@@ -24,6 +24,7 @@ use Lorekeeper\Protocol\Event\Map\MapRequiresQuestEvent;
 use Lorekeeper\Protocol\Event\Map\MovedToMapEvent;
 use Lorekeeper\Protocol\Event\PlayerInventoryLoadedEvent;
 use Lorekeeper\Protocol\Event\Quest\QuestLoadedEvent;
+use Lorekeeper\Protocol\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Protocol\Message\Message;
 use Psl\Option\Option;
 
@@ -51,6 +52,7 @@ final readonly class KnownEvents
             ItemUnequippedEvent::from(...),
             ClassChangedEvent::from(...),
             QuestLoadedEvent::from(...),
+            ShopLoadedEvent::from(...),
         ];
     }
 }
