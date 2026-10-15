@@ -10,6 +10,7 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemPrice;
 use Lorekeeper\Core\Knowledge\Fact;
+use Lorekeeper\Core\World\Shop\MergeCost;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopItem;
 use Lorekeeper\Core\World\Shop\ShopName;
@@ -47,6 +48,33 @@ final class ShopLoadedEventTest extends TestCase
                 new Fact(new ItemId(16_416), new ItemName('Gladiator of Circumstance')),
                 new Fact(new ItemId(16_416), new ItemPrice(new AdventureCoins(450))),
                 new Fact(new ItemId(16_416), new MemberOnly()),
+            ],
+            $event->facts,
+        );
+    }
+
+    #[Test]
+    public function it_records_what_merge_shops_ask_in_exchange(): void
+    {
+        $event = ShopLoadedEvent::from(self::message([
+            'ShopID' => 2081,
+            'sName' => 'Legacy Generosity Shop',
+            'bMerge' => true,
+            'items' => [
+                [
+                    'ItemID' => 66_472,
+                    'sName' => 'Titanium FrostElf Royalty',
+                    'turnin' => [['ItemID' => 66_486, 'sName' => 'Generosity Coin', 'iQty' => 2]],
+                ],
+            ],
+        ]))->unwrap();
+
+        static::assertEquals(
+            [
+                new Fact(new ShopId(2081), new ShopName('Legacy Generosity Shop')),
+                new Fact(new ItemId(66_486), new ItemName('Generosity Coin')),
+                new Fact(new ShopId(2081), new ShopItem(new ItemId(66_472), [new MergeCost(new ItemId(66_486), 2)])),
+                new Fact(new ItemId(66_472), new ItemName('Titanium FrostElf Royalty')),
             ],
             $event->facts,
         );

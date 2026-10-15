@@ -23,6 +23,7 @@ use Lorekeeper\Core\World\Npc\NpcQuest;
 use Lorekeeper\Core\World\Npc\NpcShop;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Region\RegionMap;
+use Lorekeeper\Core\World\Shop\MergeCost;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopItem;
 use Lorekeeper\Persistence\Exception\UnknownTypeException;
@@ -86,12 +87,7 @@ final readonly class WorldCodecs
                 static fn(object $v): int => Type\instance_of(NpcShop::class)->assert($v)->shopId->value,
                 static fn(mixed $p): NpcShop => new NpcShop(new ShopId(Type\positive_int()->assert($p))),
             ),
-            new CustomCodec(
-                'shop.item',
-                ShopItem::class,
-                static fn(object $v): int => Type\instance_of(ShopItem::class)->assert($v)->itemId->value,
-                static fn(mixed $p): ShopItem => new ShopItem(new ItemId(Type\positive_int()->assert($p))),
-            ),
+            new CustomCodec('shop.item', ShopItem::class, self::encodeShopItem(...), self::decodeShopItem(...)),
             new CustomCodec(
                 'map.unavailable',
                 MapUnavailable::class,
@@ -145,6 +141,43 @@ final readonly class WorldCodecs
                 static fn(string $d): MapDescription => new MapDescription($d),
             ),
             new LevelRange($p['minLevel'], $p['maxLevel']),
+        );
+    }
+
+    /** @return int|array{item: positive-int, costs: list<array{item: positive-int, quantity: positive-int}>} */
+    private static function encodeShopItem(object $value): int|array
+    {
+        $item = Type\instance_of(ShopItem::class)->assert($value);
+        if ($item->costs === []) {
+            return $item->itemId->value;
+        }
+
+        return [
+            'item' => $item->itemId->value,
+            'costs' => array_map(static fn(MergeCost $cost): array => [
+                'item' => $cost->itemId->value,
+                'quantity' => $cost->quantity,
+            ], $item->costs),
+        ];
+    }
+
+    private static function decodeShopItem(mixed $payload): ShopItem
+    {
+        if (is_int($payload)) {
+            return new ShopItem(new ItemId(Type\positive_int()->assert($payload)));
+        }
+
+        $item = Type\shape([
+            'item' => Type\positive_int(),
+            'costs' => Type\vec(Type\shape(['item' => Type\positive_int(), 'quantity' => Type\positive_int()])),
+        ])->coerce($payload);
+
+        return new ShopItem(
+            new ItemId($item['item']),
+            array_map(
+                static fn(array $cost): MergeCost => new MergeCost(new ItemId($cost['item']), $cost['quantity']),
+                $item['costs'],
+            ),
         );
     }
 }

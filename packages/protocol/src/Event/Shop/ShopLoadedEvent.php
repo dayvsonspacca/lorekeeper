@@ -6,8 +6,10 @@ namespace Lorekeeper\Protocol\Event\Shop;
 
 use Lorekeeper\Core\Access\MemberOnly;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Knowledge\Fact;
 use Lorekeeper\Core\Knowledge\Subject;
+use Lorekeeper\Core\World\Shop\MergeCost;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopItem;
 use Lorekeeper\Core\World\Shop\ShopName;
@@ -44,6 +46,9 @@ final readonly class ShopLoadedEvent implements FactEvent
                 'bUpgrd' => Type\optional(Type\bool()),
                 'items' => Type\vec(ItemFacts::type()),
             ], allowUnknownFields: true)->coerce($message->data['shopinfo'] ?? null);
+            $turnins = Type\shape(['items' => Type\vec(self::turninType())], allowUnknownFields: true)->coerce(
+                $message->data['shopinfo'],
+            )['items'];
         } catch (CoercionException $exception) {
             throw new MalformedEventException(static::class, 'shopinfo is missing or invalid', $exception);
         }
@@ -54,11 +59,33 @@ final readonly class ShopLoadedEvent implements FactEvent
             $facts[] = new Fact($shopId, new MemberOnly());
         }
 
-        foreach ($shop['items'] as $item) {
-            $facts = [...$facts, new Fact($shopId, new ShopItem(new ItemId($item['ItemID']))), ...ItemFacts::of($item)];
+        foreach ($shop['items'] as $index => $item) {
+            $costs = [];
+            foreach ($turnins[$index]['turnin'] ?? [] as $material) {
+                $costs[] = new MergeCost(new ItemId($material['ItemID']), $material['iQty']);
+                $facts[] = new Fact(new ItemId($material['ItemID']), new ItemName($material['sName']));
+            }
+
+            $facts = [
+                ...$facts,
+                new Fact($shopId, new ShopItem(new ItemId($item['ItemID']), $costs)),
+                ...ItemFacts::of($item),
+            ];
         }
 
         return Option\some(new static($shopId, $facts));
+    }
+
+    /** @return Type\TypeInterface<array{turnin?: list<array{ItemID: positive-int, sName: non-empty-string, iQty: positive-int, ...}>, ...}> */
+    private static function turninType(): Type\TypeInterface
+    {
+        return Type\shape([
+            'turnin' => Type\optional(Type\vec(Type\shape([
+                'ItemID' => Type\positive_int(),
+                'sName' => Type\non_empty_string(),
+                'iQty' => Type\positive_int(),
+            ], allowUnknownFields: true))),
+        ], allowUnknownFields: true);
     }
 
     #[Override]

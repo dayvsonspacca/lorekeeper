@@ -65,6 +65,7 @@ use Lorekeeper\Core\World\Quest\TurnInItem;
 use Lorekeeper\Core\World\Region\RegionId;
 use Lorekeeper\Core\World\Region\RegionMap;
 use Lorekeeper\Core\World\Region\RegionName;
+use Lorekeeper\Core\World\Shop\MergeCost;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopItem;
 use Lorekeeper\Core\World\Shop\ShopName;
@@ -127,6 +128,7 @@ final class DefaultCodecsTest extends TestCase
         yield 'npc shop' => [new NpcShop(new ShopId(299))];
         yield 'shop name' => [new ShopName('Battleon Assorted shop')];
         yield 'shop item' => [new ShopItem(new ItemId(16_416))];
+        yield 'merge shop item' => [new ShopItem(new ItemId(66_472), [new MergeCost(new ItemId(66_486), 2)])];
         yield 'map link' => [new MapLink(new MapName('fableforest'))];
         yield 'map unavailable' => [new MapUnavailable()];
         yield 'faction name' => [new FactionName('Good')];
