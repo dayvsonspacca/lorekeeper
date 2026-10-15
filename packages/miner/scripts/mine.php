@@ -11,11 +11,13 @@ use Lorekeeper\Miner\Cli\ServerChoice;
 use Lorekeeper\Miner\Connection;
 use Lorekeeper\Miner\Discovery\FfdecMapDiscoverer;
 use Lorekeeper\Miner\Discovery\MapQueue;
+use Lorekeeper\Miner\Discovery\QuestQueue;
 use Lorekeeper\Miner\Listener;
 use Lorekeeper\Miner\Login\GameLogin;
 use Lorekeeper\Miner\Login\LoginClient;
 use Lorekeeper\Miner\Recorder;
 use Lorekeeper\Miner\Routine\DiscoverMapsRoutine;
+use Lorekeeper\Miner\Routine\DiscoverQuestsRoutine;
 use Lorekeeper\Miner\Routine\GameEntry;
 use Lorekeeper\Miner\Routine\HouseRoutine;
 use Lorekeeper\Miner\Routine\ListenRoutine;
@@ -39,6 +41,7 @@ const USAGE = <<<'TXT'
       listen       --user=Name [--duration=60] [--server=Twilly] [--version=5.1]
       house        --user=Name [--server=Twilly] [--version=5.1]   (until Ctrl+C)
       discover-maps --user=Name [--interval=5] [--limit=50] [--server=Twilly]
+      discover-quests --user=Name [--interval=2] [--limit=20] [--server=Twilly]
       travel-map
 
     Common options:
@@ -173,6 +176,21 @@ function discover_maps(Arguments $arguments, FactStore $store): int
     ));
 }
 
+function discover_quests(Arguments $arguments, FactStore $store): int
+{
+    $interval = Duration::seconds(max(1, (int) $arguments->get('interval', '2')));
+    $limit = max(1, (int) $arguments->get('limit', '20'));
+    $queue = new QuestQueue($store);
+
+    return until_interrupted(static fn(SignalCancellationToken $stop): int => in_game(
+        $arguments,
+        $store,
+        static function (GameEntry $entry) use ($queue, $interval, $limit, $stop): void {
+            new DiscoverQuestsRoutine($entry, $queue, log_line(...))->run($interval, $limit, $stop);
+        },
+    ));
+}
+
 function house(Arguments $arguments, FactStore $store): int
 {
     return until_interrupted(static fn(SignalCancellationToken $stop): int => in_game(
@@ -193,6 +211,7 @@ Async\main(static function () use ($argv): int {
         $arguments->routine === 'listen' && $arguments->has('user') => listen($arguments, $store),
         $arguments->routine === 'house' && $arguments->has('user') => house($arguments, $store),
         $arguments->routine === 'discover-maps' && $arguments->has('user') => discover_maps($arguments, $store),
+        $arguments->routine === 'discover-quests' && $arguments->has('user') => discover_quests($arguments, $store),
         default => usage(),
     };
 });

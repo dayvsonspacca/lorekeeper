@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Miner\Routine;
 
 use Closure;
+use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Miner\Connection;
 use Lorekeeper\Miner\Exception\SessionNotReadyException;
 use Lorekeeper\Miner\Login\GameLogin;
@@ -45,6 +46,15 @@ final readonly class GameEntry
 
         $this->connection->send(new LoadPlayerInventoryCommand($areaId, $socketId));
         ($this->log)('> load inventory');
+    }
+
+    /** @throws SessionNotReadyException */
+    public function arrivedAt(MapName $map): AreaId
+    {
+        return $this->await("in {$map}", fn(): Option => $this->session
+            ->mapName()
+            ->filter(static fn(MapName $current): bool => $current->value === $map->value)
+            ->and($this->session->areaId()));
     }
 
     /**
