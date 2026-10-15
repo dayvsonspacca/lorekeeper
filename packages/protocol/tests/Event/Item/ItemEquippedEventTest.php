@@ -27,7 +27,7 @@ final class ItemEquippedEventTest extends TestCase
 
         static::assertSame(93_426, $event->player->value);
         static::assertEquals($darkMage, $event->itemId);
-        static::assertEquals([new Fact($darkMage, EquipmentSlot::Costume)], $event->facts());
+        static::assertEquals([new Fact($darkMage, EquipmentSlot::Armor)], $event->facts());
     }
 
     #[Test]

@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Item;
 
-enum EquipmentSlot
+enum EquipmentSlot: string
 {
-    case Weapon;
-    case Armor;
-    case Costume;
-    case Helm;
-    case Cape;
-    case Pet;
-    case Accessory;
-    case House;
-    case Ground;
+    case Weapon = 'Weapon';
+    case Armor = 'Armor';
+    case Helm = 'Helm';
+    case Cape = 'Cape';
+    case Pet = 'Pet';
+    case Ground = 'Ground';
 }

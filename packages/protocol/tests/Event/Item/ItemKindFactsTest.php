@@ -16,16 +16,23 @@ final class ItemKindFactsTest extends TestCase
     #[Test]
     #[TestWith(['Weapon', EquipmentSlot::Weapon])]
     #[TestWith(['ar', EquipmentSlot::Armor])]
-    #[TestWith(['co', EquipmentSlot::Costume])]
+    #[TestWith(['co', EquipmentSlot::Armor])]
     #[TestWith(['he', EquipmentSlot::Helm])]
     #[TestWith(['ba', EquipmentSlot::Cape])]
     #[TestWith(['pe', EquipmentSlot::Pet])]
-    #[TestWith(['am', EquipmentSlot::Accessory])]
-    #[TestWith(['ho', EquipmentSlot::House])]
     #[TestWith(['mi', EquipmentSlot::Ground])]
     public function it_translates_slot_codes(string $code, EquipmentSlot $slot): void
     {
         static::assertSame($slot, ItemKindFacts::of(new ItemId(1), '', $code)[0]->value);
+    }
+
+    #[Test]
+    #[TestWith(['am'])]
+    #[TestWith(['ho'])]
+    #[TestWith(['None'])]
+    public function it_has_no_slot_for_necklaces_houses_and_unknown_codes(string $code): void
+    {
+        static::assertSame([], ItemKindFacts::of(new ItemId(1), '', $code));
     }
 
     #[Test]

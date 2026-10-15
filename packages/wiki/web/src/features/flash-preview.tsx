@@ -192,7 +192,7 @@ export function AvatarPreview({ slot, file, linkage, type, compact }: { slot: Av
   )
 }
 
-const avatarSlots: Record<string, AvatarSlot> = { Weapon: 'weapon', Helm: 'helm', Cape: 'cape', Armor: 'armor', Costume: 'armor' }
+const avatarSlots: Record<string, AvatarSlot> = { Weapon: 'weapon', Helm: 'helm', Cape: 'cape', Armor: 'armor' }
 
 export function visualOf(value: (type: string) => unknown) {
   const file = value('asset.gamefile')

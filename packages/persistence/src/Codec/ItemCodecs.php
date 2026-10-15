@@ -24,7 +24,7 @@ final readonly class ItemCodecs
             new CustomCodec(
                 'item.slot',
                 EquipmentSlot::class,
-                static fn(object $v): string => Type\instance_of(EquipmentSlot::class)->assert($v)->name,
+                static fn(object $v): string => Type\instance_of(EquipmentSlot::class)->assert($v)->value,
                 self::decodeSlot(...),
             ),
             new CustomCodec(
@@ -62,12 +62,6 @@ final readonly class ItemCodecs
     {
         $name = Type\non_empty_string()->assert($payload);
 
-        foreach (EquipmentSlot::cases() as $slot) {
-            if ($slot->name === $name) {
-                return $slot;
-            }
-        }
-
-        throw new UnknownTypeException("Unknown equipment slot '{$name}'");
+        return EquipmentSlot::tryFrom($name) ?? throw new UnknownTypeException("Unknown equipment slot '{$name}'");
     }
 }

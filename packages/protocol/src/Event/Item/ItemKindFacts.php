@@ -24,13 +24,10 @@ final readonly class ItemKindFacts
     {
         return match ($code) {
             'Weapon' => EquipmentSlot::Weapon,
-            'ar' => EquipmentSlot::Armor,
-            'co' => EquipmentSlot::Costume,
+            'ar', 'co' => EquipmentSlot::Armor,
             'he' => EquipmentSlot::Helm,
             'ba' => EquipmentSlot::Cape,
             'pe' => EquipmentSlot::Pet,
-            'am' => EquipmentSlot::Accessory,
-            'ho' => EquipmentSlot::House,
             'mi' => EquipmentSlot::Ground,
             default => null,
         };

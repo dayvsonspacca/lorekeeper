@@ -108,7 +108,7 @@ final class DefaultCodecsTest extends TestCase
         yield 'item name' => [new ItemName('Sweeping Broom')];
         yield 'item description' => [new ItemDescription("If you /use this broom you'll be sweeping the floor!")];
         yield 'item type' => [new ItemType('Axe')];
-        yield 'item slot' => [EquipmentSlot::Accessory];
+        yield 'item slot' => [EquipmentSlot::Ground];
         yield 'item gold price' => [new ItemPrice(new Gold(26_000))];
         yield 'item ac price' => [new ItemPrice(new AdventureCoins(5000))];
         yield 'gamefile' => [new Gamefile('items/staves/staff10a.swf')];
