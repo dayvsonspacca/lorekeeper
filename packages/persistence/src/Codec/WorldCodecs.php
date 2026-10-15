@@ -4,17 +4,25 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Persistence\Codec;
 
+use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\Progression\LevelRange;
+use Lorekeeper\Core\World\Map\MapAnalyzed;
 use Lorekeeper\Core\World\Map\MapDescription;
 use Lorekeeper\Core\World\Map\MapLink;
 use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Map\MapNpc;
 use Lorekeeper\Core\World\Map\MapTitle;
 use Lorekeeper\Core\World\Map\MapUnavailable;
 use Lorekeeper\Core\World\Monster\MonsterId;
 use Lorekeeper\Core\World\Monster\Race;
+use Lorekeeper\Core\World\Npc\NpcId;
+use Lorekeeper\Core\World\Npc\NpcQuest;
+use Lorekeeper\Core\World\Npc\NpcShop;
+use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Region\RegionMap;
+use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Persistence\Exception\UnknownTypeException;
 use Psl\Option;
 use Psl\Type;
@@ -51,6 +59,30 @@ final readonly class WorldCodecs
                 MapLink::class,
                 static fn(object $v): string => Type\instance_of(MapLink::class)->assert($v)->mapName->value,
                 static fn(mixed $p): MapLink => new MapLink(new MapName(Type\string()->assert($p))),
+            ),
+            new CustomCodec(
+                'map.npc',
+                MapNpc::class,
+                static fn(object $v): string => (string) Type\instance_of(MapNpc::class)->assert($v)->npcId,
+                static fn(mixed $p): MapNpc => new MapNpc(NpcId::fromString(Type\string()->assert($p))),
+            ),
+            new CustomCodec(
+                'map.analyzed',
+                MapAnalyzed::class,
+                static fn(object $v): string => Type\instance_of(MapAnalyzed::class)->assert($v)->gamefile->value,
+                static fn(mixed $p): MapAnalyzed => new MapAnalyzed(new Gamefile(Type\string()->assert($p))),
+            ),
+            new CustomCodec(
+                'npc.quest',
+                NpcQuest::class,
+                static fn(object $v): int => Type\instance_of(NpcQuest::class)->assert($v)->questId->value,
+                static fn(mixed $p): NpcQuest => new NpcQuest(new QuestId(Type\positive_int()->assert($p))),
+            ),
+            new CustomCodec(
+                'npc.shop',
+                NpcShop::class,
+                static fn(object $v): int => Type\instance_of(NpcShop::class)->assert($v)->shopId->value,
+                static fn(mixed $p): NpcShop => new NpcShop(new ShopId(Type\positive_int()->assert($p))),
             ),
             new CustomCodec(
                 'map.unavailable',

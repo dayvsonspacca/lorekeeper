@@ -21,6 +21,8 @@ use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Monster\MonsterId;
 use Lorekeeper\Core\World\Monster\MonsterLevel;
 use Lorekeeper\Core\World\Monster\MonsterName;
+use Lorekeeper\Core\World\Npc\NpcId;
+use Lorekeeper\Core\World\Npc\NpcName;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Region\RegionId;
@@ -55,6 +57,7 @@ final readonly class DefaultCodecs
             new SubjectCodec('region', RegionId::class, static fn(string $v) => new RegionId($id($v))),
             new SubjectCodec('map', MapName::class, static fn(string $v) => new MapName($v)),
             new SubjectCodec('class_name', ClassName::class, static fn(string $v) => new ClassName($v)),
+            new SubjectCodec('npc', NpcId::class, NpcId::fromString(...)),
         ];
     }
 
@@ -69,6 +72,7 @@ final readonly class DefaultCodecs
             new StringCodec('quest.name', QuestName::class),
             new StringCodec('faction.name', FactionName::class),
             new StringCodec('region.name', RegionName::class),
+            new StringCodec('npc.name', NpcName::class),
             new StringCodec('class.description', ClassDescription::class),
             new StringCodec('class.mana_regeneration', ManaRegeneration::class),
             new IntegerCodec('attribute.health', Health::class, static fn(int $v) => new Health($v)),

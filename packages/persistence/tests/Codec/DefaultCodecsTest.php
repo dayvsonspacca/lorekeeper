@@ -31,17 +31,23 @@ use Lorekeeper\Core\Progression\Rank;
 use Lorekeeper\Core\World\Faction\FactionId;
 use Lorekeeper\Core\World\Faction\FactionName;
 use Lorekeeper\Core\World\Faction\Reputation;
+use Lorekeeper\Core\World\Map\MapAnalyzed;
 use Lorekeeper\Core\World\Map\MapDescription;
 use Lorekeeper\Core\World\Map\MapId;
 use Lorekeeper\Core\World\Map\MapLink;
 use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Map\MapNpc;
 use Lorekeeper\Core\World\Map\MapTitle;
 use Lorekeeper\Core\World\Map\MapUnavailable;
 use Lorekeeper\Core\World\Monster\MonsterId;
 use Lorekeeper\Core\World\Monster\MonsterLevel;
 use Lorekeeper\Core\World\Monster\MonsterName;
 use Lorekeeper\Core\World\Monster\Race;
+use Lorekeeper\Core\World\Npc\NpcId;
+use Lorekeeper\Core\World\Npc\NpcName;
+use Lorekeeper\Core\World\Npc\NpcQuest;
+use Lorekeeper\Core\World\Npc\NpcShop;
 use Lorekeeper\Core\World\Quest\QuestDescription;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
@@ -82,6 +88,7 @@ final class DefaultCodecsTest extends TestCase
         yield 'region' => [new RegionId(1)];
         yield 'map' => [new MapName('battleon')];
         yield 'class name' => [new ClassName('Blaze Binder')];
+        yield 'npc' => [new NpcId(new MapName('battleon'), new NpcName('Twilly'))];
     }
 
     /** @return iterable<string, array{object}> */
@@ -111,6 +118,11 @@ final class DefaultCodecsTest extends TestCase
         yield 'race' => [Race::Undead];
         yield 'map id' => [new MapId(2)];
         yield 'map monster' => [new MapMonster(new MonsterId(1))];
+        yield 'map npc' => [new MapNpc(new NpcId(new MapName('battleon'), new NpcName('Twilly')))];
+        yield 'npc name' => [new NpcName('Twilly')];
+        yield 'map analyzed' => [new MapAnalyzed(new Gamefile('Battleon/town-Battleon-9Oct26.swf'))];
+        yield 'npc quest' => [new NpcQuest(new QuestId(407))];
+        yield 'npc shop' => [new NpcShop(new ShopId(299))];
         yield 'map link' => [new MapLink(new MapName('fableforest'))];
         yield 'map unavailable' => [new MapUnavailable()];
         yield 'faction name' => [new FactionName('Good')];
