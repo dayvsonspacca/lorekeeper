@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Lorekeeper\Protocol\Event\Map;
+
+use Lorekeeper\Core\Knowledge\Fact;
+use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Map\MapUnavailable;
+use Lorekeeper\Protocol\Event\FactEvent;
+use Lorekeeper\Protocol\Event\Notice;
+use Lorekeeper\Protocol\Message\Message;
+use Override;
+use Psl\Option;
+
+final readonly class MapNotAvailableEvent implements FactEvent
+{
+    public function __construct(
+        public MapName $mapName,
+    ) {}
+
+    /** @return Option\Option<static> */
+    #[Override]
+    public static function from(Message $message): Option\Option
+    {
+        return Notice::text($message, 'warning')->andThen(static function (string $text): Option\Option {
+            $match = [];
+
+            if (preg_match('/^(\S+) is not available/i', $text, $match) !== 1) {
+                return Option\none();
+            }
+
+            return Option\some($match[1]);
+        })->map(static fn(string $name): static => new static(new MapName($name)));
+    }
+
+    #[Override]
+    public function facts(): array
+    {
+        return [new Fact($this->mapName, new MapUnavailable())];
+    }
+}
