@@ -13,10 +13,19 @@ use PHPUnit\Framework\TestCase;
 final class LoadQuestCommandTest extends TestCase
 {
     #[Test]
-    public function it_serializes_to_message(): void
+    public function it_serializes_one_quest(): void
     {
-        $command = new LoadQuestCommand(new AreaId(1), new QuestId(275));
+        static::assertSame(
+            '%xt%zm%getQuests%1%275%',
+            new LoadQuestCommand(new AreaId(1), new QuestId(275))->toMessage(),
+        );
+    }
 
-        static::assertSame('%xt%zm%getQuests%1%275%', $command->toMessage());
+    #[Test]
+    public function it_serializes_the_quests_of_an_npc(): void
+    {
+        $command = new LoadQuestCommand(new AreaId(172_760), new QuestId(11), new QuestId(407), new QuestId(408));
+
+        static::assertSame('%xt%zm%getQuests%172760%11%407%408%', $command->toMessage());
     }
 }

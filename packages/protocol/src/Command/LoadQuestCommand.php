@@ -10,14 +10,22 @@ use Override;
 
 final readonly class LoadQuestCommand implements Command
 {
+    /** @var non-empty-list<QuestId> */
+    private array $questIds;
+
     public function __construct(
         private AreaId $areaId,
-        private QuestId $questId,
-    ) {}
+        QuestId $questId,
+        QuestId ...$more,
+    ) {
+        $this->questIds = [$questId, ...array_values($more)];
+    }
 
     #[Override]
     public function toMessage(): string
     {
-        return "%xt%zm%getQuests%{$this->areaId}%{$this->questId}%";
+        $ids = implode('%', array_map(static fn(QuestId $id): string => (string) $id->value, $this->questIds));
+
+        return "%xt%zm%getQuests%{$this->areaId}%{$ids}%";
     }
 }
