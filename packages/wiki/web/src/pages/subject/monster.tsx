@@ -5,7 +5,7 @@ import { Empty, Section, StatTile, WikiPage } from '@/components/wiki-page'
 import { type Detail, useAtlas } from '@/lib/api'
 import { formatNumber } from '@/lib/format'
 import { page } from '@/lib/page'
-import { MonsterPreview } from '@/features/monster-preview'
+import { MonsterPreview } from '@/features/flash-preview'
 
 export function MonsterPage({ detail }: { detail: Detail }) {
   const p = page(detail)

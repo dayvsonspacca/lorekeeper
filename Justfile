@@ -41,4 +41,5 @@ wiki-swf mxmlc="/opt/apache-flex-sdk/bin/mxmlc":
     mkdir -p var/cache/client
     test -f var/cache/client/Game.swf || curl -sfL -A Mozilla/5.0 -o var/cache/client/Game.swf "https://game.aq.com/game/gamefiles/$(curl -sf -A Mozilla/5.0 https://game.aq.com/game/api/data/gameversion | php -r 'echo json_decode(stream_get_contents(STDIN))->sFile;')"
     {{ mxmlc }} -output packages/wiki/web/public/swfs/item.swf -static-link-runtime-shared-libraries=true -default-size 600 450 packages/wiki/flash/ItemPreview.as
+    {{ mxmlc }} -output packages/wiki/web/public/swfs/monster.swf -static-link-runtime-shared-libraries=true -default-size 600 450 packages/wiki/flash/MonsterPreview.as
     {{ mxmlc }} -output packages/wiki/web/public/swfs/avatar.swf -static-link-runtime-shared-libraries=true -default-size 600 450 packages/wiki/flash/AvatarPreview.as

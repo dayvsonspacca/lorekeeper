@@ -6,11 +6,6 @@ export interface RufflePlayer extends HTMLElement {
 declare global {
   interface Window {
     RufflePlayer?: { config?: Record<string, unknown>; newest: () => { createPlayer: () => RufflePlayer } }
-    onMonsterAnimationsLoaded?: (csv: string) => void
-    onItemPreviewLoaded?: (csv: string) => void
-    onItemPreviewFailed?: (payload: string) => void
-    onAvatarLoaded?: (csv: string) => void
-    onAvatarFailed?: (payload: string) => void
   }
 }
 
