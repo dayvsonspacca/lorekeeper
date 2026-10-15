@@ -58,6 +58,44 @@ final class NpcExtractorTest extends TestCase
     }
 
     #[Test]
+    public function it_prefers_the_quest_list_the_popup_opens_on_click(): void
+    {
+        $code = <<<'AS'
+            public function onClick(param1:MouseEvent) : void
+            {
+               switch(param1.currentTarget.name)
+               {
+                  case "ItemShop":
+                     rootClass.world.sendLoadShopRequest(445);
+                     break;
+                  case "QuestBtn":
+                     rootClass.world.showQuestList("q","2188,2189","2188,2189");
+                     break;
+                  case "Extra":
+                     rootClass.world.showQuestList("q","3000","3000");
+               }
+            }
+            internal function __setProp_QuestBtn_Lowell_APOP_Content_17() : *
+            {
+               QuestBtn.strQuests = "2044,2083";
+            }
+            internal function __setProp___id58__Lowell_APOP_Content_17() : *
+            {
+               __id58_.strQuests = "2500";
+            }
+            AS;
+
+        static::assertEquals(
+            new Npc(
+                new NpcName('Lowell'),
+                [new QuestId(2188), new QuestId(2189), new QuestId(3000), new QuestId(2500)],
+                [new ShopId(445)],
+            ),
+            NpcExtractor::fromSource('Lowell', $code),
+        );
+    }
+
+    #[Test]
     public function it_ignores_npcs_without_quests_or_shops(): void
     {
         static::assertNull(NpcExtractor::fromSource('Talker', 'this.__id1_.strAction = "GotoAndStop";'));
