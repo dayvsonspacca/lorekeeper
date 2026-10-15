@@ -1,0 +1,17 @@
+{
+  "name": "dayvsonspacca/lorekeeper-persistence",
+  "description": "Stores facts observed from any source, keeping their history",
+  "version": "dev-main",
+  "require": {
+    "php": "~8.4.0 || ~8.5.0",
+    "ext-pdo_sqlite": "*",
+    "dayvsonspacca/lorekeeper-core": "dev-main",
+    "php-standard-library/type": "^6.2",
+    "php-standard-library/option": "^6.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Lorekeeper\\Persistence\\": "src/"
+    }
+  }
+}
