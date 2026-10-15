@@ -1,6 +1,7 @@
 {
   "name": "dayvsonspacca/lorekeeper-miner",
   "description": "Talks to the AQW server: connection, authentication and data collection",
+  "license": "MIT",
   "version": "dev-main",
   "require": {
     "php": "~8.4.0 || ~8.5.0",

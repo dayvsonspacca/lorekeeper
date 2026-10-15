@@ -1,6 +1,7 @@
 {
     "name": "dayvsonspacca/lorekeeper",
     "description": "A structured AQW wiki built from many sources",
+    "license": "MIT",
     "type": "project",
     "authors": [
         {

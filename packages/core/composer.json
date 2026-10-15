@@ -1,6 +1,7 @@
 {
   "name": "dayvsonspacca/lorekeeper-core",
   "description": "My interpretation of the AQW game: definitions, events and commands",
+  "license": "MIT",
   "version": "dev-main",
   "require": {
     "php": "~8.4.0 || ~8.5.0",

@@ -1,6 +1,7 @@
 {
   "name": "dayvsonspacca/lorekeeper-persistence",
   "description": "Stores facts observed from any source, keeping their history",
+  "license": "MIT",
   "version": "dev-main",
   "require": {
     "php": "~8.4.0 || ~8.5.0",

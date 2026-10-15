@@ -1,6 +1,7 @@
 {
   "name": "dayvsonspacca/lorekeeper-wiki",
   "description": "The wiki: pages built from the stored facts",
+  "license": "MIT",
   "version": "dev-main",
   "require": {
     "php": "~8.4.0 || ~8.5.0",

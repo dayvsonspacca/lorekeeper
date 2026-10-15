@@ -1,6 +1,7 @@
 {
   "name": "dayvsonspacca/lorekeeper-protocol",
   "description": "AQW client/server protocol: messages, commands and events",
+  "license": "MIT",
   "version": "dev-main",
   "require": {
     "php": "~8.4.0 || ~8.5.0",
