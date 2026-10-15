@@ -1,6 +1,7 @@
 import { LoaderCircle } from 'lucide-react'
-import { useEffect, useId, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Section } from '@/components/wiki-page'
 import type { Detail } from '@/lib/api'
 import { page } from '@/lib/page'
@@ -15,14 +16,16 @@ interface FlashPreviewProps {
   parameters: Record<string, string>
   animations?: string[]
   description: string
+  initial?: string
   compact?: boolean
+  controls?: ReactNode
 }
 
-function FlashPreview({ swf, parameters, animations: fixed, description, compact = false }: FlashPreviewProps) {
+function FlashPreview({ swf, parameters, animations: fixed, description, initial, compact = false, controls }: FlashPreviewProps) {
   const container = useRef<HTMLDivElement>(null)
   const player = useRef<RufflePlayer | null>(null)
   const [animations, setAnimations] = useState<string[] | null>(null)
-  const [current, setCurrent] = useState(fixed?.[0] ?? null)
+  const [current, setCurrent] = useState(initial ?? fixed?.[0] ?? null)
   const [failure, setFailure] = useState(false)
   const id = useId().replace(/[^a-zA-Z0-9]/g, '')
   const key = JSON.stringify(parameters)
@@ -34,7 +37,7 @@ function FlashPreview({ swf, parameters, animations: fixed, description, compact
     const failed = `onPreviewFailed${id}`
     setAnimations(null)
     setFailure(false)
-    setCurrent(fixed?.[0] ?? null)
+    setCurrent(initial ?? fixed?.[0] ?? null)
     callbacks[loaded] = (csv) => !cancelled && setAnimations(fixed ?? csv.split(',').filter(Boolean))
     callbacks[failed] = () => !cancelled && setFailure(true)
 
@@ -57,7 +60,7 @@ function FlashPreview({ swf, parameters, animations: fixed, description, compact
       player.current?.remove()
       player.current = null
     }
-  }, [swf, key, fixed, id])
+  }, [swf, key, fixed, id, initial])
 
   const play = (anim: string) => {
     setCurrent(anim)
@@ -79,11 +82,22 @@ function FlashPreview({ swf, parameters, animations: fixed, description, compact
     </div>
   )
 
-  if (compact) return stage
+  if (compact) {
+    if (failure) return null
+    return controls ? (
+      <div className="space-y-2">
+        {controls}
+        {stage}
+      </div>
+    ) : (
+      stage
+    )
+  }
 
   return (
     <Section title="Preview" description={description}>
       <div className="space-y-3">
+        {controls}
         {stage}
         {animations && animations.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
@@ -104,9 +118,21 @@ const proxy = () => `${window.location.origin}/proxy/swf/item/`
 export function ItemPreview({ file, linkage, compact }: { file: string; linkage: string; compact?: boolean }) {
   return (
     <FlashPreview
-      swf="/swfs/item.swf"
+      swf={`/swfs/item.swf?v=${__SWF_VERSION__}`}
       parameters={{ sBase: proxy(), sFile: file, sLink: linkage }}
       description="How this item looks in game"
+      compact={compact}
+    />
+  )
+}
+
+export function MonsterPreview({ file, linkage, compact }: { file: string; linkage: string; compact?: boolean }) {
+  return (
+    <FlashPreview
+      swf={`/swfs/monster.swf?v=${__SWF_VERSION__}`}
+      parameters={{ sBase: `${window.location.origin}/proxy/swf/monster/`, sFile: file, sLink: linkage, sAnim: 'Idle' }}
+      initial="Idle"
+      description="Click an animation to play it"
       compact={compact}
     />
   )
@@ -117,38 +143,70 @@ export type AvatarSlot = 'weapon' | 'helm' | 'cape' | 'armor'
 const avatarAnimations = ['Idle', 'Walk', 'Fight', 'Attack1', 'Attack2', 'Cast1', 'Jump', 'Dance', 'Salute', 'Cheer']
 const weaponAnimations = avatarAnimations.filter((anim) => anim !== 'Dance')
 
+type Gender = 'M' | 'F'
+
+function storedGender(): Gender {
+  try {
+    return localStorage.getItem('lorekeeper-gender') === 'F' ? 'F' : 'M'
+  } catch {
+    return 'M'
+  }
+}
+
 export function AvatarPreview({ slot, file, linkage, type, compact }: { slot: AvatarSlot; file: string; linkage: string; type?: string; compact?: boolean }) {
   const { theme } = useTheme()
+  const [gender, setGender] = useState<Gender>(storedGender)
+  const choose = (value: string) => {
+    if (value !== 'M' && value !== 'F') return
+    setGender(value)
+    try {
+      localStorage.setItem('lorekeeper-gender', value)
+    } catch {}
+  }
   const colors = theme === 'dark' ? { sColor: '0x52525B', sBackColor: '0x3F3F46' } : { sColor: '0xA1A1AA', sBackColor: '0x71717A' }
 
   return (
     <FlashPreview
-      swf="/swfs/avatar.swf"
+      swf={`/swfs/avatar.swf?v=${__SWF_VERSION__}`}
       parameters={{
         sBase: proxy(),
         sSlot: slot,
-        sFile: slot === 'armor' ? `classes/M/${file}` : file,
+        sFile: slot === 'armor' ? `classes/${gender}/${file}` : file,
         sLink: linkage,
         sType: type ?? '',
-        sGender: 'M',
+        sGender: gender,
         ...colors,
       }}
       animations={slot === 'weapon' ? weaponAnimations : avatarAnimations}
       description="Worn by a character — pick an animation"
       compact={compact}
+      controls={
+        slot === 'armor' && (
+          <ToggleGroup type="single" variant="outline" size="sm" value={gender} onValueChange={choose} className={compact ? 'h-7' : undefined}>
+            <ToggleGroupItem value="M" className={compact ? 'h-7 px-2.5 text-xs' : 'px-3 text-xs'}>Male</ToggleGroupItem>
+            <ToggleGroupItem value="F" className={compact ? 'h-7 px-2.5 text-xs' : 'px-3 text-xs'}>Female</ToggleGroupItem>
+          </ToggleGroup>
+        )
+      }
     />
   )
 }
 
 const avatarSlots: Record<string, AvatarSlot> = { Weapon: 'weapon', Helm: 'helm', Cape: 'cape', Armor: 'armor', Costume: 'armor' }
 
+export function visualOf(value: (type: string) => unknown) {
+  const file = value('asset.gamefile')
+  const linkage = value('asset.linkage')
+  const slot = avatarSlots[String(value('item.slot'))]
+  if (typeof file !== 'string' || !file.endsWith('.swf')) return undefined
+  if (slot === 'armor' ? typeof linkage !== 'string' : !file.startsWith('items/')) return undefined
+  if (!slot && typeof linkage !== 'string') return undefined
+  return { file, linkage: typeof linkage === 'string' ? linkage : '', slot, type: typeof value('item.type') === 'string' ? String(value('item.type')) : undefined }
+}
+
 export function itemVisual(detail: Detail) {
   const p = page(detail)
-  const file = p.value<string>('asset.gamefile')
-  const linkage = p.value<string>('asset.linkage')
-  const slot = avatarSlots[String(p.value('item.slot'))]
-  if (!file || !file.endsWith('.swf') || (!linkage && (!slot || slot === 'armor'))) return undefined
-  return { file, linkage: linkage ?? '', slot, type: p.value<string>('item.type') }
+  return visualOf((type) => p.value(type))
 }
 
 export function ItemVisual({ detail, compact }: { detail: Detail; compact?: boolean }) {

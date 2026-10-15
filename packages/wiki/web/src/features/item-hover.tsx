@@ -3,20 +3,24 @@ import type { ReactNode } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ItemVisual, itemVisual } from '@/features/flash-preview'
-import { type SubjectRef, useDetail } from '@/lib/api'
-import { price } from '@/lib/facts'
+import { ItemVisual, visualOf } from '@/features/flash-preview'
+import { type SubjectRef, useDetail, useListing } from '@/lib/api'
+import { first, price } from '@/lib/facts'
 import { formatNumber } from '@/lib/format'
 import { page } from '@/lib/page'
 
 function ItemCard({ item }: { item: SubjectRef }) {
   const { data, isLoading } = useDetail('item', item.id)
+  const { data: items } = useListing('item')
+  const row = items?.rows.find((candidate) => candidate.id === item.id)
+  const visual = row ? visualOf((type) => first(row.facts, type)) : undefined
 
   if (isLoading || !data) {
     return (
       <div className="space-y-3">
         <Skeleton className="h-5 w-40" />
-        <Skeleton className="aspect-4/3 w-full" />
+        <Skeleton className="h-4 w-24" />
+        {visual && <Skeleton className="aspect-4/3 w-full" />}
       </div>
     )
   }
@@ -42,7 +46,7 @@ function ItemCard({ item }: { item: SubjectRef }) {
           )}
         </div>
       </div>
-      {itemVisual(data) && <ItemVisual detail={data} compact />}
+      {visual && <ItemVisual detail={data} compact />}
       {description && <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">{description}</p>}
     </div>
   )
