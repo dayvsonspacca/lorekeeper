@@ -18,6 +18,10 @@ final class Connection
 
     private readonly IO\Reader $reader;
 
+    private ?string $closedBecause = null;
+
+    private bool $closedHere = false;
+
     public function __construct(
         private readonly TCP\StreamInterface $stream,
     ) {
@@ -29,9 +33,21 @@ final class Connection
         return new self(TCP\connect($server->address->host, $server->address->port ?? 0));
     }
 
+    /** @throws PeerClosedException */
     public function send(Command $command): void
     {
-        $this->stream->writeAll($command->toMessage() . self::TERMINATOR);
+        if ($this->closedBecause !== null) {
+            throw new PeerClosedException($this->closedBecause);
+        }
+
+        try {
+            $this->stream->writeAll($command->toMessage() . self::TERMINATOR);
+        } catch (IO\Exception\RuntimeException $exception) {
+            throw new PeerClosedException(
+                'Connection error while sending: ' . $exception->getMessage(),
+                previous: $exception,
+            );
+        }
     }
 
     /**
@@ -44,14 +60,15 @@ final class Connection
         try {
             $raw = $this->reader->readUntil(self::TERMINATOR);
         } catch (IO\Exception\RuntimeException $exception) {
-            throw new PeerClosedException(
-                'Connection error while receiving: ' . $exception->getMessage(),
-                previous: $exception,
-            );
+            $this->closedBecause = 'Connection error while receiving: ' . $exception->getMessage();
+
+            throw new PeerClosedException($this->closedBecause, previous: $exception);
         }
 
         if ($raw === null) {
-            throw new PeerClosedException('Peer closed the connection.');
+            $this->closedBecause = 'The server closed the connection.';
+
+            throw new PeerClosedException($this->closedBecause);
         }
 
         return MessageParser::parse($raw);
@@ -59,6 +76,12 @@ final class Connection
 
     public function close(): void
     {
+        $this->closedHere = true;
         $this->stream->close();
+    }
+
+    public function closedHere(): bool
+    {
+        return $this->closedHere;
     }
 }

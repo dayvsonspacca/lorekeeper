@@ -57,6 +57,24 @@ final readonly class GameEntry
             ->and($this->session->areaId()));
     }
 
+    /** @param Closure(Session): bool $probe */
+    public function answered(Closure $probe, Duration $timeout): bool
+    {
+        $waited = Duration::zero();
+        $step = Duration::milliseconds(100);
+
+        while (!$probe($this->session)) {
+            if ($waited->compare($timeout) !== Order::Less) {
+                return false;
+            }
+
+            Async\sleep($step);
+            $waited = $waited->plus($step);
+        }
+
+        return true;
+    }
+
     /**
      * @template T of SocketId|AreaId
      *

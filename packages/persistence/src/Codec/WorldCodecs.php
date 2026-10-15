@@ -26,6 +26,7 @@ use Lorekeeper\Core\World\Region\RegionMap;
 use Lorekeeper\Core\World\Shop\MergeCost;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopItem;
+use Lorekeeper\Core\World\Shop\ShopUnavailable;
 use Lorekeeper\Persistence\Exception\UnknownTypeException;
 use Psl\Option;
 use Psl\Type;
@@ -88,6 +89,12 @@ final readonly class WorldCodecs
                 static fn(mixed $p): NpcShop => new NpcShop(new ShopId(Type\positive_int()->assert($p))),
             ),
             new CustomCodec('shop.item', ShopItem::class, self::encodeShopItem(...), self::decodeShopItem(...)),
+            new CustomCodec(
+                'shop.unavailable',
+                ShopUnavailable::class,
+                static fn(object $v): bool => true,
+                static fn(mixed $p): ShopUnavailable => new ShopUnavailable(),
+            ),
             new CustomCodec(
                 'map.unavailable',
                 MapUnavailable::class,

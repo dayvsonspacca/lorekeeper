@@ -4,25 +4,41 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Miner\Discovery;
 
+use Closure;
+use DateTimeImmutable;
 use Lorekeeper\Core\Access\MemberOnly;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Npc\NpcId;
 use Lorekeeper\Core\World\Npc\NpcShop;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopName;
+use Lorekeeper\Core\World\Shop\ShopUnavailable;
 use Lorekeeper\Persistence\Store\FactStore;
 use Lorekeeper\Persistence\Store\StoredFact;
+use Psl\DateTime\Duration;
 
 final readonly class ShopQueue
 {
+    /** @param Closure(): DateTimeImmutable $clock */
     public function __construct(
         private FactStore $store,
+        private Closure $clock,
+        private Duration $retryUnavailableAfter,
     ) {}
 
     /** @return array<string, non-empty-list<ShopId>> */
     public function toLoad(): array
     {
-        $skip = self::subjectIds($this->store->withValue(ShopName::class), ShopId::class);
+        $since = ($this->clock)()->getTimestamp() - (int) $this->retryUnavailableAfter->getTotalSeconds();
+        $known = self::subjectIds($this->store->withValue(ShopName::class), ShopId::class);
+        $unavailable = self::subjectIds(
+            array_values(array_filter(
+                $this->store->withValue(ShopUnavailable::class),
+                static fn(StoredFact $stored): bool => $stored->lastSeen->getTimestamp() >= $since,
+            )),
+            ShopId::class,
+        );
+        $skip = $known + $unavailable;
         $memberOnly = self::subjectIds($this->store->withValue(MemberOnly::class), MapName::class);
 
         $maps = [];

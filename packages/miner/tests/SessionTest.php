@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Lorekeeper\Miner\Tests;
 
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Miner\Session;
 use Lorekeeper\Protocol\AreaId;
 use Lorekeeper\Protocol\Event\AwayFromKeyboardEvent;
 use Lorekeeper\Protocol\Event\LoginSucceededEvent;
 use Lorekeeper\Protocol\Event\Map\MovedToMapEvent;
+use Lorekeeper\Protocol\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Protocol\RoomId;
 use Lorekeeper\Protocol\SocketId;
 use PHPUnit\Framework\Attributes\Test;
@@ -46,6 +48,16 @@ final class SessionTest extends TestCase
 
         static::assertSame(174_547, $session->areaId()->unwrap()->value);
         static::assertSame('forest', $session->mapName()->unwrap()->value);
+    }
+
+    #[Test]
+    public function it_remembers_which_shops_answered(): void
+    {
+        $session = new Session();
+        $session->observe(new ShopLoadedEvent(new ShopId(31), []));
+
+        static::assertTrue($session->hasLoaded(new ShopId(31)));
+        static::assertFalse($session->hasLoaded(new ShopId(299)));
     }
 
     #[Test]

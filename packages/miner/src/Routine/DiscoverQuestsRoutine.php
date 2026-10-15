@@ -8,6 +8,7 @@ use Closure;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Miner\Discovery\QuestQueue;
+use Lorekeeper\Miner\Exception\PeerClosedException;
 use Lorekeeper\Miner\Exception\SessionNotReadyException;
 use Lorekeeper\Protocol\Command\JoinMapCommand;
 use Lorekeeper\Protocol\Command\LoadQuestCommand;
@@ -52,6 +53,11 @@ final readonly class DiscoverQuestsRoutine
             }
         } catch (CancelledException) {
             ($this->log)('> stop requested');
+        } catch (PeerClosedException $exception) {
+            ($this->log)("! {$exception->getMessage()}");
+            ($this->log)("> visited {$visited} maps");
+
+            return;
         }
 
         Async\sleep($interval);

@@ -12,6 +12,7 @@ use Lorekeeper\Miner\Discovery\AnalysisFacts;
 use Lorekeeper\Miner\Discovery\MapDiscoverer;
 use Lorekeeper\Miner\Discovery\MapQueue;
 use Lorekeeper\Miner\Exception\DiscoveryFailedException;
+use Lorekeeper\Miner\Exception\PeerClosedException;
 use Lorekeeper\Miner\Exception\SessionNotReadyException;
 use Lorekeeper\Miner\Recorder;
 use Lorekeeper\Persistence\Observation\Source;
@@ -68,6 +69,11 @@ final class DiscoverMapsRoutine
             }
         } catch (CancelledException) {
             ($this->log)('> stop requested');
+        } catch (PeerClosedException $exception) {
+            ($this->log)("! {$exception->getMessage()}");
+            ($this->log)('> visited ' . count($this->attempted) . ' maps, analyzed ' . count($this->analyzed));
+
+            return;
         }
 
         ($this->log)('> visited ' . count($this->attempted) . ' maps, analyzed ' . count($this->analyzed));

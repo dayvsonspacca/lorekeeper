@@ -11,6 +11,7 @@ use Lorekeeper\Protocol\Message\DelimitedMessage;
 use Lorekeeper\Protocol\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psl\IO;
 use Psl\TCP;
 
 final class ConnectionTest extends TestCase
@@ -20,6 +21,17 @@ final class ConnectionTest extends TestCase
     {
         $stream = $this->createMock(TCP\StreamInterface::class);
         $stream->expects(static::once())->method('writeAll')->with("%xt%zm%logout%1%\0");
+
+        new Connection($stream)->send(new LogoutCommand());
+    }
+
+    #[Test]
+    public function it_throws_when_sending_on_a_closed_connection(): void
+    {
+        $stream = static::createStub(TCP\StreamInterface::class);
+        $stream->method('writeAll')->willThrowException(new IO\Exception\RuntimeException('Broken pipe'));
+
+        $this->expectException(PeerClosedException::class);
 
         new Connection($stream)->send(new LogoutCommand());
     }
@@ -80,6 +92,26 @@ final class ConnectionTest extends TestCase
         $this->expectException(PeerClosedException::class);
 
         new Connection($stream)->receive();
+    }
+
+    #[Test]
+    public function it_refuses_to_send_after_the_server_closed(): void
+    {
+        $stream = static::createStub(TCP\StreamInterface::class);
+        $stream->method('read')->willReturn('');
+        $stream->method('reachedEndOfDataSource')->willReturn(true);
+        $connection = new Connection($stream);
+
+        try {
+            $connection->receive();
+            static::fail('The closed connection should not receive.');
+        } catch (PeerClosedException $closed) {
+            static::assertSame('The server closed the connection.', $closed->getMessage());
+        }
+
+        $this->expectExceptionMessage('The server closed the connection.');
+
+        $connection->send(new LogoutCommand());
     }
 
     private static function connection(string ...$reads): Connection

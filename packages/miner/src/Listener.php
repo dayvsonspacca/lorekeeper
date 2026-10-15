@@ -38,7 +38,11 @@ final class Listener
         while (true) {
             try {
                 $message = $this->connection->receive();
-            } catch (PeerClosedException) {
+            } catch (PeerClosedException $exception) {
+                if (!$this->connection->closedHere()) {
+                    ($this->log)("! {$exception->getMessage()}");
+                }
+
                 return;
             }
 

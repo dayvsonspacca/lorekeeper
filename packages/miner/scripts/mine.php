@@ -198,13 +198,17 @@ function discover_shops(Arguments $arguments, FactStore $store): int
 {
     $interval = Duration::seconds(max(4, (int) $arguments->get('interval', '4')));
     $limit = max(1, (int) $arguments->get('limit', '20'));
-    $queue = new ShopQueue($store);
+    $queue = new ShopQueue($store, now(...), Duration::hours(7 * 24));
 
     return until_interrupted(static fn(SignalCancellationToken $stop): int => in_game(
         $arguments,
         $store,
-        static function (GameEntry $entry) use ($queue, $interval, $limit, $stop): void {
-            new DiscoverShopsRoutine($entry, $queue, log_line(...))->run($interval, $limit, $stop);
+        static function (GameEntry $entry) use ($queue, $store, $interval, $limit, $stop): void {
+            new DiscoverShopsRoutine($entry, $queue, new Recorder($store, now(...)), log_line(...))->run(
+                $interval,
+                $limit,
+                $stop,
+            );
         },
     ));
 }

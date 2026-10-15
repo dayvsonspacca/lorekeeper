@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Miner;
 
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Protocol\AreaId;
 use Lorekeeper\Protocol\Event\Event;
 use Lorekeeper\Protocol\Event\LoginSucceededEvent;
 use Lorekeeper\Protocol\Event\Map\MovedToMapEvent;
+use Lorekeeper\Protocol\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Protocol\SocketId;
 use Psl\Option;
 
@@ -20,10 +22,17 @@ final class Session
 
     private ?MapName $mapName = null;
 
+    /** @var array<int, true> */
+    private array $loadedShops = [];
+
     public function observe(Event $event): void
     {
         if ($event instanceof LoginSucceededEvent) {
             $this->socketId = $event->socketId;
+        }
+
+        if ($event instanceof ShopLoadedEvent) {
+            $this->loadedShops[$event->shopId->value] = true;
         }
 
         if ($event instanceof MovedToMapEvent) {
@@ -42,6 +51,11 @@ final class Session
     public function areaId(): Option\Option
     {
         return Option\from_nullable($this->areaId);
+    }
+
+    public function hasLoaded(ShopId $shop): bool
+    {
+        return array_key_exists($shop->value, $this->loadedShops);
     }
 
     /** @return Option\Option<MapName> */
