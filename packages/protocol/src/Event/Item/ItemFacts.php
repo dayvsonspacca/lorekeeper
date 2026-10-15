@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Protocol\Event\Item;
 
+use Lorekeeper\Core\Access\MemberOnly;
 use Lorekeeper\Core\Currency\AdventureCoins;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\ItemDescription;
@@ -24,6 +25,7 @@ use Psl\Type;
  *     sLink?: string,
  *     sType?: string,
  *     sES?: string,
+ *     bUpg?: bool,
  *     ...
  * }
  */
@@ -42,6 +44,7 @@ final readonly class ItemFacts
             'sLink' => Type\optional(Type\string()),
             'sType' => Type\optional(Type\string()),
             'sES' => Type\optional(Type\string()),
+            'bUpg' => Type\optional(Type\bool()),
         ], allowUnknownFields: true);
     }
 
@@ -60,6 +63,7 @@ final readonly class ItemFacts
             ...self::priceFacts($itemId, $item),
             ...ItemAssetFacts::of($itemId, $item['sFile'] ?? '', $item['sLink'] ?? ''),
             ...ItemKindFacts::of($itemId, $item['sType'] ?? '', $item['sES'] ?? ''),
+            ...($item['bUpg'] ?? false ? [new Fact($itemId, new MemberOnly())] : []),
         ];
     }
 
