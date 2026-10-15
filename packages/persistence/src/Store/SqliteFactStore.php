@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Persistence\Store;
 
-use DateTimeImmutable;
 use DateTimeInterface;
-use Lorekeeper\Core\Knowledge\Fact;
 use Lorekeeper\Core\Knowledge\Subject;
 use Lorekeeper\Persistence\Codec\Codecs;
-use Lorekeeper\Persistence\Observation\Source;
 use Override;
 use PDO;
-use PDOStatement;
 use Psl\Type;
-use RuntimeException;
 use Throwable;
 
 final readonly class SqliteFactStore implements FactStore
@@ -59,12 +54,38 @@ final readonly class SqliteFactStore implements FactStore
         ORDER BY id
         SQL;
 
+    private const string SUBJECTS = <<<'SQL'
+        SELECT DISTINCT subject_id
+        FROM facts
+        WHERE subject_type = :subject_type
+        ORDER BY subject_id
+        SQL;
+
+    private const string ABOUT_ALL = <<<'SQL'
+        SELECT subject_type, subject_id, value_type, value, source, first_seen, last_seen, times_seen
+        FROM facts
+        WHERE subject_type = :subject_type
+        ORDER BY id
+        SQL;
+
+    private const string LATEST = <<<'SQL'
+        SELECT subject_type, subject_id, value_type, value, source, first_seen, last_seen, times_seen
+        FROM facts
+        ORDER BY first_seen DESC, id DESC
+        LIMIT :limit
+        SQL;
+
+    private const string COUNT_BY_SOURCE = 'SELECT source, count(*) AS total FROM facts GROUP BY source';
+
+    private SqliteQuery $query;
+
     public function __construct(
         private PDO $pdo,
         private Codecs $codecs,
     ) {
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->pdo->exec(self::SCHEMA);
+        $this->query = new SqliteQuery($pdo, $codecs);
     }
 
     public static function open(string $path, Codecs $codecs): self
@@ -75,7 +96,7 @@ final readonly class SqliteFactStore implements FactStore
     #[Override]
     public function record(array $observations): void
     {
-        $statement = $this->prepare(self::RECORD);
+        $statement = $this->query->statement(self::RECORD);
 
         $this->pdo->beginTransaction();
 
@@ -108,7 +129,57 @@ final readonly class SqliteFactStore implements FactStore
     {
         $codec = $this->codecs->subjectFor($subject);
 
-        return $this->fetch(self::ABOUT, ['subject_type' => $codec->key, 'subject_id' => $codec->encode($subject)]);
+        return $this->query->facts(self::ABOUT, [
+            'subject_type' => $codec->key,
+            'subject_id' => $codec->encode($subject),
+        ]);
+    }
+
+    #[Override]
+    public function subjects(string $subjectClass): array
+    {
+        $codec = $this->codecs->subjectForClass($subjectClass);
+        $statement = $this->query->statement(self::SUBJECTS);
+        $statement->execute(['subject_type' => $codec->key]);
+
+        $subjects = [];
+        foreach (Type\vec(Type\string())->coerce($statement->fetchAll(PDO::FETCH_COLUMN)) as $id) {
+            $subject = $codec->decode($id);
+            if ($subject instanceof $subjectClass) {
+                $subjects[] = $subject;
+            }
+        }
+
+        return $subjects;
+    }
+
+    #[Override]
+    public function aboutAll(string $subjectClass): array
+    {
+        return $this->query->facts(self::ABOUT_ALL, [
+            'subject_type' => $this->codecs->subjectForClass($subjectClass)->key,
+        ]);
+    }
+
+    #[Override]
+    public function latest(int $limit): array
+    {
+        return $this->query->facts(self::LATEST, ['limit' => (string) $limit]);
+    }
+
+    #[Override]
+    public function countBySource(): array
+    {
+        $statement = $this->query->statement(self::COUNT_BY_SOURCE);
+        $statement->execute();
+
+        $counts = [];
+        foreach (Type\vec(Type\shape(['source' => Type\string(), 'total' => Type\int()]))
+            ->coerce($statement->fetchAll(PDO::FETCH_ASSOC)) as $row) {
+            $counts[$row['source']] = $row['total'];
+        }
+
+        return $counts;
     }
 
     #[Override]
@@ -116,56 +187,6 @@ final readonly class SqliteFactStore implements FactStore
     {
         $codec = $this->codecs->valueForClass($valueClass);
 
-        return $this->fetch(self::WITH_VALUE, ['value_type' => $codec->key()]);
-    }
-
-    /**
-     * @param array<string, string> $parameters
-     *
-     * @return list<StoredFact>
-     */
-    private function fetch(string $sql, array $parameters): array
-    {
-        $statement = $this->prepare($sql);
-        $statement->execute($parameters);
-
-        $rows = Type\vec(Type\shape([
-            'subject_type' => Type\string(),
-            'subject_id' => Type\string(),
-            'value_type' => Type\string(),
-            'value' => Type\string(),
-            'source' => Type\string(),
-            'first_seen' => Type\string(),
-            'last_seen' => Type\string(),
-            'times_seen' => Type\positive_int(),
-        ]))
-            ->coerce($statement->fetchAll(PDO::FETCH_ASSOC));
-
-        return array_map(
-            fn(array $row): StoredFact => new StoredFact(
-                new Fact(
-                    $this->codecs->subject($row['subject_type'])->decode($row['subject_id']),
-                    $this->codecs
-                        ->value($row['value_type'])
-                        ->decode(json_decode($row['value'], associative: true, flags: JSON_THROW_ON_ERROR)),
-                ),
-                Source::from($row['source']),
-                new DateTimeImmutable($row['first_seen']),
-                new DateTimeImmutable($row['last_seen']),
-                $row['times_seen'],
-            ),
-            $rows,
-        );
-    }
-
-    private function prepare(string $sql): PDOStatement
-    {
-        $statement = $this->pdo->prepare($sql);
-
-        if ($statement === false) {
-            throw new RuntimeException('Could not prepare statement.');
-        }
-
-        return $statement;
+        return $this->query->facts(self::WITH_VALUE, ['value_type' => $codec->key()]);
     }
 }

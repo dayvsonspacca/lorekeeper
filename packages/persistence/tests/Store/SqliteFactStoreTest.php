@@ -127,7 +127,7 @@ final class SqliteFactStoreTest extends TestCase
     }
 
     #[Test]
-    public function it_finds_facts_by_value_type(): void
+    public function it_finds_facts_by_value_type_and_subjects_by_type(): void
     {
         $store = self::store();
 
@@ -156,6 +156,10 @@ final class SqliteFactStoreTest extends TestCase
             ],
             array_map(static fn(StoredFact $stored): Fact => $stored->fact, $store->withValue(MapMonster::class)),
         );
+        static::assertEquals([new MapName('battleon'), new MapName('forest')], $store->subjects(MapName::class));
+        static::assertCount(3, $store->aboutAll(MapName::class));
+        static::assertSame(['socket' => 3], $store->countBySource());
+        static::assertEquals(new MapName('battleon'), $store->latest(1)[0]->fact->subject);
     }
 
     #[Test]

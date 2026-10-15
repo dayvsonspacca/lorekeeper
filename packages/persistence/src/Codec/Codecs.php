@@ -56,6 +56,16 @@ final readonly class Codecs
         );
     }
 
+    /**
+     * @param class-string<Subject> $class
+     *
+     * @throws UnknownTypeException
+     */
+    public function subjectForClass(string $class): SubjectCodec
+    {
+        return $this->subjectsByClass[$class] ?? throw new UnknownTypeException("No codec for subject {$class}");
+    }
+
     /** @throws UnknownTypeException */
     public function subject(string $key): SubjectCodec
     {
