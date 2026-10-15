@@ -14,6 +14,7 @@ use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Miner\Discovery\QuestQueue;
 use Lorekeeper\Miner\Recorder;
 use Lorekeeper\Miner\Routine\DiscoverQuestsRoutine;
+use Lorekeeper\Miner\Routine\MapVisit;
 use Lorekeeper\Persistence\Codec\DefaultCodecs;
 use Lorekeeper\Persistence\Observation\Source;
 use Lorekeeper\Persistence\Store\SqliteFactStore;
@@ -44,14 +45,20 @@ final class DiscoverQuestsRoutineTest extends TestCase
         ], Source::Swf);
 
         $sent = [];
+        $entry = RoutineStub::entry(
+            static::createStub(TCP\StreamInterface::class),
+            $sent,
+            RoutineStub::readySession(),
+            Duration::milliseconds(200),
+        );
         new DiscoverQuestsRoutine(
-            RoutineStub::entry(
-                static::createStub(TCP\StreamInterface::class),
-                $sent,
-                RoutineStub::readySession(),
-                Duration::milliseconds(200),
-            ),
+            $entry,
             new QuestQueue($store),
+            new MapVisit(
+                $entry,
+                new Recorder($store, static fn(): DateTimeImmutable => new DateTimeImmutable('2026-10-15')),
+                static fn(string $line): null => null,
+            ),
             static fn(string $line): null => null,
         )->run(Duration::zero(), 5, new SignalCancellationToken());
 

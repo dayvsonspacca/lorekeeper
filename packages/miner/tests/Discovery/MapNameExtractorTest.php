@@ -65,12 +65,18 @@ final class MapNameExtractorTest extends TestCase
                this.__id25_.strNewMap = "greenguardwest";
                this.__id25_.strAsk = "";
             }
+            internal function __setProp___id26__MainTimeline_Pads_0(param1:int) : *
+            {
+               this.__id26_.strNewMap = "laircross";
+               this.__id26_.strAsk = "Go to Lair\'s Crossroads?";
+            }
             AS;
 
         static::assertEquals(
             [
                 new MapExit(new MapName('librarium'), new ExitPrompt('Enter the Librarium?')),
                 new MapExit(new MapName('greenguardwest')),
+                new MapExit(new MapName('laircross'), new ExitPrompt("Go to Lair's Crossroads?")),
             ],
             MapNameExtractor::exitsIn($code),
         );

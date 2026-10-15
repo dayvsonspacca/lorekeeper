@@ -15,6 +15,7 @@ use Lorekeeper\Core\World\Shop\ShopUnavailable;
 use Lorekeeper\Miner\Discovery\ShopQueue;
 use Lorekeeper\Miner\Recorder;
 use Lorekeeper\Miner\Routine\DiscoverShopsRoutine;
+use Lorekeeper\Miner\Routine\MapVisit;
 use Lorekeeper\Persistence\Codec\DefaultCodecs;
 use Lorekeeper\Persistence\Observation\Source;
 use Lorekeeper\Persistence\Store\SqliteFactStore;
@@ -38,19 +39,24 @@ final class DiscoverShopsRoutineTest extends TestCase
         ], Source::Swf);
 
         $sent = [];
+        $entry = RoutineStub::entry(
+            static::createStub(TCP\StreamInterface::class),
+            $sent,
+            RoutineStub::readySession(),
+            Duration::milliseconds(200),
+        );
         new DiscoverShopsRoutine(
-            RoutineStub::entry(
-                static::createStub(TCP\StreamInterface::class),
-                $sent,
-                RoutineStub::readySession(),
-                Duration::milliseconds(200),
-            ),
+            $entry,
             new ShopQueue(
                 $store,
                 static fn(): DateTimeImmutable => new DateTimeImmutable('2026-10-15'),
                 Duration::hours(1),
             ),
-            new Recorder($store, static fn(): DateTimeImmutable => new DateTimeImmutable('2026-10-15')),
+            new MapVisit(
+                $entry,
+                new Recorder($store, static fn(): DateTimeImmutable => new DateTimeImmutable('2026-10-15')),
+                static fn(string $line): null => null,
+            ),
             static fn(string $line): null => null,
         )->run(Duration::zero(), 5, new SignalCancellationToken());
 

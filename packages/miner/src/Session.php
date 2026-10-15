@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Miner;
 
+use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Protocol\AreaId;
@@ -22,6 +23,8 @@ final class Session
 
     private ?MapName $mapName = null;
 
+    private ?Gamefile $mapFile = null;
+
     /** @var array<int, true> */
     private array $loadedShops = [];
 
@@ -38,6 +41,14 @@ final class Session
         if ($event instanceof MovedToMapEvent) {
             $this->areaId = $event->areaId;
             $this->mapName = $event->mapName;
+            $this->mapFile = null;
+            foreach ($event->facts as $fact) {
+                if (!$fact->value instanceof Gamefile || !$fact->subject instanceof MapName) {
+                    continue;
+                }
+
+                $this->mapFile = $fact->value;
+            }
         }
     }
 
@@ -51,6 +62,12 @@ final class Session
     public function areaId(): Option\Option
     {
         return Option\from_nullable($this->areaId);
+    }
+
+    /** @return Option\Option<Gamefile> */
+    public function mapFile(): Option\Option
+    {
+        return Option\from_nullable($this->mapFile);
     }
 
     public function hasLoaded(ShopId $shop): bool

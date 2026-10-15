@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../../vendor/autoload.php';
 
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Miner\Cli\Arguments;
 use Lorekeeper\Miner\Cli\Password;
 use Lorekeeper\Miner\Cli\ServerChoice;
@@ -20,9 +21,11 @@ use Lorekeeper\Miner\Recorder;
 use Lorekeeper\Miner\Routine\DiscoverMapsRoutine;
 use Lorekeeper\Miner\Routine\DiscoverQuestsRoutine;
 use Lorekeeper\Miner\Routine\DiscoverShopsRoutine;
+use Lorekeeper\Miner\Routine\ExploreMapRoutine;
 use Lorekeeper\Miner\Routine\GameEntry;
 use Lorekeeper\Miner\Routine\HouseRoutine;
 use Lorekeeper\Miner\Routine\ListenRoutine;
+use Lorekeeper\Miner\Routine\MapVisit;
 use Lorekeeper\Miner\Routine\TravelMapRoutine;
 use Lorekeeper\Miner\Session;
 use Lorekeeper\Miner\TravelMap\TravelMapClient;
@@ -45,6 +48,7 @@ const USAGE = <<<'TXT'
       discover-maps --user=Name [--interval=5] [--limit=50] [--server=Twilly]
       discover-quests --user=Name [--interval=2] [--limit=20] [--server=Twilly]
       discover-shops --user=Name [--interval=4] [--limit=20] [--server=Twilly]
+      explore-map --user=Name --map=battleontown [--interval=4] [--server=Twilly]
       travel-map
 
     Common options:
@@ -188,8 +192,12 @@ function discover_quests(Arguments $arguments, FactStore $store): int
     return until_interrupted(static fn(SignalCancellationToken $stop): int => in_game(
         $arguments,
         $store,
-        static function (GameEntry $entry) use ($queue, $interval, $limit, $stop): void {
-            new DiscoverQuestsRoutine($entry, $queue, log_line(...))->run($interval, $limit, $stop);
+        static function (GameEntry $entry) use ($queue, $store, $interval, $limit, $stop): void {
+            new DiscoverQuestsRoutine($entry, $queue, map_visit($entry, $store), log_line(...))->run(
+                $interval,
+                $limit,
+                $stop,
+            );
         },
     ));
 }
@@ -204,11 +212,37 @@ function discover_shops(Arguments $arguments, FactStore $store): int
         $arguments,
         $store,
         static function (GameEntry $entry) use ($queue, $store, $interval, $limit, $stop): void {
-            new DiscoverShopsRoutine($entry, $queue, new Recorder($store, now(...)), log_line(...))->run(
+            new DiscoverShopsRoutine($entry, $queue, map_visit($entry, $store), log_line(...))->run(
                 $interval,
                 $limit,
                 $stop,
             );
+        },
+    ));
+}
+
+function map_visit(GameEntry $entry, FactStore $store): MapVisit
+{
+    return new MapVisit($entry, new Recorder($store, now(...)), log_line(...));
+}
+
+function explore_map(Arguments $arguments, FactStore $store): int
+{
+    $map = new MapName(strtolower($arguments->get('map')));
+    $interval = Duration::seconds(max(4, (int) $arguments->get('interval', '4')));
+    $discoverer = new FfdecMapDiscoverer(__DIR__ . '/decompile.sh', 'var/swfs');
+
+    return until_interrupted(static fn(SignalCancellationToken $stop): int => in_game(
+        $arguments,
+        $store,
+        static function (GameEntry $entry) use ($map, $store, $interval, $discoverer, $stop): void {
+            new ExploreMapRoutine(
+                $entry,
+                map_visit($entry, $store),
+                $discoverer,
+                new Recorder($store, now(...)),
+                log_line(...),
+            )->run($map, $interval, $stop);
         },
     ));
 }
@@ -235,6 +269,8 @@ Async\main(static function () use ($argv): int {
         $arguments->routine === 'discover-maps' && $arguments->has('user') => discover_maps($arguments, $store),
         $arguments->routine === 'discover-quests' && $arguments->has('user') => discover_quests($arguments, $store),
         $arguments->routine === 'discover-shops' && $arguments->has('user') => discover_shops($arguments, $store),
+        $arguments->routine === 'explore-map' && $arguments->has('user') && $arguments->get('map') !== ''
+            => explore_map($arguments, $store),
         default => usage(),
     };
 });

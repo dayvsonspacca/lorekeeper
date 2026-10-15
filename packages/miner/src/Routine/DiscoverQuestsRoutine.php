@@ -10,23 +10,19 @@ use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Miner\Discovery\QuestQueue;
 use Lorekeeper\Miner\Exception\PeerClosedException;
 use Lorekeeper\Miner\Exception\SessionNotReadyException;
-use Lorekeeper\Protocol\Command\JoinMapCommand;
-use Lorekeeper\Protocol\Command\LoadQuestCommand;
 use Lorekeeper\Protocol\Command\LogoutCommand;
 use Psl\Async;
 use Psl\Async\CancellationTokenInterface;
 use Psl\Async\Exception\CancelledException;
 use Psl\DateTime\Duration;
-use Psl\Option;
 
 final readonly class DiscoverQuestsRoutine
 {
-    private const int BATCH = 10;
-
     /** @param Closure(string): void $log */
     public function __construct(
         private GameEntry $entry,
         private QuestQueue $queue,
+        private MapVisit $visit,
         private Closure $log,
     ) {}
 
@@ -49,7 +45,7 @@ final readonly class DiscoverQuestsRoutine
             ) as $map => $npcs) {
                 Async\sleep($interval, $stop);
                 $visited++;
-                $this->visit(new MapName($map), $npcs, $interval, $stop);
+                $this->explore(new MapName($map), $npcs, $interval, $stop);
             }
         } catch (CancelledException) {
             ($this->log)('> stop requested');
@@ -66,28 +62,16 @@ final readonly class DiscoverQuestsRoutine
         ($this->log)('> logout');
     }
 
-    /** @param array<string, non-empty-list<QuestId>> $npcs */
-    private function visit(MapName $map, array $npcs, Duration $interval, CancellationTokenInterface $stop): void
+    /**
+     * @param array<string, non-empty-list<QuestId>> $npcs
+     *
+     * @throws PeerClosedException
+     */
+    private function explore(MapName $map, array $npcs, Duration $interval, CancellationTokenInterface $stop): void
     {
-        $this->entry->connection->send(new JoinMapCommand($this->entry->login->player, $map, Option\none()));
-        ($this->log)("> join {$map}");
-
-        try {
-            $areaId = $this->entry->arrivedAt($map);
-        } catch (SessionNotReadyException) {
-            ($this->log)("! {$map}: could not join");
-
-            return;
-        }
-
-        foreach ($npcs as $npc => $quests) {
-            foreach (array_chunk($quests, self::BATCH) as $batch) {
-                Async\sleep($interval, $stop);
-                $this->entry->connection->send(
-                    new LoadQuestCommand($areaId, $batch[0], ...array_slice($batch, offset: 1)),
-                );
-                ($this->log)("> {$map} / {$npc}: " . count($batch) . ' quests');
-            }
+        $area = $this->visit->join($map);
+        if ($area !== null) {
+            $this->visit->askQuests($map, $area, $npcs, $interval, $stop);
         }
     }
 }

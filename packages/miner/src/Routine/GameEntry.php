@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Miner\Routine;
 
 use Closure;
+use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Miner\Connection;
 use Lorekeeper\Miner\Exception\SessionNotReadyException;
@@ -55,6 +56,12 @@ final readonly class GameEntry
             ->mapName()
             ->filter(static fn(MapName $current): bool => $current->value === $map->value)
             ->and($this->session->areaId()));
+    }
+
+    /** @return Option<Gamefile> */
+    public function mapFile(): Option
+    {
+        return $this->session->mapFile();
     }
 
     /** @param Closure(Session): bool $probe */

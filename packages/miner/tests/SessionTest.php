@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Miner\Tests;
 
+use Lorekeeper\Core\Asset\Gamefile;
+use Lorekeeper\Core\Knowledge\Fact;
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Monster\MonsterId;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Miner\Session;
 use Lorekeeper\Protocol\AreaId;
@@ -48,6 +51,18 @@ final class SessionTest extends TestCase
 
         static::assertSame(174_547, $session->areaId()->unwrap()->value);
         static::assertSame('forest', $session->mapName()->unwrap()->value);
+    }
+
+    #[Test]
+    public function it_keeps_the_map_file_and_not_a_monster_file(): void
+    {
+        $session = new Session();
+        $session->observe(new MovedToMapEvent(new AreaId(1), new RoomId(1), new MapName('lair'), [
+            new Fact(new MapName('lair'), new Gamefile('Lair/town-Lair-29Dec24.swf')),
+            new Fact(new MonsterId(14), new Gamefile('DragonFire.swf')),
+        ]));
+
+        static::assertEquals(new Gamefile('Lair/town-Lair-29Dec24.swf'), $session->mapFile()->unwrap());
     }
 
     #[Test]

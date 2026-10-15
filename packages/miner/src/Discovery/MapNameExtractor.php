@@ -43,7 +43,9 @@ final readonly class MapNameExtractor
             }
 
             $ask = [];
-            $prompt = preg_match('/strAsk\s*=\s*"([^"]+)"/', $block, $ask) === 1 ? new ExitPrompt(trim($ask[1])) : null;
+            $prompt = preg_match('/strAsk\s*=\s*"([^"]+)"/', $block, $ask) === 1
+                ? new ExitPrompt(trim(str_replace(['\\\'', '\\"'], ["'", '"'], $ask[1])))
+                : null;
             $exits[$map->value . '|' . ($prompt->value ?? '')] = new MapExit($map, $prompt);
         }
 
