@@ -6,6 +6,7 @@ namespace Lorekeeper\Persistence\Codec;
 
 use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
+use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Progression\LevelRange;
 use Lorekeeper\Core\World\Map\MapAnalyzed;
 use Lorekeeper\Core\World\Map\MapDescription;
@@ -23,6 +24,7 @@ use Lorekeeper\Core\World\Npc\NpcShop;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Region\RegionMap;
 use Lorekeeper\Core\World\Shop\ShopId;
+use Lorekeeper\Core\World\Shop\ShopItem;
 use Lorekeeper\Persistence\Exception\UnknownTypeException;
 use Psl\Option;
 use Psl\Type;
@@ -83,6 +85,12 @@ final readonly class WorldCodecs
                 NpcShop::class,
                 static fn(object $v): int => Type\instance_of(NpcShop::class)->assert($v)->shopId->value,
                 static fn(mixed $p): NpcShop => new NpcShop(new ShopId(Type\positive_int()->assert($p))),
+            ),
+            new CustomCodec(
+                'shop.item',
+                ShopItem::class,
+                static fn(object $v): int => Type\instance_of(ShopItem::class)->assert($v)->itemId->value,
+                static fn(mixed $p): ShopItem => new ShopItem(new ItemId(Type\positive_int()->assert($p))),
             ),
             new CustomCodec(
                 'map.unavailable',

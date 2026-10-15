@@ -28,6 +28,7 @@ use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Region\RegionId;
 use Lorekeeper\Core\World\Region\RegionName;
 use Lorekeeper\Core\World\Shop\ShopId;
+use Lorekeeper\Core\World\Shop\ShopName;
 use Psl\Type;
 
 final readonly class DefaultCodecs
@@ -73,6 +74,7 @@ final readonly class DefaultCodecs
             new StringCodec('faction.name', FactionName::class),
             new StringCodec('region.name', RegionName::class),
             new StringCodec('npc.name', NpcName::class),
+            new StringCodec('shop.name', ShopName::class),
             new StringCodec('class.description', ClassDescription::class),
             new StringCodec('class.mana_regeneration', ManaRegeneration::class),
             new IntegerCodec('attribute.health', Health::class, static fn(int $v) => new Health($v)),

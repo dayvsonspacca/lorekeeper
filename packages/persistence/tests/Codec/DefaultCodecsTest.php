@@ -66,6 +66,8 @@ use Lorekeeper\Core\World\Region\RegionId;
 use Lorekeeper\Core\World\Region\RegionMap;
 use Lorekeeper\Core\World\Region\RegionName;
 use Lorekeeper\Core\World\Shop\ShopId;
+use Lorekeeper\Core\World\Shop\ShopItem;
+use Lorekeeper\Core\World\Shop\ShopName;
 use Lorekeeper\Persistence\Codec\DefaultCodecs;
 use Lorekeeper\Persistence\Exception\UnknownTypeException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -123,6 +125,8 @@ final class DefaultCodecsTest extends TestCase
         yield 'map analyzed' => [new MapAnalyzed(new Gamefile('Battleon/town-Battleon-9Oct26.swf'))];
         yield 'npc quest' => [new NpcQuest(new QuestId(407))];
         yield 'npc shop' => [new NpcShop(new ShopId(299))];
+        yield 'shop name' => [new ShopName('Battleon Assorted shop')];
+        yield 'shop item' => [new ShopItem(new ItemId(16_416))];
         yield 'map link' => [new MapLink(new MapName('fableforest'))];
         yield 'map unavailable' => [new MapUnavailable()];
         yield 'faction name' => [new FactionName('Good')];
