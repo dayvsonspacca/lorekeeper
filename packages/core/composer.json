@@ -1,0 +1,15 @@
+{
+  "name": "dayvsonspacca/lorekeeper-core",
+  "description": "My interpretation of the AQW game: definitions, events and commands",
+  "version": "dev-main",
+  "require": {
+    "php": "~8.4.0 || ~8.5.0",
+    "php-standard-library/type": "^6.2",
+    "php-standard-library/option": "^6.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Lorekeeper\\Core\\": "src/"
+    }
+  }
+}

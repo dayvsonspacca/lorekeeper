@@ -1,0 +1,55 @@
+{
+    "name": "dayvsonspacca/lorekeeper",
+    "description": "A structured AQW wiki built from many sources",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Dayvson Spacca",
+            "email": "spacca.dayvson@gmail.com"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/core"
+        },
+        {
+            "type": "path",
+            "url": "packages/protocol"
+        },
+        {
+            "type": "path",
+            "url": "packages/miner"
+        },
+        {
+            "type": "path",
+            "url": "packages/persistence"
+        }
+    ],
+    "require": {
+        "php": "~8.4.0 || ~8.5.0",
+        "dayvsonspacca/lorekeeper-core": "dev-main",
+        "dayvsonspacca/lorekeeper-protocol": "dev-main",
+        "dayvsonspacca/lorekeeper-miner": "dev-main",
+        "dayvsonspacca/lorekeeper-persistence": "dev-main"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^13.0.5",
+        "carthage-software/mago": "~1.16.0"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload-dev": {
+        "psr-4": {
+            "Lorekeeper\\Core\\Tests\\": "packages/core/tests/",
+            "Lorekeeper\\Protocol\\Tests\\": "packages/protocol/tests/",
+            "Lorekeeper\\Miner\\Tests\\": "packages/miner/tests/",
+            "Lorekeeper\\Persistence\\Tests\\": "packages/persistence/tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "carthage-software/mago": true
+        }
+    }
+}
