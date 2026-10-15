@@ -8,6 +8,7 @@ use Closure;
 use DateTimeImmutable;
 use Lorekeeper\Core\Access\MemberOnly;
 use Lorekeeper\Core\Asset\Gamefile;
+use Lorekeeper\Core\World\Map\MapAnalyzed;
 use Lorekeeper\Core\World\Map\MapId;
 use Lorekeeper\Core\World\Map\MapLink;
 use Lorekeeper\Core\World\Map\MapName;
@@ -30,18 +31,28 @@ final readonly class MapQueue
     /** @return array<string, Gamefile> */
     public function toAnalyze(): array
     {
-        $analyzed = self::mapNames($this->store->withValue(MapLink::class));
-        $pending = [];
-
-        foreach ($this->store->withValue(Gamefile::class) as $stored) {
-            $subject = $stored->fact->subject;
-            if (!$subject instanceof MapName || array_key_exists($subject->value, $analyzed)) {
+        $analyzed = [];
+        foreach ($this->store->withValue(MapAnalyzed::class) as $stored) {
+            if (!$stored->fact->value instanceof MapAnalyzed) {
                 continue;
             }
 
-            $pending[$subject->value] = $stored->fact->value instanceof Gamefile
-                ? $stored->fact->value
-                : throw new \LogicException();
+            $analyzed[(string) $stored->fact->subject . '|' . $stored->fact->value->gamefile->value] = true;
+        }
+
+        $pending = [];
+        foreach ($this->store->withValue(Gamefile::class) as $stored) {
+            $subject = $stored->fact->subject;
+            $gamefile = $stored->fact->value;
+            if (
+                !$subject instanceof MapName
+                || !$gamefile instanceof Gamefile
+                || array_key_exists($subject->value . '|' . $gamefile->value, $analyzed)
+            ) {
+                continue;
+            }
+
+            $pending[$subject->value] = $gamefile;
         }
 
         return $pending;

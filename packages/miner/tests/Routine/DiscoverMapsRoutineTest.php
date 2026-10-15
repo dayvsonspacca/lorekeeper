@@ -7,11 +7,21 @@ namespace Lorekeeper\Miner\Tests\Routine;
 use DateTimeImmutable;
 use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\Knowledge\Fact;
+use Lorekeeper\Core\World\Map\MapAnalyzed;
 use Lorekeeper\Core\World\Map\MapId;
 use Lorekeeper\Core\World\Map\MapLink;
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Map\MapNpc;
+use Lorekeeper\Core\World\Npc\NpcId;
+use Lorekeeper\Core\World\Npc\NpcName;
+use Lorekeeper\Core\World\Npc\NpcQuest;
+use Lorekeeper\Core\World\Npc\NpcShop;
+use Lorekeeper\Core\World\Quest\QuestId;
+use Lorekeeper\Core\World\Shop\ShopId;
+use Lorekeeper\Miner\Discovery\MapAnalysis;
 use Lorekeeper\Miner\Discovery\MapDiscoverer;
 use Lorekeeper\Miner\Discovery\MapQueue;
+use Lorekeeper\Miner\Discovery\Npc;
 use Lorekeeper\Miner\Recorder;
 use Lorekeeper\Miner\Routine\DiscoverMapsRoutine;
 use Lorekeeper\Persistence\Codec\DefaultCodecs;
@@ -38,9 +48,13 @@ final class DiscoverMapsRoutineTest extends TestCase
         ], Source::Socket);
 
         $discoverer = new class implements MapDiscoverer {
-            public function discover(Gamefile $mapFile): array
+            public function discover(Gamefile $mapFile): MapAnalysis
             {
-                return [new MapName('greenguardeast'), new MapName('forest'), new MapName('fableforest')];
+                return new MapAnalysis([
+                    new MapName('greenguardeast'),
+                    new MapName('forest'),
+                    new MapName('fableforest'),
+                ], [new Npc(new NpcName('Twilly'), [new QuestId(407)], [new ShopId(31)])]);
             }
         };
 
@@ -60,6 +74,18 @@ final class DiscoverMapsRoutineTest extends TestCase
             array_map(static fn($stored): object => $stored->fact->value, $store->withValue(MapLink::class)),
         );
         static::assertSame(Source::Swf, $store->withValue(MapLink::class)[0]->source);
+        static::assertEquals(
+            [new MapNpc(new NpcId(new MapName('forest'), new NpcName('Twilly')))],
+            array_map(static fn($stored): object => $stored->fact->value, $store->withValue(MapNpc::class)),
+        );
+        static::assertEquals(
+            [new NpcName('Twilly'), new NpcQuest(new QuestId(407)), new NpcShop(new ShopId(31))],
+            array_map(
+                static fn($stored): object => $stored->fact->value,
+                $store->about(new NpcId(new MapName('forest'), new NpcName('Twilly'))),
+            ),
+        );
+        static::assertCount(1, $store->withValue(MapAnalyzed::class));
         static::assertSame(
             ['%xt%zm%cmd%1%tfer%Hero%greenguardeast%', '%xt%zm%cmd%1%tfer%Hero%fableforest%', '%xt%zm%logout%1%'],
             array_slice($sent, offset: 4),
@@ -83,9 +109,9 @@ final class DiscoverMapsRoutineTest extends TestCase
             RoutineStub::entry(static::createStub(TCP\StreamInterface::class), $sent, RoutineStub::readySession()),
             new MapQueue($store, $clock, Duration::hours(1)),
             new class implements MapDiscoverer {
-                public function discover(Gamefile $mapFile): array
+                public function discover(Gamefile $mapFile): MapAnalysis
                 {
-                    return [];
+                    return new MapAnalysis([], []);
                 }
             },
             $recorder,

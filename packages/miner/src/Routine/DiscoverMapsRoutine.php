@@ -6,8 +6,9 @@ namespace Lorekeeper\Miner\Routine;
 
 use Closure;
 use Lorekeeper\Core\Knowledge\Fact;
-use Lorekeeper\Core\World\Map\MapLink;
+use Lorekeeper\Core\World\Map\MapAnalyzed;
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Miner\Discovery\AnalysisFacts;
 use Lorekeeper\Miner\Discovery\MapDiscoverer;
 use Lorekeeper\Miner\Discovery\MapQueue;
 use Lorekeeper\Miner\Exception\DiscoveryFailedException;
@@ -94,19 +95,18 @@ final class DiscoverMapsRoutine
             $map = new MapName($name);
 
             try {
-                $links = $this->discoverer->discover($gamefile);
+                $analysis = $this->discoverer->discover($gamefile);
             } catch (DiscoveryFailedException $exception) {
                 ($this->log)("! {$name}: {$exception->getMessage()}");
 
                 continue;
             }
 
-            $links = array_values(array_filter($links, static fn(MapName $link): bool => $link->value !== $name));
-            $this->recorder->record(
-                array_map(static fn(MapName $link): Fact => new Fact($map, new MapLink($link)), $links),
-                Source::Swf,
-            );
-            ($this->log)("< {$name} links to " . count($links) . ' maps');
+            $this->recorder->record([
+                ...AnalysisFacts::of($map, $analysis),
+                new Fact($map, new MapAnalyzed($gamefile)),
+            ], Source::Swf);
+            ($this->log)("< {$name}: " . count($analysis->links) . ' links, ' . count($analysis->npcs) . ' npcs');
         }
     }
 }

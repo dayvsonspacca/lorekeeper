@@ -19,7 +19,7 @@ final readonly class FfdecMapDiscoverer implements MapDiscoverer
 
     /** @throws DiscoveryFailedException */
     #[Override]
-    public function discover(Gamefile $mapFile): array
+    public function discover(Gamefile $mapFile): MapAnalysis
     {
         $workspace = $this->workDirectory . '/' . bin2hex(random_bytes(6));
         $swf = "{$workspace}/map.swf";
@@ -31,7 +31,7 @@ final readonly class FfdecMapDiscoverer implements MapDiscoverer
             $this->download($mapFile, $swf);
             $this->decompile($swf, $output);
 
-            return MapNameExtractor::fromDirectory($output);
+            return new MapAnalysis(MapNameExtractor::fromDirectory($output), NpcExtractor::fromDirectory($output));
         } finally {
             self::remove($workspace);
         }

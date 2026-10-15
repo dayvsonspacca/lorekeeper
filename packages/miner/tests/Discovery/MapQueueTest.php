@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Lorekeeper\Core\Access\MemberOnly;
 use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\Knowledge\Fact;
+use Lorekeeper\Core\World\Map\MapAnalyzed;
 use Lorekeeper\Core\World\Map\MapId;
 use Lorekeeper\Core\World\Map\MapLink;
 use Lorekeeper\Core\World\Map\MapName;
@@ -54,15 +55,23 @@ final class MapQueueTest extends TestCase
     }
 
     #[Test]
-    public function it_analyzes_maps_with_a_gamefile_and_no_links(): void
+    public function it_analyzes_map_files_not_analyzed_yet(): void
     {
         [$queue] = self::queue([
             ['battleon', new Gamefile('Battleon/town-Battleon-9Oct26.swf'), '2026-10-15'],
             ['forest', new Gamefile('GreenGuard/town-Forest-13Aug24.swf'), '2026-10-15'],
-            ['forest', new MapLink(new MapName('fableforest')), '2026-10-15'],
+            ['forest', new MapAnalyzed(new Gamefile('GreenGuard/town-Forest-13Aug24.swf')), '2026-10-15'],
+            ['yulgar', new Gamefile('Yulgar/town-Yulgar-2Nov26.swf'), '2026-10-15'],
+            ['yulgar', new MapAnalyzed(new Gamefile('Yulgar/town-Yulgar-1Jan20.swf')), '2026-10-15'],
         ]);
 
-        static::assertEquals(['battleon' => new Gamefile('Battleon/town-Battleon-9Oct26.swf')], $queue->toAnalyze());
+        static::assertEquals(
+            [
+                'battleon' => new Gamefile('Battleon/town-Battleon-9Oct26.swf'),
+                'yulgar' => new Gamefile('Yulgar/town-Yulgar-2Nov26.swf'),
+            ],
+            $queue->toAnalyze(),
+        );
     }
 
     /**
