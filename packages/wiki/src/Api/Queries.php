@@ -87,8 +87,14 @@ final readonly class Queries
 
         foreach (array_keys(Targets::PROPERTIES) as $valueClass) {
             foreach ($this->store->withValue($valueClass) as $stored) {
-                $target = Targets::of($stored->fact->value);
-                if ($target === null || $target::class !== $subject::class || (string) $target !== (string) $subject) {
+                $matches = array_filter(
+                    Targets::all($stored->fact->value),
+                    static fn(Subject $target): bool => (
+                        $target::class === $subject::class
+                        && (string) $target === (string) $subject
+                    ),
+                );
+                if ($matches === []) {
                     continue;
                 }
 

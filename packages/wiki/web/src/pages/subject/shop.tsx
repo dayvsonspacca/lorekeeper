@@ -4,13 +4,13 @@ import { SubjectLink } from '@/components/subject-link'
 import { Alert } from '@/components/wiki-bits'
 import { Empty, Section, StatTile, WikiPage } from '@/components/wiki-page'
 import { useMapTitles } from '@/features/npcs'
-import { ShopItemsTable } from '@/features/shops'
+import { offerOf, ShopItemsTable } from '@/features/shops'
 import type { Detail } from '@/lib/api'
 import { page } from '@/lib/page'
 
 export function ShopPage({ detail }: { detail: Detail }) {
   const p = page(detail)
-  const items = p.linked('shop.item')
+  const items = p.facts('shop.item').flatMap((fact) => (fact.ref ? [{ ref: fact.ref, offer: offerOf(fact.value) }] : []))
   const keepers = p.pointing('npc.shop').map((r) => r.subject)
   const titleOf = useMapTitles()
 

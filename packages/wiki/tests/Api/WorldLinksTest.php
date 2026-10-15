@@ -44,7 +44,14 @@ final class WorldLinksTest extends TestCase
         );
         static::assertSame('forest/Twilly', $shop['references'][0]['subject']['id']);
 
-        static::assertContains('shop.item', array_column(self::get('/api/item/100')['references'], 'type'));
+        $sold = array_values(array_filter(
+            self::get('/api/item/100')['references'],
+            static fn(array $reference): bool => $reference['type'] === 'shop.item',
+        ));
+        static::assertSame(
+            [100, ['item' => 200, 'costs' => [['item' => 100, 'quantity' => 3]]]],
+            array_column($sold, 'value'),
+        );
     }
 
     /** @return array<string, mixed> */

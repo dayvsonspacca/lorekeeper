@@ -64,7 +64,7 @@ export const factTypes: Record<string, FactType> = {
   'npc.quest': { label: 'Quests', section: 'quests', render: (v, ref) => link(ref, `quest #${str(v)}`) },
   'npc.shop': { label: 'Shops', section: 'details', render: (v, ref) => link(ref, `Shop #${str(v)}`) },
   'shop.name': text('Name'),
-  'shop.item': { label: 'Items', section: 'details', render: (v, ref) => link(ref, `item #${str(v)}`) },
+  'shop.item': { label: 'Items', section: 'details', render: (v, ref) => link(ref, `item #${str(typeof v === 'object' && v !== null ? obj(v).item : v)}`) },
   'map.unavailable': {
     label: 'Unavailable',
     section: 'status',

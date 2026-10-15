@@ -16,7 +16,7 @@ final class ApplicationTest extends TestCase
 
         static::assertSame(1, $data['counts']['map']);
         static::assertSame(1, $data['counts']['monster']);
-        static::assertSame(['socket' => 13], $data['sources']);
+        static::assertSame(['socket' => 14], $data['sources']);
         static::assertContains('Specialty Pizza', array_map(
             static fn(array $page): string => $page['subject']['name'],
             $data['newPages'],

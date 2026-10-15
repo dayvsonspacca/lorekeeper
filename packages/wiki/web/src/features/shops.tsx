@@ -21,9 +21,41 @@ export function useShopKeepers() {
   return (shop: string) => byShop.get(shop) ?? []
 }
 
-export function ShopItemsTable({ items }: { items: SubjectRef[] }) {
+export interface Offer {
+  item: string
+  costs: { item: string; quantity: number }[]
+}
+
+export function offerOf(value: unknown): Offer {
+  if (typeof value === 'number' || typeof value === 'string') return { item: String(value), costs: [] }
+  const offer = value as { item: number; costs?: { item: number; quantity: number }[] }
+  return { item: String(offer.item), costs: (offer.costs ?? []).map((cost) => ({ item: String(cost.item), quantity: cost.quantity })) }
+}
+
+export function useItemNames() {
+  const { data } = useListing('item')
+  const names = new Map((data?.rows ?? []).map((row) => [row.id, row.name]))
+  return (id: string) => names.get(id) ?? `#${id}`
+}
+
+export function Cost({ costs }: { costs: Offer['costs'] }) {
+  const nameOf = useItemNames()
+  return (
+    <span className="inline-flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+      {costs.map((cost) => (
+        <span key={cost.item} className="inline-flex items-center gap-1">
+          <span className="tabular-nums text-muted-foreground">{cost.quantity}×</span>
+          <SubjectLink subject={{ kind: 'item', id: cost.item, name: nameOf(cost.item) }} className="font-normal" />
+        </span>
+      ))}
+    </span>
+  )
+}
+
+export function ShopItemsTable({ items }: { items: { ref: SubjectRef; offer: Offer }[] }) {
   const { data } = useListing('item')
   const rows = new Map((data?.rows ?? []).map((row) => [row.id, row]))
+  const merge = items.some(({ offer }) => offer.costs.length > 0)
 
   return (
     <div className="-mx-6">
@@ -32,11 +64,11 @@ export function ShopItemsTable({ items }: { items: SubjectRef[] }) {
           <TableRow>
             <TableHead className="pl-6">Item</TableHead>
             <TableHead className="w-36">Type</TableHead>
-            <TableHead className="w-40 pr-6 text-right">Price</TableHead>
+            <TableHead className={merge ? 'pr-6 text-right' : 'w-40 pr-6 text-right'}>{merge ? 'Trade for' : 'Price'}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item) => {
+          {items.map(({ ref: item, offer }) => {
             const facts = rows.get(item.id)?.facts ?? {}
             const cost = first(facts, 'item.price')
             return (
@@ -49,7 +81,9 @@ export function ShopItemsTable({ items }: { items: SubjectRef[] }) {
                 </TableCell>
                 <TableCell className="text-muted-foreground">{String(first(facts, 'item.type') ?? '—')}</TableCell>
                 <TableCell className="pr-6 text-right tabular-nums">
-                  {cost === undefined ? (
+                  {offer.costs.length > 0 ? (
+                    <Cost costs={offer.costs} />
+                  ) : cost === undefined ? (
                     <Badge variant="secondary" className="font-normal">Free</Badge>
                   ) : (
                     <span>

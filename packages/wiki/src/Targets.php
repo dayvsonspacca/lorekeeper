@@ -47,6 +47,20 @@ final readonly class Targets
         return self::subject(get_object_vars($value)[$property] ?? null);
     }
 
+    /** @return list<Subject> */
+    public static function all(object $value): array
+    {
+        $primary = self::of($value);
+        $targets = $primary === null ? [] : [$primary];
+        if ($value instanceof ShopItem) {
+            foreach ($value->costs as $cost) {
+                $targets[] = $cost->itemId;
+            }
+        }
+
+        return $targets;
+    }
+
     private static function subject(mixed $candidate): ?Subject
     {
         return $candidate instanceof Subject ? $candidate : null;

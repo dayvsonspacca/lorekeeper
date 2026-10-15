@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { AvatarPreview, type AvatarSlot, ItemPreview } from '@/features/flash-preview'
 import type { Detail } from '@/lib/api'
 import { categoryOf } from '@/lib/categories'
-import { useShopKeepers } from '@/features/shops'
+import { Cost, offerOf, useItemNames, useShopKeepers } from '@/features/shops'
 import { price } from '@/lib/facts'
 import { formatNumber } from '@/lib/format'
 import { page } from '@/lib/page'
@@ -19,7 +19,10 @@ export function ItemPage({ detail }: { detail: Detail }) {
   const category = categoryOf(type)
   const cost = p.value('item.price')
   const rewardedBy = p.pointing('quest.reward.item')
-  const soldAt = p.pointing('shop.item').map((r) => r.subject)
+  const offers = detail.references.filter((r) => r.type === 'shop.item').map((r) => ({ shop: r.subject, offer: offerOf(r.value) }))
+  const soldAt = offers.filter(({ offer }) => offer.item === detail.subject.id)
+  const tradedFor = offers.filter(({ offer }) => offer.item !== detail.subject.id)
+  const nameOf = useItemNames()
   const keepersOf = useShopKeepers()
   const turnedIn = p.pointing('quest.turn_in')
   const requiredBy = p.pointing('quest.requirement.item')
@@ -76,15 +79,22 @@ export function ItemPage({ detail }: { detail: Detail }) {
             <Empty>No known source yet.</Empty>
           ) : (
             <ul className="space-y-2">
-              {soldAt.map((shop) => (
-                <li key={`s${shop.id}`} className="flex flex-wrap items-center justify-between gap-2">
-                  <SubjectLink subject={shop} icon />
-                  <span className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-                    {keepersOf(shop.id).map((npc) => (
-                      <SubjectLink key={npc.id} subject={npc} className="font-normal text-muted-foreground" />
-                    ))}
-                    <Badge variant="outline">buy</Badge>
-                  </span>
+              {soldAt.map(({ shop, offer }) => (
+                <li key={`s${shop.id}`} className="space-y-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <SubjectLink subject={shop} icon />
+                    <span className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+                      {keepersOf(shop.id).map((npc) => (
+                        <SubjectLink key={npc.id} subject={npc} className="font-normal text-muted-foreground" />
+                      ))}
+                      <Badge variant="outline">{offer.costs.length > 0 ? 'trade' : 'buy'}</Badge>
+                    </span>
+                  </div>
+                  {offer.costs.length > 0 && (
+                    <div className="text-sm">
+                      <Cost costs={offer.costs} />
+                    </div>
+                  )}
                 </li>
               ))}
               {rewardedBy.map((r) => {
@@ -99,11 +109,22 @@ export function ItemPage({ detail }: { detail: Detail }) {
             </ul>
           )}
         </Section>
-        <Section title="Used in" description="Quests that ask for this item">
-          {turnedIn.length + requiredBy.length === 0 ? (
-            <Empty>Not used by any known quest.</Empty>
+        <Section title="Used in" description="Quests that ask for it and what it can be traded for">
+          {turnedIn.length + requiredBy.length + tradedFor.length === 0 ? (
+            <Empty>Not used anywhere we know of.</Empty>
           ) : (
             <ul className="space-y-2">
+              {tradedFor.map(({ shop, offer }) => (
+                <li key={`m${shop.id}-${offer.item}`} className="flex flex-wrap items-center justify-between gap-2">
+                  <SubjectLink subject={{ kind: 'item', id: offer.item, name: nameOf(offer.item) }} icon />
+                  <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Badge variant="outline">
+                      trade {offer.costs.find((cost) => cost.item === detail.subject.id)?.quantity ?? 1}
+                    </Badge>
+                    at <SubjectLink subject={shop} className="font-normal text-muted-foreground" />
+                  </span>
+                </li>
+              ))}
               {turnedIn.map((r) => (
                 <li key={`t${r.subject.id}`} className="flex items-center justify-between gap-2">
                   <SubjectLink subject={r.subject} icon />

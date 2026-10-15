@@ -23,6 +23,7 @@ use Lorekeeper\Core\World\Npc\NpcShop;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Quest\Reward\ItemReward;
+use Lorekeeper\Core\World\Shop\MergeCost;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopItem;
 use Lorekeeper\Core\World\Shop\ShopName;
@@ -65,6 +66,7 @@ final readonly class ApiFixture
             new Fact(new NpcId(new MapName('forest'), new NpcName('Twilly')), new NpcShop(new ShopId(31))),
             new Fact(new ShopId(31), new ShopName('Battleon Assorted shop')),
             new Fact(new ShopId(31), new ShopItem(new ItemId(100))),
+            new Fact(new ShopId(31), new ShopItem(new ItemId(200), [new MergeCost(new ItemId(100), 3)])),
         ]));
 
         return new Application($store, $codecs);
