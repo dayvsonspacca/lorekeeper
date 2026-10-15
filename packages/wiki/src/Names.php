@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Wiki;
 
 use Lorekeeper\Core\Knowledge\Subject;
+use Lorekeeper\Core\World\Npc\NpcId;
 use Lorekeeper\Persistence\Store\FactStore;
 use Stringable;
 
@@ -25,7 +26,16 @@ final class Names
             return $id;
         }
 
-        return $this->names($nameClass)[$id] ?? "#{$id}";
+        return $this->names($nameClass)[$id] ?? self::fallback($subject, $id);
+    }
+
+    private static function fallback(Subject $subject, string $id): string
+    {
+        if (!$subject instanceof NpcId) {
+            return "#{$id}";
+        }
+
+        return (string) preg_replace('/_APOP$/', replacement: '', subject: $subject->popup->value);
     }
 
     /**

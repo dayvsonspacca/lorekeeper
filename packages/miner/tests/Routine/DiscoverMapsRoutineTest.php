@@ -6,6 +6,7 @@ namespace Lorekeeper\Miner\Tests\Routine;
 
 use DateTimeImmutable;
 use Lorekeeper\Core\Asset\Gamefile;
+use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\Knowledge\Fact;
 use Lorekeeper\Core\World\Map\MapAnalyzed;
 use Lorekeeper\Core\World\Map\MapId;
@@ -54,7 +55,7 @@ final class DiscoverMapsRoutineTest extends TestCase
                     new MapName('greenguardeast'),
                     new MapName('forest'),
                     new MapName('fableforest'),
-                ], [new Npc(new NpcName('Twilly'), [new QuestId(407)], [new ShopId(31)])]);
+                ], [new Npc(new Linkage('Twilly_APOP'), [new QuestId(407)], [new ShopId(31)], new NpcName('Twilly'))]);
             }
         };
 
@@ -75,14 +76,14 @@ final class DiscoverMapsRoutineTest extends TestCase
         );
         static::assertSame(Source::Swf, $store->withValue(MapLink::class)[0]->source);
         static::assertEquals(
-            [new MapNpc(new NpcId(new MapName('forest'), new NpcName('Twilly')))],
+            [new MapNpc(new NpcId(new MapName('forest'), new Linkage('Twilly_APOP')))],
             array_map(static fn($stored): object => $stored->fact->value, $store->withValue(MapNpc::class)),
         );
         static::assertEquals(
             [new NpcName('Twilly'), new NpcQuest(new QuestId(407)), new NpcShop(new ShopId(31))],
             array_map(
                 static fn($stored): object => $stored->fact->value,
-                $store->about(new NpcId(new MapName('forest'), new NpcName('Twilly'))),
+                $store->about(new NpcId(new MapName('forest'), new Linkage('Twilly_APOP'))),
             ),
         );
         static::assertCount(1, $store->withValue(MapAnalyzed::class));

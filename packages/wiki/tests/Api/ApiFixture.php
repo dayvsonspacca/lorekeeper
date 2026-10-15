@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Wiki\Tests\Api;
 
 use DateTimeImmutable;
+use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\Item\DropRate;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
@@ -60,10 +61,10 @@ final readonly class ApiFixture
             new Fact(new ItemId(100), new ItemName('Special Hair Gel')),
             new Fact(new QuestId(14), new QuestName('Specialty Pizza')),
             new Fact(new QuestId(14), new ItemReward(new ItemId(100), new DropRate(12.5), 1)),
-            new Fact(new MapName('forest'), new MapNpc(new NpcId(new MapName('forest'), new NpcName('Twilly')))),
-            new Fact(new NpcId(new MapName('forest'), new NpcName('Twilly')), new NpcName('Twilly')),
-            new Fact(new NpcId(new MapName('forest'), new NpcName('Twilly')), new NpcQuest(new QuestId(14))),
-            new Fact(new NpcId(new MapName('forest'), new NpcName('Twilly')), new NpcShop(new ShopId(31))),
+            new Fact(new MapName('forest'), new MapNpc(new NpcId(new MapName('forest'), new Linkage('Twilly_APOP')))),
+            new Fact(new NpcId(new MapName('forest'), new Linkage('Twilly_APOP')), new NpcName('Twilly')),
+            new Fact(new NpcId(new MapName('forest'), new Linkage('Twilly_APOP')), new NpcQuest(new QuestId(14))),
+            new Fact(new NpcId(new MapName('forest'), new Linkage('Twilly_APOP')), new NpcShop(new ShopId(31))),
             new Fact(new ShopId(31), new ShopName('Battleon Assorted shop')),
             new Fact(new ShopId(31), new ShopItem(new ItemId(100))),
             new Fact(new ShopId(31), new ShopItem(new ItemId(200), [new MergeCost(new ItemId(100), 3)])),

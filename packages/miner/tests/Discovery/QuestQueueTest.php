@@ -6,10 +6,10 @@ namespace Lorekeeper\Miner\Tests\Discovery;
 
 use DateTimeImmutable;
 use Lorekeeper\Core\Access\MemberOnly;
+use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\Knowledge\Fact;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Npc\NpcId;
-use Lorekeeper\Core\World\Npc\NpcName;
 use Lorekeeper\Core\World\Npc\NpcQuest;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
@@ -41,8 +41,8 @@ final class QuestQueueTest extends TestCase
 
         static::assertEquals(
             [
-                'battleon' => ['Twilly' => [new QuestId(11), new QuestId(407)]],
-                'crashsite' => ['Valencia' => [new QuestId(5000)]],
+                'battleon' => ['Twilly_APOP' => [new QuestId(11), new QuestId(407)]],
+                'crashsite' => ['Valencia_APOP' => [new QuestId(5000)]],
             ],
             new QuestQueue($store)->toLoad(),
         );
@@ -50,6 +50,6 @@ final class QuestQueueTest extends TestCase
 
     private static function npc(string $map, string $name): NpcId
     {
-        return new NpcId(new MapName($map), new NpcName($name));
+        return new NpcId(new MapName($map), new Linkage("{$name}_APOP"));
     }
 }

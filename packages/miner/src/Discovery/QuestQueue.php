@@ -53,7 +53,7 @@ final readonly class QuestQueue
             }
 
             $skip[$quest->questId->value] = true;
-            $maps[$npc->map->value][$npc->name->value][] = $quest->questId;
+            $maps[$npc->map->value][$npc->popup->value][] = $quest->questId;
         }
 
         return $maps;

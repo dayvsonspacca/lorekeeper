@@ -21,4 +21,5 @@ if [ ! -f "$FFDEC" ]; then
     chmod +x "$FFDEC"
 fi
 
-"$FFDEC" -cli -export script "$2" "$1" >/dev/null
+"$FFDEC" -cli -export script,text "$2" "$1" >/dev/null
+"$FFDEC" -cli -swf2xml "$1" "$2/map.xml" >/dev/null

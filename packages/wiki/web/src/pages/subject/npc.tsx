@@ -27,7 +27,7 @@ export function NpcPage({ detail }: { detail: Detail }) {
     <WikiPage
       crumbs={[{ label: 'Home', to: '/' }, { label: 'World' }, { label: 'NPCs', to: '/npc' }, { label: detail.subject.name }]}
       title={detail.subject.name}
-      subtitle={<><span>NPC</span><MapLinks maps={maps} /></>}
+      subtitle={<><span>{p.value<string>('npc.title') ?? 'NPC'}</span><MapLinks maps={maps} /></>}
       actions={maps[0] && <JoinButton map={maps[0].id} className="h-9 px-3 text-sm" />}
       updated={p.updated}
     >

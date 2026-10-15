@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Miner\Tests\Discovery;
 
+use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\World\Npc\NpcName;
+use Lorekeeper\Core\World\Npc\NpcTitle;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Miner\Discovery\Npc;
@@ -49,11 +51,11 @@ final class NpcExtractorTest extends TestCase
     {
         static::assertEquals(
             new Npc(
-                new NpcName('Twilly'),
+                new Linkage('Twilly_APOP'),
                 [new QuestId(11), new QuestId(407), new QuestId(408), new QuestId(409)],
                 [new ShopId(31)],
             ),
-            NpcExtractor::fromSource('Twilly', self::TWILLY),
+            NpcExtractor::fromSource('Twilly_APOP', self::TWILLY),
         );
     }
 
@@ -87,11 +89,11 @@ final class NpcExtractorTest extends TestCase
 
         static::assertEquals(
             new Npc(
-                new NpcName('Lowell'),
+                new Linkage('Lowell_APOP'),
                 [new QuestId(2188), new QuestId(2189), new QuestId(3000), new QuestId(2500)],
                 [new ShopId(445)],
             ),
-            NpcExtractor::fromSource('Lowell', $code),
+            NpcExtractor::fromSource('Lowell_APOP', $code),
         );
     }
 
@@ -102,20 +104,48 @@ final class NpcExtractorTest extends TestCase
     }
 
     #[Test]
-    public function it_reads_npc_popups_from_a_directory(): void
+    public function it_finds_npcs_placed_on_the_map_with_their_popup_names(): void
     {
         $directory = sys_get_temp_dir() . '/lorekeeper-' . bin2hex(random_bytes(4));
         mkdir("{$directory}/scripts", recursive: true);
+        mkdir("{$directory}/texts");
         file_put_contents("{$directory}/scripts/Twilly_APOP.as", data: self::TWILLY);
-        file_put_contents("{$directory}/scripts/MainTimeline.as", data: 'this.strQuests = "1";');
+        file_put_contents("{$directory}/scripts/Default_APOP.as", data: 'this.__id1_.strQuests = "2902";');
+        file_put_contents("{$directory}/scripts/MainTimeline.as", data: <<<'AS'
+            this.__id2_.npcLinkage = "Twilly_NPC";
+            this.__id2_.apopLinkage = "Twilly_APOP";
+            this.__id26_.npcLinkage = "Guard_NPC";
+            this.__id26_.apopLinkage = "Guard1_APOP";
+            AS);
+        file_put_contents("{$directory}/map.xml", data: PopupTextsTest::xml());
+        file_put_contents("{$directory}/texts/10.txt", data: 'Sir Render');
+        file_put_contents("{$directory}/texts/11.txt", data: 'Knight of the Pactagonal Table');
+        file_put_contents("{$directory}/texts/12.txt", data: 'We cannot even surrender!');
 
         $npcs = NpcExtractor::fromDirectory($directory);
 
-        static::assertSame(['Twilly'], array_map(static fn(Npc $npc): string => $npc->name->value, $npcs));
+        static::assertSame(
+            ['Guard1_APOP', 'Twilly_APOP'],
+            array_map(static fn(Npc $npc): string => $npc->popup->value, $npcs),
+        );
+        static::assertEquals(new NpcName('Sir Render'), $npcs[0]->name);
+        static::assertEquals(new NpcTitle('Knight of the Pactagonal Table'), $npcs[0]->title);
+        static::assertSame([], $npcs[0]->quests);
 
-        unlink("{$directory}/scripts/Twilly_APOP.as");
-        unlink("{$directory}/scripts/MainTimeline.as");
+        foreach ([
+            'scripts/Twilly_APOP.as',
+            'scripts/Default_APOP.as',
+            'scripts/MainTimeline.as',
+            'map.xml',
+            'texts/10.txt',
+            'texts/11.txt',
+            'texts/12.txt',
+        ] as $file) {
+            unlink("{$directory}/{$file}");
+        }
+
         rmdir("{$directory}/scripts");
+        rmdir("{$directory}/texts");
         rmdir($directory);
     }
 }

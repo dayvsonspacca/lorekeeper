@@ -12,9 +12,9 @@ final class WorldLinksTest extends TestCase
     #[Test]
     public function it_connects_npcs_to_their_maps_and_quests(): void
     {
-        $npc = self::get('/api/npc/forest%2FTwilly');
+        $npc = self::get('/api/npc/forest%2FTwilly_APOP');
 
-        static::assertSame(['kind' => 'npc', 'id' => 'forest/Twilly', 'name' => 'Twilly'], $npc['subject']);
+        static::assertSame(['kind' => 'npc', 'id' => 'forest/Twilly_APOP', 'name' => 'Twilly'], $npc['subject']);
         static::assertSame(
             ['kind' => 'quest', 'id' => '14', 'name' => 'Specialty Pizza'],
             array_values(array_filter(
@@ -42,7 +42,7 @@ final class WorldLinksTest extends TestCase
             ['kind' => 'item', 'id' => '100', 'name' => 'Special Hair Gel'],
             array_column($shop['facts'], 'ref'),
         );
-        static::assertSame('forest/Twilly', $shop['references'][0]['subject']['id']);
+        static::assertSame('forest/Twilly_APOP', $shop['references'][0]['subject']['id']);
 
         $sold = array_values(array_filter(
             self::get('/api/item/100')['references'],

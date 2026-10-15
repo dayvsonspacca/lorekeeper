@@ -83,6 +83,7 @@ export const columns: Record<KindKey, Column<Row>[]> = {
   ],
   npc: [
     name,
+    { key: 'title', header: 'Title', cell: (r) => <span className="text-muted-foreground">{t(value(r, 'npc.title'))}</span>, sort: (r) => String(value(r, 'npc.title') ?? '~') },
     {
       key: 'map',
       header: 'Map',

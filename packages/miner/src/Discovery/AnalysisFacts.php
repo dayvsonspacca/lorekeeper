@@ -29,9 +29,16 @@ final readonly class AnalysisFacts
         }
 
         foreach ($analysis->npcs as $npc) {
-            $id = new NpcId($map, $npc->name);
+            $id = new NpcId($map, $npc->popup);
             $facts[] = new Fact($map, new MapNpc($id));
-            $facts[] = new Fact($id, $npc->name);
+            if ($npc->name !== null) {
+                $facts[] = new Fact($id, $npc->name);
+            }
+
+            if ($npc->title !== null) {
+                $facts[] = new Fact($id, $npc->title);
+            }
+
             foreach ($npc->quests as $quest) {
                 $facts[] = new Fact($id, new NpcQuest($quest));
             }

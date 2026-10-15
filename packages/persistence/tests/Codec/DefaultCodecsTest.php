@@ -48,6 +48,7 @@ use Lorekeeper\Core\World\Npc\NpcId;
 use Lorekeeper\Core\World\Npc\NpcName;
 use Lorekeeper\Core\World\Npc\NpcQuest;
 use Lorekeeper\Core\World\Npc\NpcShop;
+use Lorekeeper\Core\World\Npc\NpcTitle;
 use Lorekeeper\Core\World\Quest\QuestDescription;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
@@ -69,6 +70,7 @@ use Lorekeeper\Core\World\Shop\MergeCost;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopItem;
 use Lorekeeper\Core\World\Shop\ShopName;
+use Lorekeeper\Core\World\Shop\ShopUnavailable;
 use Lorekeeper\Persistence\Codec\DefaultCodecs;
 use Lorekeeper\Persistence\Exception\UnknownTypeException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -91,7 +93,7 @@ final class DefaultCodecsTest extends TestCase
         yield 'region' => [new RegionId(1)];
         yield 'map' => [new MapName('battleon')];
         yield 'class name' => [new ClassName('Blaze Binder')];
-        yield 'npc' => [new NpcId(new MapName('battleon'), new NpcName('Twilly'))];
+        yield 'npc' => [new NpcId(new MapName('battleon'), new Linkage('Twilly_APOP'))];
     }
 
     /** @return iterable<string, array{object}> */
@@ -121,12 +123,14 @@ final class DefaultCodecsTest extends TestCase
         yield 'race' => [Race::Undead];
         yield 'map id' => [new MapId(2)];
         yield 'map monster' => [new MapMonster(new MonsterId(1))];
-        yield 'map npc' => [new MapNpc(new NpcId(new MapName('battleon'), new NpcName('Twilly')))];
+        yield 'map npc' => [new MapNpc(new NpcId(new MapName('battleon'), new Linkage('Twilly_APOP')))];
         yield 'npc name' => [new NpcName('Twilly')];
+        yield 'npc title' => [new NpcTitle('Helpful Healing Moglin')];
         yield 'map analyzed' => [new MapAnalyzed(new Gamefile('Battleon/town-Battleon-9Oct26.swf'))];
         yield 'npc quest' => [new NpcQuest(new QuestId(407))];
         yield 'npc shop' => [new NpcShop(new ShopId(299))];
         yield 'shop name' => [new ShopName('Battleon Assorted shop')];
+        yield 'shop unavailable' => [new ShopUnavailable()];
         yield 'shop item' => [new ShopItem(new ItemId(16_416))];
         yield 'merge shop item' => [new ShopItem(new ItemId(66_472), [new MergeCost(new ItemId(66_486), 2)])];
         yield 'map link' => [new MapLink(new MapName('fableforest'))];

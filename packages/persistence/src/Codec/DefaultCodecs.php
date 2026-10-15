@@ -23,6 +23,7 @@ use Lorekeeper\Core\World\Monster\MonsterLevel;
 use Lorekeeper\Core\World\Monster\MonsterName;
 use Lorekeeper\Core\World\Npc\NpcId;
 use Lorekeeper\Core\World\Npc\NpcName;
+use Lorekeeper\Core\World\Npc\NpcTitle;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Region\RegionId;
@@ -74,6 +75,7 @@ final readonly class DefaultCodecs
             new StringCodec('faction.name', FactionName::class),
             new StringCodec('region.name', RegionName::class),
             new StringCodec('npc.name', NpcName::class),
+            new StringCodec('npc.title', NpcTitle::class),
             new StringCodec('shop.name', ShopName::class),
             new StringCodec('class.description', ClassDescription::class),
             new StringCodec('class.mana_regeneration', ManaRegeneration::class),

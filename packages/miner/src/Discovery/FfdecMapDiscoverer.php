@@ -39,7 +39,8 @@ final readonly class FfdecMapDiscoverer implements MapDiscoverer
 
     private function download(Gamefile $mapFile, string $target): void
     {
-        $curl = curl_init(self::MAPS_URL . $mapFile->value);
+        $path = implode('/', array_map(rawurlencode(...), explode('/', $mapFile->value)));
+        $curl = curl_init(self::MAPS_URL . $path);
         $handle = fopen($target, mode: 'wb');
 
         curl_setopt_array($curl, [

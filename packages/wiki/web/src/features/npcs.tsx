@@ -44,11 +44,15 @@ export function NpcCards({ npcs }: { npcs: SubjectRef[] }) {
     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
       {npcs.map((npc) => {
         const facts = rows.get(npc.id)?.facts ?? {}
+        const title = facts['npc.title']?.[0]
         const quests = facts['npc.quest']?.length ?? 0
         const shops = facts['npc.shop']?.length ?? 0
         return (
           <Link key={npc.id} to={subjectPath(npc)} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 transition-colors hover:bg-accent">
-            <span className="truncate font-medium">{npc.name}</span>
+            <span className="min-w-0">
+              <span className="block truncate font-medium">{npc.name}</span>
+              {title !== undefined && <span className="block truncate text-xs text-muted-foreground">{String(title)}</span>}
+            </span>
             <span className="flex shrink-0 gap-1.5">
               {quests > 0 && <Badge variant="secondary" className="gap-1 font-normal"><ScrollText className="size-3" />{quests}</Badge>}
               {shops > 0 && <Badge variant="outline" className="gap-1 font-normal"><Store className="size-3" />{shops}</Badge>}
