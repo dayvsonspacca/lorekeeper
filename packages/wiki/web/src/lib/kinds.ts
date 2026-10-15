@@ -1,4 +1,4 @@
-import { Castle, Gem, Map, type LucideIcon, ScrollText, Shield, Skull, Swords, UserRound } from 'lucide-react'
+import { Castle, Gem, Map, type LucideIcon, ScrollText, Shield, Skull, Store, Swords, UserRound } from 'lucide-react'
 import type { KindKey } from './api'
 
 export interface KindMeta {
@@ -15,6 +15,7 @@ export const kinds: KindMeta[] = [
   { key: 'item', singular: 'Item', plural: 'Items', icon: Gem, description: 'Gear, resources and quest items' },
   { key: 'quest', singular: 'Quest', plural: 'Quests', icon: ScrollText, description: 'Tasks with requirements and rewards' },
   { key: 'npc', singular: 'NPC', plural: 'NPCs', icon: UserRound, description: 'Characters who give quests and run shops' },
+  { key: 'shop', singular: 'Shop', plural: 'Shops', icon: Store, description: 'What NPCs sell and for how much' },
   { key: 'class_name', singular: 'Class', plural: 'Classes', icon: Swords, description: 'Melee and caster classes' },
   { key: 'region', singular: 'Region', plural: 'Regions', icon: Castle, description: 'Travel map regions' },
   { key: 'faction', singular: 'Faction', plural: 'Factions', icon: Shield, description: 'Reputation factions' },

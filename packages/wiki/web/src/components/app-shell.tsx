@@ -72,6 +72,7 @@ export function AppShell() {
             {kindLink('map')}
             {kindLink('monster')}
             {kindLink('npc')}
+            {kindLink('shop')}
             {kindLink('quest')}
             {kindLink('faction')}
             <NavLink to="/atlas" className={({ isActive }) => linkClass(isActive)}>

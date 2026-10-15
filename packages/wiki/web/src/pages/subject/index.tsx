@@ -10,6 +10,7 @@ import { MonsterPage } from './monster'
 import { NpcPage } from './npc'
 import { QuestPage } from './quest'
 import { RegionPage } from './region'
+import { ShopPage } from './shop'
 
 const pages: Record<string, (props: { detail: Detail }) => React.ReactNode> = {
   map: MapPage,
@@ -17,6 +18,7 @@ const pages: Record<string, (props: { detail: Detail }) => React.ReactNode> = {
   item: ItemPage,
   quest: QuestPage,
   npc: NpcPage,
+  shop: ShopPage,
   region: RegionPage,
   class_name: ClassPage,
   faction: FactionPage,

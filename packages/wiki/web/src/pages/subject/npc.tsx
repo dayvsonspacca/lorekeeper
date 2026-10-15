@@ -4,6 +4,7 @@ import { Empty, Section, StatTile, WikiPage } from '@/components/wiki-page'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { SubjectLink } from '@/components/subject-link'
 import { MapLinks } from '@/features/npcs'
+import { ShopCards } from '@/features/shops'
 import { type Detail, useListing } from '@/lib/api'
 import { first } from '@/lib/facts'
 import { formatNumber } from '@/lib/format'
@@ -77,9 +78,7 @@ export function NpcPage({ detail }: { detail: Detail }) {
 
       {shops.length > 0 && (
         <Section title="Shops" description="What this NPC sells">
-          <Empty>
-            {detail.subject.name} runs {shops.length === 1 ? 'a shop' : `${shops.length} shops`}. Their stock has not been documented yet.
-          </Empty>
+          <ShopCards shops={shops.map((shop) => ({ id: String(shop.value), ref: shop.ref }))} />
         </Section>
       )}
     </WikiPage>

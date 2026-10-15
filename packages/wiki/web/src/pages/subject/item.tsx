@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { AvatarPreview, type AvatarSlot, ItemPreview } from '@/features/flash-preview'
 import type { Detail } from '@/lib/api'
 import { categoryOf } from '@/lib/categories'
+import { useShopKeepers } from '@/features/shops'
 import { price } from '@/lib/facts'
 import { formatNumber } from '@/lib/format'
 import { page } from '@/lib/page'
@@ -18,6 +19,8 @@ export function ItemPage({ detail }: { detail: Detail }) {
   const category = categoryOf(type)
   const cost = p.value('item.price')
   const rewardedBy = p.pointing('quest.reward.item')
+  const soldAt = p.pointing('shop.item').map((r) => r.subject)
+  const keepersOf = useShopKeepers()
   const turnedIn = p.pointing('quest.turn_in')
   const requiredBy = p.pointing('quest.requirement.item')
   const unnamed = detail.subject.name.startsWith('#')
@@ -68,11 +71,22 @@ export function ItemPage({ detail }: { detail: Detail }) {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Section title="How to get" description="Quests that give this item">
-          {rewardedBy.length === 0 ? (
+        <Section title="How to get" description="Shops that sell it and quests that give it">
+          {rewardedBy.length + soldAt.length === 0 ? (
             <Empty>No known source yet.</Empty>
           ) : (
             <ul className="space-y-2">
+              {soldAt.map((shop) => (
+                <li key={`s${shop.id}`} className="flex flex-wrap items-center justify-between gap-2">
+                  <SubjectLink subject={shop} icon />
+                  <span className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+                    {keepersOf(shop.id).map((npc) => (
+                      <SubjectLink key={npc.id} subject={npc} className="font-normal text-muted-foreground" />
+                    ))}
+                    <Badge variant="outline">buy</Badge>
+                  </span>
+                </li>
+              ))}
               {rewardedBy.map((r) => {
                 const rate = Number((r.value as { dropRate?: number }).dropRate ?? 100)
                 return (

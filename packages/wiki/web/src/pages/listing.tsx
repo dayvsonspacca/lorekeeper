@@ -19,7 +19,7 @@ export function ListingPage() {
 }
 
 const ALL = '__all__'
-const world: KindKey[] = ['map', 'monster', 'npc', 'quest', 'region', 'faction']
+const world: KindKey[] = ['map', 'monster', 'npc', 'shop', 'quest', 'region', 'faction']
 
 function Listing({ kind }: { kind: KindKey }) {
   const meta = kindByKey(kind)!

@@ -19,6 +19,8 @@ use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Region\RegionId;
 use Lorekeeper\Core\World\Region\RegionName;
+use Lorekeeper\Core\World\Shop\ShopId;
+use Lorekeeper\Core\World\Shop\ShopName;
 use Psl\Option;
 
 final readonly class Kinds
@@ -31,6 +33,7 @@ final readonly class Kinds
             new Kind('region', 'Region', 'Regions', RegionId::class, RegionName::class),
             new Kind('monster', 'Monster', 'Monsters', MonsterId::class, MonsterName::class),
             new Kind('npc', 'NPC', 'NPCs', NpcId::class, NpcName::class),
+            new Kind('shop', 'Shop', 'Shops', ShopId::class, ShopName::class),
             new Kind('item', 'Item', 'Items', ItemId::class, ItemName::class),
             new Kind('quest', 'Quest', 'Quests', QuestId::class, QuestName::class),
             new Kind('faction', 'Faction', 'Factions', FactionId::class, FactionName::class),

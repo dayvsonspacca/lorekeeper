@@ -9,7 +9,7 @@ import { first } from '@/lib/facts'
 import { formatNumber, timeAgo } from '@/lib/format'
 import { kindByKey } from '@/lib/kinds'
 
-const world: KindKey[] = ['region', 'map', 'monster', 'npc', 'quest', 'faction', 'class_name']
+const world: KindKey[] = ['region', 'map', 'monster', 'npc', 'shop', 'quest', 'faction', 'class_name']
 
 export function OverviewPage() {
   const { data: overview } = useOverview()

@@ -93,6 +93,18 @@ export const columns: Record<KindKey, Column<Row>[]> = {
     { key: 'quests', header: 'Quests', cell: (r) => n(count(r, 'npc.quest') || undefined), sort: (r) => count(r, 'npc.quest'), className: 'w-24' },
     { key: 'shops', header: 'Shops', cell: (r) => n(count(r, 'npc.shop') || undefined), sort: (r) => count(r, 'npc.shop'), className: 'w-24' },
   ],
+  shop: [
+    {
+      ...name,
+      cell: (row) => (
+        <span className="flex items-center gap-2 font-medium">
+          {displayName(row)}
+          {value(row, 'access.member_only') !== undefined && <Crown className="size-3.5 text-amber-500" />}
+        </span>
+      ),
+    },
+    { key: 'items', header: 'Items', cell: (r) => n(count(r, 'shop.item') || undefined), sort: (r) => count(r, 'shop.item'), className: 'w-24' },
+  ],
   class_name: [
     name,
     {

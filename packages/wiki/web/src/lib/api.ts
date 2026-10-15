@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-export type KindKey = 'map' | 'region' | 'monster' | 'item' | 'quest' | 'npc' | 'faction' | 'class_name'
+export type KindKey = 'map' | 'region' | 'monster' | 'item' | 'quest' | 'npc' | 'shop' | 'faction' | 'class_name'
 
 export interface SubjectRef {
   kind: string
