@@ -19,6 +19,7 @@ psl-randomness-functions = { enabled = false }
 psl-regex-functions = { enabled = false }
 psl-datetime = { enabled = false }
 psl-math-functions = { enabled = false }
+psl-output = { enabled = false }
 
 [analyzer]
 plugins = ["psl"]
@@ -28,7 +29,7 @@ excludes = ["*/packages/**/tests/*"]
 # but PSL types.
 [guard]
 mode = "perimeter"
-excludes = ["*/packages/**/tests/*", "*/packages/**/scripts/*"]
+excludes = ["*/packages/**/tests/*", "*/packages/**/scripts/*", "*/packages/wiki/public/*"]
 
 [guard.perimeter.layers]
 ext = ["@native", "@global", "Psl\\**"]
@@ -54,3 +55,7 @@ permit = [
 [[guard.perimeter.rules]]
 namespace = "Lorekeeper\\Persistence"
 permit = ["@layer:ext", "Lorekeeper\\Persistence\\**", "Lorekeeper\\Core\\**"]
+
+[[guard.perimeter.rules]]
+namespace = "Lorekeeper\\Wiki"
+permit = ["@layer:ext", "Lorekeeper\\Wiki\\**", "Lorekeeper\\Persistence\\**", "Lorekeeper\\Core\\**"]
