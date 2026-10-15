@@ -6,12 +6,8 @@ namespace Lorekeeper\Miner\Discovery;
 
 use Lorekeeper\Core\Knowledge\Fact;
 use Lorekeeper\Core\Knowledge\Subject;
-use Lorekeeper\Core\World\Map\MapLink;
+use Lorekeeper\Core\World\Map\MapMention;
 use Lorekeeper\Core\World\Map\MapName;
-use Lorekeeper\Core\World\Map\MapNpc;
-use Lorekeeper\Core\World\Npc\NpcId;
-use Lorekeeper\Core\World\Npc\NpcQuest;
-use Lorekeeper\Core\World\Npc\NpcShop;
 
 final readonly class AnalysisFacts
 {
@@ -20,32 +16,24 @@ final readonly class AnalysisFacts
     {
         $facts = [];
 
-        foreach ($analysis->links as $link) {
-            if ($link->value === $map->value) {
+        foreach ($analysis->mentions as $mention) {
+            if ($mention->value === $map->value) {
                 continue;
             }
 
-            $facts[] = new Fact($map, new MapLink($link));
+            $facts[] = new Fact($map, new MapMention($mention));
+        }
+
+        foreach ($analysis->exits as $exit) {
+            if ($exit->mapName->value === $map->value) {
+                continue;
+            }
+
+            $facts[] = new Fact($map, $exit);
         }
 
         foreach ($analysis->npcs as $npc) {
-            $id = new NpcId($map, $npc->popup);
-            $facts[] = new Fact($map, new MapNpc($id));
-            if ($npc->name !== null) {
-                $facts[] = new Fact($id, $npc->name);
-            }
-
-            if ($npc->title !== null) {
-                $facts[] = new Fact($id, $npc->title);
-            }
-
-            foreach ($npc->quests as $quest) {
-                $facts[] = new Fact($id, new NpcQuest($quest));
-            }
-
-            foreach ($npc->shops as $shop) {
-                $facts[] = new Fact($id, new NpcShop($shop));
-            }
+            $facts = [...$facts, ...NpcFacts::of($map, $npc)];
         }
 
         return $facts;

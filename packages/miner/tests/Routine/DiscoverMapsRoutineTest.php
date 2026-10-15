@@ -9,8 +9,9 @@ use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\Knowledge\Fact;
 use Lorekeeper\Core\World\Map\MapAnalyzed;
+use Lorekeeper\Core\World\Map\MapExit;
 use Lorekeeper\Core\World\Map\MapId;
-use Lorekeeper\Core\World\Map\MapLink;
+use Lorekeeper\Core\World\Map\MapMention;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapNpc;
 use Lorekeeper\Core\World\Npc\NpcId;
@@ -23,6 +24,8 @@ use Lorekeeper\Miner\Discovery\MapAnalysis;
 use Lorekeeper\Miner\Discovery\MapDiscoverer;
 use Lorekeeper\Miner\Discovery\MapQueue;
 use Lorekeeper\Miner\Discovery\Npc;
+use Lorekeeper\Miner\Discovery\PopupButtons;
+use Lorekeeper\Miner\Discovery\PopupText;
 use Lorekeeper\Miner\Recorder;
 use Lorekeeper\Miner\Routine\DiscoverMapsRoutine;
 use Lorekeeper\Persistence\Codec\DefaultCodecs;
@@ -51,11 +54,15 @@ final class DiscoverMapsRoutineTest extends TestCase
         $discoverer = new class implements MapDiscoverer {
             public function discover(Gamefile $mapFile): MapAnalysis
             {
-                return new MapAnalysis([
-                    new MapName('greenguardeast'),
-                    new MapName('forest'),
-                    new MapName('fableforest'),
-                ], [new Npc(new Linkage('Twilly_APOP'), [new QuestId(407)], [new ShopId(31)], new NpcName('Twilly'))]);
+                return new MapAnalysis(
+                    [new MapName('greenguardeast'), new MapName('forest'), new MapName('fableforest')],
+                    [new MapExit(new MapName('greenguardeast')), new MapExit(new MapName('forest'))],
+                    [new Npc(
+                        new Linkage('Twilly_APOP'),
+                        new PopupButtons([new QuestId(407)], [new ShopId(31)]),
+                        new PopupText(new NpcName('Twilly'), null),
+                    )],
+                );
             }
         };
 
@@ -71,10 +78,14 @@ final class DiscoverMapsRoutineTest extends TestCase
         $routine->run(Duration::zero(), 10, new SignalCancellationToken());
 
         static::assertEquals(
-            [new MapLink(new MapName('greenguardeast')), new MapLink(new MapName('fableforest'))],
-            array_map(static fn($stored): object => $stored->fact->value, $store->withValue(MapLink::class)),
+            [new MapMention(new MapName('greenguardeast')), new MapMention(new MapName('fableforest'))],
+            array_map(static fn($stored): object => $stored->fact->value, $store->withValue(MapMention::class)),
         );
-        static::assertSame(Source::Swf, $store->withValue(MapLink::class)[0]->source);
+        static::assertSame(Source::Swf, $store->withValue(MapMention::class)[0]->source);
+        static::assertEquals(
+            [new MapExit(new MapName('greenguardeast'))],
+            array_map(static fn($stored): object => $stored->fact->value, $store->withValue(MapExit::class)),
+        );
         static::assertEquals(
             [new MapNpc(new NpcId(new MapName('forest'), new Linkage('Twilly_APOP')))],
             array_map(static fn($stored): object => $stored->fact->value, $store->withValue(MapNpc::class)),
@@ -112,7 +123,7 @@ final class DiscoverMapsRoutineTest extends TestCase
             new class implements MapDiscoverer {
                 public function discover(Gamefile $mapFile): MapAnalysis
                 {
-                    return new MapAnalysis([], []);
+                    return new MapAnalysis([], [], []);
                 }
             },
             $recorder,

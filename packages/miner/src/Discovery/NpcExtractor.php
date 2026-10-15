@@ -15,14 +15,12 @@ final readonly class NpcExtractor
 
     public static function fromSource(string $popup, string $code, ?PopupText $text = null): ?Npc
     {
-        $quests = PopupQuests::in($code);
-        $shops = PopupShops::in($code);
-
-        if ($quests === [] && $shops === [] && $text?->name === null) {
+        $buttons = PopupButtons::in($code);
+        if ($buttons->isEmpty() && $text?->name === null) {
             return null;
         }
 
-        return new Npc(new Linkage($popup), $quests, $shops, $text?->name, $text?->title);
+        return new Npc(new Linkage($popup), $buttons, $text ?? new PopupText(null, null));
     }
 
     /** @return list<string> */

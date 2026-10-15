@@ -59,7 +59,8 @@ export const factTypes: Record<string, FactType> = {
   'monster.race': text('Race'),
   'map.id': text('Map ID'),
   'map.monster': { label: 'Monsters', section: 'monsters', render: (v, ref) => link(ref, `#${str(v)}`) },
-  'map.link': { label: 'Leads to', section: 'links', render: (v, ref) => link(ref, str(v)) },
+  'map.exit': { label: 'Leads to', section: 'links', render: (v, ref) => link(ref, str(v)) },
+  'npc.travel': { label: 'Takes you to', section: 'links', render: (v, ref) => link(ref, str(v)) },
   'map.npc': { label: 'NPCs', section: 'npcs', render: (v, ref) => link(ref, str(v)) },
   'npc.quest': { label: 'Quests', section: 'quests', render: (v, ref) => link(ref, `quest #${str(v)}`) },
   'npc.shop': { label: 'Shops', section: 'details', render: (v, ref) => link(ref, `Shop #${str(v)}`) },
@@ -163,7 +164,8 @@ export const factType = (type: string): FactType => factTypes[type] ?? { label: 
 
 export const referenceLabels: Record<string, string> = {
   'map.monster': 'Found in maps',
-  'map.link': 'Reached from',
+  'map.exit': 'Reached from',
+  'npc.travel': 'Reached through',
   'map.npc': 'Found in maps',
   'npc.quest': 'Offered by',
   'npc.shop': 'Run by',
@@ -176,6 +178,5 @@ export const referenceLabels: Record<string, string> = {
   'quest.reward.reputation': 'Reputation from',
   'quest.requirement.faction_rank': 'Rank required by',
 }
-
 
 export const first = (facts: Record<string, unknown[]>, type: string): unknown => facts[type]?.[0]

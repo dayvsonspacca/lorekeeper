@@ -8,9 +8,11 @@ use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Progression\LevelRange;
+use Lorekeeper\Core\World\Map\ExitPrompt;
 use Lorekeeper\Core\World\Map\MapAnalyzed;
 use Lorekeeper\Core\World\Map\MapDescription;
-use Lorekeeper\Core\World\Map\MapLink;
+use Lorekeeper\Core\World\Map\MapExit;
+use Lorekeeper\Core\World\Map\MapMention;
 use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapNpc;
@@ -21,6 +23,7 @@ use Lorekeeper\Core\World\Monster\Race;
 use Lorekeeper\Core\World\Npc\NpcId;
 use Lorekeeper\Core\World\Npc\NpcQuest;
 use Lorekeeper\Core\World\Npc\NpcShop;
+use Lorekeeper\Core\World\Npc\NpcTravel;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Region\RegionMap;
 use Lorekeeper\Core\World\Shop\MergeCost;
@@ -59,10 +62,17 @@ final readonly class WorldCodecs
             ),
             new CustomCodec('region.map', RegionMap::class, self::encodeRegionMap(...), self::decodeRegionMap(...)),
             new CustomCodec(
-                'map.link',
-                MapLink::class,
-                static fn(object $v): string => Type\instance_of(MapLink::class)->assert($v)->mapName->value,
-                static fn(mixed $p): MapLink => new MapLink(new MapName(Type\string()->assert($p))),
+                'map.mention',
+                MapMention::class,
+                static fn(object $v): string => Type\instance_of(MapMention::class)->assert($v)->mapName->value,
+                static fn(mixed $p): MapMention => new MapMention(new MapName(Type\string()->assert($p))),
+            ),
+            new CustomCodec('map.exit', MapExit::class, self::encodeExit(...), self::decodeExit(...)),
+            new CustomCodec(
+                'npc.travel',
+                NpcTravel::class,
+                static fn(object $v): string => Type\instance_of(NpcTravel::class)->assert($v)->mapName->value,
+                static fn(mixed $p): NpcTravel => new NpcTravel(new MapName(Type\string()->assert($p))),
             ),
             new CustomCodec(
                 'map.npc',
@@ -185,6 +195,27 @@ final readonly class WorldCodecs
                 static fn(array $cost): MergeCost => new MergeCost(new ItemId($cost['item']), $cost['quantity']),
                 $item['costs'],
             ),
+        );
+    }
+
+    /** @return array{map: string, prompt: ?string} */
+    private static function encodeExit(object $value): array
+    {
+        $exit = Type\instance_of(MapExit::class)->assert($value);
+
+        return ['map' => $exit->mapName->value, 'prompt' => $exit->prompt?->value];
+    }
+
+    private static function decodeExit(mixed $payload): MapExit
+    {
+        $exit = Type\shape([
+            'map' => Type\non_empty_string(),
+            'prompt' => Type\nullable(Type\non_empty_string()),
+        ])->coerce($payload);
+
+        return new MapExit(
+            new MapName($exit['map']),
+            $exit['prompt'] === null ? null : new ExitPrompt($exit['prompt']),
         );
     }
 }

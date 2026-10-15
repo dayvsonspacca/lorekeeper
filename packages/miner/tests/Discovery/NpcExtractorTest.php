@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Lorekeeper\Miner\Tests\Discovery;
 
 use Lorekeeper\Core\Asset\Linkage;
+use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Npc\NpcName;
 use Lorekeeper\Core\World\Npc\NpcTitle;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Miner\Discovery\Npc;
 use Lorekeeper\Miner\Discovery\NpcExtractor;
+use Lorekeeper\Miner\Discovery\PopupButtons;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -52,8 +54,11 @@ final class NpcExtractorTest extends TestCase
         static::assertEquals(
             new Npc(
                 new Linkage('Twilly_APOP'),
-                [new QuestId(11), new QuestId(407), new QuestId(408), new QuestId(409)],
-                [new ShopId(31)],
+                new PopupButtons(
+                    [new QuestId(11), new QuestId(407), new QuestId(408), new QuestId(409)],
+                    [new ShopId(31)],
+                    [new MapName('oaklore')],
+                ),
             ),
             NpcExtractor::fromSource('Twilly_APOP', self::TWILLY),
         );
@@ -90,10 +95,38 @@ final class NpcExtractorTest extends TestCase
         static::assertEquals(
             new Npc(
                 new Linkage('Lowell_APOP'),
-                [new QuestId(2188), new QuestId(2189), new QuestId(3000), new QuestId(2500)],
-                [new ShopId(445)],
+                new PopupButtons([
+                    new QuestId(2188),
+                    new QuestId(2189),
+                    new QuestId(3000),
+                    new QuestId(2500),
+                ], [new ShopId(445)]),
             ),
             NpcExtractor::fromSource('Lowell_APOP', $code),
+        );
+    }
+
+    #[Test]
+    public function it_reads_where_an_npc_can_send_you(): void
+    {
+        $code = <<<'AS'
+            internal function __setProp___id60__Alteon_APOP_Content_0() : *
+            {
+               this.__id60_.strAction = "/Join";
+               this.__id60_.strString = "shadowfall";
+            }
+            internal function __setProp___id70__Maya_APOP_Content_0() : *
+            {
+               this.__id70_.strCutLink = "Swordhaven/KingScene2.swf";
+               this.__id70_.strMap = "battleon";
+            }
+            case "JoinBtn":
+               rootClass.world.gotoTown("necrocavern","r16","Down");
+            AS;
+
+        static::assertEquals(
+            [new MapName('shadowfall'), new MapName('necrocavern')],
+            NpcExtractor::fromSource('Alteon_APOP', $code)?->buttons->travels,
         );
     }
 
@@ -128,9 +161,9 @@ final class NpcExtractorTest extends TestCase
             ['Guard1_APOP', 'Twilly_APOP'],
             array_map(static fn(Npc $npc): string => $npc->popup->value, $npcs),
         );
-        static::assertEquals(new NpcName('Sir Render'), $npcs[0]->name);
-        static::assertEquals(new NpcTitle('Knight of the Pactagonal Table'), $npcs[0]->title);
-        static::assertSame([], $npcs[0]->quests);
+        static::assertEquals(new NpcName('Sir Render'), $npcs[0]->text->name);
+        static::assertEquals(new NpcTitle('Knight of the Pactagonal Table'), $npcs[0]->text->title);
+        static::assertSame([], $npcs[0]->buttons->quests);
 
         foreach ([
             'scripts/Twilly_APOP.as',

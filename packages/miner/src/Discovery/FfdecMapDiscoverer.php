@@ -31,7 +31,9 @@ final readonly class FfdecMapDiscoverer implements MapDiscoverer
             $this->download($mapFile, $swf);
             $this->decompile($swf, $output);
 
-            return new MapAnalysis(MapNameExtractor::fromDirectory($output), NpcExtractor::fromDirectory($output));
+            $names = MapNameExtractor::fromDirectory($output);
+
+            return new MapAnalysis($names['mentions'], $names['exits'], NpcExtractor::fromDirectory($output));
         } finally {
             self::remove($workspace);
         }

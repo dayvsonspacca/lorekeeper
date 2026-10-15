@@ -9,8 +9,9 @@ use DateTimeImmutable;
 use Lorekeeper\Core\Access\MemberOnly;
 use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\World\Map\MapAnalyzed;
+use Lorekeeper\Core\World\Map\MapExit;
 use Lorekeeper\Core\World\Map\MapId;
-use Lorekeeper\Core\World\Map\MapLink;
+use Lorekeeper\Core\World\Map\MapMention;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapUnavailable;
 use Lorekeeper\Persistence\Store\FactStore;
@@ -61,7 +62,11 @@ final readonly class MapQueue
     /** @return list<MapName> */
     public function toVisit(): array
     {
-        $known = [...self::mapNames($this->store->withValue(MapId::class)), ...$this->linkedMaps()];
+        $known = [
+            ...$this->targets(MapExit::class),
+            ...self::mapNames($this->store->withValue(MapId::class)),
+            ...$this->targets(MapMention::class),
+        ];
         $skip = [
             ...self::mapNames(array_filter(
                 $this->store->withValue(Gamefile::class),
@@ -78,17 +83,22 @@ final readonly class MapQueue
         ));
     }
 
-    /** @return array<string, true> */
-    private function linkedMaps(): array
+    /**
+     * @param class-string<MapExit|MapMention> $valueClass
+     *
+     * @return array<string, true>
+     */
+    private function targets(string $valueClass): array
     {
         $names = [];
 
-        foreach ($this->store->withValue(MapLink::class) as $stored) {
-            if (!$stored->fact->value instanceof MapLink) {
+        foreach ($this->store->withValue($valueClass) as $stored) {
+            $value = $stored->fact->value;
+            if (!$value instanceof MapExit && !$value instanceof MapMention) {
                 continue;
             }
 
-            $names[$stored->fact->value->mapName->value] = true;
+            $names[$value->mapName->value] = true;
         }
 
         return $names;

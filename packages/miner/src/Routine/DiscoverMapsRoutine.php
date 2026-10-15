@@ -112,7 +112,15 @@ final class DiscoverMapsRoutine
                 ...AnalysisFacts::of($map, $analysis),
                 new Fact($map, new MapAnalyzed($gamefile)),
             ], Source::Swf);
-            ($this->log)("< {$name}: " . count($analysis->links) . ' links, ' . count($analysis->npcs) . ' npcs');
+            ($this->log)(
+                "< {$name}: "
+                . count($analysis->exits)
+                . ' exits, '
+                . count($analysis->mentions)
+                . ' mentions, '
+                . count($analysis->npcs)
+                . ' npcs',
+            );
         }
     }
 }

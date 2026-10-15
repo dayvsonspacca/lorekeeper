@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Miner\Discovery;
 
+use Lorekeeper\Core\World\Map\ExitPrompt;
+use Lorekeeper\Core\World\Map\MapExit;
 use Lorekeeper\Core\World\Map\MapName;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -11,38 +13,48 @@ use SplFileInfo;
 
 final readonly class MapNameExtractor
 {
-    private const array PATTERNS = [
+    private const array MENTIONS = [
         '/gotoTown\("([^"]+)"/',
         '/strNewMap\s*=\s*"([^"]+)"/',
         '/strString\s*=\s*"([^"]+)"/',
+        '/strMap\s*=\s*"([^"]+)"/',
     ];
 
-    private const string VALID = '/^[a-z][a-z0-9]+$/';
-
     /** @return list<MapName> */
-    public static function fromSource(string $code): array
+    public static function mentionsIn(string $code): array
     {
-        $names = [];
-
-        foreach (self::PATTERNS as $pattern) {
-            $matches = [];
-            preg_match_all($pattern, $code, $matches);
-
-            foreach ($matches[1] as $candidate) {
-                $name = strtolower($candidate);
-                if (preg_match(self::VALID, $name) === 1) {
-                    $names[$name] = new MapName($name);
-                }
-            }
-        }
-
-        return array_values($names);
+        return self::matching(self::MENTIONS, $code);
     }
 
-    /** @return list<MapName> */
+    /** @return list<MapExit> */
+    public static function exitsIn(string $code): array
+    {
+        $exits = [];
+        $blocks = preg_split('/internal function __setProp_/', $code);
+        foreach ($blocks === false ? [] : $blocks as $block) {
+            $target = [];
+            if (preg_match('/strNewMap\s*=\s*"([^"]+)"/', $block, $target) !== 1) {
+                continue;
+            }
+
+            $map = MapNames::valid([$target[1]])[0] ?? null;
+            if ($map === null) {
+                continue;
+            }
+
+            $ask = [];
+            $prompt = preg_match('/strAsk\s*=\s*"([^"]+)"/', $block, $ask) === 1 ? new ExitPrompt(trim($ask[1])) : null;
+            $exits[$map->value . '|' . ($prompt->value ?? '')] = new MapExit($map, $prompt);
+        }
+
+        return array_values($exits);
+    }
+
+    /** @return array{mentions: list<MapName>, exits: list<MapExit>} */
     public static function fromDirectory(string $directory): array
     {
-        $names = [];
+        $mentions = [];
+        $exits = [];
 
         /** @var SplFileInfo $file */
         foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory)) as $file) {
@@ -50,11 +62,48 @@ final readonly class MapNameExtractor
                 continue;
             }
 
-            foreach (self::fromSource((string) file_get_contents($file->getPathname())) as $name) {
-                $names[$name->value] = $name;
-            }
+            $code = (string) file_get_contents($file->getPathname());
+            $mentions = [...$mentions, ...self::mentionsIn($code)];
+            $exits = [...$exits, ...self::exitsIn($code)];
         }
 
-        return array_values($names);
+        $unique = [];
+        foreach ($exits as $exit) {
+            $unique[$exit->mapName->value . '|' . ($exit->prompt->value ?? '')] = $exit;
+        }
+
+        return ['mentions' => self::unique($mentions), 'exits' => array_values($unique)];
+    }
+
+    /**
+     * @param list<non-empty-string> $patterns
+     *
+     * @return list<MapName>
+     */
+    private static function matching(array $patterns, string $code): array
+    {
+        $candidates = [];
+        foreach ($patterns as $pattern) {
+            $matches = [];
+            preg_match_all($pattern, $code, $matches);
+            $candidates = [...$candidates, ...$matches[1]];
+        }
+
+        return MapNames::valid($candidates);
+    }
+
+    /**
+     * @param list<MapName> $names
+     *
+     * @return list<MapName>
+     */
+    private static function unique(array $names): array
+    {
+        $unique = [];
+        foreach ($names as $name) {
+            $unique[$name->value] = $name;
+        }
+
+        return array_values($unique);
     }
 }

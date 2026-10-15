@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Wiki\Api;
 
-use Lorekeeper\Core\World\Map\MapLink;
+use Lorekeeper\Core\World\Map\MapExit;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Region\RegionId;
 use Lorekeeper\Core\World\Region\RegionMap;
@@ -30,7 +30,7 @@ final readonly class Atlas
             $nodes[$map] ??= new AtlasNode($map);
             $nodes[$map]->learn($value);
 
-            if (!$value instanceof MapLink) {
+            if (!$value instanceof MapExit) {
                 continue;
             }
 

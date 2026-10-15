@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Wiki;
 
 use Lorekeeper\Core\Knowledge\Subject;
-use Lorekeeper\Core\World\Map\MapLink;
+use Lorekeeper\Core\World\Map\MapExit;
 use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapNpc;
 use Lorekeeper\Core\World\Npc\NpcQuest;
 use Lorekeeper\Core\World\Npc\NpcShop;
+use Lorekeeper\Core\World\Npc\NpcTravel;
 use Lorekeeper\Core\World\Quest\Requirement\FactionRankRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\ItemRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\PreviousQuestRequirement;
@@ -23,7 +24,8 @@ final readonly class Targets
 {
     public const array PROPERTIES = [
         MapMonster::class => 'monsterId',
-        MapLink::class => 'mapName',
+        MapExit::class => 'mapName',
+        NpcTravel::class => 'mapName',
         MapNpc::class => 'npcId',
         NpcQuest::class => 'questId',
         NpcShop::class => 'shopId',

@@ -10,8 +10,8 @@ use Lorekeeper\Core\Item\DropRate;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Knowledge\Fact;
+use Lorekeeper\Core\World\Map\MapExit;
 use Lorekeeper\Core\World\Map\MapId;
-use Lorekeeper\Core\World\Map\MapLink;
 use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapNpc;
@@ -56,7 +56,7 @@ final readonly class ApiFixture
         $store->record(array_map(static fn(Fact $fact): Observation => new Observation($fact, Source::Socket, $at), [
             new Fact(new MapName('forest'), new MapId(2)),
             new Fact(new MapName('forest'), new MapMonster(new MonsterId(2))),
-            new Fact(new MapName('forest'), new MapLink(new MapName('fableforest'))),
+            new Fact(new MapName('forest'), new MapExit(new MapName('fableforest'))),
             new Fact(new MonsterId(2), new MonsterName('Boss Zardman')),
             new Fact(new ItemId(100), new ItemName('Special Hair Gel')),
             new Fact(new QuestId(14), new QuestName('Specialty Pizza')),

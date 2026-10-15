@@ -3,7 +3,7 @@ import { JoinButton } from '@/components/join-button'
 import { Empty, Section, StatTile, WikiPage } from '@/components/wiki-page'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { SubjectLink } from '@/components/subject-link'
-import { MapLinks } from '@/features/npcs'
+import { MapLinks, useMapTitles } from '@/features/npcs'
 import { ShopCards } from '@/features/shops'
 import { type Detail, useListing } from '@/lib/api'
 import { first } from '@/lib/facts'
@@ -18,6 +18,8 @@ export function NpcPage({ detail }: { detail: Detail }) {
   const { data: questListing } = useListing('quest')
   const quests = p.linked('npc.quest')
   const shops = p.facts('npc.shop')
+  const travels = p.linked('npc.travel')
+  const titleOf = useMapTitles()
   const maps = p.pointing('map.npc').map((r) => r.subject)
   const rows = new Map((questListing?.rows ?? []).map((row) => [row.id, row]))
   const known = quests.filter((q) => !q.name.startsWith('#'))
@@ -75,6 +77,19 @@ export function NpcPage({ detail }: { detail: Detail }) {
           </div>
         )}
       </Section>
+
+      {travels.length > 0 && (
+        <Section title="Takes you to" description={`Maps ${detail.subject.name} can send you to`}>
+          <ul className="space-y-2">
+            {travels.map((map) => (
+              <li key={map.id} className="flex items-center justify-between gap-3">
+                <SubjectLink subject={{ ...map, name: titleOf(map.id) }} icon />
+                <JoinButton map={map.id} />
+              </li>
+            ))}
+          </ul>
+        </Section>
+      )}
 
       {shops.length > 0 && (
         <Section title="Shops" description="What this NPC sells">

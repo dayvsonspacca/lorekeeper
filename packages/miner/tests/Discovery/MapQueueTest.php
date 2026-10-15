@@ -8,9 +8,11 @@ use DateTimeImmutable;
 use Lorekeeper\Core\Access\MemberOnly;
 use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\Knowledge\Fact;
+use Lorekeeper\Core\World\Map\ExitPrompt;
 use Lorekeeper\Core\World\Map\MapAnalyzed;
+use Lorekeeper\Core\World\Map\MapExit;
 use Lorekeeper\Core\World\Map\MapId;
-use Lorekeeper\Core\World\Map\MapLink;
+use Lorekeeper\Core\World\Map\MapMention;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapUnavailable;
 use Lorekeeper\Miner\Discovery\MapQueue;
@@ -32,7 +34,7 @@ final class MapQueueTest extends TestCase
             ['battleon', new MapId(1), '2026-10-15'],
             ['battleon', new Gamefile('Battleon/town-Battleon-9Oct26.swf'), '2026-10-15'],
             ['forest', new MapId(2), '2026-10-15'],
-            ['forest', new MapLink(new MapName('fableforest')), '2026-10-15'],
+            ['forest', new MapMention(new MapName('fableforest')), '2026-10-15'],
             ['shallow', new MapId(47), '2026-10-15'],
             ['shallow', new MemberOnly(), '2026-10-15'],
             ['house', new MapId(9), '2026-10-15'],
@@ -42,13 +44,32 @@ final class MapQueueTest extends TestCase
     }
 
     #[Test]
+    public function it_visits_maps_reachable_on_foot_first(): void
+    {
+        [$queue] = self::queue([
+            ['forest', new MapId(2), '2026-10-15'],
+            ['battleon', new MapMention(new MapName('nexus')), '2026-10-15'],
+            [
+                'battleon',
+                new MapExit(new MapName('battleontown'), new ExitPrompt('Go to Battleon Town?')),
+                '2026-10-15',
+            ],
+        ]);
+
+        static::assertEquals(
+            [new MapName('battleontown'), new MapName('forest'), new MapName('nexus')],
+            $queue->toVisit(),
+        );
+    }
+
+    #[Test]
     public function it_retries_unavailable_maps_after_a_while(): void
     {
         [$queue] = self::queue([
             ['tlapd', new MapUnavailable(), '2026-10-14'],
             ['oldmap', new MapUnavailable(), '2026-09-01'],
-            ['forest', new MapLink(new MapName('tlapd')), '2026-10-15'],
-            ['forest', new MapLink(new MapName('oldmap')), '2026-10-15'],
+            ['forest', new MapMention(new MapName('tlapd')), '2026-10-15'],
+            ['forest', new MapMention(new MapName('oldmap')), '2026-10-15'],
         ]);
 
         static::assertEquals([new MapName('oldmap')], $queue->toVisit());

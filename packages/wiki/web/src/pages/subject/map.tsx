@@ -23,8 +23,14 @@ export function MapPage({ detail }: { detail: Detail }) {
     : undefined
   const mapMonsters = p.linked('map.monster')
   const npcs = p.linked('map.npc')
-  const leadsTo = p.linked('map.link')
-  const reachedFrom = p.pointing('map.link').map((r) => r.subject)
+  const prompts = new Map(p.facts('map.exit').flatMap((fact) => (fact.ref ? [[fact.ref.id, (fact.value as { prompt?: string | null }).prompt ?? undefined]] : [])))
+  const leadsTo = p.linked('map.exit')
+  const reachedFrom = p.pointing('map.exit').map((r) => r.subject)
+  const { data: npcRows } = useListing('npc')
+  const travelsOut = (npcRows?.rows ?? [])
+    .filter((row) => row.id.startsWith(`${detail.subject.id}/`))
+    .flatMap((row) => (row.facts['npc.travel'] ?? []).map((target) => ({ npc: { kind: 'npc', id: row.id, name: row.name }, map: String(target) })))
+  const travelsIn = p.pointing('npc.travel').map((r) => r.subject)
   const byId = new Map((monsters?.rows ?? []).map((row) => [row.id, row]))
 
   return (
@@ -102,13 +108,41 @@ export function MapPage({ detail }: { detail: Detail }) {
         </Section>
       )}
 
-      {(leadsTo.length > 0 || reachedFrom.length > 0) && (
+      {(leadsTo.length + reachedFrom.length + travelsOut.length + travelsIn.length > 0) && (
         <div className="grid gap-4 md:grid-cols-2">
-          <Section title="Leads to" description="Maps you can reach from here">
-            {leadsTo.length === 0 ? <Empty>No known exits.</Empty> : <MapChips maps={leadsTo.map((m) => ({ ...m, name: titleOf(m.id) }))} />}
+          <Section title="Leads to" description="Walk through an arrow to get there">
+            <div className="space-y-4">
+              {leadsTo.length === 0 ? <Empty>No arrows lead out of this map.</Empty> : <MapChips maps={leadsTo.map((m) => ({ ...m, name: titleOf(m.id), hint: prompts.get(m.id) }))} />}
+              {travelsOut.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Or ask an NPC here</p>
+                  <ul className="space-y-1.5 text-sm">
+                    {travelsOut.map(({ npc, map }) => (
+                      <li key={`${npc.id}-${map}`} className="flex flex-wrap items-center gap-1.5">
+                        <SubjectLink subject={npc} icon /> takes you to <SubjectLink subject={{ kind: 'map', id: map, name: titleOf(map) }} icon />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </Section>
-          <Section title="Reached from" description="Maps that lead here">
-            {reachedFrom.length === 0 ? <Empty>No known entrances.</Empty> : <MapChips maps={reachedFrom.map((m) => ({ ...m, name: titleOf(m.id) }))} />}
+          <Section title="Reached from" description="Maps with an arrow into this one">
+            <div className="space-y-4">
+              {reachedFrom.length === 0 ? <Empty>No arrows lead here.</Empty> : <MapChips maps={reachedFrom.map((m) => ({ ...m, name: titleOf(m.id) }))} />}
+              {travelsIn.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">Or ask an NPC</p>
+                  <ul className="space-y-1.5 text-sm">
+                    {travelsIn.map((npc) => (
+                      <li key={npc.id} className="flex flex-wrap items-center gap-1.5">
+                        <SubjectLink subject={npc} icon /> in <SubjectLink subject={{ kind: 'map', id: npc.id.split('/')[0], name: titleOf(npc.id.split('/')[0]) }} icon />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </Section>
         </div>
       )}
@@ -116,11 +150,11 @@ export function MapPage({ detail }: { detail: Detail }) {
   )
 }
 
-function MapChips({ maps }: { maps: { kind: string; id: string; name: string }[] }) {
+function MapChips({ maps }: { maps: { kind: string; id: string; name: string; hint?: string }[] }) {
   return (
     <div className="flex flex-wrap gap-2">
       {maps.map((map) => (
-        <Badge key={map.id}><SubjectLink subject={map} /></Badge>
+        <span key={map.id} title={map.hint}><Badge><SubjectLink subject={map} /></Badge></span>
       ))}
     </div>
   )
