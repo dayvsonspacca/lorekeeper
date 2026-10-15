@@ -1,36 +1,42 @@
-import { useEffect, useRef, useState } from 'react'
+import { LoaderCircle } from 'lucide-react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Section } from '@/components/wiki-page'
+import type { Detail } from '@/lib/api'
+import { page } from '@/lib/page'
 import { loadRuffle, type RufflePlayer } from '@/lib/ruffle'
 import { useTheme } from '@/lib/theme'
+import { cn } from '@/lib/utils'
 
-type Callback = 'onItemPreviewLoaded' | 'onItemPreviewFailed' | 'onAvatarLoaded' | 'onAvatarFailed'
+type Callbacks = Record<string, ((payload: string) => void) | undefined>
 
 interface FlashPreviewProps {
   swf: string
   parameters: Record<string, string>
-  loaded: Callback
-  failed: Callback
   animations?: string[]
   description: string
+  compact?: boolean
 }
 
-function FlashPreview({ swf, parameters, loaded, failed, animations: fixed, description }: FlashPreviewProps) {
+function FlashPreview({ swf, parameters, animations: fixed, description, compact = false }: FlashPreviewProps) {
   const container = useRef<HTMLDivElement>(null)
   const player = useRef<RufflePlayer | null>(null)
   const [animations, setAnimations] = useState<string[] | null>(null)
   const [current, setCurrent] = useState(fixed?.[0] ?? null)
   const [failure, setFailure] = useState(false)
+  const id = useId().replace(/[^a-zA-Z0-9]/g, '')
   const key = JSON.stringify(parameters)
 
   useEffect(() => {
     let cancelled = false
+    const callbacks = window as unknown as Callbacks
+    const loaded = `onPreviewLoaded${id}`
+    const failed = `onPreviewFailed${id}`
     setAnimations(null)
     setFailure(false)
     setCurrent(fixed?.[0] ?? null)
-    window[loaded] = (csv: string) => !cancelled && setAnimations(fixed ?? csv.split(',').filter(Boolean))
-    window[failed] = () => !cancelled && setFailure(true)
+    callbacks[loaded] = (csv) => !cancelled && setAnimations(fixed ?? csv.split(',').filter(Boolean))
+    callbacks[failed] = () => !cancelled && setFailure(true)
 
     loadRuffle()
       .then(() => {
@@ -40,30 +46,45 @@ function FlashPreview({ swf, parameters, loaded, failed, animations: fixed, desc
         instance.style.height = '100%'
         container.current.replaceChildren(instance)
         player.current = instance
-        return instance.load({ url: swf, parameters: JSON.parse(key) as Record<string, string> })
+        return instance.load({ url: swf, parameters: { ...(JSON.parse(key) as Record<string, string>), sLoaded: loaded, sFailed: failed } })
       })
       .catch(() => !cancelled && setFailure(true))
 
     return () => {
       cancelled = true
+      callbacks[loaded] = undefined
+      callbacks[failed] = undefined
       player.current?.remove()
       player.current = null
     }
-  }, [swf, key, loaded, failed, fixed])
+  }, [swf, key, fixed, id])
 
   const play = (anim: string) => {
     setCurrent(anim)
     player.current?.playAnim?.(anim)
   }
 
+  const stage = (
+    <div className={cn('relative aspect-4/3 overflow-hidden rounded-lg border bg-[radial-gradient(circle_at_50%_50%,var(--muted),transparent_70%)]', compact && 'rounded-md')}>
+      <div ref={container} className={cn('size-full transition-opacity duration-300', animations === null ? 'opacity-0' : 'opacity-100')} />
+      {animations === null && !failure && (
+        <div className="absolute inset-0 grid place-items-center">
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <LoaderCircle className="size-6 animate-spin" />
+            <span className="text-xs">Loading preview…</span>
+          </div>
+        </div>
+      )}
+      {failure && <p className="absolute inset-0 grid place-items-center text-sm text-muted-foreground">Preview unavailable</p>}
+    </div>
+  )
+
+  if (compact) return stage
+
   return (
     <Section title="Preview" description={description}>
       <div className="space-y-3">
-        <div className="relative aspect-4/3 overflow-hidden rounded-lg border bg-[radial-gradient(circle_at_50%_50%,var(--muted),transparent_70%)]">
-          <div ref={container} className="size-full" />
-          {animations === null && !failure && <Skeleton className="absolute inset-0 rounded-none opacity-40" />}
-          {failure && <p className="absolute inset-0 grid place-items-center text-sm text-muted-foreground">Preview unavailable</p>}
-        </div>
+        {stage}
         {animations && animations.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {animations.map((anim) => (
@@ -80,14 +101,13 @@ function FlashPreview({ swf, parameters, loaded, failed, animations: fixed, desc
 
 const proxy = () => `${window.location.origin}/proxy/swf/item/`
 
-export function ItemPreview({ file, linkage }: { file: string; linkage: string }) {
+export function ItemPreview({ file, linkage, compact }: { file: string; linkage: string; compact?: boolean }) {
   return (
     <FlashPreview
       swf="/swfs/item.swf"
       parameters={{ sBase: proxy(), sFile: file, sLink: linkage }}
-      loaded="onItemPreviewLoaded"
-      failed="onItemPreviewFailed"
       description="How this item looks in game"
+      compact={compact}
     />
   )
 }
@@ -95,8 +115,9 @@ export function ItemPreview({ file, linkage }: { file: string; linkage: string }
 export type AvatarSlot = 'weapon' | 'helm' | 'cape' | 'armor'
 
 const avatarAnimations = ['Idle', 'Walk', 'Fight', 'Attack1', 'Attack2', 'Cast1', 'Jump', 'Dance', 'Salute', 'Cheer']
+const weaponAnimations = avatarAnimations.filter((anim) => anim !== 'Dance')
 
-export function AvatarPreview({ slot, file, linkage, type }: { slot: AvatarSlot; file: string; linkage: string; type?: string }) {
+export function AvatarPreview({ slot, file, linkage, type, compact }: { slot: AvatarSlot; file: string; linkage: string; type?: string; compact?: boolean }) {
   const { theme } = useTheme()
   const colors = theme === 'dark' ? { sColor: '0x52525B', sBackColor: '0x3F3F46' } : { sColor: '0xA1A1AA', sBackColor: '0x71717A' }
 
@@ -112,10 +133,30 @@ export function AvatarPreview({ slot, file, linkage, type }: { slot: AvatarSlot;
         sGender: 'M',
         ...colors,
       }}
-      loaded="onAvatarLoaded"
-      failed="onAvatarFailed"
-      animations={slot === 'weapon' ? avatarAnimations.filter((anim) => anim !== 'Dance') : avatarAnimations}
+      animations={slot === 'weapon' ? weaponAnimations : avatarAnimations}
       description="Worn by a character — pick an animation"
+      compact={compact}
     />
+  )
+}
+
+const avatarSlots: Record<string, AvatarSlot> = { Weapon: 'weapon', Helm: 'helm', Cape: 'cape', Armor: 'armor', Costume: 'armor' }
+
+export function itemVisual(detail: Detail) {
+  const p = page(detail)
+  const file = p.value<string>('asset.gamefile')
+  const linkage = p.value<string>('asset.linkage')
+  const slot = avatarSlots[String(p.value('item.slot'))]
+  if (!file || !file.endsWith('.swf') || (!linkage && (!slot || slot === 'armor'))) return undefined
+  return { file, linkage: linkage ?? '', slot, type: p.value<string>('item.type') }
+}
+
+export function ItemVisual({ detail, compact }: { detail: Detail; compact?: boolean }) {
+  const visual = itemVisual(detail)
+  if (!visual) return null
+  return visual.slot ? (
+    <AvatarPreview slot={visual.slot} file={visual.file} linkage={visual.linkage} type={visual.type} compact={compact} />
+  ) : (
+    <ItemPreview file={visual.file} linkage={visual.linkage} compact={compact} />
   )
 }

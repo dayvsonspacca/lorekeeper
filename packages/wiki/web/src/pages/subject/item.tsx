@@ -3,15 +3,13 @@ import { SubjectLink } from '@/components/subject-link'
 import { Alert } from '@/components/wiki-bits'
 import { Empty, Section, StatTile, WikiPage } from '@/components/wiki-page'
 import { Badge } from '@/components/ui/badge'
-import { AvatarPreview, type AvatarSlot, ItemPreview } from '@/features/flash-preview'
+import { ItemVisual, itemVisual } from '@/features/flash-preview'
 import type { Detail } from '@/lib/api'
 import { categoryOf } from '@/lib/categories'
 import { Cost, offerOf, useItemNames, useShopKeepers } from '@/features/shops'
 import { price } from '@/lib/facts'
 import { formatNumber } from '@/lib/format'
 import { page } from '@/lib/page'
-
-const avatarSlots: Record<string, AvatarSlot> = { Weapon: 'weapon', Helm: 'helm', Cape: 'cape', Armor: 'armor', Costume: 'armor' }
 
 export function ItemPage({ detail }: { detail: Detail }) {
   const p = page(detail)
@@ -27,10 +25,7 @@ export function ItemPage({ detail }: { detail: Detail }) {
   const turnedIn = p.pointing('quest.turn_in')
   const requiredBy = p.pointing('quest.requirement.item')
   const unnamed = detail.subject.name.startsWith('#')
-  const file = p.value<string>('asset.gamefile')
-  const linkage = p.value<string>('asset.linkage')
-  const slot = avatarSlots[String(p.value('item.slot'))]
-  const preview = file && file.endsWith('.swf') && (linkage || (slot && slot !== 'armor')) ? { file, linkage: linkage ?? '' } : undefined
+  const preview = itemVisual(detail)
   const description = p.value<string>('item.description')
 
   return (
@@ -57,7 +52,7 @@ export function ItemPage({ detail }: { detail: Detail }) {
 
       {(preview || description) && (
         <div className="grid gap-4 lg:grid-cols-2">
-          {preview && (slot ? <AvatarPreview slot={slot} file={preview.file} linkage={preview.linkage} type={type} /> : <ItemPreview file={preview.file} linkage={preview.linkage} />)}
+          {preview && <ItemVisual detail={detail} />}
           {description && (
             <Section title="Description" className={preview ? '' : 'lg:col-span-2'}>
               <p className="leading-relaxed">{description}</p>

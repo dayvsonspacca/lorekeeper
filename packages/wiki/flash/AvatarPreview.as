@@ -58,6 +58,7 @@ package
          };
 
          skeleton = new Skeleton();
+         skeleton.visible = false;
          addChild(skeleton);
          skeleton.gotoAndStop("Idle");
          prepareSkeleton();
@@ -73,7 +74,7 @@ package
          if (!params.sFile)
          {
             fitAndCenter();
-            notify("onAvatarLoaded", "");
+            notify(String(params.sLoaded || "onAvatarLoaded"), "");
             return;
          }
 
@@ -161,7 +162,7 @@ package
             var create:Function = factory(definition(link), e.target.content as DisplayObject);
             if (create == null)
             {
-               notify("onAvatarFailed", "");
+               notify(String(params.sFailed || "onAvatarFailed"), "");
                return;
             }
 
@@ -180,7 +181,7 @@ package
          }
 
          fitAndCenter();
-         notify("onAvatarLoaded", "");
+         notify(String(params.sLoaded || "onAvatarLoaded"), "");
       }
 
       private function wearWeapon(create:Function, type:String) : void
@@ -436,6 +437,7 @@ package
 
          skeleton.x = (sw / 2) - (bounds.x + bounds.width / 2) * scale;
          skeleton.y = (sh / 2) - (bounds.y + bounds.height / 2) * scale;
+         skeleton.visible = true;
       }
 
       private function show(frame:int) : void
@@ -480,7 +482,7 @@ package
       private function onError(e:Event) : void
       {
          fitAndCenter();
-         notify("onAvatarFailed", "");
+         notify(String(params.sFailed || "onAvatarFailed"), "");
       }
 
       private function notify(callback:String, payload:String) : void

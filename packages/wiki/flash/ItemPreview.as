@@ -21,6 +21,7 @@ package
       private var holder:MovieClip;
       private var item:MovieClip;
       private var sLink:String = "";
+      private var params:Object;
 
       public function ItemPreview()
       {
@@ -29,7 +30,7 @@ package
          stage.scaleMode = StageScaleMode.NO_SCALE;
          holder = MovieClip(addChild(new MovieClip()));
 
-         var params:Object = stage.loaderInfo.parameters;
+         params = stage.loaderInfo.parameters;
          sLink = params.sLink || "";
 
          if (ExternalInterface.available)
@@ -78,7 +79,7 @@ package
 
          if (mc == null)
          {
-            notify("onItemPreviewFailed", "");
+            notify(String(params.sFailed || "onItemPreviewFailed"), "");
             return;
          }
 
@@ -99,7 +100,7 @@ package
             names.push(labels[i].name);
          }
 
-         notify("onItemPreviewLoaded", names.join(","));
+         notify(String(params.sLoaded || "onItemPreviewLoaded"), names.join(","));
       }
 
       private function fitAndCenter(mc:MovieClip) : void
@@ -129,7 +130,7 @@ package
 
       private function onError(e:Event) : void
       {
-         notify("onItemPreviewFailed", "");
+         notify(String(params.sFailed || "onItemPreviewFailed"), "");
       }
 
       private function notify(callback:String, payload:String) : void
