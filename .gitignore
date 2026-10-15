@@ -4,3 +4,8 @@
 *.sqlite
 var/
 packages/miner/tools/
+node_modules/
+packages/wiki/public/app/
+packages/wiki/web/public/ruffle/
+packages/wiki/web/public/swfs/avatar.swf
+*.tsbuildinfo
