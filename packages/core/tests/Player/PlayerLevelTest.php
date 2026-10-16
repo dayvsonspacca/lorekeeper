@@ -29,4 +29,10 @@ final class PlayerLevelTest extends TestCase
 
         new PlayerLevel($level);
     }
+
+    #[Test]
+    public function it_converts_to_string(): void
+    {
+        static::assertSame('42', (string) new PlayerLevel(42));
+    }
 }

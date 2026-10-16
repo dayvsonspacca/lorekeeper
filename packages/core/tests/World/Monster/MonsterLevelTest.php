@@ -29,4 +29,10 @@ final class MonsterLevelTest extends TestCase
 
         new MonsterLevel($level);
     }
+
+    #[Test]
+    public function it_converts_to_string(): void
+    {
+        static::assertSame('42', (string) new MonsterLevel(42));
+    }
 }

@@ -60,4 +60,10 @@ final class RankTest extends TestCase
     {
         static::assertSame($points, new Rank($rank)->minimumPoints());
     }
+
+    #[Test]
+    public function it_converts_to_string(): void
+    {
+        static::assertSame('7', (string) new Rank(7));
+    }
 }
