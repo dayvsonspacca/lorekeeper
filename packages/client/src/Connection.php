@@ -9,6 +9,8 @@ use Lorekeeper\Client\Exception\PeerClosedException;
 use Lorekeeper\Client\Message\MessageParser;
 use Lorekeeper\Server\Message\Message;
 use Lorekeeper\Server\Server;
+use Psl\Async\CancellationTokenInterface;
+use Psl\Async\NullCancellationToken;
 use Psl\IO;
 use Psl\Option;
 use Psl\TCP;
@@ -56,10 +58,10 @@ final class Connection
      *
      * @return Option\Option<Message>
      */
-    public function receive(): Option\Option
+    public function receive(CancellationTokenInterface $cancellation = new NullCancellationToken()): Option\Option
     {
         try {
-            $raw = $this->reader->readUntil(self::TERMINATOR);
+            $raw = $this->reader->readUntil(self::TERMINATOR, $cancellation);
         } catch (IO\Exception\RuntimeException $exception) {
             $this->closedBecause = 'Connection error while receiving: ' . $exception->getMessage();
 
