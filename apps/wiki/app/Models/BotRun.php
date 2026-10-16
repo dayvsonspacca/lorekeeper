@@ -17,7 +17,7 @@ use Lorekeeper\Apps\Wiki\Bots\RunStatus;
  * @property int $id
  * @property int $account_id
  * @property BotScript $script
- * @property array<string, string> $parameters
+ * @property array<string, mixed> $parameters
  * @property RunStatus $status
  * @property null|int $pid
  * @property null|string $result

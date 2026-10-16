@@ -70,7 +70,7 @@ final class BotDashboardTest extends TestCase
         $account = $this->account();
 
         Livewire::test(CreateBotRun::class)
-            ->assertSet('data.parameters', ['map' => null])
+            ->assertSet('data.parameters', ['map' => null, 'quests' => null, 'shops' => null])
             ->set('data', [
                 'account_id' => $account->id,
                 'script' => BotScript::StayInMap->value,
@@ -83,7 +83,7 @@ final class BotDashboardTest extends TestCase
 
         Livewire::test(ManageAccounts::class)
             ->mountTableAction('startRun', $account)
-            ->assertTableActionDataSet(['parameters' => ['map' => null]]);
+            ->assertTableActionDataSet(['parameters' => ['map' => null, 'quests' => null, 'shops' => null]]);
 
         Livewire::test(CreateBotRun::class)
             ->assertDontSee('Parameters')
@@ -96,7 +96,26 @@ final class BotDashboardTest extends TestCase
 
         $run = BotRun::query()->sole();
         static::assertSame(RunStatus::Pending, $run->status);
-        static::assertSame(['map' => 'forest'], $run->parameters);
+        static::assertSame('forest', $run->parameters['map']);
+
+        Livewire::test(CreateBotRun::class)
+            ->fillForm(['account_id' => $account->id, 'script' => BotScript::AskQuests->value])
+            ->assertSee('Quest ids')
+            ->assertSet('data.parameters', ['map' => 'battleon', 'quests' => []])
+            ->fillForm(['parameters' => ['map' => 'battleon', 'quests' => ['3', 'x']]])
+            ->call('create')
+            ->assertHasFormErrors(['parameters.quests.1'])
+            ->fillForm(['parameters' => ['map' => 'battleon', 'quests' => ['3', '5']]])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        static::assertSame(
+            ['3', '5'],
+            BotRun::query()
+                ->latest('id')
+                ->firstOrFail()
+                ->parameters['quests'],
+        );
     }
 
     #[Test]

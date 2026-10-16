@@ -9,6 +9,7 @@ use Lorekeeper\Apps\Wiki\Bots\EventSummary;
 use Lorekeeper\Apps\Wiki\Bots\LogLevel;
 use Lorekeeper\Apps\Wiki\Bots\RunRecorder;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
+use Lorekeeper\Apps\Wiki\Bots\Scripts\Done;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\ClientVersion;
@@ -81,7 +82,7 @@ final class RunBot extends Command
     private static function ending(BotRun $run): array
     {
         return match ($run->status) {
-            RunStatus::Finished => ["Finished after {$run->duration()}", LogLevel::Success],
+            RunStatus::Finished => ["Finished after {$run->duration()}: {$run->result}", LogLevel::Success],
             RunStatus::Disconnected => ["Disconnected: {$run->result}", LogLevel::Error],
             RunStatus::Failed => ["Failed: {$run->result}", LogLevel::Error],
             default => ["Stopped after {$run->duration()}", LogLevel::Info],
@@ -118,6 +119,10 @@ final class RunBot extends Command
         $client->run(new LogoutScript());
         $connection->close();
 
-        return $result instanceof Stopped ? [RunStatus::Stopped, null] : [RunStatus::Failed, self::reason($result)];
+        return match (true) {
+            $result instanceof Stopped => [RunStatus::Stopped, null],
+            $result instanceof Done => [RunStatus::Finished, $result->summary],
+            default => [RunStatus::Failed, self::reason($result)],
+        };
     }
 }

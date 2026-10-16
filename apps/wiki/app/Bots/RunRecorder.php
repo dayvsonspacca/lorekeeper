@@ -57,6 +57,10 @@ final class RunRecorder
     public function stepped(Instruction $instruction, null|Event|TimedOut $answer): void
     {
         if ($instruction instanceof Pause) {
+            if ($instruction->duration->getTotalSeconds() < 60) {
+                return;
+            }
+
             if (!$this->idling) {
                 $this->idling = true;
                 $this->run->log($this->map === null ? 'Idling' : "Idling in {$this->map}");
