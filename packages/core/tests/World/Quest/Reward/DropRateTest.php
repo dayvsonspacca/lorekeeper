@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Tests\Item;
+namespace Lorekeeper\Core\Tests\World\Quest\Reward;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Item\DropRate;
+use Lorekeeper\Core\World\Quest\Reward\DropRate;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;

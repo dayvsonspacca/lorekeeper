@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Quest\Reward;
 
-use Lorekeeper\Core\Item\DropRate;
 use Lorekeeper\Core\Item\ItemId;
 use Psl\Type;
 

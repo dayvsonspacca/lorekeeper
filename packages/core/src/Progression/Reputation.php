@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\World\Faction;
+namespace Lorekeeper\Core\Progression;
 
 use Lorekeeper\Core\Support\NonNegativeInteger;
 

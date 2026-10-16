@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Progression;
 
-use Lorekeeper\Core\World\Faction\Reputation;
 use Psl\Type;
 use Stringable;
 

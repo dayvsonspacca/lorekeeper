@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\World\Quest\Reward;
 
-use Lorekeeper\Core\Item\DropRate;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\World\Quest\Reward\DropRate;
 use Lorekeeper\Core\World\Quest\Reward\ItemReward;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

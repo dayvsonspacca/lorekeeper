@@ -12,4 +12,5 @@ enum EquipmentSlot: string
     case Cape = 'Cape';
     case Pet = 'Pet';
     case Ground = 'Ground';
+    case Necklace = 'Necklace';
 }

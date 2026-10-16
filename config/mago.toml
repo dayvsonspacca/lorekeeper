@@ -20,6 +20,7 @@ psl-regex-functions = { enabled = false }
 psl-datetime = { enabled = false }
 psl-math-functions = { enabled = false }
 psl-output = { enabled = false }
+too-many-enum-cases = { enabled = false }
 
 [analyzer]
 plugins = ["psl"]

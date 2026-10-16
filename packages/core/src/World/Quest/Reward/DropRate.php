@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Item;
+namespace Lorekeeper\Core\World\Quest\Reward;
 
 use InvalidArgumentException;
 use Stringable;

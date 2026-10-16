@@ -6,7 +6,7 @@ namespace Lorekeeper\Core\Tests\Progression;
 
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Rank;
-use Lorekeeper\Core\World\Faction\Reputation;
+use Lorekeeper\Core\Progression\Reputation;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
