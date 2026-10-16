@@ -12,6 +12,7 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemPrice;
 use Lorekeeper\Core\Item\Type;
+use Lorekeeper\Core\World\Shop\MergeCost;
 use Psl\Option\Option;
 
 final readonly class ShopLoadedItem
@@ -24,7 +25,7 @@ final readonly class ShopLoadedItem
      * @param Option<Gamefile> $file
      * @param Option<Linkage> $link
      * @param Option<EquipmentSlot> $slot
-     * @param list<ShopLoadedCost> $costs
+     * @param list<MergeCost> $costs
      *
      * @mago-expect lint:excessive-parameter-list
      */

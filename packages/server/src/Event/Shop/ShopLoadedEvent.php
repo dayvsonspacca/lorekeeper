@@ -18,6 +18,8 @@ use Lorekeeper\Core\World\Shop\MergeCost;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopName;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\Mention\Mention;
+use Lorekeeper\Server\Event\Mention\Mentions;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -26,16 +28,31 @@ use Psl\Option;
 use Psl\Type as Coerce;
 use Psl\Type\Exception\CoercionException;
 
-/** @mago-expect lint:cyclomatic-complexity */
-final readonly class ShopLoadedEvent implements Event
+/**
+ * @psalm-type Item = array{ItemID: positive-int, sName: non-empty-string, sType: string, sES: string, sDesc?: string, iCost?: non-negative-int, bCoins?: bool, sFile?: null|string, sLink?: string, bUpg?: bool, turnin?: list<array{ItemID: positive-int, sName: non-empty-string, iQty: positive-int, ...}>, ...}
+ *
+ * @mago-expect lint:cyclomatic-complexity
+ */
+final readonly class ShopLoadedEvent implements Event, Mentions
 {
-    /** @param list<ShopLoadedItem> $items */
+    /**
+     * @param list<ShopLoadedItem> $items
+     * @param list<Mention> $mentions
+     */
     public function __construct(
         public ShopId $id,
         public ShopName $name,
         public bool $memberOnly,
         public array $items,
+        private array $mentions,
     ) {}
+
+    /** @return list<Mention> */
+    #[Override]
+    public function mentions(): array
+    {
+        return $this->mentions;
+    }
 
     /** @return Option\Option<static> */
     #[Override]
@@ -72,41 +89,66 @@ final readonly class ShopLoadedEvent implements Event
             throw new MalformedEventException(static::class, 'shopinfo is missing or invalid', $exception);
         }
 
-        $items = [];
-        foreach ($shop['items'] as $item) {
-            $description = trim($item['sDesc'] ?? '');
-            $cost = $item['iCost'] ?? 0;
-            $file = $item['sFile'] ?? '';
-            $link = $item['sLink'] ?? '';
-            $hasFile = str_ends_with($file, '.swf');
+        return Option\some(
+            new static(
+                new ShopId($shop['ShopID']),
+                new ShopName($shop['sName']),
+                $shop['bUpgrd'] ?? false,
+                array_map(self::item(...), $shop['items']),
+                self::materials($shop['items']),
+            ),
+        );
+    }
 
-            $items[] = new ShopLoadedItem(
-                new ItemId($item['ItemID']),
-                new ItemName($item['sName']),
-                self::detail($item['sType']),
-                $description === '' ? Option\none() : Option\some(new ItemDescription($description)),
-                $cost === 0
-                    ? Option\none()
-                    : Option\some(
-                        new ItemPrice($item['bCoins'] ?? false ? new AdventureCoins($cost) : new Gold($cost)),
-                    ),
-                $hasFile ? Option\some(new Gamefile($file)) : Option\none(),
-                $hasFile && $link !== '' ? Option\some(new Linkage($link)) : Option\none(),
-                self::slot($item['sES']),
-                $item['bUpg'] ?? false,
-                array_map(
-                    static fn(array $material): ShopLoadedCost => new ShopLoadedCost(
-                        new MergeCost(new ItemId($material['ItemID']), $material['iQty']),
-                        new ItemName($material['sName']),
-                    ),
-                    $item['turnin'] ?? [],
+    /** @param Item $item */
+    private static function item(array $item): ShopLoadedItem
+    {
+        $description = trim($item['sDesc'] ?? '');
+        $cost = $item['iCost'] ?? 0;
+        $file = $item['sFile'] ?? '';
+        $link = $item['sLink'] ?? '';
+        $hasFile = str_ends_with($file, '.swf');
+
+        return new ShopLoadedItem(
+            new ItemId($item['ItemID']),
+            new ItemName($item['sName']),
+            self::detail($item['sType']),
+            $description === '' ? Option\none() : Option\some(new ItemDescription($description)),
+            $cost === 0
+                ? Option\none()
+                : Option\some(new ItemPrice($item['bCoins'] ?? false ? new AdventureCoins($cost) : new Gold($cost))),
+            $hasFile ? Option\some(new Gamefile($file)) : Option\none(),
+            $hasFile && $link !== '' ? Option\some(new Linkage($link)) : Option\none(),
+            self::slot($item['sES']),
+            $item['bUpg'] ?? false,
+            array_map(
+                static fn(array $material): MergeCost => new MergeCost(
+                    new ItemId($material['ItemID']),
+                    $material['iQty'],
                 ),
-            );
+                $item['turnin'] ?? [],
+            ),
+        );
+    }
+
+    /**
+     * @param list<Item> $items
+     *
+     * @return list<Mention<ItemId, ItemName>>
+     */
+    private static function materials(array $items): array
+    {
+        $mentions = [];
+        foreach ($items as $item) {
+            foreach ($item['turnin'] ?? [] as $material) {
+                $mentions[$material['ItemID']] ??= new Mention(
+                    new ItemId($material['ItemID']),
+                    new ItemName($material['sName']),
+                );
+            }
         }
 
-        return Option\some(
-            new static(new ShopId($shop['ShopID']), new ShopName($shop['sName']), $shop['bUpgrd'] ?? false, $items),
-        );
+        return array_values($mentions);
     }
 
     /** @throws MalformedEventException */

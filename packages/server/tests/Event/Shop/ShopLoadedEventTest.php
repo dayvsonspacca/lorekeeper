@@ -7,9 +7,12 @@ namespace Lorekeeper\Server\Tests\Event\Shop;
 use Lorekeeper\Core\Currency\AdventureCoins;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\EquipmentSlot;
+use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Type;
-use Lorekeeper\Server\Event\Shop\ShopLoadedCost;
+use Lorekeeper\Server\Event\Mention\Mention;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
+use Lorekeeper\Server\Event\Shop\ShopLoadedItem;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
@@ -55,22 +58,23 @@ final class ShopLoadedEventTest extends TestCase
     }
 
     #[Test]
-    public function it_reads_the_merge_costs_of_a_real_merge_shop(): void
+    public function it_reads_the_merge_costs_and_mentions_each_material_once(): void
     {
         $shop = self::load(self::MERGE_SHOP);
 
         static::assertSame('Reward Gem Shop', $shop->name->value);
         static::assertSame(
             [15, 5, 7, 3, 10],
-            array_map(static fn($item): int => $item->costs[0]->cost->quantity, $shop->items),
+            array_map(static fn(ShopLoadedItem $item): int => $item->costs[0]->quantity, $shop->items),
         );
-
-        $cost = $shop->items[0]->costs[0];
-        static::assertInstanceOf(ShopLoadedCost::class, $cost);
-        static::assertSame(17_109, $cost->cost->itemId->value);
-        static::assertSame('Realm Gem', $cost->name->value);
+        static::assertSame(17_109, $shop->items[0]->costs[0]->itemId->value);
         static::assertTrue($shop->items[0]->price->isNone());
         static::assertSame(Type\Misc::Boost, $shop->items[3]->detail);
+
+        $mentions = $shop->mentions();
+
+        static::assertEquals([new Mention(new ItemId(17_109), new ItemName('Realm Gem'))], $mentions);
+        static::assertSame([], self::load(self::ASSORTED_SHOP)->mentions());
     }
 
     #[Test]
