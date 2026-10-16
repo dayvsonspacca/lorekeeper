@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Wiki\Livewire;
 
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Apps\Wiki\Models\BotRunEvent;
@@ -15,11 +16,22 @@ final class RunEvents extends Component
 
     public BotRun $run;
 
-    public ?string $only = null;
+    /** @var list<string> */
+    public array $only = [];
 
-    public function show(?string $name): void
+    public string $search = '';
+
+    public function toggle(string $name): void
     {
-        $this->only = $name === $this->only ? null : $name;
+        $this->only = in_array($name, $this->only, strict: true)
+            ? array_values(array_diff($this->only, [$name]))
+            : [...$this->only, $name];
+    }
+
+    public function showAll(): void
+    {
+        $this->only = [];
+        $this->search = '';
     }
 
     public function render(): View
@@ -35,9 +47,16 @@ final class RunEvents extends Component
             ->pluck('total', 'name')
             ->all();
 
+        $search = trim($this->search);
         $events = $this->run
             ->events()
-            ->when($this->only !== null, fn($query) => $query->where('name', $this->only))
+            ->when($this->only !== [], fn(Builder $query): Builder => $query->whereIn('name', $this->only))
+            ->when($search
+            !== '', static fn(Builder $query): Builder => $query->where(static fn(Builder $matches): Builder => $matches->where(
+                'summary',
+                'like',
+                "%{$search}%",
+            )->orWhere('raw', 'like', "%{$search}%")))
             ->latest('id')
             ->limit(self::EVENTS)
             ->get()

@@ -154,14 +154,27 @@ final class BotDashboardTest extends TestCase
             'raw' => '%xt%uotls%-1%hero%afk:true%',
         ]);
 
+        $run->events()->create(['name' => 'ClassChanged', 'summary' => 'Socket 7 is Shaman (Caster, 2689 CP)']);
+
         Livewire::test(RunEvents::class, ['run' => $run])
-            ->assertSee('All · 2')
             ->assertSee('Socket 7 equipped item 31660')
             ->assertSee('%xt%uotls%-1%hero%afk:true%')
-            ->call('show', 'Unrecognized')
+            ->call('toggle', 'Unrecognized')
             ->assertDontSee('Socket 7 equipped item 31660')
-            ->call('show', 'Unrecognized')
-            ->assertSee('Socket 7 equipped item 31660');
+            ->call('toggle', 'ClassChanged')
+            ->assertSee('Shaman')
+            ->assertDontSee('Socket 7 equipped item 31660')
+            ->call('toggle', 'Unrecognized')
+            ->call('toggle', 'ClassChanged')
+            ->assertSee('Socket 7 equipped item 31660')
+            ->set('search', 'afk:true')
+            ->assertSee('uotls')
+            ->assertDontSee('Shaman')
+            ->set('search', 'nothing like this')
+            ->assertSee('No events match the filter.')
+            ->call('showAll')
+            ->assertSet('search', '')
+            ->assertSee('Shaman');
     }
 
     #[Test]
