@@ -23,6 +23,7 @@ use Lorekeeper\Server\Event\LoginSucceededEvent;
 use Lorekeeper\Server\Message\Message;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psl\Async\CancellationTokenInterface;
 use Psl\Async\Exception\CancelledException;
 use Psl\Async\NullCancellationToken;
 use Psl\Async\SignalCancellationToken;
@@ -57,13 +58,13 @@ final class ClientTest extends TestCase
     }
 
     #[Test]
-    public function it_skips_what_it_was_not_waiting_for_and_tells_the_observer(): void
+    public function it_skips_what_it_was_not_waiting_for_and_tells_the_observer_about_every_message(): void
     {
-        $unheard = [];
+        $heard = [];
         $client = new Client(
             self::connection("%xt%server%-1%Profanity filter On.%\0", "unparsable\0", "<cross-domain-policy/>\0"),
-            static function (Message $message) use (&$unheard): void {
-                $unheard[] = $message->raw;
+            static function (Message $message) use (&$heard): void {
+                $heard[] = $message->raw;
             },
         );
 
@@ -72,7 +73,7 @@ final class ClientTest extends TestCase
         ));
 
         static::assertInstanceOf(ConnectionEstablishedEvent::class, $result);
-        static::assertSame(['%xt%server%-1%Profanity filter On.%'], $unheard);
+        static::assertSame(['%xt%server%-1%Profanity filter On.%', '<cross-domain-policy/>'], $heard);
     }
 
     #[Test]
@@ -98,8 +99,17 @@ final class ClientTest extends TestCase
     #[Test]
     public function it_pauses_and_sends_without_waiting(): void
     {
-        $answers = new Client(self::connection())->run(self::script(static function (): Generator {
+        $heard = [];
+        $client = new Client(
+            self::connection("%xt%server%-1%Profanity filter On.%\0"),
+            static function (Message $message) use (&$heard): void {
+                $heard[] = $message->raw;
+            },
+        );
+
+        $answers = $client->run(self::script(static function (): Generator {
             $paused = yield new Pause(Duration::milliseconds(1));
+            yield new Pause(Duration::zero());
             $sent = yield new Send(new LogoutCommand());
             $unknown = yield new class() implements Instruction {};
 
@@ -107,6 +117,7 @@ final class ClientTest extends TestCase
         }));
 
         static::assertSame([null, null, null], $answers);
+        static::assertSame(['%xt%server%-1%Profanity filter On.%'], $heard);
     }
 
     #[Test]
@@ -129,7 +140,7 @@ final class ClientTest extends TestCase
     public function it_tells_the_observer_about_every_step(): void
     {
         $steps = [];
-        $client = new Client(self::connection("<cross-domain-policy/>\0"), null, static function (
+        $client = new Client(self::connection(null, "<cross-domain-policy/>\0"), null, static function (
             Instruction $instruction,
             mixed $answer,
         ) use (&$steps): void {
@@ -174,8 +185,21 @@ final class ClientTest extends TestCase
             $stop,
         );
 
+        $halt = new SignalCancellationToken();
+        $quiet = static::createStub(TCP\StreamInterface::class);
+        $quiet
+            ->method('read')
+            ->willReturnCallback(static function () use ($halt): never {
+                $halt->cancel();
+
+                throw new CancelledException($halt);
+            });
+        $quiet->method('reachedEndOfDataSource')->willReturn(false);
+        $pausing = new Client(new Connection($quiet))->run(new IdleScript(), $halt);
+
         static::assertEquals(new Stopped(), $before);
         static::assertEquals(new Stopped(), $waiting);
+        static::assertEquals(new Stopped(), $pausing);
     }
 
     #[Test]
@@ -210,10 +234,22 @@ final class ClientTest extends TestCase
         };
     }
 
-    private static function connection(string ...$reads): Connection
+    private static function connection(?string ...$reads): Connection
     {
         $stream = static::createStub(TCP\StreamInterface::class);
-        $stream->method('read')->willReturnOnConsecutiveCalls(...$reads);
+        $stream
+            ->method('read')
+            ->willReturnCallback(static function (
+                ?int $maxBytes = null,
+                CancellationTokenInterface $cancellation = new NullCancellationToken(),
+            ) use (&$reads): string {
+                $next = array_shift($reads);
+                if ($next === null) {
+                    throw new CancelledException($cancellation);
+                }
+
+                return $next;
+            });
         $stream->method('reachedEndOfDataSource')->willReturn(false);
 
         return new Connection($stream);

@@ -22,16 +22,19 @@ use Psl\Async\Exception\CancelledException;
 use Psl\Async\NullCancellationToken;
 use Psl\DateTime\Timestamp;
 
-/** @mago-expect lint:cyclomatic-complexity */
+/**
+ * @mago-expect lint:cyclomatic-complexity
+ * @mago-expect lint:kan-defect
+ */
 final readonly class Client
 {
     /**
-     * @param null|Closure(Message): void $unheard
+     * @param null|Closure(Message): void $heard
      * @param null|Closure(Instruction, null|Event|TimedOut): void $stepped
      */
     public function __construct(
         private Connection $connection,
-        private ?Closure $unheard = null,
+        private ?Closure $heard = null,
         private ?Closure $stepped = null,
     ) {}
 
@@ -75,7 +78,7 @@ final readonly class Client
     private function execute(Instruction $instruction, CancellationTokenInterface $stop): null|Event|TimedOut
     {
         if ($instruction instanceof Pause) {
-            Async\sleep($instruction->duration, $stop);
+            $this->listen($instruction, $stop);
 
             return null;
         }
@@ -120,6 +123,8 @@ final readonly class Client
                 continue;
             }
 
+            $this->hear($message->unwrap());
+
             foreach ($await->events as $event) {
                 /** @mago-expect analysis:possibly-static-access-on-interface */
                 $heard = $event::from($message->unwrap());
@@ -127,10 +132,40 @@ final readonly class Client
                     return $heard->unwrap();
                 }
             }
+        }
+    }
 
-            if ($this->unheard !== null) {
-                ($this->unheard)($message->unwrap());
+    /** @throws PeerClosedException */
+    private function listen(Pause $pause, CancellationTokenInterface $stop): void
+    {
+        $deadline = Timestamp::monotonic()->plus($pause->duration);
+
+        while (true) {
+            $left = $deadline->since(Timestamp::monotonic());
+            if (!$left->isPositive()) {
+                return;
             }
+
+            try {
+                $message = $this->connection->receive(
+                    new Async\LinkedCancellationToken(new Async\TimeoutCancellationToken($left), $stop),
+                );
+            } catch (CancelledException $cancelled) {
+                if ($stop->isCancelled()) {
+                    throw $cancelled;
+                }
+
+                return;
+            }
+
+            $message->apply($this->hear(...));
+        }
+    }
+
+    private function hear(Message $message): void
+    {
+        if ($this->heard !== null) {
+            ($this->heard)($message);
         }
     }
 }
