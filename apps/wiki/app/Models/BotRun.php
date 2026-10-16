@@ -9,27 +9,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
-use Lorekeeper\Apps\Wiki\Bots\BotScript;
+use Lorekeeper\Apps\Wiki\Bots\Elapsed;
 use Lorekeeper\Apps\Wiki\Bots\LogLevel;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
+use Lorekeeper\Apps\Wiki\Bots\TaskStatus;
 
 /**
  * @property int $id
  * @property int $account_id
- * @property BotScript $script
- * @property array<string, mixed> $parameters
  * @property RunStatus $status
  * @property null|int $pid
  * @property null|string $result
+ * @property null|string $map
  * @property null|Carbon $started_at
  * @property null|Carbon $finished_at
  * @property Account $account
  */
-#[Fillable(['account_id', 'script', 'parameters', 'status', 'pid', 'result', 'started_at', 'finished_at'])]
+#[Fillable(['account_id', 'status', 'pid', 'result', 'map', 'started_at', 'finished_at'])]
 final class BotRun extends Model
 {
     /** @var array<string, mixed> */
-    protected $attributes = ['status' => 'pending', 'parameters' => '{}'];
+    protected $attributes = ['status' => 'pending'];
 
     /** @return BelongsTo<Account, $this> */
     public function account(): BelongsTo
@@ -45,17 +45,7 @@ final class BotRun extends Model
 
     public function duration(): ?string
     {
-        if ($this->started_at === null) {
-            return null;
-        }
-
-        $seconds = (int) $this->started_at->diffInSeconds($this->finished_at ?? now());
-
-        return match (true) {
-            $seconds < 60 => "{$seconds}s",
-            $seconds < 3600 => sprintf('%dm %02ds', intdiv($seconds, num2: 60), $seconds % 60),
-            default => sprintf('%dh %02dm', intdiv($seconds, num2: 3600), intdiv($seconds % 3600, num2: 60)),
-        };
+        return Elapsed::between($this->started_at, $this->finished_at);
     }
 
     /** @return HasMany<BotRunEvent, $this> */
@@ -64,17 +54,52 @@ final class BotRun extends Model
         return $this->hasMany(BotRunEvent::class);
     }
 
-    public function log(string $message, LogLevel $level = LogLevel::Info): void
+    /** @return HasMany<BotTask, $this> */
+    public function tasks(): HasMany
     {
-        $this->logs()->create(['message' => $message, 'level' => $level]);
+        return $this->hasMany(BotTask::class);
+    }
+
+    public function closeTasks(string $reason): void
+    {
+        $this
+            ->tasks()
+            ->whereIn('status', [TaskStatus::Running, TaskStatus::Cancelling])
+            ->update([
+                'status' => TaskStatus::Failed,
+                'result' => $reason,
+                'finished_at' => now(),
+            ]);
+        $this
+            ->tasks()
+            ->where('status', TaskStatus::Pending)
+            ->update([
+                'status' => TaskStatus::Cancelled,
+                'result' => $reason,
+                'finished_at' => now(),
+            ]);
+    }
+
+    public function nextTask(): ?BotTask
+    {
+        $task = $this
+            ->tasks()
+            ->where('status', TaskStatus::Pending)
+            ->oldest('id')
+            ->first();
+
+        return $task instanceof BotTask ? $task : null;
+    }
+
+    public function log(string $message, LogLevel $level = LogLevel::Info, ?BotTask $task = null): void
+    {
+        $this->logs()->create(['message' => $message, 'level' => $level, 'bot_task_id' => $task?->id]);
     }
 
     /** @return array<string, string> */
     protected function casts(): array
     {
         return [
-            'script' => BotScript::class,
-            'parameters' => 'array',
             'status' => RunStatus::class,
             'started_at' => 'datetime',
             'finished_at' => 'datetime',

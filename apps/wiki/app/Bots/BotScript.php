@@ -9,10 +9,10 @@ use Filament\Schemas\Components\Component;
 use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasLabel;
 use Lorekeeper\Apps\Wiki\Bots\Scripts\AskQuestsScript;
+use Lorekeeper\Apps\Wiki\Bots\Scripts\GoToMapScript;
 use Lorekeeper\Apps\Wiki\Bots\Scripts\OpenShopsScript;
-use Lorekeeper\Apps\Wiki\Bots\Scripts\StayInMapScript;
-use Lorekeeper\Client\Login\GameLogin;
 use Lorekeeper\Client\Script\Script;
+use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Shop\ShopId;
@@ -20,7 +20,7 @@ use Override;
 
 enum BotScript: string implements HasLabel, HasDescription
 {
-    case StayInMap = 'stay-in-map';
+    case GoToMap = 'go-to-map';
     case AskQuests = 'ask-quests';
     case OpenShops = 'open-shops';
 
@@ -38,7 +38,7 @@ enum BotScript: string implements HasLabel, HasDescription
     public function getLabel(): string
     {
         return match ($this) {
-            self::StayInMap => 'Stay in map',
+            self::GoToMap => 'Go to map',
             self::AskQuests => 'Ask for quests',
             self::OpenShops => 'Open shops',
         };
@@ -48,9 +48,9 @@ enum BotScript: string implements HasLabel, HasDescription
     public function getDescription(): string
     {
         return match ($this) {
-            self::StayInMap => 'Enters the game, goes to a map and stays there until stopped.',
-            self::AskQuests => 'Enters the game, goes to a map and asks for the given quests, ten at a time.',
-            self::OpenShops => 'Enters the game, goes to a map and opens the given shops one by one.',
+            self::GoToMap => 'Goes to a map; the bot then waits there for the next task.',
+            self::AskQuests => 'Goes to a map if needed and asks for the given quests, ten at a time.',
+            self::OpenShops => 'Goes to a map if needed and opens the given shops one by one.',
         };
     }
 
@@ -58,7 +58,7 @@ enum BotScript: string implements HasLabel, HasDescription
     public function defaults(): array
     {
         return match ($this) {
-            self::StayInMap => ['map' => 'battleon'],
+            self::GoToMap => ['map' => 'battleon'],
             self::AskQuests => ['map' => 'battleon', 'quests' => []],
             self::OpenShops => ['map' => 'battleon', 'shops' => []],
         };
@@ -68,7 +68,7 @@ enum BotScript: string implements HasLabel, HasDescription
     public function fields(): array
     {
         return match ($this) {
-            self::StayInMap => [Parameters::mapField()],
+            self::GoToMap => [Parameters::mapField()],
             self::AskQuests => [
                 Parameters::mapField(),
                 Parameters::idsField('quests', 'Quest ids', 'Only ask for quests you have seen.'),
@@ -90,7 +90,7 @@ enum BotScript: string implements HasLabel, HasDescription
         $map = is_string($parameters['map'] ?? null) ? $parameters['map'] : '—';
 
         return match ($this) {
-            self::StayInMap => $map,
+            self::GoToMap => $map,
             self::AskQuests => "{$map} · " . count(Parameters::ids($parameters, 'quests')) . ' quests',
             self::OpenShops => "{$map} · " . count(Parameters::ids($parameters, 'shops')) . ' shops',
         };
@@ -101,16 +101,17 @@ enum BotScript: string implements HasLabel, HasDescription
      *
      * @return Script<object>
      */
-    public function script(GameLogin $login, array $parameters): Script
+    public function script(PlayerName $player, Position $here, array $parameters): Script
     {
         $map = new MapName(
             is_string($parameters['map'] ?? null) && $parameters['map'] !== '' ? $parameters['map'] : 'battleon',
         );
 
         return match ($this) {
-            self::StayInMap => new StayInMapScript($login, $map),
+            self::GoToMap => new GoToMapScript($player, $here, $map),
             self::AskQuests => new AskQuestsScript(
-                $login,
+                $player,
+                $here,
                 $map,
                 array_map(
                     static fn(int $id): QuestId => new QuestId($id),
@@ -118,7 +119,8 @@ enum BotScript: string implements HasLabel, HasDescription
                 ),
             ),
             self::OpenShops => new OpenShopsScript(
-                $login,
+                $player,
+                $here,
                 $map,
                 array_map(static fn(int $id): ShopId => new ShopId($id), Parameters::requiredIds($parameters, 'shops')),
             ),

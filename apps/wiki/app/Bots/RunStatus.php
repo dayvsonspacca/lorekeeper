@@ -16,7 +16,6 @@ enum RunStatus: string implements HasLabel, HasColor, HasIcon
     case Running = 'running';
     case Stopping = 'stopping';
     case Stopped = 'stopped';
-    case Finished = 'finished';
     case Disconnected = 'disconnected';
     case Failed = 'failed';
 
@@ -24,7 +23,7 @@ enum RunStatus: string implements HasLabel, HasColor, HasIcon
     {
         return match ($this) {
             self::Pending, self::Running, self::Stopping => true,
-            self::Stopped, self::Finished, self::Disconnected, self::Failed => false,
+            self::Stopped, self::Disconnected, self::Failed => false,
         };
     }
 
@@ -42,7 +41,7 @@ enum RunStatus: string implements HasLabel, HasColor, HasIcon
             self::Pending, self::Stopping => 'info',
             self::Disconnected => 'warning',
             self::Failed => 'danger',
-            self::Stopped, self::Finished => 'gray',
+            self::Stopped => 'gray',
         };
     }
 
@@ -54,7 +53,6 @@ enum RunStatus: string implements HasLabel, HasColor, HasIcon
             self::Running => Heroicon::OutlinedPlayCircle,
             self::Stopping => Heroicon::OutlinedPauseCircle,
             self::Stopped => Heroicon::OutlinedStopCircle,
-            self::Finished => Heroicon::OutlinedCheckCircle,
             self::Disconnected => Heroicon::OutlinedSignalSlash,
             self::Failed => Heroicon::OutlinedExclamationTriangle,
         };

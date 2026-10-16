@@ -14,20 +14,12 @@ final class RunAgainAction
     public static function make(): Action
     {
         return Action::make('runAgain')
-            ->label('Run again')
+            ->label('Start again')
             ->icon(Heroicon::OutlinedArrowPath)
             ->color('gray')
             ->visible(static fn(BotRun $record): bool => !$record->status->isActive())
             ->action(static function (BotRun $record, Action $action): void {
-                $run = $record
-                    ->account
-                    ->runs()
-                    ->create([
-                        'script' => $record->script,
-                        'parameters' => $record->parameters,
-                    ]);
-
-                $action->redirect(BotRunResource::getUrl('view', ['record' => $run]));
+                $action->redirect(BotRunResource::getUrl('view', ['record' => $record->account->runs()->create()]));
             });
     }
 }

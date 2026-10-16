@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Wiki\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Lorekeeper\Apps\Wiki\Bots\BotScript;
 use Lorekeeper\Apps\Wiki\Bots\LogLevel;
 use Lorekeeper\Apps\Wiki\Bots\RunRecorder;
 use Lorekeeper\Apps\Wiki\Models\Account;
@@ -85,6 +84,6 @@ final class RunRecorderTest extends TestCase
     {
         $account = Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
 
-        return $account->runs()->create(['script' => BotScript::StayInMap, 'parameters' => ['map' => 'forest']]);
+        return $account->runs()->create();
     }
 }

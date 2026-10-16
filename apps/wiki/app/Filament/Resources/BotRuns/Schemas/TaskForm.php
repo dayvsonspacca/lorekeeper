@@ -11,24 +11,10 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Lorekeeper\Apps\Wiki\Bots\BotScript;
 
-final class RunForm
+final class TaskForm
 {
     /** @return list<Component|Select> */
     public static function components(): array
-    {
-        return [
-            Select::make('account_id')
-                ->label('Character')
-                ->relationship('account', 'name')
-                ->searchable()
-                ->preload()
-                ->required(),
-            ...self::forAccount(),
-        ];
-    }
-
-    /** @return list<Component|Select> */
-    public static function forAccount(): array
     {
         return [
             Select::make('script')
@@ -45,6 +31,12 @@ final class RunForm
                 ->visible(static fn(Get $get): bool => self::script($get) !== null)
                 ->columnSpanFull(),
         ];
+    }
+
+    /** @return array{parameters: array<string, null>} */
+    public static function blank(): array
+    {
+        return ['parameters' => BotScript::blankParameters()];
     }
 
     private static function script(Get $get): ?BotScript

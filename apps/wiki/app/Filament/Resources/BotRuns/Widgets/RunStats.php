@@ -8,7 +8,9 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
+use Lorekeeper\Apps\Wiki\Bots\TaskStatus;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
+use Lorekeeper\Apps\Wiki\Models\BotTask;
 use Override;
 
 final class RunStats extends StatsOverviewWidget
@@ -19,9 +21,6 @@ final class RunStats extends StatsOverviewWidget
     #[Override]
     protected function getStats(): array
     {
-        $today = BotRun::query()->where('created_at', '>=', now()->startOfDay());
-        $lastDay = BotRun::query()->where('finished_at', '>=', now()->subDay());
-
         return [
             Stat::make(
                 'Running',
@@ -30,14 +29,23 @@ final class RunStats extends StatsOverviewWidget
                 ->icon(Heroicon::OutlinedPlayCircle)
                 ->color('success'),
             Stat::make(
-                'Waiting',
-                BotRun::query()->where('status', RunStatus::Pending)->count(),
-            )->icon(Heroicon::OutlinedClock),
-            Stat::make('Started today', (clone $today)->count())->icon(Heroicon::OutlinedCalendarDays),
+                'Tasks waiting',
+                BotTask::query()->where('status', TaskStatus::Pending)->count(),
+            )->icon(Heroicon::OutlinedQueueList),
             Stat::make(
-                'Failed in 24h',
-                (clone $lastDay)->whereIn('status', [RunStatus::Failed, RunStatus::Disconnected])->count(),
-            )
+                'Tasks done today',
+                BotTask::query()
+                    ->where('status', TaskStatus::Done)
+                    ->where('finished_at', '>=', now()->startOfDay())
+                    ->count(),
+            )->icon(Heroicon::OutlinedCheckCircle),
+            Stat::make('Failed in 24h', BotTask::query()
+                ->where('status', TaskStatus::Failed)
+                ->where('finished_at', '>=', now()->subDay())
+                ->count() + BotRun::query()
+                ->whereIn('status', [RunStatus::Failed, RunStatus::Disconnected])
+                ->where('finished_at', '>=', now()->subDay())
+                ->count())
                 ->icon(Heroicon::OutlinedExclamationTriangle)
                 ->color('danger'),
         ];

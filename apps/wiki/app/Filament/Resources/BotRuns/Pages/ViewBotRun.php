@@ -6,6 +6,7 @@ namespace Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages;
 
 use Filament\Resources\Pages\ViewRecord;
 use Livewire\Attributes\On;
+use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Actions\AddTaskAction;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Actions\RunAgainAction;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Actions\StopRunAction;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\BotRunResource;
@@ -30,6 +31,6 @@ final class ViewBotRun extends ViewRecord
     #[Override]
     protected function getHeaderActions(): array
     {
-        return [StopRunAction::make(), RunAgainAction::make()];
+        return [AddTaskAction::make(), StopRunAction::make(), RunAgainAction::make()];
     }
 }

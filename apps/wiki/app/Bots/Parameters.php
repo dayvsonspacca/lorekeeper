@@ -4,19 +4,24 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Wiki\Bots;
 
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\TextInput;
+use Filament\Support\Icons\Heroicon;
 use InvalidArgumentException;
 use Lorekeeper\Apps\Wiki\Game\GameCatalog;
 
 final class Parameters
 {
-    public static function mapField(): Select
+    public static function mapField(): TextInput
     {
-        return Select::make('parameters.map')
+        return TextInput::make('parameters.map')
             ->label('Map')
-            ->options(static fn(GameCatalog $catalog): array => $catalog->maps())
-            ->searchable()
+            ->prefixIcon(Heroicon::OutlinedMap)
+            ->datalist(static fn(GameCatalog $catalog): array => array_keys($catalog->maps()))
+            ->placeholder('battleon')
+            ->helperText('Any map name; the travel map ones are suggested. A room goes after a dash, like battleon-2.')
+            ->regex('/^[A-Za-z0-9_-]+$/')
+            ->maxLength(64)
             ->required();
     }
 

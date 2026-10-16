@@ -9,6 +9,7 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Livewire;
@@ -26,9 +27,9 @@ use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Actions\StopRunAction;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\CreateBotRun;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\ListBotRuns;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\ViewBotRun;
-use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Schemas\RunForm;
 use Lorekeeper\Apps\Wiki\Livewire\RunEvents;
 use Lorekeeper\Apps\Wiki\Livewire\RunLog;
+use Lorekeeper\Apps\Wiki\Livewire\RunTasks;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Override;
 use UnitEnum;
@@ -64,7 +65,16 @@ final class BotRunResource extends Resource
     #[Override]
     public static function form(Schema $schema): Schema
     {
-        return $schema->components(RunForm::components());
+        return $schema->components([
+            Select::make('account_id')
+                ->label('Character')
+                ->relationship('account', 'name')
+                ->searchable()
+                ->preload()
+                ->required()
+                ->helperText('The bot logs in, enters the game and waits for tasks.')
+                ->columnSpanFull(),
+        ]);
     }
 
     #[Override]
@@ -75,10 +85,7 @@ final class BotRunResource extends Resource
                 ->icon(Heroicon::OutlinedPlay)
                 ->schema([
                     TextEntry::make('account.name')->label('Character')->icon(Heroicon::OutlinedUser),
-                    TextEntry::make('script')
-                        ->badge()
-                        ->color('gray')
-                        ->helperText(static fn(BotRun $record): string => $record->script->summary($record->parameters)),
+                    TextEntry::make('map')->icon(Heroicon::OutlinedMap)->placeholder('Not in the game yet'),
                     TextEntry::make('started_at')->dateTime()->placeholder('Not started'),
                     TextEntry::make('finished_at')->dateTime()->placeholder('—'),
                     TextEntry::make('result')
@@ -86,6 +93,10 @@ final class BotRunResource extends Resource
                         ->columnSpanFull(),
                 ])
                 ->columns(4)
+                ->columnSpanFull(),
+            Section::make('Tasks')
+                ->icon(Heroicon::OutlinedQueueList)
+                ->schema([Livewire::make(RunTasks::class, static fn(BotRun $record): array => ['run' => $record])])
                 ->columnSpanFull(),
             Tabs::make()
                 ->tabs([
@@ -114,11 +125,12 @@ final class BotRunResource extends Resource
                     ->label('Character')
                     ->weight('bold')
                     ->searchable(),
-                TextColumn::make('script')
-                    ->badge()
-                    ->color('gray')
-                    ->description(static fn(BotRun $record): string => $record->script->summary($record->parameters)),
                 TextColumn::make('status')->badge(),
+                TextColumn::make('map')->icon(Heroicon::OutlinedMap)->placeholder('—'),
+                TextColumn::make('tasks_count')
+                    ->counts('tasks')
+                    ->label('Tasks')
+                    ->color('gray'),
                 TextColumn::make('duration')
                     ->state(static fn(BotRun $record): ?string => $record->duration())
                     ->placeholder('—')
@@ -148,7 +160,7 @@ final class BotRunResource extends Resource
             ->toolbarActions([DeleteBulkAction::make()])
             ->emptyStateIcon(Heroicon::OutlinedPlay)
             ->emptyStateHeading('No runs yet')
-            ->emptyStateDescription('Start a script on one of your accounts.')
+            ->emptyStateDescription('Start a run on one of your accounts, then give it tasks.')
             ->poll('5s');
     }
 

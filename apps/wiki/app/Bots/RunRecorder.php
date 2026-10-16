@@ -6,6 +6,7 @@ namespace Lorekeeper\Apps\Wiki\Bots;
 
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Apps\Wiki\Models\BotRunEvent;
+use Lorekeeper\Apps\Wiki\Models\BotTask;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\TimedOut;
@@ -20,7 +21,9 @@ use Lorekeeper\Server\Message\XmlMessage;
 
 final class RunRecorder
 {
-    private ?string $map = null;
+    private ?Position $position = null;
+
+    private ?BotTask $task = null;
 
     private bool $idling = false;
 
@@ -41,13 +44,13 @@ final class RunRecorder
         foreach ($recognized as $event) {
             if ($event instanceof MalformedEventException) {
                 $this->event('Malformed', $event->getMessage(), $message->raw);
-                $this->run->log("Could not read a message: {$event->getMessage()}", LogLevel::Error);
+                $this->log("Could not read a message: {$event->getMessage()}", LogLevel::Error);
 
                 continue;
             }
 
             if ($event instanceof MovedToMapEvent) {
-                $this->map = $event->map->value;
+                $this->at(new Position($event->map, $event->areaId));
             }
 
             $this->event(EventSummary::name($event), EventSummary::of($event));
@@ -63,7 +66,7 @@ final class RunRecorder
 
             if (!$this->idling) {
                 $this->idling = true;
-                $this->run->log($this->map === null ? 'Idling' : "Idling in {$this->map}");
+                $this->log($this->position === null ? 'Idling' : "Idling in {$this->position->map->value}");
             }
 
             return;
@@ -71,7 +74,29 @@ final class RunRecorder
 
         $this->idling = false;
         [$level, $message] = StepLog::describe($instruction, $answer);
-        $this->run->log($message, $level);
+        $this->log($message, $level);
+    }
+
+    public function at(Position $position): void
+    {
+        $this->position = $position;
+        $this->run->update(['map' => $position->map->value]);
+    }
+
+    public function position(): ?Position
+    {
+        return $this->position;
+    }
+
+    public function working(?BotTask $task): void
+    {
+        $this->task = $task;
+        $this->idling = false;
+    }
+
+    public function log(string $message, LogLevel $level = LogLevel::Info): void
+    {
+        $this->run->log($message, $level, $this->task);
     }
 
     public static function command(Message $message): string

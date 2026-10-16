@@ -20,6 +20,7 @@
         @forelse ($lines as $line)
             <div style="display: flex; gap: 1rem; white-space: pre-wrap; word-break: break-word;">
                 <span style="color: #64748b; flex-shrink: 0;">{{ $line['at'] }}</span>
+                <span style="color: #475569; flex-shrink: 0; min-width: 2.5rem;">{{ $line['task'] === null ? '' : '#' . $line['task'] }}</span>
                 <span style="color: {{ match ($line['level']) {
                     'success' => '#86efac',
                     'warning' => '#fbbf24',

@@ -42,6 +42,7 @@ final class RunLog extends Component
             $this->run->started_at?->toIso8601String(),
             $this->run->finished_at?->toIso8601String(),
             $this->run->result,
+            $this->run->map,
         ]);
     }
 
@@ -57,6 +58,7 @@ final class RunLog extends Component
                 'at' => $log->created_at->format('H:i:s'),
                 'message' => $log->message,
                 'level' => $log->level->value,
+                'task' => $log->bot_task_id,
             ])
             ->values()
             ->all();

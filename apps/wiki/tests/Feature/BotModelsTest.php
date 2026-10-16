@@ -7,7 +7,9 @@ namespace Lorekeeper\Apps\Wiki\Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Lorekeeper\Apps\Wiki\Bots\BotScript;
+use Lorekeeper\Apps\Wiki\Bots\LogLevel;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
+use Lorekeeper\Apps\Wiki\Bots\TaskStatus;
 use Lorekeeper\Apps\Wiki\Models\Account;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Apps\Wiki\Tests\TestCase;
@@ -32,20 +34,42 @@ final class BotModelsTest extends TestCase
     }
 
     #[Test]
-    public function runs_start_pending_and_keep_their_log(): void
+    public function runs_start_pending_and_keep_their_tasks_and_log(): void
     {
         $account = Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
-        $run = $account->runs()->create(['script' => BotScript::StayInMap, 'parameters' => ['map' => 'battleon']]);
-        $run = BotRun::query()->findOrFail($run->id);
+        $run = BotRun::query()->findOrFail($account->runs()->create()->id);
+        $first = $run->tasks()->create(['script' => BotScript::GoToMap, 'parameters' => ['map' => 'forest']]);
+        $second = $run->tasks()->create([
+            'script' => BotScript::AskQuests,
+            'parameters' => ['map' => 'forest', 'quests' => ['3']],
+        ]);
 
-        $run->log('> login');
-        $run->log('< logged in');
+        $run->log('Logging in as Hero');
+        $run->log('Now in forest', LogLevel::Success, $first);
 
         static::assertSame(RunStatus::Pending, $run->status);
-        static::assertSame(BotScript::StayInMap, $run->script);
-        static::assertSame(['map' => 'battleon'], $run->parameters);
         static::assertSame('Hero', $run->account->name);
-        static::assertSame(['> login', '< logged in'], $run->logs()->orderBy('id')->pluck('message')->all());
+        static::assertSame($first->id, $run->nextTask()?->id);
+        static::assertSame('Go to map · forest', $first->title());
+        static::assertSame([null, $first->id], $run->logs()->orderBy('id')->pluck('bot_task_id')->all());
+
+        $first->finish(TaskStatus::Done, 'Now in forest');
+        static::assertSame($second->id, $run->nextTask()?->id);
+
+        $second->update(['status' => TaskStatus::Running]);
+        $run->tasks()->create(['script' => BotScript::GoToMap, 'parameters' => ['map' => 'battleon']]);
+        $run->closeTasks('the run ended');
+
+        static::assertSame(
+            [TaskStatus::Done, TaskStatus::Failed, TaskStatus::Cancelled],
+            $run
+                ->tasks()
+                ->orderBy('id')
+                ->get()
+                ->map(static fn($task) => $task->status)
+                ->all(),
+        );
+        static::assertNull($run->nextTask());
     }
 
     #[Test]
