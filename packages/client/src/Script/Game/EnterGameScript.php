@@ -32,6 +32,7 @@ final readonly class EnterGameScript implements Script
         private GameLogin $login,
     ) {}
 
+    /** @return Generator<int, Send, null|Event|TimedOut, InGame|LoginFailedEvent|TimedOut> */
     #[Override]
     public function run(): Generator
     {

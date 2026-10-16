@@ -12,6 +12,7 @@ use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Server\AreaId;
+use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Override;
 use Psl\DateTime\Duration;
@@ -24,13 +25,20 @@ final readonly class OpenShopScript implements Script
         private ShopId $shop,
     ) {}
 
-    /** @return Generator<int, Send, ShopLoadedEvent|TimedOut, ShopLoadedEvent|TimedOut> */
+    /**
+     * @return Generator<int, Send, null|Event|TimedOut, ShopLoadedEvent|TimedOut>
+     *
+     * @mago-expect lint:inline-variable-return
+     */
     #[Override]
     public function run(): Generator
     {
-        return yield new Send(
+        /** @var ShopLoadedEvent|TimedOut $answer */
+        $answer = yield new Send(
             new LoadShopCommand($this->area, $this->shop),
             new Await([ShopLoadedEvent::class], Duration::seconds(15)),
         );
+
+        return $answer;
     }
 }

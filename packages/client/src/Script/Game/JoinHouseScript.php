@@ -11,6 +11,7 @@ use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Override;
 use Psl\DateTime\Duration;
@@ -22,13 +23,20 @@ final readonly class JoinHouseScript implements Script
         private PlayerName $owner,
     ) {}
 
-    /** @return Generator<int, Send, MovedToMapEvent|TimedOut, MovedToMapEvent|TimedOut> */
+    /**
+     * @return Generator<int, Send, null|Event|TimedOut, MovedToMapEvent|TimedOut>
+     *
+     * @mago-expect lint:inline-variable-return
+     */
     #[Override]
     public function run(): Generator
     {
-        return yield new Send(
+        /** @var MovedToMapEvent|TimedOut $answer */
+        $answer = yield new Send(
             new JoinHouseCommand($this->owner),
             new Await([MovedToMapEvent::class], Duration::seconds(15)),
         );
+
+        return $answer;
     }
 }

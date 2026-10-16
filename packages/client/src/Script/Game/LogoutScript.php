@@ -8,11 +8,14 @@ use Generator;
 use Lorekeeper\Client\Command\LogoutCommand;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
+use Lorekeeper\Client\Script\TimedOut;
+use Lorekeeper\Server\Event\Event;
 use Override;
 
 /** @implements Script<null> */
 final readonly class LogoutScript implements Script
 {
+    /** @return Generator<int, Send, null|Event|TimedOut, null> */
     #[Override]
     public function run(): Generator
     {

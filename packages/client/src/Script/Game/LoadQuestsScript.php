@@ -13,6 +13,7 @@ use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Server\AreaId;
+use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Override;
 use Psl\DateTime\Duration;
@@ -29,6 +30,7 @@ final readonly class LoadQuestsScript implements Script
         private Duration $interval,
     ) {}
 
+    /** @return Generator<int, Send|Pause, null|Event|TimedOut, list<QuestLoadedEvent|TimedOut>> */
     #[Override]
     public function run(): Generator
     {

@@ -12,6 +12,7 @@ use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\AlreadyInMapEvent;
 use Lorekeeper\Server\Event\Map\MapLockedEvent;
 use Lorekeeper\Server\Event\Map\MapMemberOnlyEvent;
@@ -33,11 +34,16 @@ final readonly class JoinMapScript implements Script
         private Option $room,
     ) {}
 
-    /** @return Generator<int, Send, MovedToMapEvent|AlreadyInMapEvent|MapLockedEvent|MapMemberOnlyEvent|MapNotAvailableEvent|MapRequiresQuestEvent|TimedOut, MovedToMapEvent|AlreadyInMapEvent|MapLockedEvent|MapMemberOnlyEvent|MapNotAvailableEvent|MapRequiresQuestEvent|TimedOut> */
+    /**
+     * @return Generator<int, Send, null|Event|TimedOut, MovedToMapEvent|AlreadyInMapEvent|MapLockedEvent|MapMemberOnlyEvent|MapNotAvailableEvent|MapRequiresQuestEvent|TimedOut>
+     *
+     * @mago-expect lint:inline-variable-return
+     */
     #[Override]
     public function run(): Generator
     {
-        return yield new Send(
+        /** @var MovedToMapEvent|AlreadyInMapEvent|MapLockedEvent|MapMemberOnlyEvent|MapNotAvailableEvent|MapRequiresQuestEvent|TimedOut $answer */
+        $answer = yield new Send(
             new JoinMapCommand($this->player, $this->map, $this->room),
             new Await([
                 MovedToMapEvent::class,
@@ -48,5 +54,7 @@ final readonly class JoinMapScript implements Script
                 MapRequiresQuestEvent::class,
             ], Duration::seconds(15)),
         );
+
+        return $answer;
     }
 }
