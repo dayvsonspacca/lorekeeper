@@ -1,5 +1,6 @@
 **/vendor
 **/composer.lock
+!apps/wiki/composer.lock
 .cache/**
 *.sqlite
 var/

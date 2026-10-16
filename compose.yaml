@@ -1,0 +1,15 @@
+services:
+  wiki:
+    build: apps/wiki/docker
+    restart: unless-stopped
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /app/apps/wiki
+    command: ./docker/start.sh
+    ports:
+      - "127.0.0.1:8765:8000"
+    environment:
+      HOME: /tmp
+      XDG_CONFIG_HOME: /tmp
+      XDG_DATA_HOME: /tmp
+    volumes:
+      - .:/app

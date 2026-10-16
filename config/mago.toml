@@ -2,9 +2,9 @@ php-version = "8.4.0"
 
 [source]
 workspace = "."
-paths = ["packages"]
-includes = ["vendor"]
-excludes = ["*packages/**/vendor/*"]
+paths = ["packages", "apps/wiki/app", "apps/wiki/bootstrap", "apps/wiki/config", "apps/wiki/database", "apps/wiki/public", "apps/wiki/routes", "apps/wiki/tests"]
+includes = ["vendor", "apps/wiki/vendor"]
+excludes = ["*packages/**/vendor/*", "*apps/wiki/bootstrap/cache/*"]
 
 [formatter]
 preset = "default"
@@ -24,13 +24,13 @@ too-many-enum-cases = { enabled = false }
 
 [analyzer]
 plugins = ["psl"]
-excludes = ["*/packages/**/tests/*"]
+excludes = ["*/packages/**/tests/*", "*/apps/wiki/bootstrap/*", "*/apps/wiki/config/*", "*/apps/wiki/database/*", "*/apps/wiki/public/*", "*/apps/wiki/routes/*", "*/apps/wiki/tests/*"]
 
 # Layer boundaries. Core is pure: no I/O, no protocol knowledge, depends on nothing
 # but PSL types.
 [guard]
 mode = "perimeter"
-excludes = ["*/packages/**/tests/*"]
+excludes = ["*/packages/**/tests/*", "*/apps/wiki/bootstrap/*", "*/apps/wiki/config/*", "*/apps/wiki/database/*", "*/apps/wiki/public/*", "*/apps/wiki/routes/*", "*/apps/wiki/tests/*"]
 
 [guard.perimeter.layers]
 ext = ["@native", "@global", "Psl\\**"]
@@ -46,3 +46,7 @@ permit = ["@layer:ext", "Lorekeeper\\Server\\**", "Lorekeeper\\Core\\**"]
 [[guard.perimeter.rules]]
 namespace = "Lorekeeper\\Client"
 permit = ["@layer:ext", "Lorekeeper\\Client\\**", "Lorekeeper\\Server\\**", "Lorekeeper\\Core\\**"]
+
+[[guard.perimeter.rules]]
+namespace = "Lorekeeper\\Apps\\Wiki"
+permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**"]

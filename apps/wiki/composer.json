@@ -1,0 +1,56 @@
+{
+    "name": "dayvsonspacca/lorekeeper-wiki",
+    "description": "A structured wiki for AdventureQuest Worlds",
+    "type": "project",
+    "license": "MIT",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../packages/core"
+        },
+        {
+            "type": "path",
+            "url": "../../packages/server"
+        },
+        {
+            "type": "path",
+            "url": "../../packages/client"
+        }
+    ],
+    "require": {
+        "php": "~8.4.0 || ~8.5.0",
+        "dayvsonspacca/lorekeeper-client": "dev-main",
+        "dayvsonspacca/lorekeeper-core": "dev-main",
+        "dayvsonspacca/lorekeeper-server": "dev-main",
+        "filament/filament": "^5.10",
+        "laravel/framework": "^13.37"
+    },
+    "require-dev": {
+        "mockery/mockery": "^1.6",
+        "phpunit/phpunit": "^12.5.12"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lorekeeper\\Apps\\Wiki\\": "app/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Lorekeeper\\Apps\\Wiki\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
