@@ -10,7 +10,7 @@ excludes = ["*packages/**/vendor/*", "*apps/wiki/bootstrap/cache/*"]
 preset = "default"
 
 [linter]
-integrations = ["phpunit", "psl"]
+integrations = ["laravel", "phpunit", "psl"]
 
 [linter.rules]
 psl-string-functions = { enabled = false }
@@ -24,7 +24,7 @@ too-many-enum-cases = { enabled = false }
 
 [analyzer]
 plugins = ["psl"]
-excludes = ["*/packages/**/tests/*", "*/apps/wiki/bootstrap/*", "*/apps/wiki/config/*", "*/apps/wiki/database/*", "*/apps/wiki/public/*", "*/apps/wiki/routes/*", "*/apps/wiki/tests/*"]
+excludes = ["*/packages/**/tests/*", "*/apps/wiki/*"]
 
 # Layer boundaries. Core is pure: no I/O, no protocol knowledge, depends on nothing
 # but PSL types.
@@ -49,4 +49,4 @@ permit = ["@layer:ext", "Lorekeeper\\Client\\**", "Lorekeeper\\Server\\**", "Lor
 
 [[guard.perimeter.rules]]
 namespace = "Lorekeeper\\Apps\\Wiki"
-permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**"]
+permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**", "Symfony\\**"]
