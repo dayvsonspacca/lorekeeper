@@ -42,6 +42,21 @@ final class BotRun extends Model
         return $this->hasMany(BotRunLog::class);
     }
 
+    public function duration(): ?string
+    {
+        if ($this->started_at === null) {
+            return null;
+        }
+
+        $seconds = (int) $this->started_at->diffInSeconds($this->finished_at ?? now());
+
+        return match (true) {
+            $seconds < 60 => "{$seconds}s",
+            $seconds < 3600 => sprintf('%dm %02ds', intdiv($seconds, num2: 60), $seconds % 60),
+            default => sprintf('%dh %02dm', intdiv($seconds, num2: 3600), intdiv($seconds % 3600, num2: 60)),
+        };
+    }
+
     public function log(string $message): void
     {
         $this->logs()->create(['message' => $message]);

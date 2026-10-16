@@ -49,4 +49,4 @@ permit = ["@layer:ext", "Lorekeeper\\Client\\**", "Lorekeeper\\Server\\**", "Lor
 
 [[guard.perimeter.rules]]
 namespace = "Lorekeeper\\Apps\\Wiki"
-permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**", "Symfony\\**"]
+permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**", "Livewire\\**", "Symfony\\**"]

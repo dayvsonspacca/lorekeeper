@@ -17,6 +17,8 @@ final class StopRunAction
             ->icon(Heroicon::OutlinedStop)
             ->color('danger')
             ->requiresConfirmation()
+            ->modalHeading('Stop this run?')
+            ->modalDescription('The bot logs out and the run ends as stopped.')
             ->visible(static fn(BotRun $record): bool => in_array(
                 $record->status,
                 [RunStatus::Pending, RunStatus::Running],
@@ -24,6 +26,7 @@ final class StopRunAction
             ))
             ->action(static function (BotRun $record): void {
                 $record->update(['status' => RunStatus::Stopping]);
-            });
+            })
+            ->successNotificationTitle('Stopping');
     }
 }

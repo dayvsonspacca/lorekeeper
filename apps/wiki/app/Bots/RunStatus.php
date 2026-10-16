@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Wiki\Bots;
 
 use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
+use Filament\Support\Icons\Heroicon;
 use Override;
 
-enum RunStatus: string implements HasLabel, HasColor
+enum RunStatus: string implements HasLabel, HasColor, HasIcon
 {
     case Pending = 'pending';
     case Running = 'running';
@@ -41,6 +43,20 @@ enum RunStatus: string implements HasLabel, HasColor
             self::Disconnected => 'warning',
             self::Failed => 'danger',
             self::Stopped, self::Finished => 'gray',
+        };
+    }
+
+    #[Override]
+    public function getIcon(): Heroicon
+    {
+        return match ($this) {
+            self::Pending => Heroicon::OutlinedClock,
+            self::Running => Heroicon::OutlinedPlayCircle,
+            self::Stopping => Heroicon::OutlinedPauseCircle,
+            self::Stopped => Heroicon::OutlinedStopCircle,
+            self::Finished => Heroicon::OutlinedCheckCircle,
+            self::Disconnected => Heroicon::OutlinedSignalSlash,
+            self::Failed => Heroicon::OutlinedExclamationTriangle,
         };
     }
 }

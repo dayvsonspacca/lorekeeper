@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property int $id
@@ -23,6 +24,12 @@ final class Account extends Model
     public function runs(): HasMany
     {
         return $this->hasMany(BotRun::class);
+    }
+
+    /** @return HasOne<BotRun, $this> */
+    public function latestRun(): HasOne
+    {
+        return $this->hasOne(BotRun::class)->latestOfMany();
     }
 
     /**

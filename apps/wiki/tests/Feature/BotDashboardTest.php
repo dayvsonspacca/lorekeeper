@@ -14,7 +14,7 @@ use Lorekeeper\Apps\Wiki\Filament\Resources\Accounts\Pages\ManageAccounts;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\CreateBotRun;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\ListBotRuns;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\ViewBotRun;
-use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\RelationManagers\LogsRelationManager;
+use Lorekeeper\Apps\Wiki\Livewire\RunLog;
 use Lorekeeper\Apps\Wiki\Models\Account;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Apps\Wiki\Models\User;
@@ -41,68 +41,123 @@ final class BotDashboardTest extends TestCase
     }
 
     #[Test]
-    public function accounts_keep_their_password_unless_a_new_one_is_typed(): void
+    public function accounts_pick_a_server_and_keep_their_password_unless_a_new_one_is_typed(): void
     {
         $this->actingAs($this->user());
         $first = bin2hex(random_bytes(8));
 
         Livewire::test(ManageAccounts::class)
-            ->callAction(CreateAction::class, ['name' => 'Hero', 'password' => $first])
+            ->callAction(CreateAction::class, ['name' => 'Hero', 'password' => $first, 'server' => 'Twilly'])
             ->assertHasNoActionErrors();
         $account = Account::query()->sole();
 
         Livewire::test(ManageAccounts::class)->callTableAction(EditAction::class, $account, [
             'name' => 'Hero',
             'password' => '',
-            'server' => 'Twilly',
+            'server' => 'Espada',
         ])->assertHasNoTableActionErrors();
 
         $account->refresh();
         static::assertSame($first, $account->password);
-        static::assertSame('Twilly', $account->server);
+        static::assertSame('Espada', $account->server);
     }
 
     #[Test]
-    public function new_runs_wait_for_the_supervisor_and_can_be_stopped(): void
+    public function the_run_form_asks_for_what_the_chosen_script_needs(): void
     {
         $this->actingAs($this->user());
-        $account = Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
+        $account = $this->account();
 
         Livewire::test(CreateBotRun::class)
-            ->fillForm([
-                'account_id' => $account->id,
-                'script' => BotScript::StayInMap->value,
-                'parameters' => ['map' => 'forest'],
-            ])
+            ->assertDontSee('Parameters')
+            ->fillForm(['account_id' => $account->id, 'script' => BotScript::StayInMap->value])
+            ->assertSee('Parameters')
+            ->fillForm(['parameters' => ['map' => 'forest']])
             ->call('create')
-            ->assertHasNoFormErrors();
-        $run = BotRun::query()->sole();
+            ->assertHasNoFormErrors()
+            ->assertRedirect("/admin/bot-runs/{$account->runs()->sole()->id}");
 
+        $run = BotRun::query()->sole();
         static::assertSame(RunStatus::Pending, $run->status);
         static::assertSame(['map' => 'forest'], $run->parameters);
-
-        Livewire::test(ListBotRuns::class)->assertCanSeeTableRecords([$run])->callTableAction('stop', $run);
-
-        static::assertSame(RunStatus::Stopping, $run->refresh()->status);
     }
 
     #[Test]
-    public function a_run_shows_its_log(): void
+    public function accounts_start_runs_and_runs_can_be_stopped_and_run_again(): void
+    {
+        $this->actingAs($this->user());
+        $account = $this->account();
+
+        Livewire::test(ManageAccounts::class)
+            ->callTableAction('startRun', $account, [
+                'script' => BotScript::StayInMap->value,
+                'parameters' => ['map' => 'battleon'],
+            ])
+            ->assertHasNoTableActionErrors();
+        $run = BotRun::query()->sole();
+
+        Livewire::test(ListBotRuns::class)->assertCanSeeTableRecords([$run])->callTableAction('stop', $run);
+        static::assertSame(RunStatus::Stopping, $run->refresh()->status);
+
+        $run->update(['status' => RunStatus::Stopped]);
+        Livewire::test(ViewBotRun::class, ['record' => $run->id])->callAction('runAgain');
+
+        static::assertSame(2, $account->runs()->count());
+        static::assertSame(['map' => 'battleon'], $account->runs()->latest('id')->firstOrFail()->parameters);
+    }
+
+    #[Test]
+    public function a_run_shows_its_log_like_a_terminal(): void
     {
         $run = $this->botRun();
+        $run->update(['status' => RunStatus::Failed, 'started_at' => now()->subMinutes(2), 'finished_at' => now()]);
         $run->log('> Login < LoginSucceeded');
+        $run->log('> LoadShop … timed out after 15s');
+        $run->log('= failed: no open server');
 
-        Livewire::test(LogsRelationManager::class, ['ownerRecord' => $run, 'pageClass' => ViewBotRun::class])
-            ->assertCanSeeTableRecords($run->logs()->get())
-            ->assertSee('> Login < LoginSucceeded');
+        Livewire::test(RunLog::class, ['run' => $run])
+            ->assertSeeInOrder([
+                '> Login < LoginSucceeded',
+                '> LoadShop … timed out after 15s',
+                '= failed: no open server',
+            ])
+            ->assertSee('Failed')
+            ->assertSee('2m 00s')
+            ->assertDontSeeHtml('wire:poll');
+    }
+
+    #[Test]
+    public function the_log_tells_the_page_when_the_run_changes(): void
+    {
+        $run = $this->botRun();
+        $log = Livewire::test(RunLog::class, ['run' => $run])->assertSeeHtml('wire:poll.2s="refreshRun"');
+
+        $log->call('refreshRun')->assertNotDispatched('run-changed');
+
+        $run->update(['status' => RunStatus::Running, 'started_at' => now()]);
+        $log->call('refreshRun')->assertDispatched('run-changed')->assertSee('Running');
+
+        Livewire::test(ViewBotRun::class, ['record' => $run->id])
+            ->assertActionVisible('stop')
+            ->tap(static fn() => $run->update(['status' => RunStatus::Stopped, 'finished_at' => now()]))
+            ->dispatch('run-changed')
+            ->assertActionHidden('stop')
+            ->assertActionVisible('runAgain');
     }
 
     private function botRun(): BotRun
     {
         $this->actingAs($this->user());
-        $account = Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
 
-        return $account->runs()->create(['script' => BotScript::StayInMap, 'parameters' => ['map' => 'battleon']]);
+        return $this
+            ->account()
+            ->runs()
+            ->create(['script' => BotScript::StayInMap, 'parameters' => ['map' => 'battleon']]);
+    }
+
+    private function account(): Account
+    {
+        return Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
     }
 
     private function user(): User

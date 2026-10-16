@@ -22,7 +22,7 @@ final class AdminPanelTest extends TestCase
     }
 
     #[Test]
-    public function users_reach_the_dashboard(): void
+    public function users_land_on_the_accounts(): void
     {
         $hero = User::query()->create([
             'name' => 'Hero',
@@ -30,6 +30,7 @@ final class AdminPanelTest extends TestCase
             'password' => bin2hex(random_bytes(16)),
         ]);
 
-        $this->actingAs($hero)->get('/admin')->assertOk();
+        $this->actingAs($hero)->get('/admin')->assertRedirect('/admin/accounts');
+        $this->actingAs($hero)->get('/admin/accounts')->assertOk();
     }
 }
