@@ -13,3 +13,17 @@ services:
       XDG_DATA_HOME: /tmp
     volumes:
       - .:/app
+
+  bots:
+    build: apps/wiki/docker
+    restart: unless-stopped
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /app/apps/wiki
+    command: ./docker/supervise.sh
+    stop_grace_period: 30s
+    depends_on:
+      - wiki
+    environment:
+      HOME: /tmp
+    volumes:
+      - .:/app
