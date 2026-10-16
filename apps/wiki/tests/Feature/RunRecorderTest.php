@@ -9,7 +9,9 @@ use Lorekeeper\Apps\Wiki\Bots\LogLevel;
 use Lorekeeper\Apps\Wiki\Bots\RunRecorder;
 use Lorekeeper\Apps\Wiki\Models\Account;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
+use Lorekeeper\Apps\Wiki\Models\BotRunEvent;
 use Lorekeeper\Apps\Wiki\Models\BotRunLog;
+use Lorekeeper\Apps\Wiki\Models\Player;
 use Lorekeeper\Apps\Wiki\Tests\TestCase;
 use Lorekeeper\Client\Command\LogoutCommand;
 use Lorekeeper\Client\Script\Pause;
@@ -31,9 +33,11 @@ final class RunRecorderTest extends TestCase
         $recorder = new RunRecorder($run);
 
         $recorder->heard(JsonMessage::from('{"b":{"o":{"cmd":"equipItem","uid":7,"ItemID":31660}}}')->unwrap());
-        $recorder->heard(DelimitedMessage::from('%xt%uotls%-1%hero%afk:true%')->unwrap());
+        $recorder->heard(DelimitedMessage::from('%xt%clearAuras%-1%')->unwrap());
         $recorder->heard(JsonMessage::from('{"b":{"o":{"cmd":"loadPrefs"}}}')->unwrap());
-        $recorder->heard(XmlMessage::from("<msg t='sys'><body action='uER' r='1'/></msg>")->unwrap());
+        $recorder->heard(
+            XmlMessage::from("<msg t='sys'><body action='userGone' r='2'><user id='1' /></body></msg>")->unwrap(),
+        );
         $recorder->heard(JsonMessage::from('{"b":{"o":{"cmd":"equipItem","uid":7}}}')->unwrap());
 
         $events = $run->events()->orderBy('id')->get();
@@ -44,13 +48,59 @@ final class RunRecorderTest extends TestCase
         );
         static::assertSame('Socket 7 equipped item 31660', $events[0]->summary);
         static::assertNull($events[0]->raw);
-        static::assertSame(['uotls', 'loadPrefs', 'uER'], [
+        static::assertSame(['clearAuras', 'loadPrefs', 'userGone'], [
             $events[1]->summary,
             $events[2]->summary,
             $events[3]->summary,
         ]);
-        static::assertSame('%xt%uotls%-1%hero%afk:true%', $events[1]->raw);
+        static::assertSame('%xt%clearAuras%-1%', $events[1]->raw);
         static::assertSame(LogLevel::Error, $run->logs()->sole()->level);
+    }
+
+    #[Test]
+    public function it_saves_the_players_it_hears_about(): void
+    {
+        $recorder = new RunRecorder($this->botRun());
+
+        $recorder->heard(
+            XmlMessage::from(
+                "<msg t='sys'><body action='joinOK' r='1'><uLs r='1'><u i='1'><n><![CDATA[hero]]></n></u></uLs></body></msg>",
+            )->unwrap(),
+        );
+        $recorder->heard(
+            JsonMessage::from(
+                '{"b":{"o":{"cmd":"moveToArea","areaId":1,"areaName":"battleon-1","strMapName":"battleon","strMapFileName":"town.swf","uoBranch":[{"strUsername":"Hero"},{"strUsername":"Hero 2"}],"monBranch":[]}}}',
+            )->unwrap(),
+        );
+        $recorder->heard(
+            XmlMessage::from(
+                "<msg t='sys'><body action='uER' r='1'><u i='3'><n><![CDATA[hero 3]]></n></u></body></msg>",
+            )->unwrap(),
+        );
+        $recorder->heard(DelimitedMessage::from('%xt%uotls%-1%hero 2%afk:true%')->unwrap());
+        $recorder->heard(DelimitedMessage::from('%xt%exitArea%-1%4%hero 4%')->unwrap());
+
+        static::assertSame(
+            ['Hero', 'Hero 2', 'hero 3', 'hero 4'],
+            Player::query()
+                ->orderBy('id')
+                ->pluck('name')
+                ->all(),
+        );
+        static::assertSame(
+            [null],
+            Player::query()
+                ->distinct()
+                ->pluck('aqw_id')
+                ->all(),
+        );
+        static::assertSame(
+            ['RoomJoined', 'MovedToMap', 'PlayerEntered', 'PlayerUpdated', 'PlayerLeft'],
+            BotRunEvent::query()
+                ->orderBy('id')
+                ->pluck('name')
+                ->all(),
+        );
     }
 
     #[Test]

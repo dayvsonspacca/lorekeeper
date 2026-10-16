@@ -22,6 +22,10 @@ use Lorekeeper\Server\Event\Map\MapMemberOnlyEvent;
 use Lorekeeper\Server\Event\Map\MapNotAvailableEvent;
 use Lorekeeper\Server\Event\Map\MapRequiresQuestEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
+use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
+use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
+use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedQuest;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
@@ -62,6 +66,10 @@ final readonly class EventSummary
             $event instanceof MapNotAvailableEvent => "{$event->mapName->value} is not available",
             $event instanceof MapRequiresQuestEvent => 'That map requires special quest actions',
             $event instanceof MovedToMapEvent => self::moved($event),
+            $event instanceof RoomJoinedEvent => 'Joined a room with ' . count($event->players) . ' players',
+            $event instanceof PlayerEnteredEvent => "{$event->name->value} (socket {$event->socketId->value}) entered",
+            $event instanceof PlayerLeftEvent => "{$event->name->value} (socket {$event->socketId->value}) left",
+            $event instanceof PlayerUpdatedEvent => "{$event->name->value} updated",
             $event instanceof QuestLoadedEvent => self::quests($event),
             $event instanceof ShopLoadedEvent => "{$event->name->value}: " . count($event->items) . ' items',
             default => self::name($event),

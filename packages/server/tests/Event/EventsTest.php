@@ -51,7 +51,7 @@ final class EventsTest extends TestCase
         static::assertCount(1, $policy);
         static::assertInstanceOf(ConnectionEstablishedEvent::class, $policy[0]);
         static::assertInstanceOf(ItemEquippedEvent::class, $equip[0]);
-        static::assertSame([], Events::recognize(DelimitedMessage::from('%xt%uotls%-1%hero%afk:true%')->unwrap()));
+        static::assertSame([], Events::recognize(DelimitedMessage::from('%xt%clearAuras%-1%')->unwrap()));
     }
 
     #[Test]

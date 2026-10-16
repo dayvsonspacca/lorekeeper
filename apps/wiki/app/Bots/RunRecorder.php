@@ -7,12 +7,18 @@ namespace Lorekeeper\Apps\Wiki\Bots;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Apps\Wiki\Models\BotRunEvent;
 use Lorekeeper\Apps\Wiki\Models\BotTask;
+use Lorekeeper\Apps\Wiki\Models\Player;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\TimedOut;
+use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Events;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
+use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
+use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
+use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -51,6 +57,10 @@ final class RunRecorder
 
             if ($event instanceof MovedToMapEvent) {
                 $this->at(new Position($event->map, $event->areaId));
+            }
+
+            foreach (self::players($event) as $player) {
+                Player::saw($player);
             }
 
             $this->event(EventSummary::name($event), EventSummary::of($event));
@@ -106,6 +116,19 @@ final class RunRecorder
             $message instanceof DelimitedMessage => $message->data[1] ?? $message->data[0],
             $message instanceof XmlMessage => self::xmlAction($message),
             default => 'message',
+        };
+    }
+
+    /** @return list<PlayerName> */
+    private static function players(Event $event): array
+    {
+        return match (true) {
+            $event instanceof MovedToMapEvent, $event instanceof RoomJoinedEvent => $event->players,
+            $event instanceof PlayerEnteredEvent,
+            $event instanceof PlayerLeftEvent,
+            $event instanceof PlayerUpdatedEvent,
+                => [$event->name],
+            default => [],
         };
     }
 

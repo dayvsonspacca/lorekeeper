@@ -16,6 +16,10 @@ use Lorekeeper\Server\Event\Map\MapMemberOnlyEvent;
 use Lorekeeper\Server\Event\Map\MapNotAvailableEvent;
 use Lorekeeper\Server\Event\Map\MapRequiresQuestEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
+use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
+use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
+use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -42,6 +46,10 @@ final readonly class Events
         MapNotAvailableEvent::class,
         MapRequiresQuestEvent::class,
         MovedToMapEvent::class,
+        RoomJoinedEvent::class,
+        PlayerEnteredEvent::class,
+        PlayerLeftEvent::class,
+        PlayerUpdatedEvent::class,
         QuestLoadedEvent::class,
         ShopLoadedEvent::class,
     ];
