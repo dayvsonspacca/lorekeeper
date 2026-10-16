@@ -19,4 +19,9 @@ enum Weapon
     case Sword;
     case Wand;
     case Whip;
+
+    public function parent(): Equipment
+    {
+        return Equipment::Weapon;
+    }
 }

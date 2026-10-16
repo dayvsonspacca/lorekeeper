@@ -9,4 +9,9 @@ enum Misc
     case Boost;
     case Enhancement;
     case Generic;
+
+    public function parent(): Category
+    {
+        return Category::Misc;
+    }
 }

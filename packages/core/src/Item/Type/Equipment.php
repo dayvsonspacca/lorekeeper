@@ -14,4 +14,9 @@ enum Equipment
     case Necklace;
     case Pet;
     case Weapon;
+
+    public function parent(): Category
+    {
+        return Category::Equipment;
+    }
 }

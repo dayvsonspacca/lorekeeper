@@ -9,4 +9,9 @@ enum House
     case Floor;
     case House;
     case Wall;
+
+    public function parent(): Category
+    {
+        return Category::House;
+    }
 }
