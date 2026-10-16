@@ -30,7 +30,7 @@ final class AdminPanelProvider extends PanelProvider
             ->brandName('Lorekeeper')
             ->colors(['primary' => Color::Indigo])
             ->sidebarCollapsibleOnDesktop()
-            ->navigationGroups(['Bots'])
+            ->navigationGroups(['Bots', 'Game'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'Lorekeeper\Apps\Wiki\Filament\Resources')
             ->middleware([
                 EncryptCookies::class,
