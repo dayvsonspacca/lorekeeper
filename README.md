@@ -1,5 +1,8 @@
 # Lorekeeper
 
+[![CI](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/ci.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-report-blue)](https://dayvsonspacca.github.io/lorekeeper/)
+
 A self-updating knowledge base and wiki for [AdventureQuest Worlds](https://www.aq.com/).
 
 Lorekeeper learns about the game straight from the game itself: it talks to the game servers like the client does, reads the
@@ -87,7 +90,11 @@ just lint      # mago lint
 just analyze   # mago static analysis
 just fmt       # mago formatter
 just guard     # layer boundaries
+just coverage  # tests with coverage (pcov or Xdebug), HTML report in var/coverage
 ```
+
+CI runs all of the above on every push, plus the tests on PHP 8.4 and a frontend build. Each push to `main` publishes
+the [coverage report](https://dayvsonspacca.github.io/lorekeeper/) to GitHub Pages.
 
 ## License
 

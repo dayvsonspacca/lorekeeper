@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_EXTENSIONS: intl, pdo_sqlite, pcntl, curl, xmlreader
+
+jobs:
+  quality:
+    name: Quality (mago)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: none
+      - uses: extractions/setup-just@v4
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/composer
+          key: composer-8.5-${{ hashFiles('composer.json', 'packages/*/composer.json') }}
+      - run: just install
+      - run: just fmt --dry-run
+      - run: just lint
+      - run: just analyze
+      - run: just guard
+
+  tests:
+    name: Tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.4', '8.5']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ${{ env.PHP_EXTENSIONS }}
+          coverage: ${{ matrix.php == '8.5' && 'pcov' || 'none' }}
+      - uses: extractions/setup-just@v4
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/composer
+          key: composer-${{ matrix.php }}-${{ hashFiles('composer.json', 'packages/*/composer.json') }}
+      - run: just install
+      - if: matrix.php != '8.5'
+        run: just test --no-progress
+      - if: matrix.php == '8.5'
+        run: just coverage --no-progress
+      - if: matrix.php == '8.5'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: var/coverage
+
+  frontend:
+    name: Wiki frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/wiki/web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: packages/wiki/web/package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+  coverage:
+    name: Publish coverage
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [quality, tests, frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
