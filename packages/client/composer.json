@@ -5,11 +5,15 @@
   "version": "dev-main",
   "require": {
     "php": "~8.4.0 || ~8.5.0",
+    "ext-curl": "*",
     "ext-zlib": "*",
     "dayvsonspacca/lorekeeper-core": "dev-main",
     "dayvsonspacca/lorekeeper-server": "dev-main",
     "php-standard-library/type": "^6.2",
-    "php-standard-library/option": "^6.2"
+    "php-standard-library/option": "^6.2",
+    "php-standard-library/io": "^6.2",
+    "php-standard-library/tcp": "^6.2",
+    "php-standard-library/network": "^6.2"
   },
   "autoload": {
     "psr-4": {
