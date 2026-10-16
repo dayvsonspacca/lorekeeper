@@ -13,11 +13,16 @@
         {
             "type": "path",
             "url": "packages/core"
+        },
+        {
+            "type": "path",
+            "url": "packages/server"
         }
     ],
     "require": {
         "php": "~8.4.0 || ~8.5.0",
-        "dayvsonspacca/lorekeeper-core": "dev-main"
+        "dayvsonspacca/lorekeeper-core": "dev-main",
+        "dayvsonspacca/lorekeeper-server": "dev-main"
     },
     "require-dev": {
         "phpunit/phpunit": "^13.0.5",
@@ -27,7 +32,8 @@
     "prefer-stable": true,
     "autoload-dev": {
         "psr-4": {
-            "Lorekeeper\\Core\\Tests\\": "packages/core/tests/"
+            "Lorekeeper\\Core\\Tests\\": "packages/core/tests/",
+            "Lorekeeper\\Server\\Tests\\": "packages/server/tests/"
         }
     },
     "config": {

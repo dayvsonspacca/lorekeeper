@@ -1,0 +1,19 @@
+{
+  "name": "dayvsonspacca/lorekeeper-server",
+  "description": "What the AQW server says and what it is",
+  "license": "MIT",
+  "version": "dev-main",
+  "require": {
+    "php": "~8.4.0 || ~8.5.0",
+    "ext-dom": "*",
+    "dayvsonspacca/lorekeeper-core": "dev-main",
+    "php-standard-library/type": "^6.2",
+    "php-standard-library/option": "^6.2",
+    "php-standard-library/network": "^6.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Lorekeeper\\Server\\": "src/"
+    }
+  }
+}

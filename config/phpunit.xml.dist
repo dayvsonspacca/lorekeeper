@@ -14,10 +14,14 @@
         <testsuite name="core">
             <directory>../packages/core/tests</directory>
         </testsuite>
+        <testsuite name="server">
+            <directory>../packages/server/tests</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>../packages/core/src</directory>
+            <directory>../packages/server/src</directory>
         </include>
     </source>
 </phpunit>
