@@ -66,26 +66,10 @@ jobs:
         with:
           path: var/coverage
 
-  frontend:
-    name: Wiki frontend
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/wiki/web
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: packages/wiki/web/package-lock.json
-      - run: npm ci
-      - run: npm run build
-
   coverage:
     name: Publish coverage
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [quality, tests, frontend]
+    needs: [quality, tests]
     runs-on: ubuntu-latest
     permissions:
       pages: write

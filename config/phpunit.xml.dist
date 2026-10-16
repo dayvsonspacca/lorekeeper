@@ -14,26 +14,10 @@
         <testsuite name="core">
             <directory>../packages/core/tests</directory>
         </testsuite>
-        <testsuite name="protocol">
-            <directory>../packages/protocol/tests</directory>
-        </testsuite>
-        <testsuite name="miner">
-            <directory>../packages/miner/tests</directory>
-        </testsuite>
-        <testsuite name="persistence">
-            <directory>../packages/persistence/tests</directory>
-        </testsuite>
-        <testsuite name="wiki">
-            <directory>../packages/wiki/tests</directory>
-        </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>../packages/core/src</directory>
-            <directory>../packages/protocol/src</directory>
-            <directory>../packages/miner/src</directory>
-            <directory>../packages/persistence/src</directory>
-            <directory>../packages/wiki/src</directory>
         </include>
     </source>
 </phpunit>
