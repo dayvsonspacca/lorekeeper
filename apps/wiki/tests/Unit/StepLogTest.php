@@ -4,44 +4,132 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Wiki\Tests\Unit;
 
+use Lorekeeper\Apps\Wiki\Bots\LogLevel;
 use Lorekeeper\Apps\Wiki\Bots\StepLog;
 use Lorekeeper\Client\ClientVersion;
+use Lorekeeper\Client\Command\Command;
+use Lorekeeper\Client\Command\JoinHouseCommand;
+use Lorekeeper\Client\Command\JoinInitialMapCommand;
+use Lorekeeper\Client\Command\JoinMapCommand;
+use Lorekeeper\Client\Command\LoadShopCommand;
 use Lorekeeper\Client\Command\LoginCommand;
 use Lorekeeper\Client\Command\LogoutCommand;
+use Lorekeeper\Client\Command\PolicyFileRequestCommand;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
+use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Shop\ShopId;
+use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\Event\ConnectionEstablishedEvent;
+use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
+use Lorekeeper\Server\Event\LoginFailedEvent;
 use Lorekeeper\Server\Event\LoginSucceededEvent;
+use Lorekeeper\Server\Event\Map\MapLockedEvent;
+use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\RoomId;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;
+use Psl\Option;
 
 final class StepLogTest extends TestCase
 {
     #[Test]
-    public function it_describes_each_step_by_name_only(): void
+    public function it_tells_what_happened_in_plain_words(): void
     {
-        $login = new Send(
-            new LoginCommand(new PlayerName('Hero'), 'TOKEN', new ClientVersion('5.1')),
-            new Await([LoginSucceededEvent::class], Duration::seconds(15)),
+        $login = self::send(new LoginCommand(new PlayerName('Hero'), 'TOKEN', new ClientVersion('5.1')));
+        $joinMap = self::send(new JoinMapCommand(new PlayerName('Hero'), new MapName('forest'), Option\none()));
+
+        static::assertSame(
+            [LogLevel::Info, 'Connected'],
+            StepLog::describe(self::send(new PolicyFileRequestCommand()), new ConnectionEstablishedEvent()),
         );
+        static::assertSame(
+            [LogLevel::Success, 'Logged in'],
+            StepLog::describe($login, new LoginSucceededEvent(new SocketId(1))),
+        );
+        static::assertSame([LogLevel::Error, 'Login refused'], StepLog::describe($login, new LoginFailedEvent()));
+        static::assertSame(
+            [LogLevel::Success, 'Entered the game in battleon (room 2)'],
+            StepLog::describe(self::send(new JoinInitialMapCommand()), self::moved('battleon', 2)),
+        );
+        static::assertSame(
+            [LogLevel::Success, 'Moved to forest (room 1) · 0 monsters, 0 players'],
+            StepLog::describe($joinMap, self::moved('forest', 1)),
+        );
+        static::assertSame(
+            [LogLevel::Success, 'Entered the house in house'],
+            StepLog::describe(self::send(new JoinHouseCommand(new PlayerName('Hero'))), self::moved('house', 1)),
+        );
+        static::assertSame([LogLevel::Warning, 'The map is locked'], StepLog::describe($joinMap, new MapLockedEvent()));
+        static::assertSame(
+            [LogLevel::Info, 'Inventory loaded: 0 items'],
+            StepLog::describe($joinMap, new PlayerInventoryLoadedEvent([])),
+        );
+    }
+
+    #[Test]
+    public function it_warns_about_answers_that_never_came(): void
+    {
+        $shop = self::send(new LoadShopCommand(new AreaId(1), new ShopId(31)));
         $await = new Await([ConnectionEstablishedEvent::class], Duration::seconds(15));
 
-        static::assertSame('> Login < LoginSucceeded', StepLog::describe(
-            $login,
-            new LoginSucceededEvent(new SocketId(1)),
-        ));
-        static::assertSame('> Logout', StepLog::describe(new Send(new LogoutCommand()), null));
-        static::assertSame('… < ConnectionEstablished', StepLog::describe($await, new ConnectionEstablishedEvent()));
-        static::assertSame('… … timed out after 15s', StepLog::describe($await, new TimedOut($await)));
-        static::assertSame('… paused 60s', StepLog::describe(new Pause(Duration::minutes(1)), null));
-        static::assertStringStartsWith('? Instruction@anonymous', StepLog::describe(new class() implements
-            Instruction {}, null));
-        static::assertStringNotContainsString('TOKEN', StepLog::describe($login, null));
+        static::assertSame(
+            [LogLevel::Warning, 'No answer to load shop after 15s'],
+            StepLog::describe($shop, new TimedOut($await)),
+        );
+        static::assertSame(
+            [LogLevel::Warning, 'Nothing arrived after 15s'],
+            StepLog::describe($await, new TimedOut($await)),
+        );
+        static::assertSame([LogLevel::Info, 'Connected'], StepLog::describe($await, new ConnectionEstablishedEvent()));
+    }
+
+    #[Test]
+    public function it_describes_steps_without_answers_and_never_shows_secrets(): void
+    {
+        $login = self::send(new LoginCommand(new PlayerName('Hero'), 'TOKEN', new ClientVersion('5.1')));
+
+        static::assertSame([LogLevel::Info, 'Logged out'], StepLog::describe(new Send(new LogoutCommand()), null));
+        static::assertSame(
+            [LogLevel::Info, 'Sent policy file request'],
+            StepLog::describe(new Send(new PolicyFileRequestCommand()), null),
+        );
+        static::assertSame(
+            [LogLevel::Info, 'Idling for 60s'],
+            StepLog::describe(new Pause(Duration::minutes(1)), null),
+        );
+        static::assertSame(
+            [LogLevel::Warning, 'Unknown step'],
+            StepLog::describe(new class() implements Instruction {}, null),
+        );
+        static::assertStringNotContainsString(
+            'TOKEN',
+            StepLog::describe($login, new LoginSucceededEvent(new SocketId(1)))[1],
+        );
+    }
+
+    private static function send(Command $command): Send
+    {
+        return new Send($command, new Await([ConnectionEstablishedEvent::class], Duration::seconds(15)));
+    }
+
+    private static function moved(string $map, int $room): MovedToMapEvent
+    {
+        return new MovedToMapEvent(
+            new AreaId(1),
+            new RoomId($room),
+            new MapName($map),
+            new Gamefile("{$map}.swf"),
+            [],
+            [],
+            [],
+        );
     }
 }

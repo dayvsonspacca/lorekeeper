@@ -45,6 +45,22 @@ enum BotScript: string implements HasLabel, HasDescription
         };
     }
 
+    /** @return array<string, null> */
+    public static function blankParameters(): array
+    {
+        $keys = array_merge(...array_map(static fn(self $script): array => array_keys(
+            $script->defaults(),
+        ), self::cases()));
+
+        return array_fill_keys($keys, value: null);
+    }
+
+    /** @return non-empty-array<string, string> */
+    public function defaults(): array
+    {
+        return match ($this) { self::StayInMap => ['map' => 'battleon'] };
+    }
+
     /** @param array<string, string> $parameters */
     public function summary(array $parameters): string
     {

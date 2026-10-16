@@ -15,23 +15,34 @@ final class RunLog extends Component
 
     public BotRun $run;
 
-    public string $status = '';
+    public string $seen = '';
 
     public function mount(): void
     {
-        $this->status = $this->run->status->value;
+        $this->seen = $this->signature();
     }
 
     public function refreshRun(): void
     {
         $this->run->refresh();
 
-        if ($this->run->status->value === $this->status) {
+        $signature = $this->signature();
+        if ($signature === $this->seen) {
             return;
         }
 
-        $this->status = $this->run->status->value;
+        $this->seen = $signature;
         $this->dispatch('run-changed');
+    }
+
+    private function signature(): string
+    {
+        return implode('|', [
+            $this->run->status->value,
+            $this->run->started_at?->toIso8601String(),
+            $this->run->finished_at?->toIso8601String(),
+            $this->run->result,
+        ]);
     }
 
     public function render(): View
@@ -45,22 +56,11 @@ final class RunLog extends Component
             ->map(static fn(BotRunLog $log): array => [
                 'at' => $log->created_at->format('H:i:s'),
                 'message' => $log->message,
-                'tone' => self::tone($log->message),
+                'level' => $log->level->value,
             ])
             ->values()
             ->all();
 
         return view('livewire.run-log', ['lines' => $lines]);
-    }
-
-    private static function tone(string $message): string
-    {
-        return match (true) {
-            str_starts_with($message, '= failed'), str_starts_with($message, '? ') => 'danger',
-            str_starts_with($message, '= disconnected'), str_contains($message, 'timed out') => 'warning',
-            str_starts_with($message, '= ') => 'final',
-            str_starts_with($message, '… ') => 'quiet',
-            default => 'step',
-        };
     }
 }

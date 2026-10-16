@@ -14,6 +14,7 @@ use Lorekeeper\Apps\Wiki\Filament\Resources\Accounts\Pages\ManageAccounts;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\CreateBotRun;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\ListBotRuns;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\ViewBotRun;
+use Lorekeeper\Apps\Wiki\Livewire\RunEvents;
 use Lorekeeper\Apps\Wiki\Livewire\RunLog;
 use Lorekeeper\Apps\Wiki\Models\Account;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
@@ -67,6 +68,22 @@ final class BotDashboardTest extends TestCase
     {
         $this->actingAs($this->user());
         $account = $this->account();
+
+        Livewire::test(CreateBotRun::class)
+            ->assertSet('data.parameters', ['map' => null])
+            ->set('data', [
+                'account_id' => $account->id,
+                'script' => BotScript::StayInMap->value,
+                'parameters' => ['map' => null],
+            ])
+            ->set('data.parameters.map', 'battleon')
+            ->call('create')
+            ->assertHasNoFormErrors();
+        $account->runs()->delete();
+
+        Livewire::test(ManageAccounts::class)
+            ->mountTableAction('startRun', $account)
+            ->assertTableActionDataSet(['parameters' => ['map' => null]]);
 
         Livewire::test(CreateBotRun::class)
             ->assertDontSee('Parameters')
@@ -127,6 +144,27 @@ final class BotDashboardTest extends TestCase
     }
 
     #[Test]
+    public function a_run_shows_the_events_it_heard_and_filters_them(): void
+    {
+        $run = $this->botRun();
+        $run->events()->create(['name' => 'ItemEquipped', 'summary' => 'Socket 7 equipped item 31660']);
+        $run->events()->create([
+            'name' => 'Unrecognized',
+            'summary' => 'uotls',
+            'raw' => '%xt%uotls%-1%hero%afk:true%',
+        ]);
+
+        Livewire::test(RunEvents::class, ['run' => $run])
+            ->assertSee('All · 2')
+            ->assertSee('Socket 7 equipped item 31660')
+            ->assertSee('%xt%uotls%-1%hero%afk:true%')
+            ->call('show', 'Unrecognized')
+            ->assertDontSee('Socket 7 equipped item 31660')
+            ->call('show', 'Unrecognized')
+            ->assertSee('Socket 7 equipped item 31660');
+    }
+
+    #[Test]
     public function the_log_tells_the_page_when_the_run_changes(): void
     {
         $run = $this->botRun();
@@ -134,8 +172,11 @@ final class BotDashboardTest extends TestCase
 
         $log->call('refreshRun')->assertNotDispatched('run-changed');
 
-        $run->update(['status' => RunStatus::Running, 'started_at' => now()]);
+        $run->update(['status' => RunStatus::Running]);
         $log->call('refreshRun')->assertDispatched('run-changed')->assertSee('Running');
+
+        $run->update(['started_at' => now()]);
+        $log->call('refreshRun')->assertDispatched('run-changed');
 
         Livewire::test(ViewBotRun::class, ['record' => $run->id])
             ->assertActionVisible('stop')

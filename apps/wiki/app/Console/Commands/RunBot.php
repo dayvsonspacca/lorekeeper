@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Wiki\Console\Commands;
 
 use Illuminate\Console\Command;
+use Lorekeeper\Apps\Wiki\Bots\EventSummary;
+use Lorekeeper\Apps\Wiki\Bots\LogLevel;
+use Lorekeeper\Apps\Wiki\Bots\RunRecorder;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
-use Lorekeeper\Apps\Wiki\Bots\StepLog;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\ClientVersion;
@@ -16,7 +18,6 @@ use Lorekeeper\Client\Login\LoginClient;
 use Lorekeeper\Client\Login\ServerChoice;
 use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Game\LogoutScript;
-use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Player\PlayerName;
@@ -57,10 +58,34 @@ final class RunBot extends Command
             }
         }
 
-        $run->log("= {$status->value}" . ($result === null ? '' : ": {$result}"));
         $run->update(['status' => $status, 'result' => $result, 'pid' => null, 'finished_at' => now()]);
+        $run->log(...self::ending($run));
 
         return self::SUCCESS;
+    }
+
+    private static function reason(mixed $result): string
+    {
+        return match (true) {
+            $result instanceof TimedOut => 'no answer while waiting for '
+                . implode(', ', array_map(static fn(string $event): string => substr(
+                    $event,
+                    (int) strrpos($event, needle: '\\') + 1,
+                ), $result->await->events)),
+            $result instanceof Event => EventSummary::of($result),
+            default => 'the script ended',
+        };
+    }
+
+    /** @return array{string, LogLevel} */
+    private static function ending(BotRun $run): array
+    {
+        return match ($run->status) {
+            RunStatus::Finished => ["Finished after {$run->duration()}", LogLevel::Success],
+            RunStatus::Disconnected => ["Disconnected: {$run->result}", LogLevel::Error],
+            RunStatus::Failed => ["Failed: {$run->result}", LogLevel::Error],
+            default => ["Stopped after {$run->duration()}", LogLevel::Info],
+        };
     }
 
     /** @return array{RunStatus, null|string} */
@@ -68,7 +93,7 @@ final class RunBot extends Command
     {
         $player = new PlayerName($run->account->name);
 
-        $run->log('> login');
+        $run->log("Logging in as {$run->account->name}");
         $login = $logins->login($player, $run->account->password);
 
         $server = ServerChoice::pick($login->servers, $run->account->server);
@@ -76,14 +101,10 @@ final class RunBot extends Command
             return [RunStatus::Failed, 'no open server'];
         }
 
-        $run->log("> connect to {$server->unwrap()->name}");
+        $run->log("Connecting to {$server->unwrap()->name}");
         $connection = Connection::open($server->unwrap());
-        $client = new Client($connection, null, static function (
-            Instruction $instruction,
-            null|Event|TimedOut $answer,
-        ) use ($run): void {
-            $run->log(StepLog::describe($instruction, $answer));
-        });
+        $recorder = new RunRecorder($run);
+        $client = new Client($connection, $recorder->heard(...), $recorder->stepped(...));
 
         $result = $client->run(
             $run->script->script(new GameLogin($player, $login->token, new ClientVersion('5.1')), $run->parameters),
@@ -97,6 +118,6 @@ final class RunBot extends Command
         $client->run(new LogoutScript());
         $connection->close();
 
-        return $result instanceof Stopped ? [RunStatus::Stopped, null] : [RunStatus::Failed, StepLog::name($result)];
+        return $result instanceof Stopped ? [RunStatus::Stopped, null] : [RunStatus::Failed, self::reason($result)];
     }
 }

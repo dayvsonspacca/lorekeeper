@@ -35,7 +35,10 @@ final class RunForm
                 ->options(BotScript::class)
                 ->required()
                 ->live()
-                ->afterStateUpdated(static fn(Set $set): mixed => $set('parameters', []))
+                ->afterStateUpdated(static fn(Get $get, Set $set): mixed => $set(
+                    'parameters',
+                    self::script($get)?->defaults(),
+                ))
                 ->helperText(static fn(Get $get): ?string => self::script($get)?->getDescription()),
             Section::make('Parameters')
                 ->schema(static fn(Get $get): array => self::script($get)?->fields() ?? [])

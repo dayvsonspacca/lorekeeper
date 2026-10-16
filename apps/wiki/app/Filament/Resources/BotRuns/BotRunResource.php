@@ -13,6 +13,8 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -25,6 +27,7 @@ use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\CreateBotRun;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\ListBotRuns;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\ViewBotRun;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Schemas\RunForm;
+use Lorekeeper\Apps\Wiki\Livewire\RunEvents;
 use Lorekeeper\Apps\Wiki\Livewire\RunLog;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Override;
@@ -84,9 +87,19 @@ final class BotRunResource extends Resource
                 ])
                 ->columns(4)
                 ->columnSpanFull(),
-            Section::make('Log')
-                ->icon(Heroicon::OutlinedCommandLine)
-                ->schema([Livewire::make(RunLog::class, static fn(BotRun $record): array => ['run' => $record])])
+            Tabs::make()
+                ->tabs([
+                    Tab::make('Log')
+                        ->icon(Heroicon::OutlinedCommandLine)
+                        ->schema([Livewire::make(RunLog::class, static fn(BotRun $record): array => [
+                            'run' => $record,
+                        ])]),
+                    Tab::make('Events')
+                        ->icon(Heroicon::OutlinedSignal)
+                        ->schema([Livewire::make(RunEvents::class, static fn(BotRun $record): array => [
+                            'run' => $record,
+                        ])]),
+                ])
                 ->columnSpanFull(),
         ]);
     }

@@ -20,12 +20,11 @@
         @forelse ($lines as $line)
             <div style="display: flex; gap: 1rem; white-space: pre-wrap; word-break: break-word;">
                 <span style="color: #64748b; flex-shrink: 0;">{{ $line['at'] }}</span>
-                <span style="color: {{ match ($line['tone']) {
-                    'danger' => '#f87171',
+                <span style="color: {{ match ($line['level']) {
+                    'success' => '#86efac',
                     'warning' => '#fbbf24',
-                    'final' => '#e2e8f0; font-weight: 600',
-                    'quiet' => '#64748b',
-                    default => '#a5b4fc',
+                    'error' => '#f87171',
+                    default => '#cbd5e1',
                 } }};">{{ $line['message'] }}</span>
             </div>
         @empty

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Lorekeeper\Apps\Wiki\Bots\BotScript;
+use Lorekeeper\Apps\Wiki\Bots\LogLevel;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
 
 /**
@@ -57,9 +58,15 @@ final class BotRun extends Model
         };
     }
 
-    public function log(string $message): void
+    /** @return HasMany<BotRunEvent, $this> */
+    public function events(): HasMany
     {
-        $this->logs()->create(['message' => $message]);
+        return $this->hasMany(BotRunEvent::class);
+    }
+
+    public function log(string $message, LogLevel $level = LogLevel::Info): void
+    {
+        $this->logs()->create(['message' => $message, 'level' => $level]);
     }
 
     /** @return array<string, string> */

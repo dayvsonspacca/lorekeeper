@@ -6,6 +6,7 @@ namespace Lorekeeper\Apps\Wiki\Filament\Resources\Accounts\Actions;
 
 use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
+use Lorekeeper\Apps\Wiki\Bots\BotScript;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\BotRunResource;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Schemas\RunForm;
 use Lorekeeper\Apps\Wiki\Models\Account;
@@ -22,6 +23,7 @@ final class StartRunAction
             ->modalHeading(static fn(Account $record): string => "Start a run for {$record->name}")
             ->modalSubmitActionLabel('Start')
             ->schema(RunForm::forAccount())
+            ->fillForm(['parameters' => BotScript::blankParameters()])
             ->action(static function (Account $record, array $data, Action $action): void {
                 $run = $record
                     ->runs()

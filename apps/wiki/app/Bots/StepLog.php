@@ -4,39 +4,99 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Wiki\Bots;
 
+use Lorekeeper\Client\Command\Command;
+use Lorekeeper\Client\Command\JoinHouseCommand;
+use Lorekeeper\Client\Command\JoinInitialMapCommand;
+use Lorekeeper\Client\Command\LogoutCommand;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
+use Lorekeeper\Server\Event\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
+use Lorekeeper\Server\Event\LoginFailedEvent;
+use Lorekeeper\Server\Event\LoginSucceededEvent;
+use Lorekeeper\Server\Event\Map\MapLockedEvent;
+use Lorekeeper\Server\Event\Map\MapMemberOnlyEvent;
+use Lorekeeper\Server\Event\Map\MapNotAvailableEvent;
+use Lorekeeper\Server\Event\Map\MapRequiresQuestEvent;
+use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
+use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 
 final readonly class StepLog
 {
-    public static function describe(Instruction $instruction, null|Event|TimedOut $answer): string
+    /** @return array{LogLevel, string} */
+    public static function describe(Instruction $instruction, null|Event|TimedOut $answer): array
     {
         return match (true) {
-            $instruction instanceof Send => '> ' . self::name($instruction->command) . self::answer($answer),
-            $instruction instanceof Await => '…' . self::answer($answer),
-            $instruction instanceof Pause => "… paused {$instruction->duration->getTotalSeconds()}s",
-            default => '? ' . self::name($instruction),
+            $instruction instanceof Send && $answer instanceof TimedOut => [
+                LogLevel::Warning,
+                'No answer to '
+                    . self::action($instruction->command)
+                    . " after {$answer->await->timeout->getTotalSeconds()}s",
+            ],
+            $instruction instanceof Send && $answer instanceof Event => self::answered($instruction->command, $answer),
+            $instruction instanceof Send && $instruction->command instanceof LogoutCommand => [
+                LogLevel::Info,
+                'Logged out',
+            ],
+            $instruction instanceof Send => [LogLevel::Info, 'Sent ' . self::action($instruction->command)],
+            $instruction instanceof Await && $answer instanceof TimedOut => [
+                LogLevel::Warning,
+                "Nothing arrived after {$answer->await->timeout->getTotalSeconds()}s",
+            ],
+            $instruction instanceof Await && $answer instanceof Event => self::answered(null, $answer),
+            $instruction instanceof Pause => [
+                LogLevel::Info,
+                "Idling for {$instruction->duration->getTotalSeconds()}s",
+            ],
+            default => [LogLevel::Warning, 'Unknown step'],
         };
     }
 
-    public static function name(object $object): string
+    public static function action(Command $command): string
     {
-        $class = $object::class;
-        $short = substr($class, (int) strrpos($class, needle: '\\') + 1);
+        $class = $command::class;
+        $name = (string) preg_replace(
+            '/Command$/',
+            replacement: '',
+            subject: substr($class, (int) strrpos($class, needle: '\\') + 1),
+        );
 
-        return (string) preg_replace('/(Command|Event)$/', replacement: '', subject: $short);
+        return strtolower((string) preg_replace('/(?<!^)[A-Z]/', replacement: ' $0', subject: $name));
     }
 
-    private static function answer(null|Event|TimedOut $answer): string
+    /** @return array{LogLevel, string} */
+    private static function answered(?Command $command, Event $event): array
     {
         return match (true) {
-            $answer === null => '',
-            $answer instanceof TimedOut => " … timed out after {$answer->await->timeout->getTotalSeconds()}s",
-            default => ' < ' . self::name($answer),
+            $event instanceof ConnectionEstablishedEvent => [LogLevel::Info, 'Connected'],
+            $event instanceof LoginSucceededEvent => [LogLevel::Success, 'Logged in'],
+            $event instanceof LoginFailedEvent => [LogLevel::Error, 'Login refused'],
+            $event instanceof MovedToMapEvent && $command instanceof JoinInitialMapCommand => [
+                LogLevel::Success,
+                "Entered the game in {$event->map->value} (room {$event->roomId->value})",
+            ],
+            $event instanceof MovedToMapEvent && $command instanceof JoinHouseCommand => [
+                LogLevel::Success,
+                "Entered the house in {$event->map->value}",
+            ],
+            $event instanceof MovedToMapEvent => [LogLevel::Success, 'Moved to ' . EventSummary::moved($event)],
+            $event instanceof PlayerInventoryLoadedEvent => [
+                LogLevel::Info,
+                'Inventory loaded: ' . count($event->items) . ' items',
+            ],
+            $event instanceof MapLockedEvent,
+            $event instanceof MapMemberOnlyEvent,
+            $event instanceof MapNotAvailableEvent,
+            $event instanceof MapRequiresQuestEvent,
+                => [LogLevel::Warning, EventSummary::of($event)],
+            $event instanceof ShopLoadedEvent => [LogLevel::Info, 'Opened ' . EventSummary::of($event)],
+            $event instanceof QuestLoadedEvent => [LogLevel::Info, 'Loaded ' . EventSummary::of($event)],
+            default => [LogLevel::Info, EventSummary::of($event)],
         };
     }
 }
