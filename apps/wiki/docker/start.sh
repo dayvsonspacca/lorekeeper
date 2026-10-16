@@ -11,4 +11,8 @@ fi
 touch database/database.sqlite
 php artisan migrate --force --no-interaction
 
+if grep -q '^APP_ENV=local' .env; then
+    php artisan db:seed --class='Lorekeeper\Apps\Wiki\Database\Seeders\DevelopmentSeeder' --force --no-interaction
+fi
+
 exec frankenphp php-server --root public --listen :8000

@@ -31,7 +31,8 @@
     },
     "autoload": {
         "psr-4": {
-            "Lorekeeper\\Apps\\Wiki\\": "app/"
+            "Lorekeeper\\Apps\\Wiki\\": "app/",
+            "Lorekeeper\\Apps\\Wiki\\Database\\Seeders\\": "database/seeders/"
         }
     },
     "autoload-dev": {
