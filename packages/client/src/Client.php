@@ -12,19 +12,27 @@ use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
+use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Message\Message;
 use Psl\Async;
+use Psl\Async\CancellationTokenInterface;
 use Psl\Async\Exception\CancelledException;
+use Psl\Async\NullCancellationToken;
 use Psl\DateTime\Timestamp;
 
+/** @mago-expect lint:cyclomatic-complexity */
 final readonly class Client
 {
-    /** @param null|Closure(Message): void $unheard */
+    /**
+     * @param null|Closure(Message): void $unheard
+     * @param null|Closure(Instruction, null|Event|TimedOut): void $stepped
+     */
     public function __construct(
         private Connection $connection,
         private ?Closure $unheard = null,
+        private ?Closure $stepped = null,
     ) {}
 
     /**
@@ -32,28 +40,42 @@ final readonly class Client
      *
      * @param Script<TResult> $script
      *
-     * @return TResult|Disconnected
+     * @return TResult|Disconnected|Stopped
      */
-    public function run(Script $script): mixed
+    public function run(Script $script, CancellationTokenInterface $stop = new NullCancellationToken()): mixed
     {
         $steps = $script->run();
 
         try {
             while ($steps->valid()) {
-                $steps->send($this->execute($steps->current()));
+                $stop->throwIfCancelled();
+                $instruction = $steps->current();
+                $answer = $this->execute($instruction, $stop);
+
+                if ($this->stepped !== null) {
+                    ($this->stepped)($instruction, $answer);
+                }
+
+                $steps->send($answer);
             }
         } catch (PeerClosedException $closed) {
             return new Disconnected($closed->getMessage());
+        } catch (CancelledException $cancelled) {
+            if (!$stop->isCancelled()) {
+                throw $cancelled;
+            }
+
+            return new Stopped();
         }
 
         return $steps->getReturn();
     }
 
     /** @throws PeerClosedException */
-    private function execute(Instruction $instruction): null|Event|TimedOut
+    private function execute(Instruction $instruction, CancellationTokenInterface $stop): null|Event|TimedOut
     {
         if ($instruction instanceof Pause) {
-            Async\sleep($instruction->duration);
+            Async\sleep($instruction->duration, $stop);
 
             return null;
         }
@@ -61,18 +83,18 @@ final readonly class Client
         if ($instruction instanceof Send) {
             $this->connection->send($instruction->command);
 
-            return $instruction->await === null ? null : $this->await($instruction->await);
+            return $instruction->await === null ? null : $this->await($instruction->await, $stop);
         }
 
         if ($instruction instanceof Await) {
-            return $this->await($instruction);
+            return $this->await($instruction, $stop);
         }
 
         return null;
     }
 
     /** @throws PeerClosedException */
-    private function await(Await $await): Event|TimedOut
+    private function await(Await $await, CancellationTokenInterface $stop): Event|TimedOut
     {
         $deadline = Timestamp::monotonic()->plus($await->timeout);
 
@@ -83,8 +105,14 @@ final readonly class Client
             }
 
             try {
-                $message = $this->connection->receive(new Async\TimeoutCancellationToken($left));
-            } catch (CancelledException) {
+                $message = $this->connection->receive(
+                    new Async\LinkedCancellationToken(new Async\TimeoutCancellationToken($left), $stop),
+                );
+            } catch (CancelledException $cancelled) {
+                if ($stop->isCancelled()) {
+                    throw $cancelled;
+                }
+
                 return new TimedOut($await);
             }
 

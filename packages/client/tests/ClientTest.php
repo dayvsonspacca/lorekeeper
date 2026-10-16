@@ -11,10 +11,12 @@ use Lorekeeper\Client\Command\PolicyFileRequestCommand;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;
+use Lorekeeper\Client\Script\Game\IdleScript;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
+use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Server\Event\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\LoginSucceededEvent;
@@ -23,6 +25,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Async\Exception\CancelledException;
 use Psl\Async\NullCancellationToken;
+use Psl\Async\SignalCancellationToken;
 use Psl\DateTime\Duration;
 use Psl\TCP;
 
@@ -120,6 +123,71 @@ final class ClientTest extends TestCase
         }));
 
         static::assertEquals(new Disconnected('The server closed the connection.'), $result);
+    }
+
+    #[Test]
+    public function it_tells_the_observer_about_every_step(): void
+    {
+        $steps = [];
+        $client = new Client(self::connection("<cross-domain-policy/>\0"), null, static function (
+            Instruction $instruction,
+            mixed $answer,
+        ) use (&$steps): void {
+            $steps[] = [$instruction::class, is_object($answer) ? $answer::class : $answer];
+        });
+
+        $client->run(self::script(static function (): Generator {
+            yield new Pause(Duration::milliseconds(1));
+            yield new Await([ConnectionEstablishedEvent::class], Duration::seconds(5));
+        }));
+
+        static::assertSame(
+            [
+                [Pause::class, null],
+                [Await::class, ConnectionEstablishedEvent::class],
+            ],
+            $steps,
+        );
+    }
+
+    #[Test]
+    public function it_stops_when_asked_to(): void
+    {
+        $stopped = new SignalCancellationToken();
+        $stopped->cancel();
+        $before = new Client(self::connection())->run(new IdleScript(), $stopped);
+
+        $stop = new SignalCancellationToken();
+        $stream = static::createStub(TCP\StreamInterface::class);
+        $stream
+            ->method('read')
+            ->willReturnCallback(static function () use ($stop): never {
+                $stop->cancel();
+
+                throw new CancelledException($stop);
+            });
+        $stream->method('reachedEndOfDataSource')->willReturn(false);
+        $waiting = new Client(new Connection($stream))->run(
+            self::script(
+                static fn(): Generator => yield new Await([ConnectionEstablishedEvent::class], Duration::seconds(5)),
+            ),
+            $stop,
+        );
+
+        static::assertEquals(new Stopped(), $before);
+        static::assertEquals(new Stopped(), $waiting);
+    }
+
+    #[Test]
+    public function it_lets_other_cancellations_through(): void
+    {
+        $this->expectException(CancelledException::class);
+
+        new Client(self::connection())->run(self::script(static function (): Generator {
+            yield new Pause(Duration::milliseconds(1));
+
+            throw new CancelledException(new NullCancellationToken());
+        }));
     }
 
     /**
