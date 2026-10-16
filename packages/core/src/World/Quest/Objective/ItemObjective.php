@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\World\Quest;
+namespace Lorekeeper\Core\World\Quest\Objective;
 
 use Lorekeeper\Core\Item\ItemId;
 use Psl\Type;
 
-final readonly class TurnInItem
+final readonly class ItemObjective implements QuestObjective
 {
     /** @var positive-int */
     public int $quantity;

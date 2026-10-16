@@ -4,6 +4,6 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\CharacterClass;
 
-use Lorekeeper\Core\Support\PositiveInteger;
+use Lorekeeper\Core\Item\ItemId;
 
-final readonly class ClassId extends PositiveInteger {}
+final readonly class ClassId extends ItemId {}

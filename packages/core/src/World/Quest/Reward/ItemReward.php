@@ -16,6 +16,7 @@ final readonly class ItemReward implements QuestReward
         public ItemId $itemId,
         public DropRate $dropRate,
         int $quantity,
+        public ItemRewardType $type,
     ) {
         $this->quantity = Type\positive_int()->assert($quantity);
     }

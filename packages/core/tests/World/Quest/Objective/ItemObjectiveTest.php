@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Tests\World\Quest;
+namespace Lorekeeper\Core\Tests\World\Quest\Objective;
 
 use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\World\Quest\TurnInItem;
+use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Type\Exception\AssertException;
 
-final class TurnInItemTest extends TestCase
+final class ItemObjectiveTest extends TestCase
 {
     #[Test]
     public function it_holds_item_and_quantity(): void
     {
-        $turnIn = new TurnInItem(new ItemId(1234), 10);
+        $objective = new ItemObjective(new ItemId(1234), 10);
 
-        static::assertSame(1234, $turnIn->itemId->value);
-        static::assertSame(10, $turnIn->quantity);
+        static::assertSame(1234, $objective->itemId->value);
+        static::assertSame(10, $objective->quantity);
     }
 
     #[Test]
@@ -26,6 +26,6 @@ final class TurnInItemTest extends TestCase
     {
         $this->expectException(AssertException::class);
 
-        new TurnInItem(new ItemId(1234), 0);
+        new ItemObjective(new ItemId(1234), 0);
     }
 }

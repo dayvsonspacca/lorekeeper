@@ -6,4 +6,4 @@ namespace Lorekeeper\Core\Item;
 
 use Lorekeeper\Core\Support\PositiveInteger;
 
-final readonly class ItemId extends PositiveInteger {}
+readonly class ItemId extends PositiveInteger {}
