@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Apps\Wiki\Bots\Scripts;
+namespace Lorekeeper\Client\Bot\Script;
 
 use Generator;
-use Lorekeeper\Apps\Wiki\Bots\Position;
+use Lorekeeper\Client\Bot\Done;
+use Lorekeeper\Client\Bot\Position;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\TimedOut;
@@ -31,7 +32,9 @@ final readonly class GoToMapScript implements Script
     #[Override]
     public function run(): Generator
     {
-        $there = yield from new GoToScript($this->player, $this->here, $this->map)->run();
+        $going = new GoToScript($this->player, $this->here, $this->map)->run();
+        yield from $going;
+        $there = $going->getReturn();
         if (!$there instanceof Position) {
             return $there;
         }

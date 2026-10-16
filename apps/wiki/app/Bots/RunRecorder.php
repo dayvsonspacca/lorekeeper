@@ -8,12 +8,17 @@ use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Apps\Wiki\Models\BotRunEvent;
 use Lorekeeper\Apps\Wiki\Models\BotTask;
 use Lorekeeper\Apps\Wiki\Models\Player;
+use Lorekeeper\Client\Bot\Log\EventSummary;
+use Lorekeeper\Client\Bot\Log\LogLevel;
+use Lorekeeper\Client\Bot\Position;
+use Lorekeeper\Client\Bot\Session\Job;
+use Lorekeeper\Client\Bot\Session\Observer;
+use Lorekeeper\Client\Bot\Session\Outcome;
 use Lorekeeper\Client\Script\Instruction;
-use Lorekeeper\Client\Script\Pause;
+use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Events;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
@@ -24,39 +29,38 @@ use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
 use Lorekeeper\Server\Message\XmlMessage;
+use Override;
 
-final class RunRecorder
+/** @mago-expect lint:too-many-methods */
+final class RunRecorder implements Observer
 {
-    private ?Position $position = null;
-
     private ?BotTask $task = null;
-
-    private bool $idling = false;
 
     public function __construct(
         private readonly BotRun $run,
     ) {}
 
-    public function heard(Message $message): void
+    #[Override]
+    public function said(string $message, LogLevel $level): void
     {
-        $recognized = Events::recognize($message);
+        $this->run->log($message, $level, $this->task);
+    }
 
-        if ($recognized === []) {
+    #[Override]
+    public function heard(Message $message, array $events): void
+    {
+        if ($events === []) {
             $this->event(BotRunEvent::UNRECOGNIZED, self::command($message), $message->raw);
 
             return;
         }
 
-        foreach ($recognized as $event) {
+        foreach ($events as $event) {
             if ($event instanceof MalformedEventException) {
                 $this->event('Malformed', $event->getMessage(), $message->raw);
-                $this->log("Could not read a message: {$event->getMessage()}", LogLevel::Error);
+                $this->said("Could not read a message: {$event->getMessage()}", LogLevel::Error);
 
                 continue;
-            }
-
-            if ($event instanceof MovedToMapEvent) {
-                $this->at(new Position($event->map, $event->areaId));
             }
 
             foreach (self::players($event) as $player) {
@@ -67,46 +71,30 @@ final class RunRecorder
         }
     }
 
-    public function stepped(Instruction $instruction, null|Event|TimedOut $answer): void
+    #[Override]
+    public function stepped(Instruction $instruction, null|Event|TimedOut $answer): void {}
+
+    #[Override]
+    public function moved(Position $position): void
     {
-        if ($instruction instanceof Pause) {
-            if ($instruction->duration->getTotalSeconds() < 60) {
-                return;
-            }
-
-            if (!$this->idling) {
-                $this->idling = true;
-                $this->log($this->position === null ? 'Idling' : "Idling in {$this->position->map->value}");
-            }
-
-            return;
-        }
-
-        $this->idling = false;
-        [$level, $message] = StepLog::describe($instruction, $answer);
-        $this->log($message, $level);
-    }
-
-    public function at(Position $position): void
-    {
-        $this->position = $position;
         $this->run->update(['map' => $position->map->value]);
     }
 
-    public function position(): ?Position
+    #[Override]
+    public function started(Job $job): void
     {
-        return $this->position;
+        $this->task = $this->run->tasks()->find($job->id);
+        $this->task?->update(['status' => TaskStatus::Running, 'started_at' => now()]);
     }
 
-    public function working(?BotTask $task): void
-    {
-        $this->task = $task;
-        $this->idling = false;
-    }
+    #[Override]
+    public function progressed(Job $job, Progress $progress): void {}
 
-    public function log(string $message, LogLevel $level = LogLevel::Info): void
+    #[Override]
+    public function finished(Job $job, Outcome $outcome): void
     {
-        $this->run->log($message, $level, $this->task);
+        $this->task?->finish(TaskStatus::from($outcome->status->value), $outcome->summary);
+        $this->task = null;
     }
 
     public static function command(Message $message): string

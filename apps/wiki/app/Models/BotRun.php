@@ -10,9 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Lorekeeper\Apps\Wiki\Bots\Elapsed;
-use Lorekeeper\Apps\Wiki\Bots\LogLevel;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
 use Lorekeeper\Apps\Wiki\Bots\TaskStatus;
+use Lorekeeper\Client\Bot\Log\LogLevel;
 
 /**
  * @property int $id

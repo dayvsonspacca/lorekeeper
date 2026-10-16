@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Apps\Wiki\Bots;
+namespace Lorekeeper\Client\Bot;
 
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Server\AreaId;

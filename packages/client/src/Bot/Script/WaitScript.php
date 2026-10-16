@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Apps\Wiki\Bots\Scripts;
+namespace Lorekeeper\Client\Bot\Script;
 
 use Generator;
 use Lorekeeper\Client\Script\Pause;

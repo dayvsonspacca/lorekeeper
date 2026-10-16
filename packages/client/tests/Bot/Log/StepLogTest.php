@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Apps\Wiki\Tests\Unit;
+namespace Lorekeeper\Client\Tests\Bot\Log;
 
-use Lorekeeper\Apps\Wiki\Bots\LogLevel;
-use Lorekeeper\Apps\Wiki\Bots\StepLog;
+use Lorekeeper\Client\Bot\Log\LogLevel;
+use Lorekeeper\Client\Bot\Log\StepLog;
 use Lorekeeper\Client\ClientVersion;
 use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Client\Command\JoinHouseCommand;
@@ -18,6 +18,7 @@ use Lorekeeper\Client\Command\PolicyFileRequestCommand;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
+use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Asset\Gamefile;
@@ -105,6 +106,7 @@ final class StepLogTest extends TestCase
             [LogLevel::Info, 'Idling for 60s'],
             StepLog::describe(new Pause(Duration::minutes(1)), null),
         );
+        static::assertSame([LogLevel::Info, 'Progress 1/3'], StepLog::describe(new Progress(1, 3), null));
         static::assertSame(
             [LogLevel::Warning, 'Unknown step'],
             StepLog::describe(new class() implements Instruction {}, null),

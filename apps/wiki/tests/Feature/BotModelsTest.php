@@ -7,12 +7,12 @@ namespace Lorekeeper\Apps\Wiki\Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Lorekeeper\Apps\Wiki\Bots\BotScript;
-use Lorekeeper\Apps\Wiki\Bots\LogLevel;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
 use Lorekeeper\Apps\Wiki\Bots\TaskStatus;
 use Lorekeeper\Apps\Wiki\Models\Account;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Apps\Wiki\Tests\TestCase;
+use Lorekeeper\Client\Bot\Log\LogLevel;
 use PHPUnit\Framework\Attributes\Test;
 
 final class BotModelsTest extends TestCase

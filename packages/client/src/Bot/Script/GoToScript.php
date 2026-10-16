@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Apps\Wiki\Bots\Scripts;
+namespace Lorekeeper\Client\Bot\Script;
 
 use Generator;
-use Lorekeeper\Apps\Wiki\Bots\Position;
+use Lorekeeper\Client\Bot\Position;
 use Lorekeeper\Client\Script\Game\JoinMapScript;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Script;
@@ -39,7 +39,9 @@ final readonly class GoToScript implements Script
             return $this->here;
         }
 
-        $joined = yield from new JoinMapScript($this->player, $this->map, Option\none())->run();
+        $joining = new JoinMapScript($this->player, $this->map, Option\none())->run();
+        yield from $joining;
+        $joined = $joining->getReturn();
 
         return match (true) {
             $joined instanceof MovedToMapEvent => new Position($joined->map, $joined->areaId),

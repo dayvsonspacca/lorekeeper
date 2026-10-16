@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Wiki\Console\Commands;
 
 use Illuminate\Console\Command;
-use Lorekeeper\Apps\Wiki\Bots\LogLevel;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
+use Lorekeeper\Client\Bot\Log\LogLevel;
 use Psl\Async;
 use Psl\Async\Exception\CancelledException;
 use Psl\Async\Scheduler;

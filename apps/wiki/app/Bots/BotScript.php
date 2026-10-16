@@ -8,11 +8,10 @@ use Filament\Forms\Components\Field;
 use Filament\Schemas\Components\Component;
 use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasLabel;
-use Lorekeeper\Apps\Wiki\Bots\Scripts\AskQuestsScript;
-use Lorekeeper\Apps\Wiki\Bots\Scripts\GoToMapScript;
-use Lorekeeper\Apps\Wiki\Bots\Scripts\OpenShopsScript;
-use Lorekeeper\Client\Script\Script;
-use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Client\Bot\Task\AskQuestsTask;
+use Lorekeeper\Client\Bot\Task\GoToMapTask;
+use Lorekeeper\Client\Bot\Task\OpenShopsTask;
+use Lorekeeper\Client\Bot\Task\Task;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Shop\ShopId;
@@ -96,34 +95,23 @@ enum BotScript: string implements HasLabel, HasDescription
         };
     }
 
-    /**
-     * @param array<string, mixed> $parameters
-     *
-     * @return Script<object>
-     */
-    public function script(PlayerName $player, Position $here, array $parameters): Script
+    /** @param array<string, mixed> $parameters */
+    public function task(array $parameters): Task
     {
         $map = new MapName(
             is_string($parameters['map'] ?? null) && $parameters['map'] !== '' ? $parameters['map'] : 'battleon',
         );
 
         return match ($this) {
-            self::GoToMap => new GoToMapScript($player, $here, $map),
-            self::AskQuests => new AskQuestsScript(
-                $player,
-                $here,
-                $map,
-                array_map(
-                    static fn(int $id): QuestId => new QuestId($id),
-                    Parameters::requiredIds($parameters, 'quests'),
-                ),
-            ),
-            self::OpenShops => new OpenShopsScript(
-                $player,
-                $here,
-                $map,
-                array_map(static fn(int $id): ShopId => new ShopId($id), Parameters::requiredIds($parameters, 'shops')),
-            ),
+            self::GoToMap => new GoToMapTask($map),
+            self::AskQuests => new AskQuestsTask($map, array_map(
+                static fn(int $id): QuestId => new QuestId($id),
+                Parameters::requiredIds($parameters, 'quests'),
+            )),
+            self::OpenShops => new OpenShopsTask($map, array_map(
+                static fn(int $id): ShopId => new ShopId($id),
+                Parameters::requiredIds($parameters, 'shops'),
+            )),
         };
     }
 }

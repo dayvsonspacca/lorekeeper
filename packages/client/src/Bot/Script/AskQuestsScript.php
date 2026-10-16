@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Apps\Wiki\Bots\Scripts;
+namespace Lorekeeper\Client\Bot\Script;
 
 use Generator;
-use Lorekeeper\Apps\Wiki\Bots\Position;
+use Lorekeeper\Client\Bot\Done;
+use Lorekeeper\Client\Bot\Position;
 use Lorekeeper\Client\Script\Game\LoadQuestsScript;
 use Lorekeeper\Client\Script\Instruction;
+use Lorekeeper\Client\Script\Pause;
+use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Player\PlayerName;
@@ -22,9 +25,15 @@ use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Override;
 use Psl\DateTime\Duration;
 
-/** @implements Script<Done|TimedOut|MapLockedEvent|MapMemberOnlyEvent|MapNotAvailableEvent|MapRequiresQuestEvent> */
+/**
+ * Goes to a map if needed and asks for the given quests, ten at a time, telling how many batches are done.
+ *
+ * @implements Script<Done|TimedOut|MapLockedEvent|MapMemberOnlyEvent|MapNotAvailableEvent|MapRequiresQuestEvent>
+ */
 final readonly class AskQuestsScript implements Script
 {
+    private const int BATCH = 10;
+
     /** @param non-empty-list<QuestId> $quests */
     public function __construct(
         private PlayerName $player,
@@ -37,16 +46,32 @@ final readonly class AskQuestsScript implements Script
     #[Override]
     public function run(): Generator
     {
-        $there = yield from new GoToScript($this->player, $this->here, $this->map)->run();
+        $going = new GoToScript($this->player, $this->here, $this->map)->run();
+        yield from $going;
+        $there = $going->getReturn();
         if (!$there instanceof Position) {
             return $there;
         }
 
-        $answers = yield from new LoadQuestsScript($there->area, $this->quests, Duration::seconds(2))->run();
+        /** @var non-empty-list<non-empty-list<QuestId>> $batches */
+        $batches = array_chunk($this->quests, self::BATCH);
+        $total = count($batches);
+        yield new Progress(0, $total);
 
         $loaded = 0;
-        foreach ($answers as $answer) {
-            $loaded += $answer instanceof QuestLoadedEvent ? count($answer->quests) : 0;
+        foreach ($batches as $index => $batch) {
+            if ($index > 0) {
+                yield new Pause(Duration::seconds(2));
+            }
+
+            $loading = new LoadQuestsScript($there->area, $batch, Duration::seconds(2))->run();
+            yield from $loading;
+            $answers = $loading->getReturn();
+            foreach ($answers as $answer) {
+                $loaded += $answer instanceof QuestLoadedEvent ? count($answer->quests) : 0;
+            }
+
+            yield new Progress($index + 1, $total);
         }
 
         return new Done("Loaded {$loaded} of " . count($this->quests) . ' quests');

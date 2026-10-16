@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Apps\Wiki\Bots;
+namespace Lorekeeper\Client\Bot\Log;
 
 use Lorekeeper\Server\Event\ActionTooSoonEvent;
 use Lorekeeper\Server\Event\AwayFromKeyboardEvent;
