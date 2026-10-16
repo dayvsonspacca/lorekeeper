@@ -17,11 +17,15 @@
         <testsuite name="server">
             <directory>../packages/server/tests</directory>
         </testsuite>
+        <testsuite name="client">
+            <directory>../packages/client/tests</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>../packages/core/src</directory>
             <directory>../packages/server/src</directory>
+            <directory>../packages/client/src</directory>
         </include>
     </source>
 </phpunit>

@@ -42,3 +42,7 @@ permit = ["@layer:ext", "Lorekeeper\\Core\\**"]
 [[guard.perimeter.rules]]
 namespace = "Lorekeeper\\Server"
 permit = ["@layer:ext", "Lorekeeper\\Server\\**", "Lorekeeper\\Core\\**"]
+
+[[guard.perimeter.rules]]
+namespace = "Lorekeeper\\Client"
+permit = ["@layer:ext", "Lorekeeper\\Client\\**", "Lorekeeper\\Server\\**", "Lorekeeper\\Core\\**"]
