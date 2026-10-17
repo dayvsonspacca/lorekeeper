@@ -121,7 +121,7 @@ final class LevelUpScriptTest extends TestCase
     }
 
     #[Test]
-    public function past_level_twenty_it_fights_the_hardest_monsters_it_can_in_icestormarena(): void
+    public function past_level_twenty_it_fights_icewing_grunts_in_icestormarena(): void
     {
         $me = self::me(level: 20, map: 'battleon');
 
@@ -143,6 +143,31 @@ final class LevelUpScriptTest extends TestCase
             self::sent($steps),
         );
         static::assertEquals(new Done('Reached level 21'), $result);
+    }
+
+    #[Test]
+    public function past_level_seventy_five_it_fights_frost_spirits_in_icestormunder(): void
+    {
+        $me = self::me(level: 81, map: 'battleon');
+
+        [$steps, $result] = Play::run(self::script(target: 82), $me, [
+            self::arrive('icestormunder', 5_120, ['r2' => [1, 255]]),
+            null,
+            null,
+            null,
+            new LeveledUpEvent(new PlayerLevel(82), new Experience(9000)),
+            null,
+        ]);
+
+        static::assertSame(
+            [
+                '%xt%zm%cmd%1%tfer%lorekeeper03%icestormunder%',
+                '%xt%zm%moveToCell%5120%r2%Top%',
+                '%xt%zm%gar%5120%0%a1>m:1%wvz%',
+            ],
+            self::sent($steps),
+        );
+        static::assertEquals(new Done('Reached level 82'), $result);
     }
 
     #[Test]

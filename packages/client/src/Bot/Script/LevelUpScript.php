@@ -7,7 +7,6 @@ namespace Lorekeeper\Client\Bot\Script;
 use Closure;
 use Generator;
 use Lorekeeper\Client\Bot\Done;
-use Lorekeeper\Client\Bot\Spawn;
 use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
@@ -56,9 +55,19 @@ final class LevelUpScript extends BotScript
             yield from $this->levelUpIn(new Cell('Gates'), Pad::Left, upTo: 20);
         }
 
-        while ($this->below(100)) {
+        if ($this->below(75)) {
             yield from $this->join(new MapName('icestormarena'));
-            yield from $this->levelUpIn($this->hardestCellForMe(), Pad::Left, upTo: $this->me->level()->value + 1);
+            yield from $this->levelUpIn(new Cell('r7'), Pad::Left, upTo: 25);
+            yield from $this->levelUpIn(new Cell('r10'), Pad::Left, upTo: 30);
+            yield from $this->levelUpIn(new Cell('r11'), Pad::Left, upTo: 35);
+            yield from $this->levelUpIn(new Cell('r14'), Pad::Left, upTo: 50);
+            yield from $this->levelUpIn(new Cell('r16'), Pad::Left, upTo: 61);
+            yield from $this->levelUpIn(new Cell('r17'), Pad::Left, upTo: 75);
+        }
+
+        if ($this->below(100)) {
+            yield from $this->join(new MapName('icestormunder'));
+            yield from $this->levelUpIn(new Cell('r2'), Pad::Top, upTo: 100);
         }
 
         return new Done("Reached level {$this->me->level()->value}");
@@ -104,25 +113,5 @@ final class LevelUpScript extends BotScript
         $total = max(1, $this->target->value - $this->from);
 
         return new Progress(max(0, min($total, $this->me->level()->value - $this->from)), $total);
-    }
-
-    private function hardestCellForMe(): Cell
-    {
-        $best = new Cell('r4');
-        $bestLevel = 0;
-        foreach ($this->me->map()->cells() as $mapCell) {
-            $level = max(0, ...array_map(
-                static fn(Spawn $spawn): int => $spawn->monster->level->value,
-                $mapCell->spawns,
-            ));
-            if ($level > $this->me->level()->value || $level <= $bestLevel) {
-                continue;
-            }
-
-            $best = $mapCell->cell;
-            $bestLevel = $level;
-        }
-
-        return $best;
     }
 }
