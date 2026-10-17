@@ -12,18 +12,24 @@ use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Core\Asset\Gamefile;
+use Lorekeeper\Core\Asset\Linkage;
+use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Map\Cell;
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Map\Pad;
 use Lorekeeper\Core\World\Monster\MonsterId;
 use Lorekeeper\Core\World\Monster\MonsterLevel;
+use Lorekeeper\Core\World\Monster\MonsterName;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
+use Lorekeeper\Core\World\Monster\Race;
 use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
@@ -31,11 +37,13 @@ use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Map\MapLockedEvent;
-use Lorekeeper\Server\Event\Map\MapPlayer;
+use Lorekeeper\Server\Event\Map\MapMonster;
 use Lorekeeper\Server\Event\Map\MonsterPlacement;
+use Lorekeeper\Server\Event\Map\MonstersDescribedEvent;
 use Lorekeeper\Server\Event\Map\MonstersPlacedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
-use Lorekeeper\Server\Event\Map\PlayersPresentEvent;
+use Lorekeeper\Server\Event\Map\PlayersSeenEvent;
+use Lorekeeper\Server\Event\Map\SeenPlayer;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\RoomId;
 use Lorekeeper\Server\SocketId;
@@ -144,10 +152,11 @@ final class LevelUpScriptTest extends TestCase
         $grunt = new MonsterId(4001);
         $arrival = [
             self::moved('icestormarena', 732_692),
+            new MonstersDescribedEvent([self::monster(4001, 20), self::monster(4999, 9)]),
             new MonstersPlacedEvent([
-                new MonsterPlacement(new MonsterSpawnId(13), $grunt, new Cell('r7'), new MonsterLevel(20)),
-                new MonsterPlacement(new MonsterSpawnId(50), new MonsterId(4999), new Cell('r7'), new MonsterLevel(9)),
-                new MonsterPlacement(new MonsterSpawnId(14), $grunt, new Cell('r7'), new MonsterLevel(20)),
+                new MonsterPlacement(new MonsterSpawnId(13), $grunt, new Cell('r7')),
+                new MonsterPlacement(new MonsterSpawnId(50), new MonsterId(4999), new Cell('r7')),
+                new MonsterPlacement(new MonsterSpawnId(14), $grunt, new Cell('r7')),
             ]),
         ];
 
@@ -212,7 +221,7 @@ final class LevelUpScriptTest extends TestCase
     {
         $me = new Character(new PlayerName('lorekeeper03'));
         $me->entered(new InGame(new SocketId(122_628), self::moved($map, 1)));
-        $me->hear(new PlayersPresentEvent([new MapPlayer(new PlayerName('lorekeeper03'), new PlayerLevel($level))]));
+        $me->hear(new PlayersSeenEvent([self::seen('lorekeeper03', $level)]));
         $me->hear(new SkillsLoadedEvent([
             new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new Mana(0), Duration::seconds(2)),
             new Skill(SkillSlot::First, SkillTarget::Enemy, new Mana(20), Duration::seconds(6)),
@@ -225,34 +234,27 @@ final class LevelUpScriptTest extends TestCase
     /**
      * @param array<string, array{int, int}> $cells
      *
-     * @return non-empty-list<MovedToMapEvent|MonstersPlacedEvent>
+     * @return non-empty-list<MovedToMapEvent|MonstersDescribedEvent|MonstersPlacedEvent>
      */
     private static function arrive(string $map, int $area, array $cells): array
     {
         $placements = [];
+        $monsters = [];
         foreach ($cells as $cell => [$spawn, $level]) {
             $placements[] = new MonsterPlacement(
                 new MonsterSpawnId($spawn),
                 new MonsterId($spawn + 1000),
                 new Cell($cell),
-                new MonsterLevel($level),
             );
+            $monsters[] = self::monster($spawn + 1000, $level);
         }
 
-        return [self::moved($map, $area), new MonstersPlacedEvent($placements)];
+        return [self::moved($map, $area), new MonstersDescribedEvent($monsters), new MonstersPlacedEvent($placements)];
     }
 
     private static function moved(string $map, int $area): MovedToMapEvent
     {
-        return new MovedToMapEvent(
-            new AreaId($area),
-            new RoomId(1),
-            new MapName($map),
-            new Gamefile("{$map}.swf"),
-            [],
-            [],
-            [],
-        );
+        return new MovedToMapEvent(new AreaId($area), new RoomId(1), new MapName($map), new Gamefile("{$map}.swf"));
     }
 
     /**
@@ -266,5 +268,33 @@ final class LevelUpScriptTest extends TestCase
             static fn(Send $send): string => $send->command->toMessage(),
             array_filter($steps, static fn(Instruction $step): bool => $step instanceof Send),
         ));
+    }
+
+    private static function monster(int $id, int $level): MapMonster
+    {
+        return new MapMonster(
+            new MonsterId($id),
+            new MonsterName("Monster {$id}"),
+            new MonsterLevel($level),
+            Race::None,
+            new Gamefile('monster.swf'),
+            new Linkage('Monster'),
+        );
+    }
+
+    private static function seen(string $name, int $level): SeenPlayer
+    {
+        return new SeenPlayer(
+            new PlayerName($name),
+            new PlayerLevel($level),
+            new Cell('Enter'),
+            Pad::Spawn,
+            CombatState::Idle,
+            new Health(390),
+            new Health(390),
+            new Mana(100),
+            new Mana(100),
+            false,
+        );
     }
 }

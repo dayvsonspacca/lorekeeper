@@ -7,6 +7,7 @@ namespace Lorekeeper\Client\Bot\Script;
 use Closure;
 use Generator;
 use Lorekeeper\Client\Bot\Done;
+use Lorekeeper\Client\Bot\Spawn;
 use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
@@ -17,7 +18,6 @@ use Lorekeeper\Core\World\Map\Cell;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\Pad;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Map\MonsterPlacement;
 use Override;
 use Psl\DateTime\Timestamp;
 use RuntimeException;
@@ -82,12 +82,16 @@ final class LevelUpScript extends BotScript
     /** @throws RuntimeException */
     private function attackIn(Cell $cell): AttackMonsterCommand
     {
-        $monster = $this->me->map()->monstersIn($cell)[0] ?? null;
-        if ($monster === null) {
-            throw new RuntimeException("There are no monsters in {$cell->value}.");
+        foreach ($this->me->map()->cells() as $mapCell) {
+            $spawn = $mapCell->spawns[0] ?? null;
+            if ($mapCell->cell->value !== $cell->value || $spawn === null) {
+                continue;
+            }
+
+            return new AttackMonsterCommand($this->me->position()->area, SkillSlot::AutoAttack, $spawn->id);
         }
 
-        return new AttackMonsterCommand($this->me->position()->area, SkillSlot::AutoAttack, $monster->id);
+        throw new RuntimeException("There are no monsters in {$cell->value}.");
     }
 
     private function below(int $level): bool
@@ -104,20 +108,21 @@ final class LevelUpScript extends BotScript
 
     private function hardestCellForMe(): Cell
     {
-        $best = null;
+        $best = new Cell('r4');
         $bestLevel = 0;
-        foreach ($this->me->map()->cells() as $cell) {
-            $levels = array_map(
-                static fn(MonsterPlacement $placement): int => $placement->level->value ?? 0,
-                $this->me->map()->monstersIn($cell),
-            );
-            $level = max($levels);
-            if ($level <= $this->me->level()->value && $level > $bestLevel) {
-                $best = $cell;
-                $bestLevel = $level;
+        foreach ($this->me->map()->cells() as $mapCell) {
+            $level = max(0, ...array_map(
+                static fn(Spawn $spawn): int => $spawn->monster->level->value,
+                $mapCell->spawns,
+            ));
+            if ($level > $this->me->level()->value || $level <= $bestLevel) {
+                continue;
             }
+
+            $best = $mapCell->cell;
+            $bestLevel = $level;
         }
 
-        return $best ?? $this->me->map()->cells()[0] ?? new Cell('r4');
+        return $best;
     }
 }

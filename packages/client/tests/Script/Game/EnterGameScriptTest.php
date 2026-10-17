@@ -99,9 +99,6 @@ final class EnterGameScriptTest extends TestCase
             new RoomId(2),
             new MapName('battleon'),
             new Gamefile('Battleon/town-Battleon-9Oct26.swf'),
-            [],
-            [],
-            [],
         );
     }
 }

@@ -17,9 +17,10 @@ use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\Map\MonstersDescribedEvent;
 use Lorekeeper\Server\Event\Map\MonstersPlacedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
-use Lorekeeper\Server\Event\Map\PlayersPresentEvent;
+use Lorekeeper\Server\Event\Map\PlayersSeenEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\SocketId;
 use Psl\Observer\SubjectInterface;
@@ -116,9 +117,10 @@ final class Character implements SubjectInterface
     private function learn(Event $event): void
     {
         match (true) {
-            $event instanceof MovedToMapEvent => $this->position = new Position($event->map, $event->areaId),
-            $event instanceof MonstersPlacedEvent => $this->map = new MapLayout($event->placements),
-            $event instanceof PlayersPresentEvent => $this->seeLevel($event),
+            $event instanceof MovedToMapEvent => $this->arrived($event),
+            $event instanceof MonstersDescribedEvent => $this->map = $this->map->described($event->monsters),
+            $event instanceof MonstersPlacedEvent => $this->map = $this->map->placed($event->placements),
+            $event instanceof PlayersSeenEvent => $this->seeLevel($event),
             $event instanceof LeveledUpEvent => $this->level = $event->level,
             $event instanceof SkillsLoadedEvent => $this->skills = array_values(array_filter(
                 $event->skills,
@@ -145,10 +147,16 @@ final class Character implements SubjectInterface
         ];
     }
 
-    private function seeLevel(PlayersPresentEvent $event): void
+    private function arrived(MovedToMapEvent $event): void
+    {
+        $this->position = new Position($event->map, $event->areaId);
+        $this->map = new MapLayout();
+    }
+
+    private function seeLevel(PlayersSeenEvent $event): void
     {
         foreach ($event->players as $player) {
-            if ($player->level === null || !$this->is($player->name)) {
+            if (!$this->is($player->name)) {
                 continue;
             }
 

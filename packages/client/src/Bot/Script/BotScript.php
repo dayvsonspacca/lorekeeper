@@ -33,7 +33,6 @@ use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MapJoins;
 use Lorekeeper\Server\Event\Map\MapRefusals;
-use Lorekeeper\Server\Event\Map\MonsterPlacement;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Override;
@@ -176,30 +175,36 @@ abstract class BotScript implements Script
             return [$aimed];
         }
 
-        $placed = $this->me->map()->monstersIn($cell);
-        $species = null;
-        foreach ($placed as $placement) {
-            if ($placement->id->value !== $aimed->value) {
+        $spawns = [];
+        foreach ($this->me->map()->cells() as $mapCell) {
+            if ($mapCell->cell->value !== $cell->value) {
                 continue;
             }
 
-            $species = $placement->monster->value;
+            $spawns = $mapCell->spawns;
+        }
+
+        $species = null;
+        foreach ($spawns as $spawn) {
+            if ($spawn->id->value !== $aimed->value) {
+                continue;
+            }
+
+            $species = $spawn->monster->id->value;
         }
 
         if ($species === null) {
             throw new RuntimeException("Monster {$aimed->value} does not stand in {$cell->value}.");
         }
 
-        $same = array_values(array_filter(
-            array_map(
-                static fn(MonsterPlacement $placement): MonsterSpawnId => $placement->id,
-                array_filter(
-                    $placed,
-                    static fn(MonsterPlacement $placement): bool => $placement->monster->value === $species,
-                ),
-            ),
-            static fn(MonsterSpawnId $spawn): bool => $spawn->value !== $aimed->value,
-        ));
+        $same = [];
+        foreach ($spawns as $spawn) {
+            if ($spawn->monster->id->value !== $species || $spawn->id->value === $aimed->value) {
+                continue;
+            }
+
+            $same[] = $spawn->id;
+        }
 
         return [$aimed, ...$same];
     }

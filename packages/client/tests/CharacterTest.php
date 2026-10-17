@@ -6,14 +6,17 @@ namespace Lorekeeper\Client\Tests;
 
 use LogicException;
 use Lorekeeper\Client\Character;
+use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Map\Cell;
+use Lorekeeper\Core\World\Map\Pad;
 use Lorekeeper\Core\World\Monster\MonsterId;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
@@ -21,10 +24,10 @@ use Lorekeeper\Server\Event\Combat\PlayerMana;
 use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
-use Lorekeeper\Server\Event\Map\MapPlayer;
 use Lorekeeper\Server\Event\Map\MonsterPlacement;
 use Lorekeeper\Server\Event\Map\MonstersPlacedEvent;
-use Lorekeeper\Server\Event\Map\PlayersPresentEvent;
+use Lorekeeper\Server\Event\Map\PlayersSeenEvent;
+use Lorekeeper\Server\Event\Map\SeenPlayer;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Override;
 use PHPUnit\Framework\Attributes\Test;
@@ -42,21 +45,20 @@ final class CharacterTest extends TestCase
         $fireball = new Skill(SkillSlot::First, SkillTarget::Enemy, new Mana(20), Duration::seconds(6));
         $shard = new Skill(SkillSlot::Second, SkillTarget::Enemy, new Mana(15), Duration::seconds(6));
 
-        $me->hear(new PlayersPresentEvent([
-            new MapPlayer(new PlayerName('Someone'), new PlayerLevel(80)),
-            new MapPlayer(new PlayerName('LoreKeeper03'), new PlayerLevel(1)),
+        $me->hear(new PlayersSeenEvent([
+            self::seen('Someone', 80),
+            self::seen('LoreKeeper03', 1),
         ]));
         $me->hear(new SkillsLoadedEvent([$fireball, $shard], [SkillSlot::First]));
         $me->hear(new PlayersManaChangedEvent([new PlayerMana(new PlayerName('lorekeeper03'), new Mana(87))]));
         $me->hear(new MonstersPlacedEvent([
-            new MonsterPlacement(new MonsterSpawnId(4), new MonsterId(2033), new Cell('r3'), null),
+            new MonsterPlacement(new MonsterSpawnId(4), new MonsterId(2033), new Cell('r3')),
         ]));
 
         static::assertSame(1, $me->level()->value);
         static::assertSame([$fireball], $me->skills());
         static::assertSame(87, $me->mana()?->value);
-        static::assertCount(1, $me->map()->monstersIn(new Cell('r3')));
-        static::assertSame([], $me->map()->monstersIn(new Cell('r4')));
+        static::assertSame([], $me->map()->cells());
 
         $me->hear(new LeveledUpEvent(new PlayerLevel(2), new Experience(100)));
         $me->hear(new PlayerDiedEvent());
@@ -84,8 +86,8 @@ final class CharacterTest extends TestCase
 
         $me->subscribe($watcher);
         $me->subscribe($watcher);
-        $me->hear(new PlayersPresentEvent([new MapPlayer(new PlayerName('lorekeeper03'), new PlayerLevel(4))]));
-        $me->hear(new PlayersPresentEvent([new MapPlayer(new PlayerName('Someone'), new PlayerLevel(90))]));
+        $me->hear(new PlayersSeenEvent([self::seen('lorekeeper03', 4)]));
+        $me->hear(new PlayersSeenEvent([self::seen('Someone', 90)]));
         $me->hear(new LeveledUpEvent(new PlayerLevel(5), new Experience(500)));
         $me->unsubscribe($watcher);
         $me->hear(new LeveledUpEvent(new PlayerLevel(6), new Experience(600)));
@@ -99,5 +101,21 @@ final class CharacterTest extends TestCase
         $this->expectException(LogicException::class);
 
         new Character(new PlayerName('Hero'))->position();
+    }
+
+    private static function seen(string $name, int $level): SeenPlayer
+    {
+        return new SeenPlayer(
+            new PlayerName($name),
+            new PlayerLevel($level),
+            new Cell('Enter'),
+            Pad::Spawn,
+            CombatState::Idle,
+            new Health(390),
+            new Health(390),
+            new Mana(100),
+            new Mana(100),
+            false,
+        );
     }
 }

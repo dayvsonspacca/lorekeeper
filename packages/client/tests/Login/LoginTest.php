@@ -53,7 +53,10 @@ final class LoginTest extends TestCase
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $went);
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $again);
         static::assertTrue($loggedOut);
-        static::assertSame(['MovedToMap', 'MonstersPlaced', 'PlayersPresent'], $heard);
+        static::assertSame(
+            ['MovedToMap', 'MonstersDescribed', 'MonstersPlaced', 'MonstersSeen', 'PlayersSeen'],
+            $heard,
+        );
         static::assertSame('%xt%zm%cmd%1%tfer%Hero%forest%', $sent[4]);
         static::assertSame('%xt%zm%logout%1%', end($sent));
         static::assertSame('forest', $client->character()->position()->map->value);

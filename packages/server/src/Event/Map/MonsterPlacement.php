@@ -6,7 +6,6 @@ namespace Lorekeeper\Server\Event\Map;
 
 use Lorekeeper\Core\World\Map\Cell;
 use Lorekeeper\Core\World\Monster\MonsterId;
-use Lorekeeper\Core\World\Monster\MonsterLevel;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 
 final readonly class MonsterPlacement
@@ -15,6 +14,5 @@ final readonly class MonsterPlacement
         public MonsterSpawnId $id,
         public MonsterId $monster,
         public Cell $cell,
-        public ?MonsterLevel $level,
     ) {}
 }

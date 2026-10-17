@@ -17,21 +17,25 @@ use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Script\Game\InGame;
 use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\Attribute\Health;
+use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\World\Map\Cell;
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Map\Pad;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\Event\Combat\MonsterHealth;
 use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
-use Lorekeeper\Server\Event\Map\MapPlayer;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
-use Lorekeeper\Server\Event\Map\PlayersPresentEvent;
+use Lorekeeper\Server\Event\Map\PlayersSeenEvent;
+use Lorekeeper\Server\Event\Map\SeenPlayer;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Lorekeeper\Server\RoomId;
@@ -58,18 +62,10 @@ final class RunBotTest extends TestCase
         $me->entered(
             new InGame(
                 new SocketId(1),
-                new MovedToMapEvent(
-                    new AreaId(1),
-                    new RoomId(1),
-                    new MapName('battleon'),
-                    new Gamefile('b.swf'),
-                    [],
-                    [],
-                    [],
-                ),
+                new MovedToMapEvent(new AreaId(1), new RoomId(1), new MapName('battleon'), new Gamefile('b.swf')),
             ),
         );
-        $me->hear(new PlayersPresentEvent([new MapPlayer(new PlayerName('lorekeeper03'), new PlayerLevel(4))]));
+        $me->hear(new PlayersSeenEvent([self::seen('lorekeeper03', 4)]));
 
         $recorder->working($task);
         $me->subscribe($recorder);
@@ -154,5 +150,21 @@ final class RunBotTest extends TestCase
             ->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))])
             ->runs()
             ->create();
+    }
+
+    private static function seen(string $name, int $level): SeenPlayer
+    {
+        return new SeenPlayer(
+            new PlayerName($name),
+            new PlayerLevel($level),
+            new Cell('Enter'),
+            Pad::Spawn,
+            CombatState::Idle,
+            new Health(390),
+            new Health(390),
+            new Mana(100),
+            new Mana(100),
+            false,
+        );
     }
 }
