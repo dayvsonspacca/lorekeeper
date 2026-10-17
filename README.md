@@ -40,11 +40,11 @@ if (MapRefusals::contains($joined)) {
 Ready-made scripts enter the game and level a character up, telling how far along they are.
 
 To play, log in to get a `Client` already in the game, then run scripts on it. The client keeps the character up to
-date with what the server says and tells an `Observer` about every message and step; a `Narrator` in front of the
-observer turns those steps into plain-word log lines. What to play next, and when to stop, stays with the app.
+date with what the server says, and tells whoever subscribes about every event it hears.
 
 ```php
-$client = Login::enter(new Credentials($player, getenv('AQW_PASSWORD')), new Narrator($observer));
+$client = Login::enter(new Credentials($player, getenv('AQW_PASSWORD')));
+$client->subscribe(static fn(Event $event) => print $event->summary() . PHP_EOL);
 $outcome = Outcome::of($client->run(new LevelUpScript(new PlayerLevel(50))));
 Login::leave($client);
 ```

@@ -19,6 +19,7 @@ use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,7 +31,6 @@ use Psl\Async\SignalCancellationToken;
 use Psl\DateTime\Duration;
 use Psl\TCP;
 
-/** @mago-expect lint:too-many-methods */
 final class ClientTest extends TestCase
 {
     #[Test]
@@ -59,21 +59,23 @@ final class ClientTest extends TestCase
     }
 
     #[Test]
-    public function it_skips_what_it_was_not_waiting_for_and_tells_the_observer_about_every_message(): void
+    public function it_skips_what_it_was_not_waiting_for_and_tells_subscribers_every_event(): void
     {
-        $observer = new RecordingObserver();
+        $heard = [];
         $client = new Client(
             self::connection("%xt%server%-1%Profanity filter On.%\0", "unparsable\0", "<cross-domain-policy/>\0"),
             self::me(),
-            $observer,
         );
+        $client->subscribe(static function (Event $event) use (&$heard): void {
+            $heard[] = $event->name();
+        });
 
         $result = $client->run(self::script(
             static fn(): Generator => yield new Await([ConnectionEstablishedEvent::class], Duration::seconds(5)),
         ));
 
         static::assertInstanceOf(ConnectionEstablishedEvent::class, $result);
-        static::assertSame(['%xt%server%-1%Profanity filter On.%', '<cross-domain-policy/>'], $observer->messages);
+        static::assertSame(['ConnectionEstablished'], $heard);
     }
 
     #[Test]
@@ -99,8 +101,7 @@ final class ClientTest extends TestCase
     #[Test]
     public function it_pauses_and_sends_without_waiting(): void
     {
-        $observer = new RecordingObserver();
-        $client = new Client(self::connection("%xt%server%-1%Profanity filter On.%\0"), self::me(), $observer);
+        $client = new Client(self::connection("%xt%server%-1%Profanity filter On.%\0"), self::me());
 
         $answers = $client->run(self::script(static function (): Generator {
             $paused = yield new Pause(Duration::milliseconds(1));
@@ -112,7 +113,6 @@ final class ClientTest extends TestCase
         }));
 
         static::assertSame([null, null, null], $answers);
-        static::assertSame(['%xt%server%-1%Profanity filter On.%'], $observer->messages);
     }
 
     #[Test]
@@ -129,26 +129,6 @@ final class ClientTest extends TestCase
         }));
 
         static::assertEquals(new Disconnected('The server closed the connection.'), $result);
-    }
-
-    #[Test]
-    public function it_tells_the_observer_about_every_step(): void
-    {
-        $observer = new RecordingObserver();
-        $client = new Client(self::connection(null, "<cross-domain-policy/>\0"), self::me(), $observer);
-
-        $client->run(self::script(static function (): Generator {
-            yield new Pause(Duration::milliseconds(1));
-            yield new Await([ConnectionEstablishedEvent::class], Duration::seconds(5));
-        }));
-
-        static::assertSame(
-            [
-                [Pause::class, null],
-                [Await::class, ConnectionEstablishedEvent::class],
-            ],
-            $observer->steps,
-        );
     }
 
     #[Test]

@@ -4,22 +4,15 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Login;
 
-use Generator;
-use Lorekeeper\Client\Bot\Done;
-use Lorekeeper\Client\Bot\Script\BotScript;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Login\Ending;
 use Lorekeeper\Client\Login\EndingStatus;
 use Lorekeeper\Client\Login\Login;
-use Lorekeeper\Client\Narrator;
-use Lorekeeper\Client\Observer;
 use Lorekeeper\Client\Script\Outcome;
 use Lorekeeper\Client\Script\OutcomeStatus;
-use Lorekeeper\Client\Script\Pause;
-use Lorekeeper\Client\Tests\RecordingObserver;
 use Lorekeeper\Core\Player\PlayerName;
-use Override;
+use Lorekeeper\Server\Event\Event;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Async\CancellationTokenInterface;
@@ -41,14 +34,17 @@ final class LoginTest extends TestCase
     public function it_enters_the_game_and_hands_back_a_client_that_plays_scripts(): void
     {
         $sent = [];
-        $observer = new RecordingObserver();
-        $client = self::enter($sent, new Narrator($observer), [
+        $client = self::enter($sent, [
             self::POLICY,
             self::LOGGED_IN,
             self::moved('battleon', 1350),
             self::INVENTORY,
             self::moved('forest', 7),
         ]);
+        $heard = [];
+        $client->subscribe(static function (Event $event) use (&$heard): void {
+            $heard[] = $event->name();
+        });
 
         $went = Outcome::of($client->run(new GoToForest()));
         $again = Outcome::of($client->run(new GoToForest()));
@@ -57,19 +53,7 @@ final class LoginTest extends TestCase
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $went);
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $again);
         static::assertTrue($loggedOut);
-        static::assertSame(
-            [
-                'moved battleon 1350',
-                'progressed 0/1',
-                'moved forest 7',
-                'progressed 1/1',
-                'progressed 0/1',
-                'progressed 1/1',
-            ],
-            $observer->updates,
-        );
-        static::assertContains('success: Entered the game in battleon (room 1)', $observer->lines);
-        static::assertContains('success: Moved to forest (room 1) · 0 monsters, 0 players', $observer->lines);
+        static::assertSame(['MovedToMap', 'MonstersPlaced', 'PlayersPresent'], $heard);
         static::assertSame('%xt%zm%cmd%1%tfer%Hero%forest%', $sent[4]);
         static::assertSame('%xt%zm%logout%1%', end($sent));
         static::assertSame('forest', $client->character()->position()->map->value);
@@ -79,7 +63,7 @@ final class LoginTest extends TestCase
     public function a_client_in_the_game_waits_and_a_cancelled_script_ends_as_cancelled(): void
     {
         $sent = [];
-        $client = self::enter($sent, new RecordingObserver(), [
+        $client = self::enter($sent, [
             self::POLICY,
             self::LOGGED_IN,
             self::moved('battleon', 1),
@@ -96,51 +80,12 @@ final class LoginTest extends TestCase
     }
 
     #[Test]
-    public function the_narrator_tells_about_a_long_idle_once(): void
-    {
-        $sent = [];
-        $observer = new RecordingObserver();
-        $client = self::enter($sent, new Narrator($observer), [
-            self::POLICY,
-            self::LOGGED_IN,
-            self::moved('battleon', 1),
-            self::INVENTORY,
-        ]);
-        $idle = new class() extends BotScript {
-            #[Override]
-            public function title(): string
-            {
-                return 'Idle';
-            }
-
-            #[Override]
-            protected function rules(): Generator
-            {
-                yield new Pause(Duration::minutes(1));
-                yield new Pause(Duration::minutes(1));
-
-                return new Done('Rested');
-            }
-        };
-
-        $client->run($idle);
-
-        static::assertSame(
-            ['info: Idling in battleon'],
-            array_values(array_filter($observer->lines, static fn(string $line): bool => str_contains(
-                $line,
-                'Idling',
-            ))),
-        );
-    }
-
-    #[Test]
     public function it_does_not_enter_when_the_server_refuses_the_login(): void
     {
         $sent = [];
         $connection = self::connection($sent, [self::POLICY, "%xt%loginResponse%-1%0%-1%%Nope%\0"]);
 
-        $ending = Login::enterOn($connection, new PlayerName('Hero'), 'TOKEN', new RecordingObserver());
+        $ending = Login::enterOn($connection, new PlayerName('Hero'), 'TOKEN');
 
         static::assertEquals(new Ending(EndingStatus::Failed, 'Login refused'), $ending);
     }
@@ -149,9 +94,9 @@ final class LoginTest extends TestCase
      * @param list<string> $sent
      * @param list<null|string> $reads
      */
-    private static function enter(array &$sent, Observer $observer, array $reads): Client
+    private static function enter(array &$sent, array $reads): Client
     {
-        $client = Login::enterOn(self::connection($sent, $reads), new PlayerName('Hero'), 'TOKEN', $observer);
+        $client = Login::enterOn(self::connection($sent, $reads), new PlayerName('Hero'), 'TOKEN');
         static::assertInstanceOf(Client::class, $client);
 
         return $client;

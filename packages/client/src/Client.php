@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client;
 
+use Closure;
 use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Client\Exception\PeerClosedException;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
-use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Events;
-use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Message\Message;
 use Psl\Async;
 use Psl\Async\CancellationTokenInterface;
@@ -30,13 +29,21 @@ use Psl\DateTime\Timestamp;
  * @mago-expect lint:cyclomatic-complexity
  * @mago-expect lint:kan-defect
  */
-final readonly class Client
+final class Client
 {
+    /** @var list<Closure(Event): void> */
+    private array $subscribers = [];
+
     public function __construct(
-        private Connection $connection,
-        private Character $me,
-        private ?Observer $observer = null,
+        private readonly Connection $connection,
+        private readonly Character $me,
     ) {}
+
+    /** @param Closure(Event): void $subscriber */
+    public function subscribe(Closure $subscriber): void
+    {
+        $this->subscribers[] = $subscriber;
+    }
 
     public function character(): Character
     {
@@ -60,8 +67,6 @@ final readonly class Client
                 $instruction = $steps->current();
                 $answer = $this->execute($instruction, $stop);
 
-                $this->stepped($instruction, $answer);
-
                 $steps->send($answer);
             }
         } catch (PeerClosedException $closed) {
@@ -81,7 +86,6 @@ final readonly class Client
     public function send(Command $command): void
     {
         $this->connection->send($command);
-        $this->stepped(new Send($command), null);
     }
 
     public function wait(
@@ -206,20 +210,9 @@ final readonly class Client
             }
 
             $this->me->hear($event);
-            if ($event instanceof MovedToMapEvent) {
-                $this->observer?->moved($this->me->position());
+            foreach ($this->subscribers as $subscriber) {
+                $subscriber($event);
             }
-        }
-
-        $this->observer?->heard($message, $events);
-    }
-
-    private function stepped(Instruction $instruction, null|Event|TimedOut $answer): void
-    {
-        $this->observer?->stepped($instruction, $answer);
-
-        if ($instruction instanceof Progress) {
-            $this->observer?->progressed($instruction);
         }
     }
 }
