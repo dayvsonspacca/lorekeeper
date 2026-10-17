@@ -7,7 +7,7 @@ namespace Lorekeeper\Server\Event\Map;
 use Lorekeeper\Server\Event\NoticeEvent;
 use Override;
 
-final readonly class MapRequiresQuestEvent extends NoticeEvent
+final readonly class MapRequiresQuestEvent extends NoticeEvent implements MapRefusedEvent
 {
     #[Override]
     protected static function channel(): string

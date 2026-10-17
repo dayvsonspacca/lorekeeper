@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Map;
 
 use Lorekeeper\Core\World\Map\MapName;
-use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Notice;
 use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
-final readonly class MapMemberOnlyEvent implements Event
+final readonly class MapMemberOnlyEvent implements MapRefusedEvent
 {
     public function __construct(
         public MapName $mapName,

@@ -20,8 +20,7 @@ use Lorekeeper\Core\World\Map\Cell;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\Pad;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Map\AlreadyInMapEvent;
-use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Map\MapJoinedEvent;
 use Override;
 use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
@@ -67,7 +66,7 @@ abstract readonly class BotScript implements Script
         yield from $joining;
         $joined = $joining->getReturn();
 
-        if (!$joined instanceof MovedToMapEvent && !$joined instanceof AlreadyInMapEvent) {
+        if (!$joined instanceof MapJoinedEvent) {
             throw new RuntimeException("Could not join {$map->value}: " . self::why($joined));
         }
     }

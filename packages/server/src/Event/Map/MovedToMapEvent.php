@@ -23,7 +23,7 @@ use Override;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
-final readonly class MovedToMapEvent extends MapArrivalEvent implements Mentions
+final readonly class MovedToMapEvent extends MapArrivalEvent implements Mentions, MapJoinedEvent
 {
     /**
      * @param list<MonsterId> $monsters
