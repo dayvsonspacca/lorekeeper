@@ -40,11 +40,8 @@ final class RunBotTest extends TestCase
     {
         $run = $this->botRun();
         $task = $run->tasks()->create([
-            'script' => BotScript::OpenShops,
-            'parameters' => [
-                'map' => 'battleon',
-                'shops' => [31, 609],
-            ],
+            'script' => BotScript::LevelUp,
+            'parameters' => ['level' => 10],
         ]);
         $task->update(['status' => TaskStatus::Running]);
         $recorder = new RunRecorder($run);

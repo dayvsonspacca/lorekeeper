@@ -79,11 +79,8 @@ final class DesktopTest extends TestCase
 
         Livewire::test(ViewBotRun::class, ['record' => $run->id])
             ->callAction('addTask', [
-                'script' => BotScript::OpenShops->value,
-                'parameters' => [
-                    'map' => 'battleon',
-                    'shops' => ['31', '609', '1', '2'],
-                ],
+                'script' => BotScript::LevelUp->value,
+                'parameters' => ['level' => '8'],
             ])
             ->assertHasNoActionErrors();
         $task = $run->tasks()->sole();
@@ -91,7 +88,7 @@ final class DesktopTest extends TestCase
 
         static::assertSame(25, $task->refresh()->percent());
         Livewire::test(RunTasks::class, ['run' => $run])->assertSee('1/4 · 25%');
-        $this->get('/bot-runs')->assertSee('Open shops')->assertSee('25%');
+        $this->get('/bot-runs')->assertSee('Level up')->assertSee('25%');
     }
 
     #[Test]
@@ -116,11 +113,11 @@ final class DesktopTest extends TestCase
             'progress_total' => 6,
         ]);
 
-        $run->tasks()->create(['script' => BotScript::GoToMap, 'parameters' => ['map' => 'forest']]);
+        $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 20]]);
 
         Livewire::test(RunTasks::class, ['run' => $run])
             ->assertSee('Report')
-            ->assertSeeInOrder(['Level up', 'Monsters killed', 'Go to map'])
+            ->assertSeeInOrder(['to level 10', 'Monsters killed', 'to level 20'])
             ->assertSee('3 per minute')
             ->assertSee('10 min per level')
             ->assertSee('4 levels')
@@ -163,7 +160,7 @@ final class DesktopTest extends TestCase
 
         $gone = $account->runs()->create();
         $gone->update(['status' => RunStatus::Running]);
-        $gone->tasks()->create(['script' => BotScript::GoToMap, 'parameters' => ['map' => 'forest']]);
+        $gone->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 10]]);
         unset($this->launcher->alive[$gone->id]);
 
         Livewire::test(ViewBotRun::class, ['record' => $gone->id])->callAction('stop');
@@ -177,7 +174,7 @@ final class DesktopTest extends TestCase
         $account = $this->account();
         $running = $account->runs()->create();
         $running->update(['status' => RunStatus::Running]);
-        $running->tasks()->create(['script' => BotScript::GoToMap, 'parameters' => ['map' => 'forest']]);
+        $running->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 10]]);
         $done = $account->runs()->create();
         $done->update(['status' => RunStatus::Stopped]);
 

@@ -10,7 +10,6 @@ use Lorekeeper\Client\Bot\Credentials;
 use Lorekeeper\Client\Bot\Done;
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Log\StepLog;
-use Lorekeeper\Client\Bot\Script\WaitScript;
 use Lorekeeper\Client\Bot\Task\Task;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\ClientVersion;
@@ -164,7 +163,7 @@ final class Session
 
     public function wait(Duration $duration, CancellationTokenInterface $stop = new NullCancellationToken()): bool
     {
-        $waited = $this->client()->run(new WaitScript($duration), $stop);
+        $waited = $this->client()->wait($duration, $stop);
         if ($waited instanceof Disconnected) {
             $this->connected = false;
         }

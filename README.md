@@ -37,8 +37,7 @@ if (MapRefusals::contains($joined)) {
 }
 ```
 
-Ready-made scripts enter the game, go to maps, ask for quests, open shops and level a character up, and tell how far
-along they are.
+Ready-made scripts enter the game and level a character up, telling how far along they are.
 
 To keep a bot in the game, enter with a `Session` and an `Observer`, then play what you want, one task at a time.
 The observer hears everything: plain-word log lines, every server message, where the bot moved and how far a task
@@ -56,7 +55,7 @@ $session->leave();
 
 A desktop app, built with [NativePHP](https://nativephp.com/), to keep several AQW characters playing on your own
 machine. There is no login: it only talks to the game. Add your accounts, start a bot on any of them and queue tasks
-for it; each bot runs in its own process, the log shows what it does and a progress bar follows each task. Data is
+for it; each bot runs in its own process, the log shows what it does and each task reports how it is going. Data is
 kept in SQLite.
 
 ```sh
@@ -68,7 +67,7 @@ php artisan native:run       # or: php artisan serve, to use it in a browser whi
 
 ### `wiki`
 
-A structured wiki of the game, filled by bots that walk around and read what the server says.
+A structured wiki of the game, filled by bots that stay in the game and record what the server says.
 
 ## Getting started
 

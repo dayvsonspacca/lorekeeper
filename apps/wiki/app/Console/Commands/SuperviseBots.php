@@ -88,7 +88,6 @@ final class SuperviseBots extends Command
             }
 
             $run->log('Failed: interrupted', LogLevel::Error);
-            $run->closeTasks('interrupted');
             $run->update([
                 'status' => RunStatus::Failed,
                 'result' => 'interrupted',

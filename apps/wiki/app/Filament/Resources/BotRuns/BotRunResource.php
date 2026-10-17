@@ -29,7 +29,6 @@ use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\ListBotRuns;
 use Lorekeeper\Apps\Wiki\Filament\Resources\BotRuns\Pages\ViewBotRun;
 use Lorekeeper\Apps\Wiki\Livewire\RunEvents;
 use Lorekeeper\Apps\Wiki\Livewire\RunLog;
-use Lorekeeper\Apps\Wiki\Livewire\RunTasks;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Override;
 use UnitEnum;
@@ -72,7 +71,7 @@ final class BotRunResource extends Resource
                 ->searchable()
                 ->preload()
                 ->required()
-                ->helperText('The bot logs in, enters the game and waits for tasks.')
+                ->helperText('The bot logs in, enters the game and stays there, recording what it hears.')
                 ->columnSpanFull(),
         ]);
     }
@@ -93,10 +92,6 @@ final class BotRunResource extends Resource
                         ->columnSpanFull(),
                 ])
                 ->columns(4)
-                ->columnSpanFull(),
-            Section::make('Tasks')
-                ->icon(Heroicon::OutlinedQueueList)
-                ->schema([Livewire::make(RunTasks::class, static fn(BotRun $record): array => ['run' => $record])])
                 ->columnSpanFull(),
             Tabs::make()
                 ->tabs([
@@ -127,10 +122,6 @@ final class BotRunResource extends Resource
                     ->searchable(),
                 TextColumn::make('status')->badge(),
                 TextColumn::make('map')->icon(Heroicon::OutlinedMap)->placeholder('—'),
-                TextColumn::make('tasks_count')
-                    ->counts('tasks')
-                    ->label('Tasks')
-                    ->color('gray'),
                 TextColumn::make('duration')
                     ->state(static fn(BotRun $record): ?string => $record->duration())
                     ->placeholder('—')
@@ -160,7 +151,7 @@ final class BotRunResource extends Resource
             ->toolbarActions([DeleteBulkAction::make()])
             ->emptyStateIcon(Heroicon::OutlinedPlay)
             ->emptyStateHeading('No runs yet')
-            ->emptyStateDescription('Start a run on one of your accounts, then give it tasks.')
+            ->emptyStateDescription('Start a run on one of your accounts.')
             ->poll('5s');
     }
 

@@ -8,9 +8,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
-use Lorekeeper\Apps\Wiki\Bots\TaskStatus;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
-use Lorekeeper\Apps\Wiki\Models\BotTask;
 use Override;
 
 final class RunStats extends StatsOverviewWidget
@@ -29,23 +27,16 @@ final class RunStats extends StatsOverviewWidget
                 ->icon(Heroicon::OutlinedPlayCircle)
                 ->color('success'),
             Stat::make(
-                'Tasks waiting',
-                BotTask::query()->where('status', TaskStatus::Pending)->count(),
-            )->icon(Heroicon::OutlinedQueueList),
+                'Runs today',
+                BotRun::query()->where('created_at', '>=', now()->startOfDay())->count(),
+            )->icon(Heroicon::OutlinedPlay),
             Stat::make(
-                'Tasks done today',
-                BotTask::query()
-                    ->where('status', TaskStatus::Done)
-                    ->where('finished_at', '>=', now()->startOfDay())
+                'Failed in 24h',
+                BotRun::query()
+                    ->whereIn('status', [RunStatus::Failed, RunStatus::Disconnected])
+                    ->where('finished_at', '>=', now()->subDay())
                     ->count(),
-            )->icon(Heroicon::OutlinedCheckCircle),
-            Stat::make('Failed in 24h', BotTask::query()
-                ->where('status', TaskStatus::Failed)
-                ->where('finished_at', '>=', now()->subDay())
-                ->count() + BotRun::query()
-                ->whereIn('status', [RunStatus::Failed, RunStatus::Disconnected])
-                ->where('finished_at', '>=', now()->subDay())
-                ->count())
+            )
                 ->icon(Heroicon::OutlinedExclamationTriangle)
                 ->color('danger'),
         ];

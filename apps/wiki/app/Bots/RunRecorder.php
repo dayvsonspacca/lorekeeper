@@ -6,7 +6,6 @@ namespace Lorekeeper\Apps\Wiki\Bots;
 
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Apps\Wiki\Models\BotRunEvent;
-use Lorekeeper\Apps\Wiki\Models\BotTask;
 use Lorekeeper\Apps\Wiki\Models\Player;
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Position;
@@ -28,11 +27,8 @@ use Lorekeeper\Server\Message\Message;
 use Lorekeeper\Server\Message\XmlMessage;
 use Override;
 
-/** @mago-expect lint:too-many-methods */
 final class RunRecorder implements Observer
 {
-    private ?BotTask $task = null;
-
     public function __construct(
         private readonly BotRun $run,
     ) {}
@@ -40,7 +36,7 @@ final class RunRecorder implements Observer
     #[Override]
     public function said(string $message, LogLevel $level): void
     {
-        $this->run->log($message, $level, $this->task);
+        $this->run->log($message, $level);
     }
 
     #[Override]
@@ -75,11 +71,6 @@ final class RunRecorder implements Observer
     public function moved(Position $position): void
     {
         $this->run->update(['map' => $position->map->value]);
-    }
-
-    public function working(?BotTask $task): void
-    {
-        $this->task = $task;
     }
 
     #[Override]

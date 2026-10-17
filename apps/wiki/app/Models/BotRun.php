@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Lorekeeper\Apps\Wiki\Bots\Elapsed;
 use Lorekeeper\Apps\Wiki\Bots\RunStatus;
-use Lorekeeper\Apps\Wiki\Bots\TaskStatus;
 use Lorekeeper\Client\Bot\Log\LogLevel;
 
 /**
@@ -54,46 +53,9 @@ final class BotRun extends Model
         return $this->hasMany(BotRunEvent::class);
     }
 
-    /** @return HasMany<BotTask, $this> */
-    public function tasks(): HasMany
+    public function log(string $message, LogLevel $level = LogLevel::Info): void
     {
-        return $this->hasMany(BotTask::class);
-    }
-
-    public function closeTasks(string $reason): void
-    {
-        $this
-            ->tasks()
-            ->whereIn('status', [TaskStatus::Running, TaskStatus::Cancelling])
-            ->update([
-                'status' => TaskStatus::Failed,
-                'result' => $reason,
-                'finished_at' => now(),
-            ]);
-        $this
-            ->tasks()
-            ->where('status', TaskStatus::Pending)
-            ->update([
-                'status' => TaskStatus::Cancelled,
-                'result' => $reason,
-                'finished_at' => now(),
-            ]);
-    }
-
-    public function nextTask(): ?BotTask
-    {
-        $task = $this
-            ->tasks()
-            ->where('status', TaskStatus::Pending)
-            ->oldest('id')
-            ->first();
-
-        return $task instanceof BotTask ? $task : null;
-    }
-
-    public function log(string $message, LogLevel $level = LogLevel::Info, ?BotTask $task = null): void
-    {
-        $this->logs()->create(['message' => $message, 'level' => $level, 'bot_task_id' => $task?->id]);
+        $this->logs()->create(['message' => $message, 'level' => $level]);
     }
 
     /** @return array<string, string> */

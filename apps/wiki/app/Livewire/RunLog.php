@@ -58,7 +58,6 @@ final class RunLog extends Component
                 'at' => $log->created_at->format('H:i:s'),
                 'message' => $log->message,
                 'level' => $log->level->value,
-                'task' => $log->bot_task_id,
             ])
             ->values()
             ->all();

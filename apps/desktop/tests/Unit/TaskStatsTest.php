@@ -39,13 +39,14 @@ final class TaskStatsTest extends TestCase
     public function it_does_not_guess_before_there_is_something_to_measure(): void
     {
         $task = new BotTask();
-        $task->script = BotScript::OpenShops;
+        $task->script = BotScript::LevelUp;
         $task->parameters = [];
         $task->started_at = Carbon::parse('2026-10-17 10:00:00');
 
         $stats = new TaskStats($task, now: Carbon::parse('2026-10-17 10:00:10'));
 
-        static::assertNull($stats->target());
+        static::assertSame(100, $stats->target());
+        static::assertNull($stats->level());
         static::assertNull($stats->levelsLeft());
         static::assertNull($stats->killsPerMinute());
         static::assertNull($stats->minutesPerLevel());

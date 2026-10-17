@@ -20,7 +20,7 @@ final class StartRunAction
             ->requiresConfirmation()
             ->modalIcon(Heroicon::OutlinedPlay)
             ->modalHeading(static fn(Account $record): string => "Start a run for {$record->name}?")
-            ->modalDescription('The bot logs in, enters the game and waits for tasks.')
+            ->modalDescription('The bot logs in, enters the game and stays there, recording what it hears.')
             ->modalSubmitActionLabel('Start')
             ->action(static function (Account $record, Action $action): void {
                 $action->redirect(BotRunResource::getUrl('view', ['record' => $record->runs()->create()]));

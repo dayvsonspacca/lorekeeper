@@ -12,15 +12,11 @@ use Lorekeeper\Client\Bot\Session\Outcome;
 use Lorekeeper\Client\Bot\Session\OutcomeStatus;
 use Lorekeeper\Client\Bot\Session\Session;
 use Lorekeeper\Client\Bot\Session\SessionStatus;
-use Lorekeeper\Client\Bot\Task\AskQuestsTask;
-use Lorekeeper\Client\Bot\Task\GoToMapTask;
 use Lorekeeper\Client\Bot\Task\Task;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\World\Map\MapName;
-use Lorekeeper\Core\World\Quest\QuestId;
 use Override;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -50,24 +46,30 @@ final class SessionTest extends TestCase
             self::moved('battleon', 1350),
             self::INVENTORY,
             self::moved('forest', 7),
-            null,
         ]);
 
-        $went = $session->play(new GoToMapTask(new MapName('forest')));
-        $asked = $session->play(new AskQuestsTask(new MapName('forest'), [new QuestId(3), new QuestId(5)]));
+        $went = $session->play(new GoToForest());
+        $again = $session->play(new GoToForest());
         $session->leave();
 
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $went);
-        static::assertEquals(new Outcome(OutcomeStatus::Done, 'Loaded 0 of 2 quests'), $asked);
+        static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $again);
         static::assertSame(
-            ['moved battleon 1350', 'moved forest 7', 'progressed 0/1', 'progressed 1/1'],
+            [
+                'moved battleon 1350',
+                'progressed 0/1',
+                'moved forest 7',
+                'progressed 1/1',
+                'progressed 0/1',
+                'progressed 1/1',
+            ],
             $observer->updates,
         );
         static::assertContains('info: Playing Go to forest', $observer->lines);
         static::assertContains('success: Go to forest: Now in forest', $observer->lines);
-        static::assertContains('warning: No answer to load quest after 15s', $observer->lines);
-        static::assertSame('%xt%zm%getQuests%7%3%5%', $sent[5]);
+        static::assertSame('%xt%zm%cmd%1%tfer%Hero%forest%', $sent[4]);
         static::assertSame('%xt%zm%logout%1%', end($sent));
+        static::assertCount(6, $sent);
         static::assertFalse($session->connected());
         static::assertSame('forest', $session->character()->position()->map->value);
     }
@@ -100,7 +102,7 @@ final class SessionTest extends TestCase
         $cancel = new SignalCancellationToken();
         $cancel->cancel();
 
-        $outcome = $session->play(new GoToMapTask(new MapName('forest')), $cancel);
+        $outcome = $session->play(new GoToForest(), $cancel);
 
         static::assertEquals(new Outcome(OutcomeStatus::Cancelled, 'cancelled'), $outcome);
         static::assertTrue($session->connected());

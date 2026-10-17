@@ -14,10 +14,9 @@ use Lorekeeper\Client\Bot\Log\LogLevel;
  * @property int $bot_run_id
  * @property string $message
  * @property LogLevel $level
- * @property null|int $bot_task_id
  * @property Carbon $created_at
  */
-#[Fillable(['message', 'level', 'bot_task_id'])]
+#[Fillable(['message', 'level'])]
 final class BotRunLog extends Model
 {
     public const null UPDATED_AT = null;

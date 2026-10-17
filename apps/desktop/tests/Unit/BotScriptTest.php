@@ -4,58 +4,28 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Tests\Unit;
 
-use InvalidArgumentException;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
-use Lorekeeper\Client\Bot\Task\AskQuestsTask;
-use Lorekeeper\Client\Bot\Task\GoToMapTask;
 use Lorekeeper\Client\Bot\Task\LevelUpTask;
-use Lorekeeper\Client\Bot\Task\OpenShopsTask;
 use Lorekeeper\Core\Player\PlayerLevel;
-use Lorekeeper\Core\World\Map\MapName;
-use Lorekeeper\Core\World\Quest\QuestId;
-use Lorekeeper\Core\World\Shop\ShopId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class BotScriptTest extends TestCase
 {
     #[Test]
-    public function each_script_becomes_a_client_task(): void
+    public function level_up_becomes_the_client_task_with_a_level_the_game_has(): void
     {
-        static::assertEquals(new GoToMapTask(new MapName('forest')), BotScript::GoToMap->task(['map' => 'forest']));
-        static::assertEquals(new AskQuestsTask(new MapName('battleon'), [
-            new QuestId(3),
-            new QuestId(5),
-        ]), BotScript::AskQuests->task(['map' => '', 'quests' => ['3', '5']]));
-        static::assertEquals(new OpenShopsTask(new MapName('battleon'), [new ShopId(
-            31,
-        )]), BotScript::OpenShops->task(['map' => 'battleon', 'shops' => [31, 'x']]));
         static::assertEquals(new LevelUpTask(new PlayerLevel(40)), BotScript::LevelUp->task(['level' => '40']));
         static::assertEquals(new LevelUpTask(new PlayerLevel(100)), BotScript::LevelUp->task(['level' => 250]));
+        static::assertEquals(new LevelUpTask(new PlayerLevel(100)), BotScript::LevelUp->task([]));
     }
 
     #[Test]
-    public function each_script_summarizes_its_parameters(): void
+    public function level_up_summarizes_its_target_and_has_a_report(): void
     {
-        static::assertSame('forest', BotScript::GoToMap->summary(['map' => 'forest']));
-        static::assertSame('battleon · 2 quests', BotScript::AskQuests->summary([
-            'map' => 'battleon',
-            'quests' => ['3', '5'],
-        ]));
-        static::assertSame('— · 0 shops', BotScript::OpenShops->summary([]));
         static::assertSame('to level 40', BotScript::LevelUp->summary(['level' => '40']));
         static::assertSame('to level 100', BotScript::LevelUp->summary([]));
-        static::assertSame(
-            ['map' => null, 'quests' => null, 'shops' => null, 'level' => null],
-            BotScript::blankParameters(),
-        );
-    }
-
-    #[Test]
-    public function a_task_without_ids_cannot_be_played(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        BotScript::OpenShops->task(['map' => 'battleon', 'shops' => ['x']]);
+        static::assertSame('reports.level-up', BotScript::LevelUp->report());
+        static::assertSame(['level' => null], BotScript::blankParameters());
     }
 }

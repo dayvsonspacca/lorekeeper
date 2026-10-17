@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Wiki\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Lorekeeper\Apps\Wiki\Bots\BotScript;
 use Lorekeeper\Apps\Wiki\Bots\RunRecorder;
 use Lorekeeper\Apps\Wiki\Models\Account;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
@@ -117,20 +116,16 @@ final class RunRecorderTest extends TestCase
     }
 
     #[Test]
-    public function it_tags_the_lines_of_the_task_it_is_working_on(): void
+    public function it_logs_what_the_session_says_and_keeps_the_map(): void
     {
         $run = $this->botRun();
-        $task = $run->tasks()->create(['script' => BotScript::GoToMap, 'parameters' => ['map' => 'forest']]);
         $recorder = new RunRecorder($run);
 
-        $recorder->working($task);
         $recorder->said('Moved to forest', LogLevel::Success);
         $recorder->moved(new Position(new MapName('forest'), new AreaId(7)));
-        $recorder->working(null);
-        $recorder->said('Waiting for tasks in forest', LogLevel::Info);
 
         static::assertSame('forest', $run->refresh()->map);
-        static::assertSame([$task->id, null], $run->logs()->orderBy('id')->pluck('bot_task_id')->all());
+        static::assertSame(['Moved to forest'], $run->logs()->pluck('message')->all());
     }
 
     private static function hear(RunRecorder $recorder, Message $message): void

@@ -21,6 +21,7 @@ use Psl\Async;
 use Psl\Async\CancellationTokenInterface;
 use Psl\Async\Exception\CancelledException;
 use Psl\Async\NullCancellationToken;
+use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
 
 /**
@@ -87,6 +88,25 @@ final readonly class Client
         if ($this->stepped !== null) {
             ($this->stepped)(new Send($command), null);
         }
+    }
+
+    public function wait(
+        Duration $duration,
+        CancellationTokenInterface $stop = new NullCancellationToken(),
+    ): null|Disconnected|Stopped {
+        try {
+            $this->listen(new Pause($duration), $stop);
+        } catch (PeerClosedException $closed) {
+            return new Disconnected($closed->getMessage());
+        } catch (CancelledException $cancelled) {
+            if (!$stop->isCancelled()) {
+                throw $cancelled;
+            }
+
+            return new Stopped();
+        }
+
+        return null;
     }
 
     /** @throws PeerClosedException */
