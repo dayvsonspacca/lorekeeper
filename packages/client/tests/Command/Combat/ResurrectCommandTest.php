@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Combat;
 
-use Lorekeeper\Client\Command\ResurrectCommand;
+use Lorekeeper\Client\Command\Combat\ResurrectCommand;
 use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;

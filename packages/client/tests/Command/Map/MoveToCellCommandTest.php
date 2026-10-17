@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Map;
 
-use Lorekeeper\Client\Command\MoveToCellCommand;
+use Lorekeeper\Client\Command\Map\MoveToCellCommand;
 use Lorekeeper\Core\World\Map\Cell;
 use Lorekeeper\Core\World\Map\Pad;
 use Lorekeeper\Server\AreaId;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Map;
 
-use Lorekeeper\Client\Command\JoinHouseCommand;
+use Lorekeeper\Client\Command\Map\JoinHouseCommand;
 use Lorekeeper\Core\Player\PlayerName;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

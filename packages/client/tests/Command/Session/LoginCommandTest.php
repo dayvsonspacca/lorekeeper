@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Session;
 
 use Lorekeeper\Client\ClientVersion;
-use Lorekeeper\Client\Command\LoginCommand;
+use Lorekeeper\Client\Command\Session\LoginCommand;
 use Lorekeeper\Core\Player\PlayerName;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

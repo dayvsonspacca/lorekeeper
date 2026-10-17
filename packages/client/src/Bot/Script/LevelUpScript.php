@@ -8,7 +8,7 @@ use Closure;
 use Generator;
 use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Done;
-use Lorekeeper\Client\Command\AttackMonsterCommand;
+use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\TimedOut;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Script\Game;
 
-use Lorekeeper\Client\Command\JoinHouseCommand;
+use Lorekeeper\Client\Command\Map\JoinHouseCommand;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Game\JoinHouseScript;
 use Lorekeeper\Client\Script\Send;

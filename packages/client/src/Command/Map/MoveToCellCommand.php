@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Command;
+namespace Lorekeeper\Client\Command\Map;
 
+use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Core\World\Map\Cell;
 use Lorekeeper\Core\World\Map\Pad;
 use Lorekeeper\Server\AreaId;

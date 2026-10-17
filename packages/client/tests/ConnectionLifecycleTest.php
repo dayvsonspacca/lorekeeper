@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests;
 
-use Lorekeeper\Client\Command\LogoutCommand;
+use Lorekeeper\Client\Command\Session\LogoutCommand;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Exception\PeerClosedException;
 use Lorekeeper\Server\Server;

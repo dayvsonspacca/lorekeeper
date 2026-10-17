@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Combat;
 
 use InvalidArgumentException;
-use Lorekeeper\Client\Command\AttackMonsterCommand;
+use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\Combat\Targetable;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;

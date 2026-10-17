@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Map;
 
-use Lorekeeper\Client\Command\JoinMapCommand;
+use Lorekeeper\Client\Command\Map\JoinMapCommand;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Server\RoomId;

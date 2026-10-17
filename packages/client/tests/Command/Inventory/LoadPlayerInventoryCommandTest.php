@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Inventory;
 
-use Lorekeeper\Client\Command\LoadPlayerInventoryCommand;
+use Lorekeeper\Client\Command\Inventory\LoadPlayerInventoryCommand;
 use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;

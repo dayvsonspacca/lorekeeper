@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Bot\Log;
 
 use Lorekeeper\Client\Command\Command;
-use Lorekeeper\Client\Command\JoinHouseCommand;
-use Lorekeeper\Client\Command\JoinInitialMapCommand;
-use Lorekeeper\Client\Command\LogoutCommand;
+use Lorekeeper\Client\Command\Map\JoinHouseCommand;
+use Lorekeeper\Client\Command\Map\JoinInitialMapCommand;
+use Lorekeeper\Client\Command\Session\LogoutCommand;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;

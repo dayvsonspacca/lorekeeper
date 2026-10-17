@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Script\Game;
 
 use Generator;
-use Lorekeeper\Client\Command\LoadQuestCommand;
+use Lorekeeper\Client\Command\Quest\LoadQuestCommand;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Script;

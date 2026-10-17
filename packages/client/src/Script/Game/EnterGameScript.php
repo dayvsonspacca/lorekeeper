@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Script\Game;
 
 use Generator;
-use Lorekeeper\Client\Command\JoinInitialMapCommand;
-use Lorekeeper\Client\Command\LoadPlayerInventoryCommand;
-use Lorekeeper\Client\Command\LoginCommand;
-use Lorekeeper\Client\Command\PolicyFileRequestCommand;
+use Lorekeeper\Client\Command\Inventory\LoadPlayerInventoryCommand;
+use Lorekeeper\Client\Command\Map\JoinInitialMapCommand;
+use Lorekeeper\Client\Command\Session\LoginCommand;
+use Lorekeeper\Client\Command\Session\PolicyFileRequestCommand;
 use Lorekeeper\Client\Login\GameLogin;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Script;

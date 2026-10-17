@@ -6,8 +6,8 @@ namespace Lorekeeper\Client\Tests;
 
 use Generator;
 use Lorekeeper\Client\Client;
-use Lorekeeper\Client\Command\LogoutCommand;
-use Lorekeeper\Client\Command\PolicyFileRequestCommand;
+use Lorekeeper\Client\Command\Session\LogoutCommand;
+use Lorekeeper\Client\Command\Session\PolicyFileRequestCommand;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;

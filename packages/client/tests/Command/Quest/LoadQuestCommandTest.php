@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Quest;
 
-use Lorekeeper\Client\Command\LoadQuestCommand;
+use Lorekeeper\Client\Command\Quest\LoadQuestCommand;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Server\AreaId;
 use PHPUnit\Framework\Attributes\Test;

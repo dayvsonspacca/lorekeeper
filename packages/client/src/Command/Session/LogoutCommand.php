@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Command;
+namespace Lorekeeper\Client\Command\Session;
 
+use Lorekeeper\Client\Command\Command;
 use Override;
 
 final readonly class LogoutCommand implements Command

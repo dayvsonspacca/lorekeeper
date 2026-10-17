@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Script\Game;
 
 use Generator;
-use Lorekeeper\Client\Command\LogoutCommand;
+use Lorekeeper\Client\Command\Session\LogoutCommand;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;

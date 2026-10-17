@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Command;
+namespace Lorekeeper\Client\Command\Inventory;
 
+use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\SocketId;
 use Override;

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Shop;
 
-use Lorekeeper\Client\Command\LoadShopCommand;
+use Lorekeeper\Client\Command\Shop\LoadShopCommand;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Server\AreaId;
 use PHPUnit\Framework\Attributes\Test;

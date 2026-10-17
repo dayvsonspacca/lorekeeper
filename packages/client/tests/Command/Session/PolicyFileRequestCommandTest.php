@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Session;
 
-use Lorekeeper\Client\Command\PolicyFileRequestCommand;
+use Lorekeeper\Client\Command\Session\PolicyFileRequestCommand;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Command;
+namespace Lorekeeper\Client\Tests\Command\Map;
 
-use Lorekeeper\Client\Command\JoinInitialMapCommand;
+use Lorekeeper\Client\Command\Map\JoinInitialMapCommand;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Command;
+namespace Lorekeeper\Client\Command\Map;
 
+use Lorekeeper\Client\Command\Command;
 use Override;
 
 final readonly class JoinInitialMapCommand implements Command

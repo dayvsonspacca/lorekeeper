@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Script\Game;
 
 use Generator;
-use Lorekeeper\Client\Command\JoinMapCommand;
+use Lorekeeper\Client\Command\Map\JoinMapCommand;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;

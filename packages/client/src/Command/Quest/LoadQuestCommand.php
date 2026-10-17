@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Command;
+namespace Lorekeeper\Client\Command\Quest;
 
+use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Server\AreaId;
 use Override;

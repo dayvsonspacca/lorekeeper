@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Script\Game;
 
-use Lorekeeper\Client\Command\LogoutCommand;
+use Lorekeeper\Client\Command\Session\LogoutCommand;
 use Lorekeeper\Client\Script\Game\LogoutScript;
 use Lorekeeper\Client\Script\Send;
 use PHPUnit\Framework\Attributes\Test;
