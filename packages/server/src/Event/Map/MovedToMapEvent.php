@@ -15,19 +15,15 @@ use Lorekeeper\Core\World\Monster\MonsterLevel;
 use Lorekeeper\Core\World\Monster\MonsterName;
 use Lorekeeper\Core\World\Monster\Race;
 use Lorekeeper\Server\AreaId;
-use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Mention\Mention;
 use Lorekeeper\Server\Event\Mention\Mentions;
 use Lorekeeper\Server\Exception\MalformedEventException;
-use Lorekeeper\Server\Message\JsonMessage;
-use Lorekeeper\Server\Message\Message;
 use Lorekeeper\Server\RoomId;
 use Override;
-use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
-final readonly class MovedToMapEvent implements Event, Mentions
+final readonly class MovedToMapEvent extends MoveToAreaEvent implements Mentions
 {
     /**
      * @param list<MonsterId> $monsters
@@ -53,14 +49,9 @@ final readonly class MovedToMapEvent implements Event, Mentions
         return $this->mentions;
     }
 
-    /** @return Option\Option<static> */
     #[Override]
-    public static function from(Message $message): Option\Option
+    protected static function read(array $data): static
     {
-        if (!$message instanceof JsonMessage || ($message->data['cmd'] ?? null) !== 'moveToArea') {
-            return Option\none();
-        }
-
         try {
             $data = Type\shape([
                 'areaId' => Type\positive_int(),
@@ -83,7 +74,7 @@ final readonly class MovedToMapEvent implements Event, Mentions
                     'intHPMax' => Type\uint(),
                     'intMPMax' => Type\uint(),
                 ], allowUnknownFields: true)),
-            ], allowUnknownFields: true)->coerce($message->data);
+            ], allowUnknownFields: true)->coerce($data);
         } catch (CoercionException $exception) {
             throw new MalformedEventException(static::class, 'map data is missing or invalid', $exception);
         }
@@ -117,19 +108,17 @@ final readonly class MovedToMapEvent implements Event, Mentions
             }
         }
 
-        return Option\some(
-            new static(
-                new AreaId($data['areaId']),
-                self::room($data['areaName']),
-                new MapName($data['strMapName']),
-                new Gamefile($data['strMapFileName']),
-                $monsters,
-                array_map(
-                    static fn(array $player): PlayerName => new PlayerName($player['strUsername']),
-                    $data['uoBranch'],
-                ),
-                $mentions,
+        return new static(
+            new AreaId($data['areaId']),
+            self::room($data['areaName']),
+            new MapName($data['strMapName']),
+            new Gamefile($data['strMapFileName']),
+            $monsters,
+            array_map(
+                static fn(array $player): PlayerName => new PlayerName($player['strUsername']),
+                $data['uoBranch'],
             ),
+            $mentions,
         );
     }
 

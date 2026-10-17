@@ -8,6 +8,7 @@
     "ext-dom": "*",
     "dayvsonspacca/lorekeeper-core": "dev-main",
     "php-standard-library/type": "^6.2",
+    "php-standard-library/date-time": "^6.2",
     "php-standard-library/option": "^6.2",
     "php-standard-library/network": "^6.2"
   },

@@ -104,7 +104,15 @@ final class RunRecorderTest extends TestCase
                 ->all(),
         );
         static::assertSame(
-            ['RoomJoined', 'MovedToMap', 'PlayerEntered', 'PlayerUpdated', 'PlayerLeft'],
+            [
+                'RoomJoined',
+                'MovedToMap',
+                'MonstersPlaced',
+                'PlayersPresent',
+                'PlayerEntered',
+                'PlayerUpdated',
+                'PlayerLeft',
+            ],
             BotRunEvent::query()
                 ->orderBy('id')
                 ->pluck('name')

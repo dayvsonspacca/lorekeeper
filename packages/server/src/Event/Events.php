@@ -5,6 +5,14 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event;
 
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
+use Lorekeeper\Server\Event\Combat\AttackRejectedEvent;
+use Lorekeeper\Server\Event\Combat\CombatUpdatedEvent;
+use Lorekeeper\Server\Event\Combat\GoldExpGainedEvent;
+use Lorekeeper\Server\Event\Combat\LevelUpEvent;
+use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
+use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
+use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Item\ItemEquippedEvent;
 use Lorekeeper\Server\Event\Item\ItemUnequippedEvent;
@@ -15,7 +23,9 @@ use Lorekeeper\Server\Event\Map\MapLockedEvent;
 use Lorekeeper\Server\Event\Map\MapMemberOnlyEvent;
 use Lorekeeper\Server\Event\Map\MapNotAvailableEvent;
 use Lorekeeper\Server\Event\Map\MapRequiresQuestEvent;
+use Lorekeeper\Server\Event\Map\MonstersPlacedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Map\PlayersPresentEvent;
 use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
 use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
@@ -30,8 +40,16 @@ final readonly class Events
     /** @var non-empty-list<class-string<Event>> */
     public const array ALL = [
         ActionTooSoonEvent::class,
+        AttackRejectedEvent::class,
         AwayFromKeyboardEvent::class,
         ClassChangedEvent::class,
+        CombatUpdatedEvent::class,
+        GoldExpGainedEvent::class,
+        LevelUpEvent::class,
+        MonsterRespawnedEvent::class,
+        PlayerDiedEvent::class,
+        ResurrectedEvent::class,
+        SkillsLoadedEvent::class,
         ConnectionEstablishedEvent::class,
         PlayerInventoryLoadedEvent::class,
         ItemEquippedEvent::class,
@@ -46,6 +64,8 @@ final readonly class Events
         MapNotAvailableEvent::class,
         MapRequiresQuestEvent::class,
         MovedToMapEvent::class,
+        MonstersPlacedEvent::class,
+        PlayersPresentEvent::class,
         RoomJoinedEvent::class,
         PlayerEnteredEvent::class,
         PlayerLeftEvent::class,

@@ -26,7 +26,11 @@ final class EventsTest extends TestCase
                 static fn(string $file): string => basename($file, suffix: '.php'),
                 $files === false ? [] : $files,
             ),
-            static fn(string $class): bool => !in_array($class, ['Event', 'NoticeEvent'], strict: true),
+            static fn(string $class): bool => !in_array(
+                $class,
+                ['Event', 'NoticeEvent', 'MoveToAreaEvent'],
+                strict: true,
+            ),
         ));
         $known = array_map(static fn(string $event): string => substr(
             $event,
