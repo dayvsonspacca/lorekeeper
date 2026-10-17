@@ -25,11 +25,7 @@ use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Override;
 use Psl\DateTime\Duration;
 
-/**
- * Goes to a map if needed and opens the given shops one by one, telling how many are done.
- *
- * @implements Script<Done|TimedOut|MapLockedEvent|MapMemberOnlyEvent|MapNotAvailableEvent|MapRequiresQuestEvent>
- */
+/** @implements Script<Done|TimedOut|MapLockedEvent|MapMemberOnlyEvent|MapNotAvailableEvent|MapRequiresQuestEvent> */
 final readonly class OpenShopsScript implements Script
 {
     /** @param non-empty-list<ShopId> $shops */

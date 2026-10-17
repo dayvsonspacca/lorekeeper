@@ -8,9 +8,6 @@ use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Override;
 use Symfony\Component\Process\Process;
 
-/**
- * Plays each run in a detached PHP process, for when the app is served in a browser while developing.
- */
 final readonly class ProcessLauncher implements Launcher
 {
     #[Override]

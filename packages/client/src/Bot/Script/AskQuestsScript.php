@@ -25,11 +25,7 @@ use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Override;
 use Psl\DateTime\Duration;
 
-/**
- * Goes to a map if needed and asks for the given quests, ten at a time, telling how many batches are done.
- *
- * @implements Script<Done|TimedOut|MapLockedEvent|MapMemberOnlyEvent|MapNotAvailableEvent|MapRequiresQuestEvent>
- */
+/** @implements Script<Done|TimedOut|MapLockedEvent|MapMemberOnlyEvent|MapNotAvailableEvent|MapRequiresQuestEvent> */
 final readonly class AskQuestsScript implements Script
 {
     private const int BATCH = 10;

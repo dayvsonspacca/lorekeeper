@@ -11,7 +11,6 @@ use Override;
 
 final class NativeAppServiceProvider implements ProvidesPhpIni
 {
-    /** Runs when the desktop app starts. */
     public function boot(): void
     {
         BotRun::interrupted();

@@ -9,7 +9,7 @@ use SensitiveParameter;
 
 final readonly class Credentials
 {
-    /** @param null|string $server The server to join; the first open one when null. */
+    /** @param null|string $server */
     public function __construct(
         public PlayerName $player,
         #[SensitiveParameter]

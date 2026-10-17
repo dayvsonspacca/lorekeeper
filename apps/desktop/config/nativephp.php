@@ -150,7 +150,7 @@ return [
     ],
 
     /**
-     * The queue workers that get auto-started on your application start. None: the bots run as child processes.
+     * The queue workers that get auto-started on your application start.
      */
     'queue_workers' => [],
 

@@ -18,9 +18,6 @@ use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Message\Message;
 use Override;
 
-/**
- * Writes what a session does into its run: the log, where the bot is, and how its tasks go.
- */
 final class RunRecorder implements Observer
 {
     private ?BotTask $task = null;

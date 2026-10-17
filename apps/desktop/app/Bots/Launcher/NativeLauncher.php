@@ -8,9 +8,6 @@ use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Native\Desktop\Facades\ChildProcess;
 use Override;
 
-/**
- * Plays each run in a child process of the desktop app, so the bots close with it.
- */
 final readonly class NativeLauncher implements Launcher
 {
     #[Override]

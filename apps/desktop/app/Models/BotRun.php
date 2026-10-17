@@ -35,7 +35,6 @@ final class BotRun extends Model
     /** @var array<string, mixed> */
     protected $attributes = ['status' => 'pending'];
 
-    /** Ends the runs left active by an app that closed; their bot processes went with it. */
     public static function interrupted(): void
     {
         foreach (self::query()

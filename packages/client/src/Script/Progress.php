@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Script;
 
-/**
- * Tells whoever watches the script how far along it is. The client sends nothing for it.
- */
 final readonly class Progress implements Instruction
 {
     /**

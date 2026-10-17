@@ -16,9 +16,6 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-/**
- * The whole app. It runs on the player's own machine, so there is no login.
- */
 final class DesktopPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel

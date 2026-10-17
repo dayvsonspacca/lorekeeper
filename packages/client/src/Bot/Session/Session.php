@@ -38,9 +38,6 @@ use SensitiveParameter;
 use Throwable;
 
 /**
- * Keeps one character in the game and plays the jobs it is given, one after the other, until it is stopped or the
- * connection drops. Everything it does is told to the observer.
- *
  * @mago-expect lint:cyclomatic-complexity
  * @mago-expect lint:kan-defect
  */
@@ -59,7 +56,6 @@ final class Session
         private readonly ClientVersion $version = new ClientVersion('5.1'),
     ) {}
 
-    /** Logs in, picks a server, connects and plays. */
     public function play(Jobs $jobs, CancellationTokenInterface $stop = new NullCancellationToken()): Ending
     {
         try {
@@ -79,7 +75,6 @@ final class Session
         }
     }
 
-    /** Enters the game over an open connection with a login token, then plays. */
     public function playOn(
         Connection $connection,
         #[SensitiveParameter]

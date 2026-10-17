@@ -169,11 +169,7 @@ final class SessionTest extends TestCase
         return new Session(new Credentials(new PlayerName('Hero'), 'secret'), $observer);
     }
 
-    /**
-     * Hands out the given jobs, a null meaning nothing to do yet, then stops the session.
-     *
-     * @param list<null|Job> $queue
-     */
+    /** @param list<null|Job> $queue */
     private static function jobs(SignalCancellationToken $stop, array $queue): Jobs
     {
         return new class($stop, $queue) implements Jobs {
@@ -209,8 +205,6 @@ final class SessionTest extends TestCase
     }
 
     /**
-     * Answers each read with the next message; a null, or running out, reads as nothing arriving in time.
-     *
      * @param list<string> $sent
      * @param list<null|string> $reads
      */

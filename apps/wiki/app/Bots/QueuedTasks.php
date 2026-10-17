@@ -12,9 +12,6 @@ use Lorekeeper\Client\Bot\Session\Job;
 use Lorekeeper\Client\Bot\Session\Jobs;
 use Override;
 
-/**
- * Hands a session the pending tasks of its run, oldest first.
- */
 final readonly class QueuedTasks implements Jobs
 {
     public function __construct(

@@ -12,10 +12,6 @@ use Psl\Async\Exception\CancelledException;
 use Psl\Async\SignalCancellationToken;
 use Psl\DateTime\Duration;
 
-/**
- * Cancels a token once a condition holds, checking it every so often in the background. Useful when the wish to
- * stop lives somewhere the bot cannot be signalled from, like a database row.
- */
 final class Watch
 {
     private readonly SignalCancellationToken $token;

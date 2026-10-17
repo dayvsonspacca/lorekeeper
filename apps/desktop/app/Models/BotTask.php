@@ -56,7 +56,6 @@ final class BotTask extends Model
         return Elapsed::between($this->started_at, $this->finished_at);
     }
 
-    /** How far along the task is, from 0 to 100, or null when its script does not tell. */
     public function percent(): ?int
     {
         if ($this->progress_total === null || $this->progress_total < 1) {
