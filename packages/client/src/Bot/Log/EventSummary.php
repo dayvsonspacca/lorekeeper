@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Bot\Log;
 
+use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\ActionTooSoonEvent;
 use Lorekeeper\Server\Event\AwayFromKeyboardEvent;
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
+use Lorekeeper\Server\Event\Combat\AttackRejectedEvent;
+use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
+use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
+use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
@@ -26,8 +32,10 @@ use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
 use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
 use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
+use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedQuest;
+use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 
 final readonly class EventSummary
@@ -72,6 +80,19 @@ final readonly class EventSummary
             $event instanceof PlayerUpdatedEvent => "{$event->name->value} updated",
             $event instanceof QuestLoadedEvent => self::quests($event),
             $event instanceof ShopLoadedEvent => "{$event->name->value}: " . count($event->items) . ' items',
+            $event instanceof MonsterRewardedEvent
+                => "Earned {$event->experience->value} experience and {$event->gold->value} gold from monster {$event->monster->value}",
+            $event instanceof MonstersDiedEvent => 'Monster '
+                . implode(', ', array_map(
+                    static fn(MonsterSpawnId $monster): string => (string) $monster->value,
+                    $event->monsters,
+                ))
+                . ' died',
+            $event instanceof MonsterRespawnedEvent => "Monster {$event->id->value} came back",
+            $event instanceof LeveledUpEvent => "Reached level {$event->level->value}",
+            $event instanceof PlayerDiedEvent => 'Died',
+            $event instanceof ResurrectedEvent => 'Back to life',
+            $event instanceof AttackRejectedEvent => 'The attack was not played',
             default => self::name($event),
         };
     }

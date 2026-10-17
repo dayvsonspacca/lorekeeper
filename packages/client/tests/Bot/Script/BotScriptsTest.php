@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Bot\Script;
 
+use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Done;
-use Lorekeeper\Client\Bot\Position;
 use Lorekeeper\Client\Bot\Task\AskQuestsTask;
 use Lorekeeper\Client\Bot\Task\GoToMapTask;
 use Lorekeeper\Client\Bot\Task\OpenShopsTask;
 use Lorekeeper\Client\Script\Await;
+use Lorekeeper\Client\Script\Game\InGame;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Script;
@@ -28,6 +29,7 @@ use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Server\RoomId;
+use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;
@@ -65,7 +67,7 @@ final class BotScriptsTest extends TestCase
         $task = new AskQuestsTask(new MapName('battleon'), $quests);
 
         [$steps, $result] = Replay::run(
-            $task->script(self::hero(), self::battleon()),
+            $task->script(self::me()),
             null,
             new QuestLoadedEvent([], []),
             null,
@@ -91,7 +93,7 @@ final class BotScriptsTest extends TestCase
         $task = new OpenShopsTask(new MapName('battleon'), [new ShopId(31), new ShopId(609)]);
 
         [$steps, $result] = Replay::run(
-            $task->script(self::hero(), self::battleon()),
+            $task->script(self::me()),
             null,
             new ShopLoadedEvent(new ShopId(31), new ShopName('Battleon Assorted shop'), false, [], []),
             null,
@@ -115,16 +117,27 @@ final class BotScriptsTest extends TestCase
     /** @return Script<object> */
     private static function goTo(string $map): Script
     {
-        return new GoToMapTask(new MapName($map))->script(self::hero(), self::battleon());
+        return new GoToMapTask(new MapName($map))->script(self::me());
     }
 
-    private static function hero(): PlayerName
+    private static function me(): Character
     {
-        return new PlayerName('Hero');
-    }
+        $me = new Character(new PlayerName('Hero'));
+        $me->entered(
+            new InGame(
+                new SocketId(1),
+                new MovedToMapEvent(
+                    new AreaId(1350),
+                    new RoomId(1),
+                    new MapName('battleon'),
+                    new Gamefile('b.swf'),
+                    [],
+                    [],
+                    [],
+                ),
+            ),
+        );
 
-    private static function battleon(): Position
-    {
-        return new Position(new MapName('battleon'), new AreaId(1350));
+        return $me;
     }
 }

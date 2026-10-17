@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Bot\Session;
 
+use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Credentials;
 use Lorekeeper\Client\Bot\Done;
 use Lorekeeper\Client\Bot\Log\EventSummary;
@@ -17,6 +18,7 @@ use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Login\GameLogin;
 use Lorekeeper\Client\Login\LoginClient;
 use Lorekeeper\Client\Login\ServerChoice;
+use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Game\EnterGameScript;
 use Lorekeeper\Client\Script\Game\InGame;
@@ -43,6 +45,8 @@ use Throwable;
  */
 final class Session
 {
+    private readonly Character $me;
+
     private ?Position $position = null;
 
     private ?Job $job = null;
@@ -54,7 +58,9 @@ final class Session
         private readonly Observer $observer,
         private readonly LoginClient $logins = new LoginClient(),
         private readonly ClientVersion $version = new ClientVersion('5.1'),
-    ) {}
+    ) {
+        $this->me = new Character($credentials->player);
+    }
 
     public function play(Jobs $jobs, CancellationTokenInterface $stop = new NullCancellationToken()): Ending
     {
@@ -98,6 +104,7 @@ final class Session
                 : new Ending(SessionStatus::Failed, self::reason($entered));
         }
 
+        $this->me->entered($entered);
         if ($this->position === null) {
             $this->at(new Position($entered->map->map, $entered->map->areaId));
         }
@@ -133,6 +140,11 @@ final class Session
         return new Ending(SessionStatus::Stopped);
     }
 
+    public function character(): Character
+    {
+        return $this->me;
+    }
+
     public function position(): ?Position
     {
         return $this->position;
@@ -150,10 +162,7 @@ final class Session
         try {
             $result = $this->position === null
                 ? 'the bot does not know where it is'
-                : $client->run(
-                    $job->task->script($this->credentials->player, $this->position),
-                    new LinkedCancellationToken($stop, $cancel->token()),
-                );
+                : $client->run($job->task->script($this->me), new LinkedCancellationToken($stop, $cancel->token()));
         } catch (Throwable $failure) {
             $result = $failure->getMessage();
         } finally {
@@ -184,11 +193,14 @@ final class Session
         $events = Events::recognize($message);
 
         foreach ($events as $event) {
-            if (!$event instanceof MovedToMapEvent) {
+            if (!$event instanceof Event) {
                 continue;
             }
 
-            $this->at(new Position($event->map, $event->areaId));
+            $this->me->hear($event);
+            if ($event instanceof MovedToMapEvent) {
+                $this->at(new Position($event->map, $event->areaId));
+            }
         }
 
         $this->observer->heard($message, $events);
@@ -216,6 +228,10 @@ final class Session
                 $this->say($this->position === null ? 'Idling' : "Idling in {$this->position->map->value}");
             }
 
+            return;
+        }
+
+        if ($instruction instanceof Await && $answer instanceof TimedOut) {
             return;
         }
 

@@ -14,6 +14,7 @@ use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
+use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
@@ -24,6 +25,7 @@ use Lorekeeper\Server\Event\Map\MapMemberOnlyEvent;
 use Lorekeeper\Server\Event\Map\MapNotAvailableEvent;
 use Lorekeeper\Server\Event\Map\MapRequiresQuestEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 
@@ -78,6 +80,8 @@ final readonly class StepLog
             $event instanceof ConnectionEstablishedEvent => [LogLevel::Info, 'Connected'],
             $event instanceof LoginSucceededEvent => [LogLevel::Success, 'Logged in'],
             $event instanceof LoginFailedEvent => [LogLevel::Error, 'Login refused'],
+            $event instanceof LeveledUpEvent => [LogLevel::Success, EventSummary::of($event)],
+            $event instanceof PlayerDiedEvent => [LogLevel::Warning, EventSummary::of($event)],
             $event instanceof MovedToMapEvent && $command instanceof JoinInitialMapCommand => [
                 LogLevel::Success,
                 "Entered the game in {$event->map->value} (room {$event->roomId->value})",

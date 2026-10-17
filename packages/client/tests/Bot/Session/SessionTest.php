@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tests\Bot\Session;
 
 use Generator;
+use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Credentials;
 use Lorekeeper\Client\Bot\Done;
-use Lorekeeper\Client\Bot\Position;
 use Lorekeeper\Client\Bot\Session\Ending;
 use Lorekeeper\Client\Bot\Session\Job;
 use Lorekeeper\Client\Bot\Session\Jobs;
@@ -126,7 +126,7 @@ final class SessionTest extends TestCase
             }
 
             #[Override]
-            public function script(PlayerName $player, Position $here): Script
+            public function script(Character $me): Script
             {
                 return new class() implements Script {
                     #[Override]

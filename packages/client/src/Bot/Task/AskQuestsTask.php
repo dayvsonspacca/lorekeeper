@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Bot\Task;
 
-use Lorekeeper\Client\Bot\Position;
+use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Script\AskQuestsScript;
 use Lorekeeper\Client\Script\Script;
-use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Override;
@@ -27,8 +26,8 @@ final readonly class AskQuestsTask implements Task
     }
 
     #[Override]
-    public function script(PlayerName $player, Position $here): Script
+    public function script(Character $me): Script
     {
-        return new AskQuestsScript($player, $here, $this->map, $this->quests);
+        return new AskQuestsScript($me->name(), $me->position(), $this->map, $this->quests);
     }
 }

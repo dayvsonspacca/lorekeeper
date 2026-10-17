@@ -22,16 +22,25 @@ use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Asset\Gamefile;
+use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Progression\ClassPoints;
+use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Server\AreaId;
+use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
+use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\LoginFailedEvent;
 use Lorekeeper\Server\Event\LoginSucceededEvent;
 use Lorekeeper\Server\Event\Map\MapLockedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
+use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Lorekeeper\Server\RoomId;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
@@ -114,6 +123,29 @@ final class StepLogTest extends TestCase
         static::assertStringNotContainsString(
             'TOKEN',
             StepLog::describe($login, new LoginSucceededEvent(new SocketId(1)))[1],
+        );
+    }
+
+    #[Test]
+    public function it_tells_how_a_fight_goes(): void
+    {
+        $await = new Await([LeveledUpEvent::class], Duration::seconds(2));
+
+        static::assertSame(
+            [LogLevel::Success, 'Reached level 3'],
+            StepLog::describe($await, new LeveledUpEvent(new PlayerLevel(3), new Experience(300))),
+        );
+        static::assertSame([LogLevel::Warning, 'Died'], StepLog::describe($await, new PlayerDiedEvent()));
+        static::assertSame(
+            [LogLevel::Info, 'Earned 10 experience and 3 gold from monster 4'],
+            StepLog::describe(
+                $await,
+                new MonsterRewardedEvent(new Gold(3), new Experience(10), new ClassPoints(510), new MonsterSpawnId(4)),
+            ),
+        );
+        static::assertSame(
+            [LogLevel::Info, 'Monster 4, 5 died'],
+            StepLog::describe($await, new MonstersDiedEvent([new MonsterSpawnId(4), new MonsterSpawnId(5)])),
         );
     }
 
