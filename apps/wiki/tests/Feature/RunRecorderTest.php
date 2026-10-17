@@ -7,7 +7,6 @@ namespace Lorekeeper\Apps\Wiki\Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Lorekeeper\Apps\Wiki\Bots\BotScript;
 use Lorekeeper\Apps\Wiki\Bots\RunRecorder;
-use Lorekeeper\Apps\Wiki\Bots\TaskStatus;
 use Lorekeeper\Apps\Wiki\Models\Account;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Apps\Wiki\Models\BotRunEvent;
@@ -15,9 +14,6 @@ use Lorekeeper\Apps\Wiki\Models\Player;
 use Lorekeeper\Apps\Wiki\Tests\TestCase;
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Position;
-use Lorekeeper\Client\Bot\Session\Job;
-use Lorekeeper\Client\Bot\Session\JobStatus;
-use Lorekeeper\Client\Bot\Session\Outcome;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\Event\Events;
@@ -121,21 +117,18 @@ final class RunRecorderTest extends TestCase
     }
 
     #[Test]
-    public function it_tags_the_lines_of_a_task_and_finishes_it(): void
+    public function it_tags_the_lines_of_the_task_it_is_working_on(): void
     {
         $run = $this->botRun();
         $task = $run->tasks()->create(['script' => BotScript::GoToMap, 'parameters' => ['map' => 'forest']]);
         $recorder = new RunRecorder($run);
-        $job = new Job($task->id, BotScript::GoToMap->task($task->parameters));
 
-        $recorder->started($job);
+        $recorder->working($task);
         $recorder->said('Moved to forest', LogLevel::Success);
         $recorder->moved(new Position(new MapName('forest'), new AreaId(7)));
-        $recorder->finished($job, new Outcome(JobStatus::Done, 'Now in forest'));
+        $recorder->working(null);
         $recorder->said('Waiting for tasks in forest', LogLevel::Info);
 
-        static::assertSame(TaskStatus::Done, $task->refresh()->status);
-        static::assertSame('Now in forest', $task->result);
         static::assertSame('forest', $run->refresh()->map);
         static::assertSame([$task->id, null], $run->logs()->orderBy('id')->pluck('bot_task_id')->all());
     }

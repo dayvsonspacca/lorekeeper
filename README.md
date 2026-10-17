@@ -40,13 +40,14 @@ $client->run(new JoinMapScript($player, new MapName('forest'), Option\none()));
 Ready-made scripts enter the game, move between maps and houses, ask for quests, open shops and idle; they compose
 into bigger ones, and can tell how far along they are.
 
-To keep a bot in the game, hand a `Session` its credentials and an `Observer`, then let it play the jobs you give it.
-The observer hears everything: plain-word log lines, every server message, where the bot moved, and when each job
-starts, progresses and finishes. Apps build on it to store, show or react to what their bots do.
+To keep a bot in the game, enter with a `Session` and an `Observer`, then play what you want, one task at a time.
+The observer hears everything: plain-word log lines, every server message, where the bot moved and how far a task
+has gone. What to play next, and when to stop, stays with the app.
 
 ```php
-$session = new Session(new Credentials($player, getenv('AQW_PASSWORD')), $observer);
-$ending = $session->play($jobs, $stop); // $jobs hands out Job(id, new GoToMapTask(new MapName('forest'))) and the like
+$session = Session::enter(new Credentials($player, getenv('AQW_PASSWORD')), $observer);
+$outcome = $session->play(new LevelUpTask(new PlayerLevel(50)));
+$session->leave();
 ```
 
 ## Apps

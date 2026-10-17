@@ -6,9 +6,7 @@ namespace Lorekeeper\Client\Tests\Bot\Session;
 
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Position;
-use Lorekeeper\Client\Bot\Session\Job;
 use Lorekeeper\Client\Bot\Session\Observer;
-use Lorekeeper\Client\Bot\Session\Outcome;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\TimedOut;
@@ -53,20 +51,8 @@ final class RecordingObserver implements Observer
     }
 
     #[Override]
-    public function started(Job $job): void
+    public function progressed(Progress $progress): void
     {
-        $this->updates[] = "started {$job->id}";
-    }
-
-    #[Override]
-    public function progressed(Job $job, Progress $progress): void
-    {
-        $this->updates[] = "progressed {$job->id} {$progress->done}/{$progress->total}";
-    }
-
-    #[Override]
-    public function finished(Job $job, Outcome $outcome): void
-    {
-        $this->updates[] = "finished {$job->id} {$outcome->status->value}: {$outcome->summary}";
+        $this->updates[] = "progressed {$progress->done}/{$progress->total}";
     }
 }

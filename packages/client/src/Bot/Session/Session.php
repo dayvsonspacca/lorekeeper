@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Bot\Session;
 
+use LogicException;
 use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Credentials;
 use Lorekeeper\Client\Bot\Done;
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Log\StepLog;
 use Lorekeeper\Client\Bot\Script\WaitScript;
+use Lorekeeper\Client\Bot\Task\Task;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\ClientVersion;
 use Lorekeeper\Client\Connection;
@@ -26,12 +28,12 @@ use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
+use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Events;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Message\Message;
 use Psl\Async\CancellationTokenInterface;
-use Psl\Async\LinkedCancellationToken;
 use Psl\Async\NullCancellationToken;
 use Psl\DateTime\Duration;
 use SensitiveParameter;
@@ -40,54 +42,67 @@ use Throwable;
 /**
  * @mago-expect lint:cyclomatic-complexity
  * @mago-expect lint:kan-defect
+ * @mago-expect lint:too-many-methods
  */
 final class Session
 {
-    private readonly Character $me;
-
-    private ?Job $job = null;
-
     private bool $idling = false;
 
-    public function __construct(
-        private readonly Credentials $credentials,
+    private bool $connected = true;
+
+    private function __construct(
+        private readonly Character $me,
         private readonly Observer $observer,
-        private readonly LoginClient $logins = new LoginClient(),
-        private readonly ClientVersion $version = new ClientVersion('5.1'),
-    ) {
-        $this->me = new Character($credentials->player);
-    }
+        private readonly Connection $connection,
+        private ?Client $client = null,
+    ) {}
 
-    public function play(Jobs $jobs, CancellationTokenInterface $stop = new NullCancellationToken()): Ending
-    {
+    public static function enter(
+        Credentials $credentials,
+        Observer $observer,
+        CancellationTokenInterface $stop = new NullCancellationToken(),
+        LoginClient $logins = new LoginClient(),
+        ClientVersion $version = new ClientVersion('5.1'),
+    ): self|Ending {
         try {
-            $this->say("Logging in as {$this->credentials->player->value}");
-            $login = $this->logins->login($this->credentials->player, $this->credentials->password);
+            $observer->said("Logging in as {$credentials->player->value}", LogLevel::Info);
+            $login = $logins->login($credentials->player, $credentials->password);
 
-            $server = ServerChoice::pick($login->servers, $this->credentials->server);
+            $server = ServerChoice::pick($login->servers, $credentials->server);
             if ($server->isNone()) {
                 return new Ending(SessionStatus::Failed, 'no open server');
             }
 
-            $this->say("Connecting to {$server->unwrap()->name}");
+            $observer->said("Connecting to {$server->unwrap()->name}", LogLevel::Info);
 
-            return $this->playOn(Connection::open($server->unwrap()), $login->token, $jobs, $stop);
+            return self::enterOn(
+                Connection::open($server->unwrap()),
+                $credentials->player,
+                $login->token,
+                $observer,
+                $stop,
+                $version,
+            );
         } catch (Throwable $failure) {
             return new Ending(SessionStatus::Failed, $failure->getMessage());
         }
     }
 
-    public function playOn(
+    /** @mago-expect lint:excessive-parameter-list */
+    public static function enterOn(
         Connection $connection,
+        PlayerName $player,
         #[SensitiveParameter]
         string $token,
-        Jobs $jobs,
+        Observer $observer,
         CancellationTokenInterface $stop = new NullCancellationToken(),
-    ): Ending {
-        $player = $this->credentials->player;
-        $client = new Client($connection, $this->heard(...), $this->stepped(...));
+        ClientVersion $version = new ClientVersion('5.1'),
+    ): self|Ending {
+        $session = new self(new Character($player), $observer, $connection);
+        $client = new Client($connection, $session->heard(...), $session->stepped(...));
+        $session->client = $client;
 
-        $entered = $client->run(new EnterGameScript(new GameLogin($player, $token, $this->version)), $stop);
+        $entered = $client->run(new EnterGameScript(new GameLogin($player, $token, $version)), $stop);
         if ($entered instanceof Disconnected) {
             return new Ending(SessionStatus::Disconnected, $entered->reason);
         }
@@ -100,73 +115,75 @@ final class Session
                 : new Ending(SessionStatus::Failed, self::reason($entered));
         }
 
-        $this->me->entered($entered);
+        $session->me->entered($entered);
 
-        $waiting = false;
-        while (!$stop->isCancelled()) {
-            $job = $jobs->next();
-
-            if ($job === null) {
-                if (!$waiting) {
-                    $waiting = true;
-                    $this->say("Waiting for tasks in {$this->me->position()->map->value}");
-                }
-
-                $waited = $client->run(new WaitScript(Duration::seconds(2)), $stop);
-                if ($waited instanceof Disconnected) {
-                    return new Ending(SessionStatus::Disconnected, $waited->reason);
-                }
-
-                continue;
-            }
-
-            $waiting = false;
-            $dropped = $this->work($client, $jobs, $job, $stop);
-            if ($dropped !== null) {
-                return new Ending(SessionStatus::Disconnected, $dropped->reason);
-            }
-        }
-
-        $client->run(new LogoutScript());
-        $connection->close();
-
-        return new Ending(SessionStatus::Stopped);
+        return $session;
     }
 
-    private function work(Client $client, Jobs $jobs, Job $job, CancellationTokenInterface $stop): ?Disconnected
+    public function character(): Character
+    {
+        return $this->me;
+    }
+
+    public function connected(): bool
+    {
+        return $this->connected;
+    }
+
+    public function play(Task $task, CancellationTokenInterface $cancel = new NullCancellationToken()): Outcome
     {
         $this->idling = false;
-        $this->job = $job;
-        $this->observer->started($job);
-        $this->say("Task #{$job->id}: {$job->task->title()}");
-
-        $cancel = Watch::until(static fn(): bool => $jobs->cancelled($job));
+        $this->say("Playing {$task->title()}");
 
         try {
-            $result = $client->run($job->task->script($this->me), new LinkedCancellationToken($stop, $cancel->token()));
+            $result = $this->client()->run($task->script($this->me), $cancel);
         } catch (Throwable $failure) {
             $result = $failure->getMessage();
-        } finally {
-            $cancel->release();
         }
 
         [$outcome, $level] = match (true) {
-            $result instanceof Done => [new Outcome(JobStatus::Done, $result->summary), LogLevel::Success],
-            $result instanceof Disconnected => [new Outcome(JobStatus::Failed, 'disconnected'), LogLevel::Error],
-            $result instanceof Stopped && $stop->isCancelled() => [
-                new Outcome(JobStatus::Cancelled, 'the run stopped'),
-                LogLevel::Warning,
+            $result instanceof Done => [new Outcome(OutcomeStatus::Done, $result->summary), LogLevel::Success],
+            $result instanceof Disconnected => [
+                new Outcome(OutcomeStatus::Disconnected, $result->reason),
+                LogLevel::Error,
             ],
-            $result instanceof Stopped => [new Outcome(JobStatus::Cancelled, 'cancelled'), LogLevel::Warning],
-            default => [new Outcome(JobStatus::Failed, self::reason($result)), LogLevel::Error],
+            $result instanceof Stopped => [new Outcome(OutcomeStatus::Cancelled, 'cancelled'), LogLevel::Warning],
+            default => [new Outcome(OutcomeStatus::Failed, self::reason($result)), LogLevel::Error],
         };
 
-        $this->job = null;
-        $this->idling = false;
-        $this->say("Task #{$job->id} {$outcome->status->value}: {$outcome->summary}", $level);
-        $this->observer->finished($job, $outcome);
+        if ($outcome->status === OutcomeStatus::Disconnected) {
+            $this->connected = false;
+        }
 
-        return $result instanceof Disconnected ? $result : null;
+        $this->idling = false;
+        $this->say("{$task->title()}: {$outcome->summary}", $level);
+
+        return $outcome;
+    }
+
+    public function wait(Duration $duration, CancellationTokenInterface $stop = new NullCancellationToken()): bool
+    {
+        $waited = $this->client()->run(new WaitScript($duration), $stop);
+        if ($waited instanceof Disconnected) {
+            $this->connected = false;
+        }
+
+        return $this->connected;
+    }
+
+    public function leave(): void
+    {
+        if ($this->connected) {
+            $this->client()->run(new LogoutScript());
+        }
+
+        $this->connection->close();
+        $this->connected = false;
+    }
+
+    private function client(): Client
+    {
+        return $this->client ?? throw new LogicException('The session has no client.');
     }
 
     private function heard(Message $message): void
@@ -192,9 +209,7 @@ final class Session
         $this->observer->stepped($instruction, $answer);
 
         if ($instruction instanceof Progress) {
-            if ($this->job !== null) {
-                $this->observer->progressed($this->job, $instruction);
-            }
+            $this->observer->progressed($instruction);
 
             return;
         }

@@ -10,9 +10,7 @@ use Lorekeeper\Apps\Wiki\Models\BotTask;
 use Lorekeeper\Apps\Wiki\Models\Player;
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Position;
-use Lorekeeper\Client\Bot\Session\Job;
 use Lorekeeper\Client\Bot\Session\Observer;
-use Lorekeeper\Client\Bot\Session\Outcome;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\TimedOut;
@@ -79,22 +77,13 @@ final class RunRecorder implements Observer
         $this->run->update(['map' => $position->map->value]);
     }
 
-    #[Override]
-    public function started(Job $job): void
+    public function working(?BotTask $task): void
     {
-        $this->task = $this->run->tasks()->find($job->id);
-        $this->task?->update(['status' => TaskStatus::Running, 'started_at' => now()]);
+        $this->task = $task;
     }
 
     #[Override]
-    public function progressed(Job $job, Progress $progress): void {}
-
-    #[Override]
-    public function finished(Job $job, Outcome $outcome): void
-    {
-        $this->task?->finish(TaskStatus::from($outcome->status->value), $outcome->summary);
-        $this->task = null;
-    }
+    public function progressed(Progress $progress): void {}
 
     public static function command(Message $message): string
     {

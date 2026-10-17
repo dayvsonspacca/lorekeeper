@@ -7,7 +7,7 @@ namespace Lorekeeper\Client\Bot\Session;
 final readonly class Outcome
 {
     public function __construct(
-        public JobStatus $status,
+        public OutcomeStatus $status,
         public string $summary,
     ) {}
 }

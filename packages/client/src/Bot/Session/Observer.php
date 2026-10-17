@@ -24,9 +24,5 @@ interface Observer
 
     public function moved(Position $position): void;
 
-    public function started(Job $job): void;
-
-    public function progressed(Job $job, Progress $progress): void;
-
-    public function finished(Job $job, Outcome $outcome): void;
+    public function progressed(Progress $progress): void;
 }

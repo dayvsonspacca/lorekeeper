@@ -6,11 +6,10 @@ namespace Lorekeeper\Client\Tests\Bot\Session;
 
 use Generator;
 use Lorekeeper\Client\Bot\Character;
-use Lorekeeper\Client\Bot\Credentials;
 use Lorekeeper\Client\Bot\Done;
 use Lorekeeper\Client\Bot\Session\Ending;
-use Lorekeeper\Client\Bot\Session\Job;
-use Lorekeeper\Client\Bot\Session\Jobs;
+use Lorekeeper\Client\Bot\Session\Outcome;
+use Lorekeeper\Client\Bot\Session\OutcomeStatus;
 use Lorekeeper\Client\Bot\Session\Session;
 use Lorekeeper\Client\Bot\Session\SessionStatus;
 use Lorekeeper\Client\Bot\Task\AskQuestsTask;
@@ -41,11 +40,11 @@ final class SessionTest extends TestCase
     private const string INVENTORY = "{\"b\":{\"o\":{\"cmd\":\"loadInventoryBig\",\"items\":[]}}}\0";
 
     #[Test]
-    public function it_enters_the_game_plays_its_jobs_in_order_and_logs_out_when_stopped(): void
+    public function it_enters_the_game_plays_what_it_is_given_in_order_and_leaves(): void
     {
-        $stop = new SignalCancellationToken();
         $sent = [];
-        $connection = self::connection($sent, [
+        $observer = new RecordingObserver();
+        $session = self::enter($sent, $observer, [
             self::POLICY,
             self::LOGGED_IN,
             self::moved('battleon', 1350),
@@ -53,71 +52,71 @@ final class SessionTest extends TestCase
             self::moved('forest', 7),
             null,
         ]);
-        $jobs = self::jobs($stop, [
-            new Job(1, new GoToMapTask(new MapName('forest'))),
-            new Job(2, new AskQuestsTask(new MapName('forest'), [new QuestId(3), new QuestId(5)])),
-        ]);
-        $observer = new RecordingObserver();
 
-        $ending = self::session($observer)->playOn($connection, 'TOKEN', $jobs, $stop);
+        $went = $session->play(new GoToMapTask(new MapName('forest')));
+        $asked = $session->play(new AskQuestsTask(new MapName('forest'), [new QuestId(3), new QuestId(5)]));
+        $session->leave();
 
-        static::assertEquals(new Ending(SessionStatus::Stopped), $ending);
+        static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $went);
+        static::assertEquals(new Outcome(OutcomeStatus::Done, 'Loaded 0 of 2 quests'), $asked);
         static::assertSame(
-            [
-                'moved battleon 1350',
-                'started 1',
-                'moved forest 7',
-                'finished 1 done: Now in forest',
-                'started 2',
-                'progressed 2 0/1',
-                'progressed 2 1/1',
-                'finished 2 done: Loaded 0 of 2 quests',
-            ],
+            ['moved battleon 1350', 'moved forest 7', 'progressed 0/1', 'progressed 1/1'],
             $observer->updates,
         );
-        static::assertContains('info: Task #1: Go to forest', $observer->lines);
-        static::assertContains('success: Task #1 done: Now in forest', $observer->lines);
+        static::assertContains('info: Playing Go to forest', $observer->lines);
+        static::assertContains('success: Go to forest: Now in forest', $observer->lines);
         static::assertContains('warning: No answer to load quest after 15s', $observer->lines);
         static::assertSame('%xt%zm%getQuests%7%3%5%', $sent[5]);
         static::assertSame('%xt%zm%logout%1%', end($sent));
-        static::assertSame(5, $observer->heard);
+        static::assertFalse($session->connected());
+        static::assertSame('forest', $session->character()->position()->map->value);
     }
 
     #[Test]
-    public function it_waits_in_the_game_until_there_is_something_to_do(): void
+    public function it_waits_in_the_game_and_stays_connected(): void
     {
-        $stop = new SignalCancellationToken();
         $sent = [];
-        $connection = self::connection($sent, [
+        $session = self::enter($sent, new RecordingObserver(), [
             self::POLICY,
             self::LOGGED_IN,
             self::moved('battleon', 1),
             self::INVENTORY,
         ]);
-        $observer = new RecordingObserver();
 
-        $ending = self::session($observer)->playOn($connection, 'TOKEN', self::jobs($stop, [null, null]), $stop);
+        static::assertTrue($session->wait(Duration::milliseconds(10)));
+        static::assertTrue($session->connected());
+    }
 
-        static::assertSame(SessionStatus::Stopped, $ending->status);
-        static::assertSame(1, count(array_filter($observer->lines, static fn(string $line): bool => str_starts_with(
-            $line,
-            'info: Waiting for tasks',
-        ))));
-        static::assertContains('info: Waiting for tasks in battleon', $observer->lines);
+    #[Test]
+    public function a_cancelled_play_ends_as_cancelled(): void
+    {
+        $sent = [];
+        $session = self::enter($sent, new RecordingObserver(), [
+            self::POLICY,
+            self::LOGGED_IN,
+            self::moved('battleon', 1),
+            self::INVENTORY,
+        ]);
+        $cancel = new SignalCancellationToken();
+        $cancel->cancel();
+
+        $outcome = $session->play(new GoToMapTask(new MapName('forest')), $cancel);
+
+        static::assertEquals(new Outcome(OutcomeStatus::Cancelled, 'cancelled'), $outcome);
+        static::assertTrue($session->connected());
     }
 
     #[Test]
     public function it_tells_about_a_long_idle_once(): void
     {
-        $stop = new SignalCancellationToken();
         $sent = [];
-        $connection = self::connection($sent, [
+        $observer = new RecordingObserver();
+        $session = self::enter($sent, $observer, [
             self::POLICY,
             self::LOGGED_IN,
             self::moved('battleon', 1),
             self::INVENTORY,
         ]);
-        $observer = new RecordingObserver();
         $idle = new class() implements Task {
             #[Override]
             public function title(): string
@@ -141,62 +140,38 @@ final class SessionTest extends TestCase
             }
         };
 
-        self::session($observer)->playOn($connection, 'TOKEN', self::jobs($stop, [new Job(1, $idle)]), $stop);
+        $session->play($idle);
 
         static::assertSame(
-            ['info: Task #1: Idle', 'info: Idling in battleon', 'success: Task #1 done: Rested'],
+            ['info: Playing Idle', 'info: Idling in battleon', 'success: Idle: Rested'],
             array_values(array_filter(
                 $observer->lines,
-                static fn(string $line): bool => str_contains($line, 'Task') || str_contains($line, 'Idling'),
+                static fn(string $line): bool => str_contains($line, 'Idle') || str_contains($line, 'Idling'),
             )),
         );
     }
 
     #[Test]
-    public function it_fails_when_the_server_refuses_the_login(): void
+    public function it_does_not_enter_when_the_server_refuses_the_login(): void
     {
         $sent = [];
         $connection = self::connection($sent, [self::POLICY, "%xt%loginResponse%-1%0%-1%%Nope%\0"]);
 
-        $ending = self::session(new RecordingObserver())
-            ->playOn($connection, 'TOKEN', self::jobs(new SignalCancellationToken(), []));
+        $ending = Session::enterOn($connection, new PlayerName('Hero'), 'TOKEN', new RecordingObserver());
 
         static::assertEquals(new Ending(SessionStatus::Failed, 'Login refused'), $ending);
     }
 
-    private static function session(RecordingObserver $observer): Session
+    /**
+     * @param list<string> $sent
+     * @param list<null|string> $reads
+     */
+    private static function enter(array &$sent, RecordingObserver $observer, array $reads): Session
     {
-        return new Session(new Credentials(new PlayerName('Hero'), 'secret'), $observer);
-    }
+        $session = Session::enterOn(self::connection($sent, $reads), new PlayerName('Hero'), 'TOKEN', $observer);
+        static::assertInstanceOf(Session::class, $session);
 
-    /** @param list<null|Job> $queue */
-    private static function jobs(SignalCancellationToken $stop, array $queue): Jobs
-    {
-        return new class($stop, $queue) implements Jobs {
-            /** @param list<null|Job> $queue */
-            public function __construct(
-                private readonly SignalCancellationToken $stop,
-                private array $queue,
-            ) {}
-
-            #[Override]
-            public function next(): ?Job
-            {
-                if ($this->queue === []) {
-                    $this->stop->cancel();
-
-                    return null;
-                }
-
-                return array_shift($this->queue);
-            }
-
-            #[Override]
-            public function cancelled(Job $job): bool
-            {
-                return false;
-            }
-        };
+        return $session;
     }
 
     private static function moved(string $map, int $area): string
