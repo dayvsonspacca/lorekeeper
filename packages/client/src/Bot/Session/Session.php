@@ -14,7 +14,9 @@ use Lorekeeper\Client\Bot\Script\WaitScript;
 use Lorekeeper\Client\Bot\Task\Task;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\ClientVersion;
+use Lorekeeper\Client\Command\Session\LogoutCommand;
 use Lorekeeper\Client\Connection;
+use Lorekeeper\Client\Exception\PeerClosedException;
 use Lorekeeper\Client\Login\GameLogin;
 use Lorekeeper\Client\Login\LoginClient;
 use Lorekeeper\Client\Login\ServerChoice;
@@ -22,7 +24,6 @@ use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Game\EnterGameScript;
 use Lorekeeper\Client\Script\Game\InGame;
-use Lorekeeper\Client\Script\Game\LogoutScript;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Progress;
@@ -174,7 +175,11 @@ final class Session
     public function leave(): void
     {
         if ($this->connected) {
-            $this->client()->run(new LogoutScript());
+            try {
+                $this->client()->send(new LogoutCommand());
+            } catch (PeerClosedException $closed) {
+                $this->say("Could not log out: {$closed->getMessage()}", LogLevel::Warning);
+            }
         }
 
         $this->connection->close();

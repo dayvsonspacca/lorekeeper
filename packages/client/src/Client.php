@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Client;
 
 use Closure;
+use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Client\Exception\PeerClosedException;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;
@@ -72,6 +73,20 @@ final readonly class Client
         }
 
         return $steps->getReturn();
+    }
+
+    /**
+     * @throws PeerClosedException
+     *
+     * @mago-expect lint:literal-named-argument
+     */
+    public function send(Command $command): void
+    {
+        $this->connection->send($command);
+
+        if ($this->stepped !== null) {
+            ($this->stepped)(new Send($command), null);
+        }
     }
 
     /** @throws PeerClosedException */

@@ -11,7 +11,6 @@ use Lorekeeper\Client\Command\Session\PolicyFileRequestCommand;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;
-use Lorekeeper\Client\Script\Game\IdleScript;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Script;
@@ -166,7 +165,10 @@ final class ClientTest extends TestCase
     {
         $stopped = new SignalCancellationToken();
         $stopped->cancel();
-        $before = new Client(self::connection())->run(new IdleScript(), $stopped);
+        $before = new Client(self::connection())->run(
+            self::script(static fn(): Generator => yield new Pause(Duration::minutes(1))),
+            $stopped,
+        );
 
         $stop = new SignalCancellationToken();
         $stream = static::createStub(TCP\StreamInterface::class);
@@ -195,7 +197,10 @@ final class ClientTest extends TestCase
                 throw new CancelledException($halt);
             });
         $quiet->method('reachedEndOfDataSource')->willReturn(false);
-        $pausing = new Client(new Connection($quiet))->run(new IdleScript(), $halt);
+        $pausing = new Client(new Connection($quiet))->run(
+            self::script(static fn(): Generator => yield new Pause(Duration::minutes(1))),
+            $halt,
+        );
 
         static::assertEquals(new Stopped(), $before);
         static::assertEquals(new Stopped(), $waiting);

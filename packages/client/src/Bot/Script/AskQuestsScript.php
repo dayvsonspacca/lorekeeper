@@ -7,11 +7,12 @@ namespace Lorekeeper\Client\Bot\Script;
 use Generator;
 use Lorekeeper\Client\Bot\Done;
 use Lorekeeper\Client\Bot\Position;
-use Lorekeeper\Client\Script\Game\LoadQuestsScript;
+use Lorekeeper\Client\Command\Quest\LoadQuestCommand;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Script;
+use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapName;
@@ -56,12 +57,10 @@ final readonly class AskQuestsScript implements Script
                 yield new Pause(Duration::seconds(2));
             }
 
-            $loading = new LoadQuestsScript($there->area, $batch, Duration::seconds(2))->run();
-            yield from $loading;
-            $answers = $loading->getReturn();
-            foreach ($answers as $answer) {
-                $loaded += $answer instanceof QuestLoadedEvent ? count($answer->quests) : 0;
-            }
+            $answer = yield new Send(
+                new LoadQuestCommand($there->area, $batch[0], ...array_slice($batch, offset: 1)),
+            )->awaits(Duration::seconds(15), QuestLoadedEvent::class);
+            $loaded += $answer instanceof QuestLoadedEvent ? count($answer->quests) : 0;
 
             yield new Progress($index + 1, $total);
         }

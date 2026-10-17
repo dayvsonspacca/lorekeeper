@@ -24,21 +24,21 @@ server notices. When a message does not read as expected, it says so instead of 
 
 ### `client`
 
-Plays the game. It logs in, picks a server, connects and runs scripts: you describe what a bot does as a sequence of
-steps, such as "send this and wait for that", and the client plays it against the live server, moving on only when
-the server answers, stopping whenever you ask and reporting a dropped connection as a result.
+Plays the game. Commands are the small parts, one message to the server each; a script is a whole flow that sends
+commands and moves on only when the server answers, stopping whenever you ask and reporting a dropped connection as
+a result.
 
 ```php
-$player = new PlayerName('Hero');
-$login = new LoginClient()->login($player, getenv('AQW_PASSWORD'));
-$client = new Client(Connection::open(ServerChoice::pick($login->servers)->unwrap()));
+$joined = yield $this->send(new JoinMapCommand($player, new MapName('forest'), Option\none()))
+    ->awaits(Duration::seconds(15), MapJoins::class, MapRefusals::class);
 
-$client->run(new EnterGameScript(new GameLogin($player, $login->token, new ClientVersion('5.1'))));
-$client->run(new JoinMapScript($player, new MapName('forest'), Option\none()));
+if (MapRefusals::contains($joined)) {
+    throw new RuntimeException("Could not join forest: {$joined->summary()}");
+}
 ```
 
-Ready-made scripts enter the game, move between maps and houses, ask for quests, open shops and idle; they compose
-into bigger ones, and can tell how far along they are.
+Ready-made scripts enter the game, go to maps, ask for quests, open shops and level a character up, and tell how far
+along they are.
 
 To keep a bot in the game, enter with a `Session` and an `Observer`, then play what you want, one task at a time.
 The observer hears everything: plain-word log lines, every server message, where the bot moved and how far a task

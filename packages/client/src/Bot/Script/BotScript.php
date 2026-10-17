@@ -9,8 +9,8 @@ use Generator;
 use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Command\Combat\Attack;
 use Lorekeeper\Client\Command\Command;
+use Lorekeeper\Client\Command\Map\JoinMapCommand;
 use Lorekeeper\Client\Command\Map\MoveToCellCommand;
-use Lorekeeper\Client\Script\Game\JoinMapScript;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Script;
@@ -21,6 +21,7 @@ use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\Pad;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MapJoins;
+use Lorekeeper\Server\Event\Map\MapRefusals;
 use Override;
 use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
@@ -62,9 +63,12 @@ abstract readonly class BotScript implements Script
             return;
         }
 
-        $joining = new JoinMapScript($this->me->name(), $map, Option\none())->run();
-        yield from $joining;
-        $joined = $joining->getReturn();
+        /** @var Event|TimedOut $joined */
+        $joined = yield $this->send(new JoinMapCommand($this->me->name(), $map, Option\none()))->awaits(
+            Duration::seconds(15),
+            MapJoins::class,
+            MapRefusals::class,
+        );
 
         if (!MapJoins::contains($joined)) {
             throw new RuntimeException("Could not join {$map->value}: " . self::why($joined));

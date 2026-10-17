@@ -7,11 +7,12 @@ namespace Lorekeeper\Client\Bot\Script;
 use Generator;
 use Lorekeeper\Client\Bot\Done;
 use Lorekeeper\Client\Bot\Position;
-use Lorekeeper\Client\Script\Game\OpenShopScript;
+use Lorekeeper\Client\Command\Shop\LoadShopCommand;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Script;
+use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapName;
@@ -52,9 +53,10 @@ final readonly class OpenShopsScript implements Script
                 yield new Pause(Duration::seconds(2));
             }
 
-            $opening = new OpenShopScript($there->area, $shop)->run();
-            yield from $opening;
-            $answer = $opening->getReturn();
+            $answer = yield new Send(new LoadShopCommand($there->area, $shop))->awaits(
+                Duration::seconds(15),
+                ShopLoadedEvent::class,
+            );
             $opened += $answer instanceof ShopLoadedEvent ? 1 : 0;
 
             yield new Progress($index + 1, $total);
