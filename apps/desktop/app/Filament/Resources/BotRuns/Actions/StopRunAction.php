@@ -26,15 +26,7 @@ final class StopRunAction
                 strict: true,
             ))
             ->action(static function (BotRun $record, Launcher $launcher): void {
-                if ($record->status === RunStatus::Running && !$launcher->alive($record)) {
-                    $record->closeTasks('the bot was gone');
-                    $record->update(['status' => RunStatus::Stopped, 'pid' => null, 'finished_at' => now()]);
-                    $record->log('Stopped: the bot process was already gone');
-
-                    return;
-                }
-
-                $record->update(['status' => RunStatus::Stopping]);
+                $record->stop($launcher);
             })
             ->successNotificationTitle('Stopping');
     }

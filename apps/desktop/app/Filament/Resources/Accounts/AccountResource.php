@@ -23,15 +23,12 @@ use Lorekeeper\Apps\Desktop\Game\GameCatalog;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Override;
-use UnitEnum;
 
 final class AccountResource extends Resource
 {
     protected static ?string $model = Account::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
-
-    protected static string|UnitEnum|null $navigationGroup = 'Bots';
 
     protected static ?string $recordTitleAttribute = 'name';
 

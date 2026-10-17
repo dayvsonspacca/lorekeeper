@@ -11,6 +11,7 @@ use Livewire\Livewire;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
+use Lorekeeper\Apps\Desktop\Filament\Pages\Bots;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Pages\ManageAccounts;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
 use Lorekeeper\Apps\Desktop\Livewire\RunTasks;
@@ -19,6 +20,7 @@ use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
+/** @mago-expect lint:too-many-methods */
 final class DesktopTest extends TestCase
 {
     use RefreshDatabase;
@@ -28,10 +30,65 @@ final class DesktopTest extends TestCase
     {
         $run = $this->account()->runs()->create();
 
-        $this->get('/')->assertRedirect();
-        foreach (['/accounts', '/bot-runs', '/bot-runs/create', "/bot-runs/{$run->id}"] as $page) {
+        foreach (['/', '/accounts', '/bot-runs', '/bot-runs/create', "/bot-runs/{$run->id}"] as $page) {
             $this->get($page)->assertOk();
         }
+    }
+
+    #[Test]
+    public function the_home_shows_a_card_per_character_to_start_stop_and_open_its_bot(): void
+    {
+        $idle = $this->account();
+        $busy = Account::query()->create(['name' => 'Busy', 'password' => bin2hex(random_bytes(8)), 'level' => 6]);
+        $run = $busy->runs()->create();
+        $run->update(['status' => RunStatus::Running, 'map' => 'icestormarena']);
+        $run->tasks()->create([
+            'script' => BotScript::LevelUp,
+            'parameters' => ['level' => 10],
+            'status' => TaskStatus::Running,
+            'started_at' => now()->subMinutes(5),
+            'kills' => 12,
+            'progress_done' => 1,
+            'progress_total' => 4,
+        ]);
+
+        Livewire::test(Bots::class)
+            ->assertSeeInOrder([
+                'Busy',
+                'Lv 6 · icestormarena',
+                'Level up',
+                '25%',
+                '12 kills',
+                'Stop',
+                'Hero',
+                'Offline',
+                'Start',
+            ])
+            ->call('start', $idle->id)
+            ->call('stop', $run->id);
+
+        static::assertSame(RunStatus::Pending, $idle->activeRun()?->status);
+        static::assertSame(RunStatus::Stopping, $run->refresh()->status);
+    }
+
+    #[Test]
+    public function characters_can_be_added_from_the_home(): void
+    {
+        Livewire::test(Bots::class)
+            ->callAction('addAccount', [
+                'name' => 'Fresh',
+                'password' => bin2hex(random_bytes(8)),
+                'server' => 'Twilly',
+            ])
+            ->assertHasNoActionErrors();
+
+        static::assertSame(
+            'Twilly',
+            Account::query()
+                ->where('name', 'Fresh')
+                ->sole()
+                ->server,
+        );
     }
 
     #[Test]

@@ -30,15 +30,12 @@ use Lorekeeper\Apps\Desktop\Livewire\RunLog;
 use Lorekeeper\Apps\Desktop\Livewire\RunTasks;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Override;
-use UnitEnum;
 
 final class BotRunResource extends Resource
 {
     protected static ?string $model = BotRun::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPlay;
-
-    protected static string|UnitEnum|null $navigationGroup = 'Bots';
 
     protected static ?string $navigationLabel = 'Runs';
 
