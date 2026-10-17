@@ -28,7 +28,7 @@ final class EventsTest extends TestCase
             ),
             static fn(string $class): bool => !in_array(
                 $class,
-                ['Event', 'NoticeEvent', 'MoveToAreaEvent'],
+                ['Event', 'NoticeEvent', 'MapArrivalEvent', 'CombatRoundEvent', 'RewardedEvent'],
                 strict: true,
             ),
         ));

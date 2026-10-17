@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Combat;
 
 use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -17,9 +20,13 @@ use Psl\Type\Exception\CoercionException;
 
 final readonly class SkillsLoadedEvent implements Event
 {
-    /** @param list<Skill> $skills */
+    /**
+     * @param list<Skill> $skills
+     * @param list<SkillSlot> $usable
+     */
     public function __construct(
         public array $skills,
+        public array $usable,
     ) {}
 
     /** @return Option\Option<static> */
@@ -46,17 +53,49 @@ final readonly class SkillsLoadedEvent implements Event
             throw new MalformedEventException(static::class, 'skills are missing or invalid', $exception);
         }
 
-        return Option\some(
-            new static(array_map(
-                static fn(array $skill): Skill => new Skill(
-                    $skill['ref'],
-                    $skill['tgt'] === 'h',
-                    new Mana($skill['mp']),
-                    Duration::milliseconds($skill['cd']),
-                    $skill['isOK'] ?? false,
-                ),
-                $active,
-            )),
-        );
+        $skills = [];
+        $usable = [];
+        foreach ($active as $skill) {
+            $slot = self::slot($skill['ref']);
+            if ($slot === null) {
+                continue;
+            }
+
+            $skills[] = new Skill(
+                $slot,
+                self::target($skill['tgt']),
+                new Mana($skill['mp']),
+                Duration::milliseconds($skill['cd']),
+            );
+            if ($skill['isOK'] ?? false) {
+                $usable[] = $slot;
+            }
+        }
+
+        return Option\some(new static($skills, $usable));
+    }
+
+    private static function slot(string $ref): ?SkillSlot
+    {
+        return match ($ref) {
+            'aa' => SkillSlot::AutoAttack,
+            'a1' => SkillSlot::First,
+            'a2' => SkillSlot::Second,
+            'a3' => SkillSlot::Third,
+            'a4' => SkillSlot::Fourth,
+            'i1' => SkillSlot::Potion,
+            default => null,
+        };
+    }
+
+    /** @throws MalformedEventException */
+    private static function target(string $target): SkillTarget
+    {
+        return match ($target) {
+            'h' => SkillTarget::Enemy,
+            's' => SkillTarget::Self,
+            'f' => SkillTarget::Ally,
+            default => throw new MalformedEventException(static::class, "unknown skill target '{$target}'"),
+        };
     }
 }

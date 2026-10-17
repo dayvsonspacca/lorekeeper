@@ -12,22 +12,14 @@ use Psl\Option;
 
 final readonly class AttackRejectedEvent implements Event
 {
-    public function __construct(
-        public ?int $action,
-    ) {}
-
     /** @return Option\Option<static> */
     #[Override]
     public static function from(Message $message): Option\Option
     {
-        if (
-            !$message instanceof JsonMessage
-            || ($message->data['cmd'] ?? null) !== 'sars'
-            || ($message->data['iRes'] ?? null) !== 0
-        ) {
-            return Option\none();
-        }
-
-        return Option\some(new static(is_int($message->data['actID'] ?? null) ? $message->data['actID'] : null));
+        return $message instanceof JsonMessage
+        && ($message->data['cmd'] ?? null) === 'sars'
+        && ($message->data['iRes'] ?? null) === 0
+            ? Option\some(new static())
+            : Option\none();
     }
 }

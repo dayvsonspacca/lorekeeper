@@ -11,7 +11,7 @@ use Override;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
-final readonly class PlayersPresentEvent extends MoveToAreaEvent
+final readonly class PlayersPresentEvent extends MapArrivalEvent
 {
     /** @param list<MapPlayer> $players */
     public function __construct(

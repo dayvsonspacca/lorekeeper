@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Combat;
 
+use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\Message;
-use Lorekeeper\Server\MonsterMapId;
 use Override;
 use Psl\Option;
 use Psl\Type;
@@ -17,7 +17,7 @@ use Psl\Type\Exception\CoercionException;
 final readonly class MonsterRespawnedEvent implements Event
 {
     public function __construct(
-        public MonsterMapId $id,
+        public MonsterSpawnId $id,
     ) {}
 
     /** @return Option\Option<static> */
@@ -34,6 +34,6 @@ final readonly class MonsterRespawnedEvent implements Event
             throw new MalformedEventException(static::class, 'monster id is missing or invalid', $exception);
         }
 
-        return Option\some(new static(new MonsterMapId($id)));
+        return Option\some(new static(new MonsterSpawnId($id)));
     }
 }

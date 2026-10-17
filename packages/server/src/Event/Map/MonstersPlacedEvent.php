@@ -7,13 +7,13 @@ namespace Lorekeeper\Server\Event\Map;
 use Lorekeeper\Core\World\Map\Cell;
 use Lorekeeper\Core\World\Monster\MonsterId;
 use Lorekeeper\Core\World\Monster\MonsterLevel;
+use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Exception\MalformedEventException;
-use Lorekeeper\Server\MonsterMapId;
 use Override;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
-final readonly class MonstersPlacedEvent extends MoveToAreaEvent
+final readonly class MonstersPlacedEvent extends MapArrivalEvent
 {
     /** @param list<MonsterPlacement> $placements */
     public function __construct(
@@ -46,7 +46,7 @@ final readonly class MonstersPlacedEvent extends MoveToAreaEvent
 
         return new static(array_map(
             static fn(array $placement): MonsterPlacement => new MonsterPlacement(
-                new MonsterMapId($placement['MonMapID']),
+                new MonsterSpawnId($placement['MonMapID']),
                 new MonsterId($placement['MonID']),
                 new Cell($placement['strFrame']),
                 $levels[$placement['MonID']] ?? null,

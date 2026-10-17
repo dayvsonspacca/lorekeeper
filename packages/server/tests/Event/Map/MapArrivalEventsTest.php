@@ -12,7 +12,7 @@ use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class MoveToAreaEventsTest extends TestCase
+final class MapArrivalEventsTest extends TestCase
 {
     private const string ICESTORM = <<<'JSON'
         {"t":"xt","b":{"r":-1,"o":{"cmd":"moveToArea","areaId":732692,"areaName":"icestormarena-48213","intType":"1","sExtra":"NoAfk","strMapName":"icestormarena","strMapFileName":"Icewing/town-icestormarena-21Jul23.swf","monmap":[{"MonMapID":1,"MonID":3984,"strFrame":"r4","bRed":false,"intRSS":-1},{"MonMapID":2,"MonID":3984,"strFrame":"r4","bRed":false,"intRSS":-1},{"MonMapID":5,"MonID":3985,"strFrame":"r5","bRed":false,"intRSS":-1}],"mondef":[{"sRace":"Undead","MonID":3984,"intLevel":5,"strLinkage":"UndeadMage1","strMonName":"Skeletal Ice Mage","strMonFileName":"UndeadMage1.swf","strBehave":"walk"}],"uoBranch":[{"uoName":"lorekeeper03","entType":"p","entID":122507,"strUsername":"lorekeeper03","strFrame":"Enter","strPad":"Spawn","intState":1,"intLevel":1,"intHP":390,"intMP":100,"intHPMax":390,"intMPMax":100,"tx":0,"ty":0,"afk":false,"showCloak":false,"showHelm":false}],"monBranch":[{"MonMapID":1,"MonID":3984,"intState":1,"intHP":730,"intMP":100,"intHPMax":730,"intMPMax":100,"bRed":false,"iLvl":5,"wDPS":5}]}}}

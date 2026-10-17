@@ -11,7 +11,7 @@ use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
-abstract readonly class MoveToAreaEvent implements Event
+abstract readonly class MapArrivalEvent implements Event
 {
     /**
      * @param array<array-key, mixed> $data

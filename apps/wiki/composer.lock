@@ -809,10 +809,11 @@
             "dist": {
                 "type": "path",
                 "url": "../../packages/core",
-                "reference": "2152f958f5b9584b01b1a968486cb05d8cd27f8e"
+                "reference": "609f1f1430a5b26156b432f8989efbe3f564ca94"
             },
             "require": {
                 "php": "~8.4.0 || ~8.5.0",
+                "php-standard-library/date-time": "^6.2",
                 "php-standard-library/option": "^6.2",
                 "php-standard-library/type": "^6.2"
             },
@@ -836,12 +837,13 @@
             "dist": {
                 "type": "path",
                 "url": "../../packages/server",
-                "reference": "78f28ac08a184d107022463aadab34a08385137c"
+                "reference": "53169c8bcd0369eadd902bc7287b0e435ad28438"
             },
             "require": {
                 "dayvsonspacca/lorekeeper-core": "dev-main",
                 "ext-dom": "*",
                 "php": "~8.4.0 || ~8.5.0",
+                "php-standard-library/date-time": "^6.2",
                 "php-standard-library/network": "^6.2",
                 "php-standard-library/option": "^6.2",
                 "php-standard-library/type": "^6.2"

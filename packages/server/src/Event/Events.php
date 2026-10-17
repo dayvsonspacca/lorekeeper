@@ -6,11 +6,12 @@ namespace Lorekeeper\Server\Event;
 
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
 use Lorekeeper\Server\Event\Combat\AttackRejectedEvent;
-use Lorekeeper\Server\Event\Combat\CombatUpdatedEvent;
-use Lorekeeper\Server\Event\Combat\GoldExpGainedEvent;
-use Lorekeeper\Server\Event\Combat\LevelUpEvent;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
+use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
+use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
@@ -30,7 +31,9 @@ use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
 use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
 use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
+use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
+use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\Message;
@@ -43,10 +46,13 @@ final readonly class Events
         AttackRejectedEvent::class,
         AwayFromKeyboardEvent::class,
         ClassChangedEvent::class,
-        CombatUpdatedEvent::class,
-        GoldExpGainedEvent::class,
-        LevelUpEvent::class,
         MonsterRespawnedEvent::class,
+        MonsterRewardedEvent::class,
+        MonstersDiedEvent::class,
+        MonstersHealthChangedEvent::class,
+        LeveledUpEvent::class,
+        PlayersHealthChangedEvent::class,
+        PlayersManaChangedEvent::class,
         PlayerDiedEvent::class,
         ResurrectedEvent::class,
         SkillsLoadedEvent::class,

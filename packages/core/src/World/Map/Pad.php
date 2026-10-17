@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Map;
 
-use Lorekeeper\Core\Support\NonEmptyString;
-
-final readonly class Pad extends NonEmptyString {}
+enum Pad
+{
+    case Left;
+    case Right;
+    case Top;
+    case Bottom;
+    case Up;
+    case Down;
+    case Center;
+    case Spawn;
+}
