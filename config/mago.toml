@@ -2,9 +2,9 @@ php-version = "8.4.0"
 
 [source]
 workspace = "."
-paths = ["packages", "apps/wiki/app", "apps/wiki/bootstrap", "apps/wiki/config", "apps/wiki/database", "apps/wiki/public", "apps/wiki/routes", "apps/wiki/tests"]
-includes = ["vendor", "apps/wiki/vendor"]
-excludes = ["*packages/**/vendor/*", "*apps/wiki/bootstrap/cache/*"]
+paths = ["packages", "apps/wiki/app", "apps/wiki/bootstrap", "apps/wiki/config", "apps/wiki/database", "apps/wiki/public", "apps/wiki/routes", "apps/wiki/tests", "apps/desktop/app", "apps/desktop/bootstrap", "apps/desktop/database", "apps/desktop/tests"]
+includes = ["vendor", "apps/wiki/vendor", "apps/desktop/vendor"]
+excludes = ["*packages/**/vendor/*", "*apps/wiki/bootstrap/cache/*", "*apps/desktop/bootstrap/cache/*"]
 
 [formatter]
 preset = "default"
@@ -24,13 +24,13 @@ too-many-enum-cases = { enabled = false }
 
 [analyzer]
 plugins = ["psl"]
-excludes = ["*/packages/**/tests/*", "*/apps/wiki/*"]
+excludes = ["*/packages/**/tests/*", "*/apps/wiki/*", "*/apps/desktop/*"]
 
 # Layer boundaries. Core is pure: no I/O, no protocol knowledge, depends on nothing
 # but PSL types.
 [guard]
 mode = "perimeter"
-excludes = ["*/packages/**/tests/*", "*/apps/wiki/bootstrap/*", "*/apps/wiki/config/*", "*/apps/wiki/database/*", "*/apps/wiki/public/*", "*/apps/wiki/routes/*", "*/apps/wiki/tests/*"]
+excludes = ["*/packages/**/tests/*", "*/apps/wiki/bootstrap/*", "*/apps/wiki/config/*", "*/apps/wiki/database/*", "*/apps/wiki/public/*", "*/apps/wiki/routes/*", "*/apps/wiki/tests/*", "*/apps/desktop/bootstrap/*", "*/apps/desktop/database/*", "*/apps/desktop/tests/*"]
 
 [guard.perimeter.layers]
 ext = ["@native", "@global", "Psl\\**"]
@@ -50,3 +50,7 @@ permit = ["@layer:ext", "Lorekeeper\\Client\\**", "Lorekeeper\\Server\\**", "Lor
 [[guard.perimeter.rules]]
 namespace = "Lorekeeper\\Apps\\Wiki"
 permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**", "Livewire\\**", "Symfony\\**"]
+
+[[guard.perimeter.rules]]
+namespace = "Lorekeeper\\Apps\\Desktop"
+permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**", "Livewire\\**", "Symfony\\**", "Native\\**"]

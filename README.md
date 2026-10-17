@@ -49,6 +49,26 @@ $session = new Session(new Credentials($player, getenv('AQW_PASSWORD')), $observ
 $ending = $session->play($jobs, $stop); // $jobs hands out Job(id, new GoToMapTask(new MapName('forest'))) and the like
 ```
 
+## Apps
+
+### `desktop`
+
+A desktop app, built with [NativePHP](https://nativephp.com/), to keep several AQW characters playing on your own
+machine. There is no login: it only talks to the game. Add your accounts, start a bot on any of them and queue tasks
+for it; each bot runs in its own process, the log shows what it does and a progress bar follows each task. Data is
+kept in SQLite.
+
+```sh
+cd apps/desktop
+composer install && php artisan migrate
+php artisan native:install   # once, sets up Electron
+php artisan native:run       # or: php artisan serve, to use it in a browser while developing
+```
+
+### `wiki`
+
+A structured wiki of the game, filled by bots that walk around and read what the server says.
+
 ## Getting started
 
 Requirements: PHP 8.4 or 8.5 with `curl`, `dom` and `zlib`, [Composer](https://getcomposer.org/) and
