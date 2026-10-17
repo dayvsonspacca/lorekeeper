@@ -15,11 +15,8 @@ use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
-use Lorekeeper\Server\Event\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
-use Lorekeeper\Server\Event\LoginFailedEvent;
-use Lorekeeper\Server\Event\LoginSucceededEvent;
 use Lorekeeper\Server\Event\Map\MapLockedEvent;
 use Lorekeeper\Server\Event\Map\MapMemberOnlyEvent;
 use Lorekeeper\Server\Event\Map\MapNotAvailableEvent;
@@ -27,6 +24,9 @@ use Lorekeeper\Server\Event\Map\MapRequiresQuestEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
+use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
+use Lorekeeper\Server\Event\Session\LoginFailedEvent;
+use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 
 final readonly class StepLog

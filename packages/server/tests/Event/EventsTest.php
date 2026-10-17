@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event;
 
-use Lorekeeper\Server\Event\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Events;
 use Lorekeeper\Server\Event\Item\ItemEquippedEvent;
+use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\JsonMessage;

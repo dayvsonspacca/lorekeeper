@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Server\Event;
+namespace Lorekeeper\Server\Event\Session;
 
+use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Message\Message;
 use Lorekeeper\Server\Message\XmlMessage;
 use Override;

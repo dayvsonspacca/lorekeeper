@@ -14,12 +14,12 @@ use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
-use Lorekeeper\Server\Event\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
-use Lorekeeper\Server\Event\LoginFailedEvent;
-use Lorekeeper\Server\Event\LoginSucceededEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
+use Lorekeeper\Server\Event\Session\LoginFailedEvent;
+use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use Override;
 use Psl\DateTime\Duration;
 

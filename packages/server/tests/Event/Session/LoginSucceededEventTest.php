@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Server\Tests\Event;
+namespace Lorekeeper\Server\Tests\Event\Session;
 
-use Lorekeeper\Server\Event\LoginSucceededEvent;
+use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\JsonMessage;

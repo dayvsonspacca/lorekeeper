@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Server\Tests\Event;
+namespace Lorekeeper\Server\Tests\Event\Session;
 
-use Lorekeeper\Server\Event\LoginFailedEvent;
+use Lorekeeper\Server\Event\Session\LoginFailedEvent;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\XmlMessage;
 use PHPUnit\Framework\Attributes\Test;
