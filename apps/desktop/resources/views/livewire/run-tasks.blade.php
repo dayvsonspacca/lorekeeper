@@ -2,9 +2,15 @@
     @forelse ($tasks as $task)
         <div
             wire:key="task-{{ $task->id }}"
-            style="padding: .625rem .875rem; border-radius: .625rem; border: 1px solid var(--gray-200, #e5e7eb);"
+            x-data="{ open: @js($task->status->isActive()) }"
+            style="padding: .625rem .875rem; border-radius: .625rem; border: 1px solid color-mix(in oklab, var(--gray-500) 30%, transparent);"
         >
-        <div style="display: flex; align-items: center; gap: 1rem;">
+        <div x-on:click="open = ! open" style="display: flex; align-items: center; gap: 1rem; cursor: pointer;">
+            <x-filament::icon
+                icon="heroicon-m-chevron-right"
+                x-bind:style="{ transform: open ? 'rotate(90deg)' : 'none' }"
+                style="width: 1rem; height: 1rem; color: var(--gray-400, #9ca3af); transition: transform .15s;"
+            />
             <span style="color: var(--gray-400, #9ca3af); font-size: .75rem; min-width: 2.5rem;">#{{ $task->id }}</span>
             <x-filament::badge :color="$task->status->getColor()" :icon="$task->status->getIcon()">
                 {{ $task->status->getLabel() }}
@@ -34,6 +40,7 @@
                     color="gray"
                     icon="heroicon-m-x-mark"
                     wire:click="cancel({{ $task->id }})"
+                    x-on:click.stop
                     wire:confirm="Cancel this task?"
                 >
                     Cancel
@@ -41,7 +48,7 @@
             @endif
         </div>
         @if ($task->script->report() !== null && $task->started_at !== null)
-            <div style="margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--gray-200, #e5e7eb);">
+            <div x-show="open" x-collapse x-cloak style="margin-top: .75rem; padding-top: .75rem; border-top: 1px solid color-mix(in oklab, var(--gray-500) 30%, transparent);">
                 @include($task->script->report(), ['task' => $task, 'stats' => new \Lorekeeper\Apps\Desktop\Bots\TaskStats($task, now())])
             </div>
         @endif
