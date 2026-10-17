@@ -6,19 +6,18 @@ namespace Lorekeeper\Apps\Desktop\Console\Commands;
 
 use Illuminate\Console\Command;
 use InvalidArgumentException;
+use Lorekeeper\Apps\Desktop\Bots\LogLevel;
 use Lorekeeper\Apps\Desktop\Bots\RunRecorder;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
 use Lorekeeper\Client\Bot\Credentials;
-use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Login\Ending;
 use Lorekeeper\Client\Login\EndingStatus;
 use Lorekeeper\Client\Login\Login;
 use Lorekeeper\Client\Login\LoginClient;
-use Lorekeeper\Client\Narrator;
 use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Outcome;
 use Lorekeeper\Client\Script\OutcomeStatus;
@@ -58,9 +57,9 @@ final class RunBot extends Command
         $stop = Watch::until(static fn(): bool => $run->fresh()?->status !== RunStatus::Running);
 
         try {
+            $run->log("Logging in as {$run->account->name}");
             $client = Login::enter(
                 new Credentials(new PlayerName($run->account->name), $run->account->password, $run->account->server),
-                new Narrator($recorder),
                 $stop->token(),
                 $logins,
             );
@@ -91,6 +90,11 @@ final class RunBot extends Command
         RunRecorder $recorder,
         CancellationTokenInterface $stop,
     ): Ending {
+        $client->subscribe($recorder->heard(...));
+        $client->character()->subscribe($recorder);
+        $recorder->update($client->character());
+        $run->log("Entered the game in {$client->character()->position()->map->value}", LogLevel::Success);
+
         $waiting = false;
         while (!$stop->isCancelled()) {
             $task = $run->nextTask();
@@ -143,6 +147,7 @@ final class RunBot extends Command
             'level_from' => $run->account->refresh()->level,
         ]);
         $recorder->working($task);
+        $recorder->update($client->character());
         $cancel = Watch::until(static fn(): bool => $task->fresh()?->status !== TaskStatus::Running);
 
         try {

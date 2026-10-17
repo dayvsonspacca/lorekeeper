@@ -11,10 +11,12 @@ use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
+use Lorekeeper\Apps\Desktop\Models\BotRunLog;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
-use Lorekeeper\Client\Bot\Log\LogLevel;
-use Lorekeeper\Client\Bot\Position;
-use Lorekeeper\Client\Script\Progress;
+use Lorekeeper\Client\Character;
+use Lorekeeper\Client\Script\Game\InGame;
+use Lorekeeper\Core\Asset\Gamefile;
+use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
@@ -23,12 +25,17 @@ use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\AreaId;
+use Lorekeeper\Server\Event\Combat\MonsterHealth;
+use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Map\MapPlayer;
+use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Map\PlayersPresentEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
-use Lorekeeper\Server\Message\JsonMessage;
+use Lorekeeper\Server\RoomId;
+use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 
 final class RunBotTest extends TestCase
@@ -36,40 +43,60 @@ final class RunBotTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function the_recorder_keeps_the_log_the_map_and_how_each_task_goes(): void
+    public function the_recorder_follows_the_character_map_level_and_level_up_progress(): void
     {
         $run = $this->botRun();
+        $run->account->update(['name' => 'lorekeeper03']);
         $task = $run->tasks()->create([
             'script' => BotScript::LevelUp,
             'parameters' => ['level' => 10],
+            'status' => TaskStatus::Running,
+            'level_from' => 4,
         ]);
-        $task->update(['status' => TaskStatus::Running]);
         $recorder = new RunRecorder($run);
+        $me = new Character(new PlayerName('lorekeeper03'));
+        $me->entered(
+            new InGame(
+                new SocketId(1),
+                new MovedToMapEvent(
+                    new AreaId(1),
+                    new RoomId(1),
+                    new MapName('battleon'),
+                    new Gamefile('b.swf'),
+                    [],
+                    [],
+                    [],
+                ),
+            ),
+        );
+        $me->hear(new PlayersPresentEvent([new MapPlayer(new PlayerName('lorekeeper03'), new PlayerLevel(4))]));
 
         $recorder->working($task);
-        $recorder->moved(new Position(new MapName('battleon'), new AreaId(1)));
-        $recorder->progressed(new Progress(1, 2));
-        static::assertSame(50, $task->refresh()->percent());
-        static::assertSame(TaskStatus::Running, $task->status);
-
-        $recorder->said('Opened a shop', LogLevel::Info);
-        $recorder->working(null);
-        $recorder->said('Waiting for tasks in battleon', LogLevel::Info);
-
+        $me->subscribe($recorder);
+        $recorder->update($me);
         static::assertSame('battleon', $run->refresh()->map);
-        static::assertSame([$task->id, null], $run->logs()->orderBy('id')->pluck('bot_task_id')->all());
+        static::assertSame(4, $run->account->refresh()->level);
+        static::assertSame(0, $task->refresh()->percent());
+
+        $me->hear(new LeveledUpEvent(new PlayerLevel(6), new Experience(600)));
+
+        static::assertSame(6, $run->account->refresh()->level);
+        static::assertSame([6, 2, 6, 33], [
+            $task->refresh()->level_to,
+            $task->progress_done,
+            $task->progress_total,
+            $task->percent(),
+        ]);
     }
 
     #[Test]
-    public function the_recorder_counts_kills_rewards_deaths_and_levels(): void
+    public function the_recorder_counts_kills_and_deaths_and_logs_what_matters(): void
     {
         $run = $this->botRun();
-        $run->account->update(['name' => 'lorekeeper03', 'level' => 4]);
         $task = $run->tasks()->create([
             'script' => BotScript::LevelUp,
             'parameters' => ['level' => 6],
             'status' => TaskStatus::Running,
-            'level_from' => 4,
         ]);
         $recorder = new RunRecorder($run);
         $reward = new MonsterRewardedEvent(
@@ -78,29 +105,35 @@ final class RunBotTest extends TestCase
             new ClassPoints(510),
             new MonsterSpawnId(4),
         );
-        $message = JsonMessage::from('{"b":{"o":{"cmd":"addGoldExp"}}}')->unwrap();
 
         $recorder->working($task);
-        $recorder->heard($message, [$reward]);
-        $recorder->heard($message, [$reward, new PlayerDiedEvent()]);
-        $recorder->heard($message, [new LeveledUpEvent(new PlayerLevel(5), new Experience(500))]);
+        $recorder->heard($reward);
+        $recorder->heard(new MonstersHealthChangedEvent([new MonsterHealth(new MonsterSpawnId(4), new Health(10))]));
+        $recorder->heard($reward);
+        $recorder->heard(new PlayerDiedEvent());
+        $recorder->heard(new ResurrectedEvent());
+        $recorder->heard(new LeveledUpEvent(new PlayerLevel(5), new Experience(500)));
+        $recorder->working(null);
+        $recorder->heard(new PlayerDiedEvent());
 
         $task->refresh();
-        static::assertSame([2, 1, 20, 6, 4, 5], [
-            $task->kills,
-            $task->deaths,
-            $task->experience,
-            $task->gold,
-            $task->level_from,
-            $task->level_to,
-        ]);
-        static::assertSame(5, $run->account->refresh()->level);
-
-        $recorder->heard($message, [new PlayersPresentEvent([
-            new MapPlayer(new PlayerName('Someone'), new PlayerLevel(90)),
-            new MapPlayer(new PlayerName('LoreKeeper03'), new PlayerLevel(7)),
-        ])]);
-        static::assertSame(7, $run->account->refresh()->level);
+        static::assertSame([2, 1, 20, 6], [$task->kills, $task->deaths, $task->experience, $task->gold]);
+        static::assertSame(
+            [
+                ['Earned 10 experience and 3 gold from monster 4', 'info', $task->id],
+                ['Earned 10 experience and 3 gold from monster 4', 'info', $task->id],
+                ['Died', 'warning', $task->id],
+                ['Back to life', 'info', $task->id],
+                ['Reached level 5', 'success', $task->id],
+                ['Died', 'warning', null],
+            ],
+            $run
+                ->logs()
+                ->orderBy('id')
+                ->get()
+                ->map(static fn(BotRunLog $log): array => [$log->message, $log->level->value, $log->bot_task_id])
+                ->all(),
+        );
     }
 
     #[Test]

@@ -11,9 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Lorekeeper\Apps\Desktop\Bots\Elapsed;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
+use Lorekeeper\Apps\Desktop\Bots\LogLevel;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
-use Lorekeeper\Client\Bot\Log\LogLevel;
 use Override;
 
 /**

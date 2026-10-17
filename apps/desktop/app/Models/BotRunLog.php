@@ -7,7 +7,7 @@ namespace Lorekeeper\Apps\Desktop\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
-use Lorekeeper\Client\Bot\Log\LogLevel;
+use Lorekeeper\Apps\Desktop\Bots\LogLevel;
 
 /**
  * @property int $id

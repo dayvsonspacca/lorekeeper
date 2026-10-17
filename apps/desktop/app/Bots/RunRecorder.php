@@ -4,23 +4,22 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Bots;
 
+use LogicException;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
-use Lorekeeper\Client\Bot\Log\LogLevel;
-use Lorekeeper\Client\Bot\Position;
-use Lorekeeper\Client\Observer;
-use Lorekeeper\Client\Script\Instruction;
-use Lorekeeper\Client\Script\Progress;
-use Lorekeeper\Client\Script\TimedOut;
+use Lorekeeper\Client\Character;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Map\PlayersPresentEvent;
+use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
-use Lorekeeper\Server\Message\Message;
 use Override;
+use Psl\Observer\ObserverInterface;
+use Psl\Observer\SubjectInterface;
 
-final class RunRecorder implements Observer
+/** @implements ObserverInterface<Character> */
+final class RunRecorder implements ObserverInterface
 {
     private ?BotTask $task = null;
 
@@ -28,64 +27,81 @@ final class RunRecorder implements Observer
         private readonly BotRun $run,
     ) {}
 
-    #[Override]
-    public function said(string $message, LogLevel $level): void
-    {
-        $this->run->log($message, $level, $this->task);
-    }
-
-    #[Override]
-    public function heard(Message $message, array $events): void
-    {
-        foreach ($events as $event) {
-            match (true) {
-                $event instanceof MonsterRewardedEvent => $this->task?->incrementEach([
-                    'kills' => 1,
-                    'experience' => $event->experience->value,
-                    'gold' => $event->gold->value,
-                ]),
-                $event instanceof PlayerDiedEvent => $this->task?->increment('deaths'),
-                $event instanceof LeveledUpEvent => $this->leveledUp($event),
-                $event instanceof PlayersPresentEvent => $this->sawLevel($event),
-                default => null,
-            };
-        }
-    }
-
-    #[Override]
-    public function stepped(Instruction $instruction, null|Event|TimedOut $answer): void {}
-
-    #[Override]
-    public function moved(Position $position): void
-    {
-        $this->run->update(['map' => $position->map->value]);
-    }
-
     public function working(?BotTask $task): void
     {
         $this->task = $task;
     }
 
+    public function heard(Event $event): void
+    {
+        match (true) {
+            $event instanceof MonsterRewardedEvent => $this->rewarded($event),
+            $event instanceof PlayerDiedEvent => $this->died($event),
+            $event instanceof ResurrectedEvent, $event instanceof MovedToMapEvent => $this->log($event),
+            $event instanceof LeveledUpEvent => $this->log($event, LogLevel::Success),
+            default => null,
+        };
+    }
+
     #[Override]
-    public function progressed(Progress $progress): void
+    public function update(SubjectInterface $subject): void
     {
-        $this->task?->update(['progress_done' => $progress->done, 'progress_total' => $progress->total]);
-    }
-
-    private function leveledUp(LeveledUpEvent $event): void
-    {
-        $this->run->account->update(['level' => $event->level->value]);
-        $this->task?->update(['level_to' => $event->level->value]);
-    }
-
-    private function sawLevel(PlayersPresentEvent $event): void
-    {
-        foreach ($event->players as $player) {
-            if ($player->level === null || strcasecmp($player->name->value, $this->run->account->name) !== 0) {
-                continue;
-            }
-
-            $this->run->account->update(['level' => $player->level->value]);
+        if (!$subject instanceof Character) {
+            return;
         }
+
+        try {
+            $map = $subject->position()->map->value;
+            $level = $subject->level()->value;
+        } catch (LogicException) {
+            return;
+        }
+
+        if ($this->run->map !== $map) {
+            $this->run->update(['map' => $map]);
+        }
+
+        if ($this->run->account->level !== $level) {
+            $this->run->account->update(['level' => $level]);
+        }
+
+        $this->reached($level);
+    }
+
+    private function rewarded(MonsterRewardedEvent $event): void
+    {
+        $this->task?->incrementEach([
+            'kills' => 1,
+            'experience' => $event->experience->value,
+            'gold' => $event->gold->value,
+        ]);
+        $this->log($event);
+    }
+
+    private function died(PlayerDiedEvent $event): void
+    {
+        $this->task?->increment('deaths');
+        $this->log($event, LogLevel::Warning);
+    }
+
+    private function reached(int $level): void
+    {
+        $task = $this->task;
+        if ($task === null || $task->script !== BotScript::LevelUp || $task->level_from === null) {
+            return;
+        }
+
+        $total = max(1, Parameters::level($task->parameters)->value - $task->level_from);
+        $done = max(0, min($total, $level - $task->level_from));
+        if ($task->level_to === $level && $task->progress_done === $done && $task->progress_total === $total) {
+            return;
+        }
+
+        $task->update(['level_to' => $level, 'progress_done' => $done, 'progress_total' => $total]);
+    }
+
+    private function log(Event $event, LogLevel $level = LogLevel::Info): void
+    {
+        $this->run->log($event->summary(), $level, $this->task);
     }
 }
