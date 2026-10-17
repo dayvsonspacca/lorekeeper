@@ -8,6 +8,9 @@ use Illuminate\Support\ServiceProvider;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\NativeLauncher;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\ProcessLauncher;
+use Lorekeeper\Apps\Desktop\Bots\Notifier\NativeNotifier;
+use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
+use Lorekeeper\Apps\Desktop\Bots\Notifier\SilentNotifier;
 use Override;
 
 final class AppServiceProvider extends ServiceProvider
@@ -18,5 +21,8 @@ final class AppServiceProvider extends ServiceProvider
         $this->app->singleton(Launcher::class, static fn(): Launcher => config('nativephp-internal.running')
             ? new NativeLauncher()
             : new ProcessLauncher());
+        $this->app->singleton(Notifier::class, static fn(): Notifier => config('nativephp-internal.running')
+            ? new NativeNotifier()
+            : new SilentNotifier());
     }
 }

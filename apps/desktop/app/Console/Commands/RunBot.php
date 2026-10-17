@@ -7,6 +7,8 @@ namespace Lorekeeper\Apps\Desktop\Console\Commands;
 use Illuminate\Console\Command;
 use InvalidArgumentException;
 use Lorekeeper\Apps\Desktop\Bots\LogLevel;
+use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
+use Lorekeeper\Apps\Desktop\Bots\Notifier\TaskNotice;
 use Lorekeeper\Apps\Desktop\Bots\RunRecorder;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
@@ -34,6 +36,12 @@ final class RunBot extends Command
 {
     /** @var string */
     protected $signature = 'bots:run {run}';
+
+    public function __construct(
+        private readonly Notifier $notifier,
+    ) {
+        parent::__construct();
+    }
 
     public function handle(LoginClient $logins): int
     {
@@ -137,6 +145,7 @@ final class RunBot extends Command
         } catch (InvalidArgumentException $invalid) {
             $task->finish(TaskStatus::Failed, $invalid->getMessage());
             $run->log("Task #{$task->id} failed: {$invalid->getMessage()}", LogLevel::Error, $task);
+            $this->announce($task);
 
             return null;
         }
@@ -177,8 +186,17 @@ final class RunBot extends Command
             },
             $task,
         );
+        $this->announce($task);
 
         return $outcome;
+    }
+
+    private function announce(BotTask $task): void
+    {
+        $notice = TaskNotice::of($task);
+        if ($notice !== null) {
+            $this->notifier->show($notice);
+        }
     }
 
     /** @return array{string, LogLevel} */
