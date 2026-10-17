@@ -10,7 +10,6 @@ use Lorekeeper\Client\Bot\Done;
 use Lorekeeper\Client\Bot\Log\EventSummary;
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Log\StepLog;
-use Lorekeeper\Client\Bot\Position;
 use Lorekeeper\Client\Bot\Script\WaitScript;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\ClientVersion;
@@ -46,8 +45,6 @@ use Throwable;
 final class Session
 {
     private readonly Character $me;
-
-    private ?Position $position = null;
 
     private ?Job $job = null;
 
@@ -105,9 +102,6 @@ final class Session
         }
 
         $this->me->entered($entered);
-        if ($this->position === null) {
-            $this->at(new Position($entered->map->map, $entered->map->areaId));
-        }
 
         $waiting = false;
         while (!$stop->isCancelled()) {
@@ -116,7 +110,7 @@ final class Session
             if ($job === null) {
                 if (!$waiting) {
                     $waiting = true;
-                    $this->say('Waiting for tasks in ' . ($this->position?->map->value ?? 'the game'));
+                    $this->say("Waiting for tasks in {$this->me->position()->map->value}");
                 }
 
                 $waited = $client->run(new WaitScript(Duration::seconds(2)), $stop);
@@ -140,16 +134,6 @@ final class Session
         return new Ending(SessionStatus::Stopped);
     }
 
-    public function character(): Character
-    {
-        return $this->me;
-    }
-
-    public function position(): ?Position
-    {
-        return $this->position;
-    }
-
     private function work(Client $client, Jobs $jobs, Job $job, CancellationTokenInterface $stop): ?Disconnected
     {
         $this->idling = false;
@@ -160,9 +144,7 @@ final class Session
         $cancel = Watch::until(static fn(): bool => $jobs->cancelled($job));
 
         try {
-            $result = $this->position === null
-                ? 'the bot does not know where it is'
-                : $client->run($job->task->script($this->me), new LinkedCancellationToken($stop, $cancel->token()));
+            $result = $client->run($job->task->script($this->me), new LinkedCancellationToken($stop, $cancel->token()));
         } catch (Throwable $failure) {
             $result = $failure->getMessage();
         } finally {
@@ -199,7 +181,7 @@ final class Session
 
             $this->me->hear($event);
             if ($event instanceof MovedToMapEvent) {
-                $this->at(new Position($event->map, $event->areaId));
+                $this->observer->moved($this->me->position());
             }
         }
 
@@ -225,7 +207,7 @@ final class Session
 
             if (!$this->idling) {
                 $this->idling = true;
-                $this->say($this->position === null ? 'Idling' : "Idling in {$this->position->map->value}");
+                $this->say("Idling in {$this->me->position()->map->value}");
             }
 
             return;
@@ -238,12 +220,6 @@ final class Session
         $this->idling = false;
         [$level, $message] = StepLog::describe($instruction, $answer);
         $this->say($message, $level);
-    }
-
-    private function at(Position $position): void
-    {
-        $this->position = $position;
-        $this->observer->moved($position);
     }
 
     private function say(string $message, LogLevel $level = LogLevel::Info): void
