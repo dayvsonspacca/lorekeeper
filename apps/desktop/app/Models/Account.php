@@ -16,8 +16,9 @@ use Lorekeeper\Apps\Desktop\Bots\RunStatus;
  * @property string $name
  * @property string $password
  * @property null|string $server
+ * @property null|int $level
  */
-#[Fillable(['name', 'password', 'server'])]
+#[Fillable(['name', 'password', 'server', 'level'])]
 #[Hidden(['password'])]
 final class Account extends Model
 {

@@ -21,6 +21,11 @@ use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
  * @property null|string $result
  * @property null|int $progress_done
  * @property null|int $progress_total
+ * @property int $kills
+ * @property int $deaths
+ * @property int $experience
+ * @property int $gold
+ * @property null|int $level_from
  * @property null|Carbon $started_at
  * @property null|Carbon $finished_at
  * @property BotRun $run
@@ -32,13 +37,25 @@ use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
     'result',
     'progress_done',
     'progress_total',
+    'kills',
+    'deaths',
+    'experience',
+    'gold',
+    'level_from',
     'started_at',
     'finished_at',
 ])]
 final class BotTask extends Model
 {
     /** @var array<string, mixed> */
-    protected $attributes = ['status' => 'pending', 'parameters' => '{}'];
+    protected $attributes = [
+        'status' => 'pending',
+        'parameters' => '{}',
+        'kills' => 0,
+        'deaths' => 0,
+        'experience' => 0,
+        'gold' => 0,
+    ];
 
     /** @return BelongsTo<BotRun, $this> */
     public function run(): BelongsTo

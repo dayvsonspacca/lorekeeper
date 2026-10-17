@@ -27,6 +27,7 @@ use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\CreateBotRun;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ListBotRuns;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
 use Lorekeeper\Apps\Desktop\Livewire\RunLog;
+use Lorekeeper\Apps\Desktop\Livewire\RunProgress;
 use Lorekeeper\Apps\Desktop\Livewire\RunTasks;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Override;
@@ -91,6 +92,10 @@ final class BotRunResource extends Resource
                         ->columnSpanFull(),
                 ])
                 ->columns(4)
+                ->columnSpanFull(),
+            Section::make('Progress')
+                ->icon(Heroicon::OutlinedChartBar)
+                ->schema([Livewire::make(RunProgress::class, static fn(BotRun $record): array => ['run' => $record])])
                 ->columnSpanFull(),
             Section::make('Tasks')
                 ->icon(Heroicon::OutlinedQueueList)

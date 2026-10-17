@@ -77,6 +77,10 @@ final class AccountResource extends Resource
                     ->icon(Heroicon::OutlinedUser)
                     ->description(static fn(Account $record): string => $record->server ?? 'First open server')
                     ->searchable(),
+                TextColumn::make('level')
+                    ->label('Level')
+                    ->placeholder('—')
+                    ->color('gray'),
                 TextColumn::make('latestRun.status')
                     ->label('Bot')
                     ->badge()
