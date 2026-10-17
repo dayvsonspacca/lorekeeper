@@ -2,20 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Bot\Session;
+namespace Lorekeeper\Client\Tests\Login;
 
 use Generator;
-use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Done;
-use Lorekeeper\Client\Bot\Session\Ending;
-use Lorekeeper\Client\Bot\Session\Outcome;
-use Lorekeeper\Client\Bot\Session\OutcomeStatus;
-use Lorekeeper\Client\Bot\Session\Session;
-use Lorekeeper\Client\Bot\Session\SessionStatus;
-use Lorekeeper\Client\Bot\Task\Task;
+use Lorekeeper\Client\Bot\Script\BotScript;
+use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Connection;
+use Lorekeeper\Client\Login\Ending;
+use Lorekeeper\Client\Login\EndingStatus;
+use Lorekeeper\Client\Login\Login;
+use Lorekeeper\Client\Narrator;
+use Lorekeeper\Client\Observer;
+use Lorekeeper\Client\Script\Outcome;
+use Lorekeeper\Client\Script\OutcomeStatus;
 use Lorekeeper\Client\Script\Pause;
-use Lorekeeper\Client\Script\Script;
+use Lorekeeper\Client\Tests\RecordingObserver;
 use Lorekeeper\Core\Player\PlayerName;
 use Override;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,7 +29,7 @@ use Psl\Async\SignalCancellationToken;
 use Psl\DateTime\Duration;
 use Psl\TCP;
 
-final class SessionTest extends TestCase
+final class LoginTest extends TestCase
 {
     private const string POLICY = "<cross-domain-policy/>\0";
 
@@ -36,11 +38,11 @@ final class SessionTest extends TestCase
     private const string INVENTORY = "{\"b\":{\"o\":{\"cmd\":\"loadInventoryBig\",\"items\":[]}}}\0";
 
     #[Test]
-    public function it_enters_the_game_plays_what_it_is_given_in_order_and_leaves(): void
+    public function it_enters_the_game_and_hands_back_a_client_that_plays_scripts(): void
     {
         $sent = [];
         $observer = new RecordingObserver();
-        $session = self::enter($sent, $observer, [
+        $client = self::enter($sent, new Narrator($observer), [
             self::POLICY,
             self::LOGGED_IN,
             self::moved('battleon', 1350),
@@ -48,12 +50,13 @@ final class SessionTest extends TestCase
             self::moved('forest', 7),
         ]);
 
-        $went = $session->play(new GoToForest());
-        $again = $session->play(new GoToForest());
-        $session->leave();
+        $went = Outcome::of($client->run(new GoToForest()));
+        $again = Outcome::of($client->run(new GoToForest()));
+        $loggedOut = Login::leave($client);
 
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $went);
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $again);
+        static::assertTrue($loggedOut);
         static::assertSame(
             [
                 'moved battleon 1350',
@@ -65,35 +68,18 @@ final class SessionTest extends TestCase
             ],
             $observer->updates,
         );
-        static::assertContains('info: Playing Go to forest', $observer->lines);
-        static::assertContains('success: Go to forest: Now in forest', $observer->lines);
+        static::assertContains('success: Entered the game in battleon (room 1)', $observer->lines);
+        static::assertContains('success: Moved to forest (room 1) · 0 monsters, 0 players', $observer->lines);
         static::assertSame('%xt%zm%cmd%1%tfer%Hero%forest%', $sent[4]);
         static::assertSame('%xt%zm%logout%1%', end($sent));
-        static::assertCount(6, $sent);
-        static::assertFalse($session->connected());
-        static::assertSame('forest', $session->character()->position()->map->value);
+        static::assertSame('forest', $client->character()->position()->map->value);
     }
 
     #[Test]
-    public function it_waits_in_the_game_and_stays_connected(): void
+    public function a_client_in_the_game_waits_and_a_cancelled_script_ends_as_cancelled(): void
     {
         $sent = [];
-        $session = self::enter($sent, new RecordingObserver(), [
-            self::POLICY,
-            self::LOGGED_IN,
-            self::moved('battleon', 1),
-            self::INVENTORY,
-        ]);
-
-        static::assertTrue($session->wait(Duration::milliseconds(10)));
-        static::assertTrue($session->connected());
-    }
-
-    #[Test]
-    public function a_cancelled_play_ends_as_cancelled(): void
-    {
-        $sent = [];
-        $session = self::enter($sent, new RecordingObserver(), [
+        $client = self::enter($sent, new RecordingObserver(), [
             self::POLICY,
             self::LOGGED_IN,
             self::moved('battleon', 1),
@@ -102,24 +88,25 @@ final class SessionTest extends TestCase
         $cancel = new SignalCancellationToken();
         $cancel->cancel();
 
-        $outcome = $session->play(new GoToForest(), $cancel);
-
-        static::assertEquals(new Outcome(OutcomeStatus::Cancelled, 'cancelled'), $outcome);
-        static::assertTrue($session->connected());
+        static::assertNull($client->wait(Duration::milliseconds(10)));
+        static::assertEquals(
+            new Outcome(OutcomeStatus::Cancelled, 'cancelled'),
+            Outcome::of($client->run(new GoToForest(), $cancel)),
+        );
     }
 
     #[Test]
-    public function it_tells_about_a_long_idle_once(): void
+    public function the_narrator_tells_about_a_long_idle_once(): void
     {
         $sent = [];
         $observer = new RecordingObserver();
-        $session = self::enter($sent, $observer, [
+        $client = self::enter($sent, new Narrator($observer), [
             self::POLICY,
             self::LOGGED_IN,
             self::moved('battleon', 1),
             self::INVENTORY,
         ]);
-        $idle = new class() implements Task {
+        $idle = new class() extends BotScript {
             #[Override]
             public function title(): string
             {
@@ -127,29 +114,23 @@ final class SessionTest extends TestCase
             }
 
             #[Override]
-            public function script(Character $me): Script
+            protected function rules(): Generator
             {
-                return new class() implements Script {
-                    #[Override]
-                    public function run(): Generator
-                    {
-                        yield new Pause(Duration::minutes(1));
-                        yield new Pause(Duration::minutes(1));
+                yield new Pause(Duration::minutes(1));
+                yield new Pause(Duration::minutes(1));
 
-                        return new Done('Rested');
-                    }
-                };
+                return new Done('Rested');
             }
         };
 
-        $session->play($idle);
+        $client->run($idle);
 
         static::assertSame(
-            ['info: Playing Idle', 'info: Idling in battleon', 'success: Idle: Rested'],
-            array_values(array_filter(
-                $observer->lines,
-                static fn(string $line): bool => str_contains($line, 'Idle') || str_contains($line, 'Idling'),
-            )),
+            ['info: Idling in battleon'],
+            array_values(array_filter($observer->lines, static fn(string $line): bool => str_contains(
+                $line,
+                'Idling',
+            ))),
         );
     }
 
@@ -159,21 +140,21 @@ final class SessionTest extends TestCase
         $sent = [];
         $connection = self::connection($sent, [self::POLICY, "%xt%loginResponse%-1%0%-1%%Nope%\0"]);
 
-        $ending = Session::enterOn($connection, new PlayerName('Hero'), 'TOKEN', new RecordingObserver());
+        $ending = Login::enterOn($connection, new PlayerName('Hero'), 'TOKEN', new RecordingObserver());
 
-        static::assertEquals(new Ending(SessionStatus::Failed, 'Login refused'), $ending);
+        static::assertEquals(new Ending(EndingStatus::Failed, 'Login refused'), $ending);
     }
 
     /**
      * @param list<string> $sent
      * @param list<null|string> $reads
      */
-    private static function enter(array &$sent, RecordingObserver $observer, array $reads): Session
+    private static function enter(array &$sent, Observer $observer, array $reads): Client
     {
-        $session = Session::enterOn(self::connection($sent, $reads), new PlayerName('Hero'), 'TOKEN', $observer);
-        static::assertInstanceOf(Session::class, $session);
+        $client = Login::enterOn(self::connection($sent, $reads), new PlayerName('Hero'), 'TOKEN', $observer);
+        static::assertInstanceOf(Client::class, $client);
 
-        return $session;
+        return $client;
     }
 
     private static function moved(string $map, int $area): string

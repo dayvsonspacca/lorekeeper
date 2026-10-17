@@ -10,10 +10,13 @@ use Lorekeeper\Apps\Wiki\Bots\RunStatus;
 use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Client\Bot\Credentials;
 use Lorekeeper\Client\Bot\Log\LogLevel;
-use Lorekeeper\Client\Bot\Session\Ending;
-use Lorekeeper\Client\Bot\Session\Session;
-use Lorekeeper\Client\Bot\Session\SessionStatus;
+use Lorekeeper\Client\Client;
+use Lorekeeper\Client\Login\Ending;
+use Lorekeeper\Client\Login\EndingStatus;
+use Lorekeeper\Client\Login\Login;
 use Lorekeeper\Client\Login\LoginClient;
+use Lorekeeper\Client\Narrator;
+use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Core\Player\PlayerName;
 use Psl\Async\CancellationTokenInterface;
 use Psl\Async\Scheduler;
@@ -43,13 +46,13 @@ final class RunBot extends Command
         $recorder = new RunRecorder($run);
 
         try {
-            $session = Session::enter(
+            $client = Login::enter(
                 new Credentials(new PlayerName($run->account->name), $run->account->password, $run->account->server),
-                $recorder,
+                new Narrator($recorder),
                 $stop,
                 $logins,
             );
-            $ending = $session instanceof Session ? $this->stay($run, $session, $stop) : $session;
+            $ending = $client instanceof Client ? $this->stay($run, $client, $stop) : $client;
         } finally {
             foreach ($signals as $signal) {
                 Scheduler::cancel($signal);
@@ -58,9 +61,9 @@ final class RunBot extends Command
 
         $run->update([
             'status' => match ($ending->status) {
-                SessionStatus::Stopped => RunStatus::Stopped,
-                SessionStatus::Disconnected => RunStatus::Disconnected,
-                SessionStatus::Failed => RunStatus::Failed,
+                EndingStatus::Stopped => RunStatus::Stopped,
+                EndingStatus::Disconnected => RunStatus::Disconnected,
+                EndingStatus::Failed => RunStatus::Failed,
             },
             'result' => $ending->reason,
             'pid' => null,
@@ -71,19 +74,20 @@ final class RunBot extends Command
         return self::SUCCESS;
     }
 
-    private function stay(BotRun $run, Session $session, CancellationTokenInterface $stop): Ending
+    private function stay(BotRun $run, Client $client, CancellationTokenInterface $stop): Ending
     {
-        $run->log("Listening in {$session->character()->position()->map->value}");
+        $run->log("Listening in {$client->character()->position()->map->value}");
 
         while (!$stop->isCancelled()) {
-            if (!$session->wait(Duration::minutes(1), $stop)) {
-                return new Ending(SessionStatus::Disconnected, 'the connection dropped');
+            $waited = $client->wait(Duration::minutes(1), $stop);
+            if ($waited instanceof Disconnected) {
+                return new Ending(EndingStatus::Disconnected, $waited->reason);
             }
         }
 
-        $session->leave();
+        Login::leave($client);
 
-        return new Ending(SessionStatus::Stopped);
+        return new Ending(EndingStatus::Stopped);
     }
 
     /** @return array{string, LogLevel} */

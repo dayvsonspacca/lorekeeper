@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Tests\Unit;
 
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
-use Lorekeeper\Client\Bot\Task\LevelUpTask;
-use Lorekeeper\Core\Player\PlayerLevel;
+use Lorekeeper\Client\Bot\Script\LevelUpScript;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class BotScriptTest extends TestCase
 {
     #[Test]
-    public function level_up_becomes_the_client_task_with_a_level_the_game_has(): void
+    public function level_up_becomes_the_client_script_with_a_level_the_game_has(): void
     {
-        static::assertEquals(new LevelUpTask(new PlayerLevel(40)), BotScript::LevelUp->task(['level' => '40']));
-        static::assertEquals(new LevelUpTask(new PlayerLevel(100)), BotScript::LevelUp->task(['level' => 250]));
-        static::assertEquals(new LevelUpTask(new PlayerLevel(100)), BotScript::LevelUp->task([]));
+        static::assertInstanceOf(LevelUpScript::class, BotScript::LevelUp->script(['level' => '40']));
+        static::assertSame('Level up to 40', BotScript::LevelUp->script(['level' => '40'])->title());
+        static::assertSame('Level up to 100', BotScript::LevelUp->script(['level' => 250])->title());
+        static::assertSame('Level up to 100', BotScript::LevelUp->script([])->title());
     }
 
     #[Test]

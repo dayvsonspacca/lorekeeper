@@ -39,14 +39,14 @@ if (MapRefusals::contains($joined)) {
 
 Ready-made scripts enter the game and level a character up, telling how far along they are.
 
-To keep a bot in the game, enter with a `Session` and an `Observer`, then play what you want, one task at a time.
-The observer hears everything: plain-word log lines, every server message, where the bot moved and how far a task
-has gone. What to play next, and when to stop, stays with the app.
+To play, log in to get a `Client` already in the game, then run scripts on it. The client keeps the character up to
+date with what the server says and tells an `Observer` about every message and step; a `Narrator` in front of the
+observer turns those steps into plain-word log lines. What to play next, and when to stop, stays with the app.
 
 ```php
-$session = Session::enter(new Credentials($player, getenv('AQW_PASSWORD')), $observer);
-$outcome = $session->play(new LevelUpTask(new PlayerLevel(50)));
-$session->leave();
+$client = Login::enter(new Credentials($player, getenv('AQW_PASSWORD')), new Narrator($observer));
+$outcome = Outcome::of($client->run(new LevelUpScript(new PlayerLevel(50))));
+Login::leave($client);
 ```
 
 ## Apps

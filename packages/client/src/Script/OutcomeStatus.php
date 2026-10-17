@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Bot\Session;
+namespace Lorekeeper\Client\Script;
 
 enum OutcomeStatus
 {

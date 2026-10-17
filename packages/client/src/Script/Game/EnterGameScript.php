@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Script\Game;
 
 use Generator;
+use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Command\Inventory\LoadPlayerInventoryCommand;
 use Lorekeeper\Client\Command\Map\JoinInitialMapCommand;
 use Lorekeeper\Client\Command\Session\LoginCommand;
@@ -32,9 +33,15 @@ final readonly class EnterGameScript implements Script
         private GameLogin $login,
     ) {}
 
+    #[Override]
+    public function title(): string
+    {
+        return 'Enter the game';
+    }
+
     /** @return Generator<int, Send, null|Event|TimedOut, InGame|LoginFailedEvent|TimedOut> */
     #[Override]
-    public function run(): Generator
+    public function run(Character $me): Generator
     {
         $policy = yield new Send(new PolicyFileRequestCommand(), self::await(ConnectionEstablishedEvent::class));
         if ($policy instanceof TimedOut) {

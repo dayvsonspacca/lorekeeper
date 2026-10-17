@@ -6,7 +6,6 @@ namespace Lorekeeper\Client\Bot\Script;
 
 use Closure;
 use Generator;
-use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Done;
 use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Client\Script\Instruction;
@@ -23,24 +22,30 @@ use Override;
 use Psl\DateTime\Timestamp;
 use RuntimeException;
 
-final readonly class LevelUpScript extends BotScript
+final class LevelUpScript extends BotScript
 {
-    private int $from;
+    private int $from = 1;
 
     /** @param null|Closure(): Timestamp $clock */
     public function __construct(
-        Character $me,
-        private PlayerLevel $target,
+        private readonly PlayerLevel $target,
         ?Closure $clock = null,
     ) {
-        parent::__construct($me, $clock);
-        $this->from = $me->level()->value;
+        parent::__construct($clock);
+    }
+
+    #[Override]
+    public function title(): string
+    {
+        return "Level up to {$this->target->value}";
     }
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, Done> */
     #[Override]
-    protected function play(): Generator
+    protected function rules(): Generator
     {
+        $this->from = $this->me->level()->value;
+
         if ($this->below(10)) {
             yield from $this->join(new MapName('oaklore'));
             yield from $this->levelUpIn(new Cell('r3'), Pad::Left, upTo: 10);

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Bot\Session;
+namespace Lorekeeper\Client\Login;
 
 final readonly class Ending
 {
     public function __construct(
-        public SessionStatus $status,
+        public EndingStatus $status,
         public ?string $reason = null,
     ) {}
 }

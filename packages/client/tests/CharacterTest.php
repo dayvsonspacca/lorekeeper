@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Bot;
+namespace Lorekeeper\Client\Tests;
 
 use LogicException;
-use Lorekeeper\Client\Bot\Character;
+use Lorekeeper\Client\Character;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;

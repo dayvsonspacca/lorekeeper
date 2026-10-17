@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client;
 
-use Closure;
 use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Client\Exception\PeerClosedException;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
+use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\Events;
+use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Message\Message;
 use Psl\Async;
 use Psl\Async\CancellationTokenInterface;
@@ -30,15 +32,16 @@ use Psl\DateTime\Timestamp;
  */
 final readonly class Client
 {
-    /**
-     * @param null|Closure(Message): void $heard
-     * @param null|Closure(Instruction, null|Event|TimedOut): void $stepped
-     */
     public function __construct(
         private Connection $connection,
-        private ?Closure $heard = null,
-        private ?Closure $stepped = null,
+        private Character $me,
+        private ?Observer $observer = null,
     ) {}
+
+    public function character(): Character
+    {
+        return $this->me;
+    }
 
     /**
      * @template TResult
@@ -49,7 +52,7 @@ final readonly class Client
      */
     public function run(Script $script, CancellationTokenInterface $stop = new NullCancellationToken()): mixed
     {
-        $steps = $script->run();
+        $steps = $script->run($this->me);
 
         try {
             while ($steps->valid()) {
@@ -57,9 +60,7 @@ final readonly class Client
                 $instruction = $steps->current();
                 $answer = $this->execute($instruction, $stop);
 
-                if ($this->stepped !== null) {
-                    ($this->stepped)($instruction, $answer);
-                }
+                $this->stepped($instruction, $answer);
 
                 $steps->send($answer);
             }
@@ -76,18 +77,11 @@ final readonly class Client
         return $steps->getReturn();
     }
 
-    /**
-     * @throws PeerClosedException
-     *
-     * @mago-expect lint:literal-named-argument
-     */
+    /** @throws PeerClosedException */
     public function send(Command $command): void
     {
         $this->connection->send($command);
-
-        if ($this->stepped !== null) {
-            ($this->stepped)(new Send($command), null);
-        }
+        $this->stepped(new Send($command), null);
     }
 
     public function wait(
@@ -197,10 +191,35 @@ final readonly class Client
         }
     }
 
+    public function close(): void
+    {
+        $this->connection->close();
+    }
+
     private function hear(Message $message): void
     {
-        if ($this->heard !== null) {
-            ($this->heard)($message);
+        $events = Events::recognize($message);
+
+        foreach ($events as $event) {
+            if (!$event instanceof Event) {
+                continue;
+            }
+
+            $this->me->hear($event);
+            if ($event instanceof MovedToMapEvent) {
+                $this->observer?->moved($this->me->position());
+            }
+        }
+
+        $this->observer?->heard($message, $events);
+    }
+
+    private function stepped(Instruction $instruction, null|Event|TimedOut $answer): void
+    {
+        $this->observer?->stepped($instruction, $answer);
+
+        if ($instruction instanceof Progress) {
+            $this->observer?->progressed($instruction);
         }
     }
 }

@@ -6,7 +6,7 @@ namespace Lorekeeper\Client\Bot\Script;
 
 use Closure;
 use Generator;
-use Lorekeeper\Client\Bot\Character;
+use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Command\Combat\Attack;
 use Lorekeeper\Client\Command\Combat\ResurrectCommand;
 use Lorekeeper\Client\Command\Command;
@@ -49,7 +49,7 @@ use RuntimeException;
  * @mago-expect lint:kan-defect
  * @mago-expect lint:too-many-methods
  */
-abstract readonly class BotScript implements Script
+abstract class BotScript implements Script
 {
     private const array FIGHT_EVENTS = [
         MonstersDiedEvent::class,
@@ -59,25 +59,27 @@ abstract readonly class BotScript implements Script
         LeveledUpEvent::class,
     ];
 
+    protected Character $me;
+
     /** @var Closure(): Timestamp */
-    private Closure $clock;
+    private readonly Closure $clock;
 
     /** @param null|Closure(): Timestamp $clock */
-    public function __construct(
-        protected Character $me,
-        ?Closure $clock = null,
-    ) {
+    public function __construct(?Closure $clock = null)
+    {
         $this->clock = $clock ?? Timestamp::monotonic(...);
     }
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, object> */
-    abstract protected function play(): Generator;
+    abstract protected function rules(): Generator;
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, object> */
     #[Override]
-    final public function run(): Generator
+    final public function run(Character $me): Generator
     {
-        return $this->play();
+        $this->me = $me;
+
+        return $this->rules();
     }
 
     /**

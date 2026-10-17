@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Bot\Session;
+namespace Lorekeeper\Client\Tests;
 
-use Lorekeeper\Client\Bot\Session\Watch;
+use Lorekeeper\Client\Watch;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Async;

@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Bot;
+namespace Lorekeeper\Client;
 
 use LogicException;
+use Lorekeeper\Client\Bot\MapLayout;
+use Lorekeeper\Client\Bot\Position;
 use Lorekeeper\Client\Script\Game\InGame;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;

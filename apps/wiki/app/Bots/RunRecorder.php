@@ -9,7 +9,7 @@ use Lorekeeper\Apps\Wiki\Models\BotRunEvent;
 use Lorekeeper\Apps\Wiki\Models\Player;
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Position;
-use Lorekeeper\Client\Bot\Session\Observer;
+use Lorekeeper\Client\Observer;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\TimedOut;

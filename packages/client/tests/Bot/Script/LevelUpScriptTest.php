@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Bot\Script;
 
-use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Done;
 use Lorekeeper\Client\Bot\Script\LevelUpScript;
+use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Script\Game\InGame;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
@@ -53,7 +53,7 @@ final class LevelUpScriptTest extends TestCase
     {
         $me = self::me(level: 1, map: 'battleon');
 
-        [$steps, $result] = Play::run(self::script($me, target: 2), $me, [
+        [$steps, $result] = Play::run(self::script(target: 2), $me, [
             self::arrive('oaklore', 946, ['r3' => [4, 1]]),
             null,
             null,
@@ -83,7 +83,7 @@ final class LevelUpScriptTest extends TestCase
     {
         $me = self::me(level: 1, map: 'battleon');
 
-        [$steps] = Play::run(self::script($me, target: 2), $me, [
+        [$steps] = Play::run(self::script(target: 2), $me, [
             self::arrive('oaklore', 946, ['r3' => [4, 1]]),
             null,
             null,
@@ -117,7 +117,7 @@ final class LevelUpScriptTest extends TestCase
     {
         $me = self::me(level: 20, map: 'battleon');
 
-        [$steps, $result] = Play::run(self::script($me, target: 21), $me, [
+        [$steps, $result] = Play::run(self::script(target: 21), $me, [
             self::arrive('icestormarena', 732_692, ['r4' => [1, 5], 'r7' => [13, 20], 'r8' => [16, 25]]),
             null,
             null,
@@ -151,7 +151,7 @@ final class LevelUpScriptTest extends TestCase
             ]),
         ];
 
-        [$steps] = Play::run(self::script($me, target: 21), $me, [
+        [$steps] = Play::run(self::script(target: 21), $me, [
             $arrival,
             null,
             null,
@@ -182,7 +182,7 @@ final class LevelUpScriptTest extends TestCase
     {
         $me = self::me(level: 30, map: 'battleon');
 
-        [$steps, $result] = Play::run(self::script($me, target: 30), $me, []);
+        [$steps, $result] = Play::run(self::script(target: 30), $me, []);
 
         static::assertSame([], $steps);
         static::assertEquals(new Done('Reached level 30'), $result);
@@ -196,14 +196,14 @@ final class LevelUpScriptTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Could not join oaklore: The map is locked');
 
-        Play::run(self::script($me, target: 2), $me, [new MapLockedEvent()]);
+        Play::run(self::script(target: 2), $me, [new MapLockedEvent()]);
     }
 
-    private static function script(Character $me, int $target): LevelUpScript
+    private static function script(int $target): LevelUpScript
     {
         $now = Timestamp::fromParts(2026, 10, 16);
 
-        return new LevelUpScript($me, new PlayerLevel($target), static function () use (&$now): Timestamp {
+        return new LevelUpScript(new PlayerLevel($target), static function () use (&$now): Timestamp {
             return $now = $now->plus(Duration::seconds(3));
         });
     }

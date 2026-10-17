@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tests;
 
 use Generator;
+use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Command\Session\LogoutCommand;
 use Lorekeeper\Client\Command\Session\PolicyFileRequestCommand;
@@ -17,9 +18,9 @@ use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
+use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
-use Lorekeeper\Server\Message\Message;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Async\CancellationTokenInterface;
@@ -29,6 +30,7 @@ use Psl\Async\SignalCancellationToken;
 use Psl\DateTime\Duration;
 use Psl\TCP;
 
+/** @mago-expect lint:too-many-methods */
 final class ClientTest extends TestCase
 {
     #[Test]
@@ -44,7 +46,7 @@ final class ClientTest extends TestCase
         $stream->method('read')->willReturnOnConsecutiveCalls("%xt%loginResponse%-1%true%59878%Hero%Welcome!%\0");
         $stream->method('reachedEndOfDataSource')->willReturn(false);
 
-        $result = new Client(new Connection($stream))->run(self::script(
+        $result = new Client(new Connection($stream), self::me())->run(self::script(
             static fn(): Generator => yield new Send(
                 new PolicyFileRequestCommand(),
                 new Await([LoginSucceededEvent::class], Duration::seconds(5)),
@@ -59,12 +61,11 @@ final class ClientTest extends TestCase
     #[Test]
     public function it_skips_what_it_was_not_waiting_for_and_tells_the_observer_about_every_message(): void
     {
-        $heard = [];
+        $observer = new RecordingObserver();
         $client = new Client(
             self::connection("%xt%server%-1%Profanity filter On.%\0", "unparsable\0", "<cross-domain-policy/>\0"),
-            static function (Message $message) use (&$heard): void {
-                $heard[] = $message->raw;
-            },
+            self::me(),
+            $observer,
         );
 
         $result = $client->run(self::script(
@@ -72,7 +73,7 @@ final class ClientTest extends TestCase
         ));
 
         static::assertInstanceOf(ConnectionEstablishedEvent::class, $result);
-        static::assertSame(['%xt%server%-1%Profanity filter On.%', '<cross-domain-policy/>'], $heard);
+        static::assertSame(['%xt%server%-1%Profanity filter On.%', '<cross-domain-policy/>'], $observer->messages);
     }
 
     #[Test]
@@ -81,7 +82,7 @@ final class ClientTest extends TestCase
         $stream = static::createStub(TCP\StreamInterface::class);
         $stream->method('read')->willThrowException(new CancelledException(new NullCancellationToken()));
         $stream->method('reachedEndOfDataSource')->willReturn(false);
-        $client = new Client(new Connection($stream));
+        $client = new Client(new Connection($stream), self::me());
 
         $waited = $client->run(self::script(
             static fn(): Generator => yield new Await([ConnectionEstablishedEvent::class], Duration::seconds(5)),
@@ -98,13 +99,8 @@ final class ClientTest extends TestCase
     #[Test]
     public function it_pauses_and_sends_without_waiting(): void
     {
-        $heard = [];
-        $client = new Client(
-            self::connection("%xt%server%-1%Profanity filter On.%\0"),
-            static function (Message $message) use (&$heard): void {
-                $heard[] = $message->raw;
-            },
-        );
+        $observer = new RecordingObserver();
+        $client = new Client(self::connection("%xt%server%-1%Profanity filter On.%\0"), self::me(), $observer);
 
         $answers = $client->run(self::script(static function (): Generator {
             $paused = yield new Pause(Duration::milliseconds(1));
@@ -116,7 +112,7 @@ final class ClientTest extends TestCase
         }));
 
         static::assertSame([null, null, null], $answers);
-        static::assertSame(['%xt%server%-1%Profanity filter On.%'], $heard);
+        static::assertSame(['%xt%server%-1%Profanity filter On.%'], $observer->messages);
     }
 
     #[Test]
@@ -126,7 +122,7 @@ final class ClientTest extends TestCase
         $stream->method('read')->willReturn('');
         $stream->method('reachedEndOfDataSource')->willReturn(true);
 
-        $result = new Client(new Connection($stream))->run(self::script(static function (): Generator {
+        $result = new Client(new Connection($stream), self::me())->run(self::script(static function (): Generator {
             yield new Await([ConnectionEstablishedEvent::class], Duration::seconds(5));
 
             return 'never';
@@ -138,13 +134,8 @@ final class ClientTest extends TestCase
     #[Test]
     public function it_tells_the_observer_about_every_step(): void
     {
-        $steps = [];
-        $client = new Client(self::connection(null, "<cross-domain-policy/>\0"), null, static function (
-            Instruction $instruction,
-            mixed $answer,
-        ) use (&$steps): void {
-            $steps[] = [$instruction::class, is_object($answer) ? $answer::class : $answer];
-        });
+        $observer = new RecordingObserver();
+        $client = new Client(self::connection(null, "<cross-domain-policy/>\0"), self::me(), $observer);
 
         $client->run(self::script(static function (): Generator {
             yield new Pause(Duration::milliseconds(1));
@@ -156,7 +147,7 @@ final class ClientTest extends TestCase
                 [Pause::class, null],
                 [Await::class, ConnectionEstablishedEvent::class],
             ],
-            $steps,
+            $observer->steps,
         );
     }
 
@@ -165,7 +156,7 @@ final class ClientTest extends TestCase
     {
         $stopped = new SignalCancellationToken();
         $stopped->cancel();
-        $before = new Client(self::connection())->run(
+        $before = new Client(self::connection(), self::me())->run(
             self::script(static fn(): Generator => yield new Pause(Duration::minutes(1))),
             $stopped,
         );
@@ -180,7 +171,7 @@ final class ClientTest extends TestCase
                 throw new CancelledException($stop);
             });
         $stream->method('reachedEndOfDataSource')->willReturn(false);
-        $waiting = new Client(new Connection($stream))->run(
+        $waiting = new Client(new Connection($stream), self::me())->run(
             self::script(
                 static fn(): Generator => yield new Await([ConnectionEstablishedEvent::class], Duration::seconds(5)),
             ),
@@ -197,7 +188,7 @@ final class ClientTest extends TestCase
                 throw new CancelledException($halt);
             });
         $quiet->method('reachedEndOfDataSource')->willReturn(false);
-        $pausing = new Client(new Connection($quiet))->run(
+        $pausing = new Client(new Connection($quiet), self::me())->run(
             self::script(static fn(): Generator => yield new Pause(Duration::minutes(1))),
             $halt,
         );
@@ -212,7 +203,7 @@ final class ClientTest extends TestCase
     {
         $this->expectException(CancelledException::class);
 
-        new Client(self::connection())->run(self::script(static function (): Generator {
+        new Client(self::connection(), self::me())->run(self::script(static function (): Generator {
             yield new Pause(Duration::milliseconds(1));
 
             throw new CancelledException(new NullCancellationToken());
@@ -232,11 +223,21 @@ final class ClientTest extends TestCase
                 private mixed $steps,
             ) {}
 
-            public function run(): Generator
+            public function title(): string
+            {
+                return 'Steps';
+            }
+
+            public function run(Character $me): Generator
             {
                 return ($this->steps)();
             }
         };
+    }
+
+    private static function me(): Character
+    {
+        return new Character(new PlayerName('Hero'));
     }
 
     private static function connection(?string ...$reads): Connection

@@ -13,18 +13,23 @@ use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
 use Lorekeeper\Client\Bot\Credentials;
 use Lorekeeper\Client\Bot\Log\LogLevel;
-use Lorekeeper\Client\Bot\Session\Ending;
-use Lorekeeper\Client\Bot\Session\OutcomeStatus;
-use Lorekeeper\Client\Bot\Session\Session;
-use Lorekeeper\Client\Bot\Session\SessionStatus;
-use Lorekeeper\Client\Bot\Session\Watch;
+use Lorekeeper\Client\Client;
+use Lorekeeper\Client\Login\Ending;
+use Lorekeeper\Client\Login\EndingStatus;
+use Lorekeeper\Client\Login\Login;
 use Lorekeeper\Client\Login\LoginClient;
+use Lorekeeper\Client\Narrator;
+use Lorekeeper\Client\Script\Disconnected;
+use Lorekeeper\Client\Script\Outcome;
+use Lorekeeper\Client\Script\OutcomeStatus;
+use Lorekeeper\Client\Watch;
 use Lorekeeper\Core\Player\PlayerName;
 use Psl\Async\CancellationTokenInterface;
 use Psl\Async\LinkedCancellationToken;
 use Psl\DateTime\Duration;
 use Symfony\Component\Console\Attribute\AsCommand;
 
+/** @mago-expect lint:kan-defect */
 #[AsCommand(name: 'bots:run', description: 'Keep one bot in the game and play its tasks until it is stopped')]
 final class RunBot extends Command
 {
@@ -53,15 +58,13 @@ final class RunBot extends Command
         $stop = Watch::until(static fn(): bool => $run->fresh()?->status !== RunStatus::Running);
 
         try {
-            $session = Session::enter(
+            $client = Login::enter(
                 new Credentials(new PlayerName($run->account->name), $run->account->password, $run->account->server),
-                $recorder,
+                new Narrator($recorder),
                 $stop->token(),
                 $logins,
             );
-            $ending = $session instanceof Session
-                ? $this->playTasks($run, $session, $recorder, $stop->token())
-                : $session;
+            $ending = $client instanceof Client ? $this->playTasks($run, $client, $recorder, $stop->token()) : $client;
         } finally {
             $stop->release();
         }
@@ -69,9 +72,9 @@ final class RunBot extends Command
         $run->closeTasks('the run ended');
         $run->update([
             'status' => match ($ending->status) {
-                SessionStatus::Stopped => RunStatus::Stopped,
-                SessionStatus::Disconnected => RunStatus::Disconnected,
-                SessionStatus::Failed => RunStatus::Failed,
+                EndingStatus::Stopped => RunStatus::Stopped,
+                EndingStatus::Disconnected => RunStatus::Disconnected,
+                EndingStatus::Failed => RunStatus::Failed,
             },
             'result' => $ending->reason,
             'pid' => null,
@@ -84,7 +87,7 @@ final class RunBot extends Command
 
     private function playTasks(
         BotRun $run,
-        Session $session,
+        Client $client,
         RunRecorder $recorder,
         CancellationTokenInterface $stop,
     ): Ending {
@@ -95,42 +98,43 @@ final class RunBot extends Command
             if ($task === null) {
                 if (!$waiting) {
                     $waiting = true;
-                    $run->log("Waiting for tasks in {$session->character()->position()->map->value}");
+                    $run->log("Waiting for tasks in {$client->character()->position()->map->value}");
                 }
 
-                if (!$session->wait(Duration::seconds(2), $stop)) {
-                    return new Ending(SessionStatus::Disconnected, 'the connection dropped');
+                $waited = $client->wait(Duration::seconds(2), $stop);
+                if ($waited instanceof Disconnected) {
+                    return new Ending(EndingStatus::Disconnected, $waited->reason);
                 }
 
                 continue;
             }
 
             $waiting = false;
-            $this->play($run, $session, $recorder, $task, $stop);
-            if (!$session->connected()) {
-                return new Ending(SessionStatus::Disconnected, 'the connection dropped');
+            $outcome = $this->play($run, $client, $recorder, $task, $stop);
+            if ($outcome?->status === OutcomeStatus::Disconnected) {
+                return new Ending(EndingStatus::Disconnected, $outcome->summary);
             }
         }
 
-        $session->leave();
+        Login::leave($client);
 
-        return new Ending(SessionStatus::Stopped);
+        return new Ending(EndingStatus::Stopped);
     }
 
     private function play(
         BotRun $run,
-        Session $session,
+        Client $client,
         RunRecorder $recorder,
         BotTask $task,
         CancellationTokenInterface $stop,
-    ): void {
+    ): ?Outcome {
         try {
-            $script = $task->script->task($task->parameters);
+            $script = $task->script->script($task->parameters);
         } catch (InvalidArgumentException $invalid) {
             $task->finish(TaskStatus::Failed, $invalid->getMessage());
             $run->log("Task #{$task->id} failed: {$invalid->getMessage()}", LogLevel::Error, $task);
 
-            return;
+            return null;
         }
 
         $task->update([
@@ -142,7 +146,8 @@ final class RunBot extends Command
         $cancel = Watch::until(static fn(): bool => $task->fresh()?->status !== TaskStatus::Running);
 
         try {
-            $outcome = $session->play($script, new LinkedCancellationToken($stop, $cancel->token()));
+            $run->log("Playing {$script->title()}", LogLevel::Info, $task);
+            $outcome = Outcome::of($client->run($script, new LinkedCancellationToken($stop, $cancel->token())));
         } finally {
             $cancel->release();
             $recorder->working(null);
@@ -158,6 +163,17 @@ final class RunBot extends Command
                 ? 'the run stopped'
                 : $outcome->summary,
         );
+        $run->log(
+            "{$script->title()}: {$outcome->summary}",
+            match ($outcome->status) {
+                OutcomeStatus::Done => LogLevel::Success,
+                OutcomeStatus::Cancelled => LogLevel::Warning,
+                OutcomeStatus::Failed, OutcomeStatus::Disconnected => LogLevel::Error,
+            },
+            $task,
+        );
+
+        return $outcome;
     }
 
     /** @return array{string, LogLevel} */

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Bot\Session;
+namespace Lorekeeper\Client\Tests;
 
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Position;
-use Lorekeeper\Client\Bot\Session\Observer;
+use Lorekeeper\Client\Observer;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\TimedOut;
@@ -22,9 +22,11 @@ final class RecordingObserver implements Observer
     /** @var list<string> */
     public array $updates = [];
 
-    public int $heard = 0;
+    /** @var list<string> */
+    public array $messages = [];
 
-    public int $steps = 0;
+    /** @var list<array{class-string<Instruction>, null|class-string}> */
+    public array $steps = [];
 
     #[Override]
     public function said(string $message, LogLevel $level): void
@@ -35,13 +37,13 @@ final class RecordingObserver implements Observer
     #[Override]
     public function heard(Message $message, array $events): void
     {
-        $this->heard++;
+        $this->messages[] = $message->raw;
     }
 
     #[Override]
     public function stepped(Instruction $instruction, null|Event|TimedOut $answer): void
     {
-        $this->steps++;
+        $this->steps[] = [$instruction::class, $answer === null ? null : $answer::class];
     }
 
     #[Override]

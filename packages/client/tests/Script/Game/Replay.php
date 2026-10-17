@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Script\Game;
 
+use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\TimedOut;
+use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Event;
 
 final readonly class Replay
@@ -18,7 +20,7 @@ final readonly class Replay
      */
     public static function run(Script $script, null|Event|TimedOut ...$answers): array
     {
-        $steps = $script->run();
+        $steps = $script->run(new Character(new PlayerName('Hero')));
         $instructions = [];
 
         while ($steps->valid()) {

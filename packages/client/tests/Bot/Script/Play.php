@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Bot\Script;
 
-use Lorekeeper\Client\Bot\Character;
+use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\TimedOut;
@@ -20,7 +20,7 @@ final readonly class Play
      */
     public static function run(Script $script, Character $me, array $answers): array
     {
-        $steps = $script->run();
+        $steps = $script->run($me);
         $instructions = [];
 
         while ($steps->valid()) {

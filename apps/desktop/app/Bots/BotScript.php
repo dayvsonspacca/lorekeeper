@@ -8,8 +8,8 @@ use Filament\Forms\Components\Field;
 use Filament\Schemas\Components\Component;
 use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasLabel;
-use Lorekeeper\Client\Bot\Task\LevelUpTask;
-use Lorekeeper\Client\Bot\Task\Task;
+use Lorekeeper\Client\Bot\Script\LevelUpScript;
+use Lorekeeper\Client\Script\Script;
 use Override;
 
 /** @mago-expect lint:kan-defect */
@@ -65,9 +65,13 @@ enum BotScript: string implements HasLabel, HasDescription
         return match ($this) { self::LevelUp => 'reports.level-up' };
     }
 
-    /** @param array<string, mixed> $parameters */
-    public function task(array $parameters): Task
+    /**
+     * @param array<string, mixed> $parameters
+     *
+     * @return Script<object>
+     */
+    public function script(array $parameters): Script
     {
-        return match ($this) { self::LevelUp => new LevelUpTask(Parameters::level($parameters)) };
+        return match ($this) { self::LevelUp => new LevelUpScript(Parameters::level($parameters)) };
     }
 }
