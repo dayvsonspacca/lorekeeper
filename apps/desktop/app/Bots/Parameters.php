@@ -9,6 +9,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
 use InvalidArgumentException;
 use Lorekeeper\Apps\Desktop\Game\GameCatalog;
+use Lorekeeper\Core\Player\PlayerLevel;
 
 final class Parameters
 {
@@ -23,6 +24,27 @@ final class Parameters
             ->regex('/^[A-Za-z0-9_-]+$/')
             ->maxLength(64)
             ->required();
+    }
+
+    public static function levelField(): TextInput
+    {
+        return TextInput::make('parameters.level')
+            ->label('Level')
+            ->prefixIcon(Heroicon::OutlinedArrowTrendingUp)
+            ->numeric()
+            ->integer()
+            ->minValue(2)
+            ->maxValue(100)
+            ->helperText('The bot stops once the character reaches it.')
+            ->required();
+    }
+
+    /** @param array<string, mixed> $parameters */
+    public static function level(array $parameters): PlayerLevel
+    {
+        $level = is_numeric($parameters['level'] ?? null) ? (int) $parameters['level'] : 100;
+
+        return new PlayerLevel(max(1, min(100, $level)));
     }
 
     public static function idsField(string $key, string $label, string $hint): TagsInput

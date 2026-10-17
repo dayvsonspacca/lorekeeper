@@ -10,6 +10,7 @@ use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasLabel;
 use Lorekeeper\Client\Bot\Task\AskQuestsTask;
 use Lorekeeper\Client\Bot\Task\GoToMapTask;
+use Lorekeeper\Client\Bot\Task\LevelUpTask;
 use Lorekeeper\Client\Bot\Task\OpenShopsTask;
 use Lorekeeper\Client\Bot\Task\Task;
 use Lorekeeper\Core\World\Map\MapName;
@@ -22,6 +23,7 @@ enum BotScript: string implements HasLabel, HasDescription
     case GoToMap = 'go-to-map';
     case AskQuests = 'ask-quests';
     case OpenShops = 'open-shops';
+    case LevelUp = 'level-up';
 
     /** @return array<string, null> */
     public static function blankParameters(): array
@@ -40,6 +42,7 @@ enum BotScript: string implements HasLabel, HasDescription
             self::GoToMap => 'Go to map',
             self::AskQuests => 'Ask for quests',
             self::OpenShops => 'Open shops',
+            self::LevelUp => 'Level up',
         };
     }
 
@@ -50,6 +53,8 @@ enum BotScript: string implements HasLabel, HasDescription
             self::GoToMap => 'Goes to a map; the bot then waits there for the next task.',
             self::AskQuests => 'Goes to a map if needed and asks for the given quests, ten at a time.',
             self::OpenShops => 'Goes to a map if needed and opens the given shops one by one.',
+            self::LevelUp
+                => 'Fights until the character reaches the level: oaklore, then swordhavenundead, then icestormarena.',
         };
     }
 
@@ -60,6 +65,7 @@ enum BotScript: string implements HasLabel, HasDescription
             self::GoToMap => ['map' => 'battleon'],
             self::AskQuests => ['map' => 'battleon', 'quests' => []],
             self::OpenShops => ['map' => 'battleon', 'shops' => []],
+            self::LevelUp => ['level' => 100],
         };
     }
 
@@ -80,6 +86,7 @@ enum BotScript: string implements HasLabel, HasDescription
                     'Some shops drop the connection; the run then ends disconnected.',
                 ),
             ],
+            self::LevelUp => [Parameters::levelField()],
         };
     }
 
@@ -92,6 +99,7 @@ enum BotScript: string implements HasLabel, HasDescription
             self::GoToMap => $map,
             self::AskQuests => "{$map} · " . count(Parameters::ids($parameters, 'quests')) . ' quests',
             self::OpenShops => "{$map} · " . count(Parameters::ids($parameters, 'shops')) . ' shops',
+            self::LevelUp => 'to level ' . Parameters::level($parameters)->value,
         };
     }
 
@@ -112,6 +120,7 @@ enum BotScript: string implements HasLabel, HasDescription
                 static fn(int $id): ShopId => new ShopId($id),
                 Parameters::requiredIds($parameters, 'shops'),
             )),
+            self::LevelUp => new LevelUpTask(Parameters::level($parameters)),
         };
     }
 }

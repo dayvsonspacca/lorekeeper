@@ -95,6 +95,24 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
+    public function a_bot_can_be_told_to_level_up(): void
+    {
+        $run = $this->account()->runs()->create();
+        $run->update(['status' => RunStatus::Running]);
+
+        Livewire::test(ViewBotRun::class, ['record' => $run->id])
+            ->callAction('addTask', ['script' => BotScript::LevelUp->value, 'parameters' => ['level' => '1']])
+            ->assertHasActionErrors(['parameters.level']);
+        Livewire::test(ViewBotRun::class, ['record' => $run->id])
+            ->callAction('addTask', ['script' => BotScript::LevelUp->value, 'parameters' => ['level' => '30']])
+            ->assertHasNoActionErrors();
+
+        $task = $run->tasks()->sole();
+        static::assertSame(BotScript::LevelUp, $task->script);
+        static::assertSame('Level up · to level 30', $task->title());
+    }
+
+    #[Test]
     public function stopping_asks_the_bot_to_log_out_or_ends_a_run_whose_bot_is_gone(): void
     {
         $account = $this->account();

@@ -8,7 +8,9 @@ use InvalidArgumentException;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
 use Lorekeeper\Client\Bot\Task\AskQuestsTask;
 use Lorekeeper\Client\Bot\Task\GoToMapTask;
+use Lorekeeper\Client\Bot\Task\LevelUpTask;
 use Lorekeeper\Client\Bot\Task\OpenShopsTask;
+use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Shop\ShopId;
@@ -28,6 +30,8 @@ final class BotScriptTest extends TestCase
         static::assertEquals(new OpenShopsTask(new MapName('battleon'), [new ShopId(
             31,
         )]), BotScript::OpenShops->task(['map' => 'battleon', 'shops' => [31, 'x']]));
+        static::assertEquals(new LevelUpTask(new PlayerLevel(40)), BotScript::LevelUp->task(['level' => '40']));
+        static::assertEquals(new LevelUpTask(new PlayerLevel(100)), BotScript::LevelUp->task(['level' => 250]));
     }
 
     #[Test]
@@ -39,7 +43,12 @@ final class BotScriptTest extends TestCase
             'quests' => ['3', '5'],
         ]));
         static::assertSame('— · 0 shops', BotScript::OpenShops->summary([]));
-        static::assertSame(['map' => null, 'quests' => null, 'shops' => null], BotScript::blankParameters());
+        static::assertSame('to level 40', BotScript::LevelUp->summary(['level' => '40']));
+        static::assertSame('to level 100', BotScript::LevelUp->summary([]));
+        static::assertSame(
+            ['map' => null, 'quests' => null, 'shops' => null, 'level' => null],
+            BotScript::blankParameters(),
+        );
     }
 
     #[Test]
