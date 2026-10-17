@@ -15,7 +15,8 @@
     "php-standard-library/tcp": "^6.2",
     "php-standard-library/network": "^6.2",
     "php-standard-library/async": "^6.2",
-    "php-standard-library/date-time": "^6.2"
+    "php-standard-library/date-time": "^6.2",
+    "php-standard-library/observer": "^6.2"
   },
   "autoload": {
     "psr-4": {

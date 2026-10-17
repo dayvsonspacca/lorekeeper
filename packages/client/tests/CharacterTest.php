@@ -26,9 +26,12 @@ use Lorekeeper\Server\Event\Map\MonsterPlacement;
 use Lorekeeper\Server\Event\Map\MonstersPlacedEvent;
 use Lorekeeper\Server\Event\Map\PlayersPresentEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
+use Override;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;
+use Psl\Observer\ObserverInterface;
+use Psl\Observer\SubjectInterface;
 
 final class CharacterTest extends TestCase
 {
@@ -62,6 +65,32 @@ final class CharacterTest extends TestCase
 
         $me->hear(new ResurrectedEvent());
         static::assertTrue($me->alive());
+    }
+
+    #[Test]
+    public function it_tells_its_observers_when_it_changes_and_only_then(): void
+    {
+        $me = new Character(new PlayerName('lorekeeper03'));
+        $watcher = new class() implements ObserverInterface {
+            /** @var list<null|int> */
+            public array $levels = [];
+
+            #[Override]
+            public function update(SubjectInterface $subject): void
+            {
+                $this->levels[] = $subject instanceof Character ? $subject->level()->value : null;
+            }
+        };
+
+        $me->subscribe($watcher);
+        $me->subscribe($watcher);
+        $me->hear(new PlayersPresentEvent([new MapPlayer(new PlayerName('lorekeeper03'), new PlayerLevel(4))]));
+        $me->hear(new PlayersPresentEvent([new MapPlayer(new PlayerName('Someone'), new PlayerLevel(90))]));
+        $me->hear(new LeveledUpEvent(new PlayerLevel(5), new Experience(500)));
+        $me->unsubscribe($watcher);
+        $me->hear(new LeveledUpEvent(new PlayerLevel(6), new Experience(600)));
+
+        static::assertSame([4, 5], $watcher->levels);
     }
 
     #[Test]

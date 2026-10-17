@@ -773,7 +773,7 @@
             "dist": {
                 "type": "path",
                 "url": "../../packages/client",
-                "reference": "e705d2e2b0877d5302fb9ba3f7af9df9dcef3e96"
+                "reference": "c8eb44f277528b6acb33e6a98352e212bcbb05b7"
             },
             "require": {
                 "dayvsonspacca/lorekeeper-core": "dev-main",
@@ -785,6 +785,7 @@
                 "php-standard-library/date-time": "^6.2",
                 "php-standard-library/io": "^6.2",
                 "php-standard-library/network": "^6.2",
+                "php-standard-library/observer": "^6.2",
                 "php-standard-library/option": "^6.2",
                 "php-standard-library/tcp": "^6.2",
                 "php-standard-library/type": "^6.2"
@@ -5178,6 +5179,65 @@
             ],
             "support": {
                 "source": "https://github.com/php-standard-library/network/tree/6.3.0"
+            },
+            "time": "2026-09-25T15:54:11+00:00"
+        },
+        {
+            "name": "php-standard-library/observer",
+            "version": "6.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/php-standard-library/observer.git",
+                "reference": "64e638cf39486feb2a5c98713fc35be83156845c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/php-standard-library/observer/zipball/64e638cf39486feb2a5c98713fc35be83156845c",
+                "reference": "64e638cf39486feb2a5c98713fc35be83156845c",
+                "shasum": ""
+            },
+            "require": {
+                "php": "~8.4.0 || ~8.5.0"
+            },
+            "conflict": {
+                "azjezz/psl": "*"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^13.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-next": "6.3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psl\\Observer\\": "src/Psl/Observer/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Seifeddine Gmati",
+                    "email": "azjezz@carthage.software"
+                },
+                {
+                    "name": "Contributors",
+                    "homepage": "https://github.com/php-standard-library/php-standard-library/graphs/contributors"
+                }
+            ],
+            "description": "Generic Observer pattern interfaces",
+            "homepage": "https://php-standard-library.dev",
+            "keywords": [
+                "design-pattern",
+                "observer"
+            ],
+            "support": {
+                "source": "https://github.com/php-standard-library/observer/tree/6.3.0"
             },
             "time": "2026-09-25T15:54:11+00:00"
         },

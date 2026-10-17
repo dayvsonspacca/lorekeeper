@@ -22,9 +22,13 @@ use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Map\PlayersPresentEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\SocketId;
+use Psl\Observer\SubjectInterface;
 
-final class Character
+/** @mago-expect lint:too-many-methods */
+final class Character implements SubjectInterface
 {
+    use Observable;
+
     private ?SocketId $socket = null;
 
     private ?Position $position = null;
@@ -94,9 +98,22 @@ final class Character
     {
         $this->socket = $game->socketId;
         $this->position = new Position($game->map->map, $game->map->areaId);
+        $this->notify();
     }
 
     public function hear(Event $event): void
+    {
+        $before = $this->state();
+        $this->learn($event);
+
+        if ($this->state() === $before) {
+            return;
+        }
+
+        $this->notify();
+    }
+
+    private function learn(Event $event): void
     {
         match (true) {
             $event instanceof MovedToMapEvent => $this->position = new Position($event->map, $event->areaId),
@@ -112,6 +129,20 @@ final class Character
             $event instanceof ResurrectedEvent => $this->alive = true,
             default => null,
         };
+    }
+
+    /** @return list<mixed> */
+    private function state(): array
+    {
+        return [
+            $this->position?->map->value,
+            $this->position?->area->value,
+            $this->level?->value,
+            $this->mana?->value,
+            $this->alive,
+            array_map(static fn(Skill $skill): string => $skill->slot->name, $this->skills),
+            $this->map,
+        ];
     }
 
     private function seeLevel(PlayersPresentEvent $event): void
