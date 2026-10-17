@@ -13,10 +13,9 @@ use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Map\MapRefusedEvent;
 use Override;
 
-/** @implements Script<Done|TimedOut|MapRefusedEvent> */
+/** @implements Script<Done|TimedOut|Event> */
 final readonly class GoToMapScript implements Script
 {
     public function __construct(
@@ -25,7 +24,7 @@ final readonly class GoToMapScript implements Script
         private MapName $map,
     ) {}
 
-    /** @return Generator<int, Instruction, null|Event|TimedOut, Done|TimedOut|MapRefusedEvent> */
+    /** @return Generator<int, Instruction, null|Event|TimedOut, Done|TimedOut|Event> */
     #[Override]
     public function run(): Generator
     {

@@ -17,12 +17,11 @@ use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Map\MapRefusedEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Override;
 use Psl\DateTime\Duration;
 
-/** @implements Script<Done|TimedOut|MapRefusedEvent> */
+/** @implements Script<Done|TimedOut|Event> */
 final readonly class AskQuestsScript implements Script
 {
     private const int BATCH = 10;
@@ -35,7 +34,7 @@ final readonly class AskQuestsScript implements Script
         private array $quests,
     ) {}
 
-    /** @return Generator<int, Instruction, null|Event|TimedOut, Done|TimedOut|MapRefusedEvent> */
+    /** @return Generator<int, Instruction, null|Event|TimedOut, Done|TimedOut|Event> */
     #[Override]
     public function run(): Generator
     {

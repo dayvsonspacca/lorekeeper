@@ -8,6 +8,7 @@ use Closure;
 use Generator;
 use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Command\Combat\Attack;
+use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Client\Command\Map\MoveToCellCommand;
 use Lorekeeper\Client\Script\Game\JoinMapScript;
 use Lorekeeper\Client\Script\Instruction;
@@ -19,7 +20,7 @@ use Lorekeeper\Core\World\Map\Cell;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\Pad;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Map\MapJoinedEvent;
+use Lorekeeper\Server\Event\Map\MapJoins;
 use Override;
 use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
@@ -65,9 +66,14 @@ abstract readonly class BotScript implements Script
         yield from $joining;
         $joined = $joining->getReturn();
 
-        if (!$joined instanceof MapJoinedEvent) {
+        if (!MapJoins::contains($joined)) {
             throw new RuntimeException("Could not join {$map->value}: " . self::why($joined));
         }
+    }
+
+    protected function send(Command $command): Send
+    {
+        return new Send($command);
     }
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, void> */

@@ -7,7 +7,7 @@ namespace Lorekeeper\Server\Event\Map;
 use Lorekeeper\Server\Event\NoticeEvent;
 use Override;
 
-final readonly class AlreadyInMapEvent extends NoticeEvent implements MapJoinedEvent
+final readonly class AlreadyInMapEvent extends NoticeEvent
 {
     #[Override]
     protected static function channel(): string

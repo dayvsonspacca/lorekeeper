@@ -17,12 +17,11 @@ use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Map\MapRefusedEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Override;
 use Psl\DateTime\Duration;
 
-/** @implements Script<Done|TimedOut|MapRefusedEvent> */
+/** @implements Script<Done|TimedOut|Event> */
 final readonly class OpenShopsScript implements Script
 {
     /** @param non-empty-list<ShopId> $shops */
@@ -33,7 +32,7 @@ final readonly class OpenShopsScript implements Script
         private array $shops,
     ) {}
 
-    /** @return Generator<int, Instruction, null|Event|TimedOut, Done|TimedOut|MapRefusedEvent> */
+    /** @return Generator<int, Instruction, null|Event|TimedOut, Done|TimedOut|Event> */
     #[Override]
     public function run(): Generator
     {
