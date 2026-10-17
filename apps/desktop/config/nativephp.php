@@ -150,16 +150,9 @@ return [
     ],
 
     /**
-     * The queue workers that get auto-started on your application start.
+     * The queue workers that get auto-started on your application start. None: the bots run as child processes.
      */
-    'queue_workers' => [
-        'default' => [
-            'queues' => ['default'],
-            'memory_limit' => 128,
-            'timeout' => 60,
-            'sleep' => 3,
-        ],
-    ],
+    'queue_workers' => [],
 
     /**
      * Define your own scripts to run before and after the build process.
