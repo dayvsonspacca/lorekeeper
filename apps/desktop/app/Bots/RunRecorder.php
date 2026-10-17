@@ -47,7 +47,7 @@ final class RunRecorder implements Observer
                     'gold' => $event->gold->value,
                 ]),
                 $event instanceof PlayerDiedEvent => $this->task?->increment('deaths'),
-                $event instanceof LeveledUpEvent => $this->run->account->update(['level' => $event->level->value]),
+                $event instanceof LeveledUpEvent => $this->leveledUp($event),
                 $event instanceof PlayersPresentEvent => $this->sawLevel($event),
                 default => null,
             };
@@ -85,6 +85,12 @@ final class RunRecorder implements Observer
     {
         $this->task?->finish(TaskStatus::from($outcome->status->value), $outcome->summary);
         $this->task = null;
+    }
+
+    private function leveledUp(LeveledUpEvent $event): void
+    {
+        $this->run->account->update(['level' => $event->level->value]);
+        $this->task?->update(['level_to' => $event->level->value]);
     }
 
     private function sawLevel(PlayersPresentEvent $event): void

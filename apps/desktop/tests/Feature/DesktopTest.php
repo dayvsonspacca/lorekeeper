@@ -13,7 +13,6 @@ use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Pages\ManageAccounts;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
-use Lorekeeper\Apps\Desktop\Livewire\RunProgress;
 use Lorekeeper\Apps\Desktop\Livewire\RunTasks;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
@@ -96,7 +95,7 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
-    public function the_run_page_shows_how_a_level_up_is_going(): void
+    public function a_level_up_task_carries_its_own_report(): void
     {
         $account = $this->account();
         $account->update(['level' => 6]);
@@ -108,6 +107,7 @@ final class DesktopTest extends TestCase
             'status' => TaskStatus::Running,
             'started_at' => now()->subMinutes(20),
             'level_from' => 4,
+            'level_to' => 6,
             'kills' => 60,
             'experience' => 600,
             'gold' => 180,
@@ -116,12 +116,20 @@ final class DesktopTest extends TestCase
             'progress_total' => 6,
         ]);
 
-        Livewire::test(RunProgress::class, ['run' => $run])
-            ->assertSee('Monsters killed')
+        $run->tasks()->create(['script' => BotScript::GoToMap, 'parameters' => ['map' => 'forest']]);
+
+        Livewire::test(RunTasks::class, ['run' => $run])
+            ->assertSee('Report')
+            ->assertSeeInOrder(['Level up', 'Monsters killed', 'Go to map'])
             ->assertSee('3 per minute')
             ->assertSee('10 min per level')
             ->assertSee('4 levels')
             ->assertSee('33%');
+        static::assertSame(1, substr_count(
+            Livewire::test(RunTasks::class, ['run' => $run])->html(),
+            needle: 'Monsters killed',
+        ));
+        $this->get("/bot-runs/{$run->id}")->assertDontSee('Progress shows up');
         $this->get('/accounts')->assertSee('Level');
     }
 

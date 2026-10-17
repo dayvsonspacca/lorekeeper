@@ -2,8 +2,9 @@
     @forelse ($tasks as $task)
         <div
             wire:key="task-{{ $task->id }}"
-            style="display: flex; align-items: center; gap: 1rem; padding: .625rem .875rem; border-radius: .625rem; border: 1px solid var(--gray-200, #e5e7eb);"
+            style="padding: .625rem .875rem; border-radius: .625rem; border: 1px solid var(--gray-200, #e5e7eb);"
         >
+        <div style="display: flex; align-items: center; gap: 1rem;">
             <span style="color: var(--gray-400, #9ca3af); font-size: .75rem; min-width: 2.5rem;">#{{ $task->id }}</span>
             <x-filament::badge :color="$task->status->getColor()" :icon="$task->status->getIcon()">
                 {{ $task->status->getLabel() }}
@@ -38,6 +39,12 @@
                     Cancel
                 </x-filament::button>
             @endif
+        </div>
+        @if ($task->script->report() !== null && $task->started_at !== null)
+            <div style="margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--gray-200, #e5e7eb);">
+                @include($task->script->report(), ['task' => $task, 'stats' => new \Lorekeeper\Apps\Desktop\Bots\TaskStats($task, now())])
+            </div>
+        @endif
         </div>
     @empty
         <div style="color: var(--gray-500, #6b7280); font-size: .875rem;">

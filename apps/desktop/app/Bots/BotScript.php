@@ -103,6 +103,11 @@ enum BotScript: string implements HasLabel, HasDescription
         };
     }
 
+    public function report(): ?string
+    {
+        return $this === self::LevelUp ? 'reports.level-up' : null;
+    }
+
     /** @param array<string, mixed> $parameters */
     public function task(array $parameters): Task
     {

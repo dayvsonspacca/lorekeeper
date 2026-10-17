@@ -26,6 +26,7 @@ use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
  * @property int $experience
  * @property int $gold
  * @property null|int $level_from
+ * @property null|int $level_to
  * @property null|Carbon $started_at
  * @property null|Carbon $finished_at
  * @property BotRun $run
@@ -42,6 +43,7 @@ use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
     'experience',
     'gold',
     'level_from',
+    'level_to',
     'started_at',
     'finished_at',
 ])]

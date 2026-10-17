@@ -20,11 +20,13 @@ final class TaskStatsTest extends TestCase
         $task->script = BotScript::LevelUp;
         $task->parameters = ['level' => 10];
         $task->level_from = 4;
+        $task->level_to = 6;
         $task->kills = 60;
         $task->started_at = Carbon::parse('2026-10-17 10:00:00');
 
-        $stats = new TaskStats($task, level: 6, now: Carbon::parse('2026-10-17 10:20:00'));
+        $stats = new TaskStats($task, now: Carbon::parse('2026-10-17 10:20:00'));
 
+        static::assertSame(6, $stats->level());
         static::assertSame(10, $stats->target());
         static::assertSame(2, $stats->levelsGained());
         static::assertSame(4, $stats->levelsLeft());
@@ -41,7 +43,7 @@ final class TaskStatsTest extends TestCase
         $task->parameters = [];
         $task->started_at = Carbon::parse('2026-10-17 10:00:00');
 
-        $stats = new TaskStats($task, level: null, now: Carbon::parse('2026-10-17 10:00:10'));
+        $stats = new TaskStats($task, now: Carbon::parse('2026-10-17 10:00:10'));
 
         static::assertNull($stats->target());
         static::assertNull($stats->levelsLeft());

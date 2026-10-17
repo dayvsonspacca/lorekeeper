@@ -11,13 +11,12 @@ final readonly class TaskStats
 {
     public function __construct(
         private BotTask $task,
-        private ?int $level,
         private Carbon $now,
     ) {}
 
     public function level(): ?int
     {
-        return $this->level;
+        return $this->task->level_to ?? $this->task->level_from;
     }
 
     public function target(): ?int
@@ -31,21 +30,23 @@ final readonly class TaskStats
 
     public function levelsGained(): int
     {
-        if ($this->level === null || $this->task->level_from === null) {
+        $level = $this->level();
+        if ($level === null || $this->task->level_from === null) {
             return 0;
         }
 
-        return max(0, $this->level - $this->task->level_from);
+        return max(0, $level - $this->task->level_from);
     }
 
     public function levelsLeft(): ?int
     {
         $target = $this->target();
-        if ($target === null || $this->level === null) {
+        $level = $this->level();
+        if ($target === null || $level === null) {
             return null;
         }
 
-        return max(0, $target - $this->level);
+        return max(0, $target - $level);
     }
 
     public function minutes(): float
