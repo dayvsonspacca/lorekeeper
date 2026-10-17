@@ -45,6 +45,7 @@ use Lorekeeper\Core\World\Quest\Reward\ReputationReward;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Mention\Mention;
 use Lorekeeper\Server\Event\Mention\Mentions;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -63,6 +64,8 @@ use Psl\Type\Exception\CoercionException;
  */
 final readonly class QuestLoadedEvent implements Event, Mentions
 {
+    use NamedAfterClass;
+
     private const int NO_FACTION = 1;
 
     /**
@@ -390,5 +393,15 @@ final readonly class QuestLoadedEvent implements Event, Mentions
             'am' => Option\some(EquipmentSlot::Necklace),
             default => throw new MalformedEventException(static::class, "unknown equipment slot '{$code}'"),
         };
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return (
+            count($this->quests)
+            . ' quests: '
+            . implode(', ', array_map(static fn(QuestLoadedQuest $quest): string => $quest->name->value, $this->quests))
+        );
     }
 }

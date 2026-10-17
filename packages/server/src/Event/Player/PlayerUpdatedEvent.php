@@ -6,6 +6,7 @@ namespace Lorekeeper\Server\Event\Player;
 
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -17,6 +18,8 @@ use Psl\Type\Exception\CoercionException;
 
 final readonly class PlayerUpdatedEvent implements Event
 {
+    use NamedAfterClass;
+
     public function __construct(
         public PlayerName $name,
     ) {}
@@ -46,5 +49,11 @@ final readonly class PlayerUpdatedEvent implements Event
         }
 
         return Option\some(new static(new PlayerName($name)));
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return "{$this->name->value} updated";
     }
 }

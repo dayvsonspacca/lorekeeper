@@ -8,6 +8,7 @@ use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -18,6 +19,8 @@ use Psl\Type\Exception\CoercionException;
 
 abstract readonly class RewardedEvent implements Event
 {
+    use NamedAfterClass;
+
     public function __construct(
         public Gold $gold,
         public Experience $experience,

@@ -11,6 +11,8 @@ use Psl\Option;
 
 final readonly class LoginFailedEvent implements Event
 {
+    use NamedAfterClass;
+
     /** @return Option\Option<static> */
     #[Override]
     public static function from(Message $message): Option\Option
@@ -24,5 +26,11 @@ final readonly class LoginFailedEvent implements Event
         }
 
         return Option\some(new static());
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return 'Login refused';
     }
 }

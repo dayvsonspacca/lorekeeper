@@ -54,4 +54,10 @@ final readonly class MonstersPlacedEvent extends MapArrivalEvent
             $data['monmap'] ?? [],
         ));
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return count($this->placements) . ' monsters stand in the map';
+    }
 }

@@ -44,4 +44,10 @@ final readonly class MonsterRewardedEvent extends RewardedEvent
 
         return Option\some(new static($gold, $experience, $classPoints, new MonsterSpawnId($monster)));
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return "Earned {$this->experience->value} experience and {$this->gold->value} gold from monster {$this->monster->value}";
+    }
 }

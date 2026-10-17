@@ -7,7 +7,6 @@ namespace Lorekeeper\Client\Bot\Session;
 use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Credentials;
 use Lorekeeper\Client\Bot\Done;
-use Lorekeeper\Client\Bot\Log\EventSummary;
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Log\StepLog;
 use Lorekeeper\Client\Bot\Script\WaitScript;
@@ -236,7 +235,7 @@ final class Session
                     $event,
                     (int) strrpos($event, needle: '\\') + 1,
                 ), $result->await->events)),
-            $result instanceof Event => EventSummary::of($result),
+            $result instanceof Event => $result->summary(),
             default => 'the script ended',
         };
     }

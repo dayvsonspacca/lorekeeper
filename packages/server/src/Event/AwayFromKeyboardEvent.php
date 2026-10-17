@@ -19,4 +19,10 @@ final readonly class AwayFromKeyboardEvent extends NoticeEvent
     {
         return 'away from keyboard';
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return 'Away from keyboard';
+    }
 }

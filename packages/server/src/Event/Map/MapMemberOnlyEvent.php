@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Map;
 
 use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Event\Notice;
 use Lorekeeper\Server\Message\Message;
 use Override;
@@ -12,6 +13,8 @@ use Psl\Option;
 
 final readonly class MapMemberOnlyEvent implements MapRefusedEvent
 {
+    use NamedAfterClass;
+
     public function __construct(
         public MapName $mapName,
     ) {}
@@ -29,5 +32,11 @@ final readonly class MapMemberOnlyEvent implements MapRefusedEvent
 
             return Option\some($match[1]);
         })->map(static fn(string $name): static => new static(new MapName($name)));
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return "{$this->mapName->value} is member-only";
     }
 }

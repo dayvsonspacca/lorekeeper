@@ -20,4 +20,10 @@ final readonly class MapLockedEvent extends NoticeEvent implements MapRefusedEve
     {
         return 'map is locked';
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return 'The map is locked';
+    }
 }

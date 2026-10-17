@@ -8,7 +8,6 @@ use Lorekeeper\Apps\Wiki\Models\BotRun;
 use Lorekeeper\Apps\Wiki\Models\BotRunEvent;
 use Lorekeeper\Apps\Wiki\Models\BotTask;
 use Lorekeeper\Apps\Wiki\Models\Player;
-use Lorekeeper\Client\Bot\Log\EventSummary;
 use Lorekeeper\Client\Bot\Log\LogLevel;
 use Lorekeeper\Client\Bot\Position;
 use Lorekeeper\Client\Bot\Session\Job;
@@ -67,7 +66,7 @@ final class RunRecorder implements Observer
                 Player::saw($player);
             }
 
-            $this->event(EventSummary::name($event), EventSummary::of($event));
+            $this->event($event->name(), $event->summary());
         }
     }
 

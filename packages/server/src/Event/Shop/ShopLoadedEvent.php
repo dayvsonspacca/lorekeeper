@@ -20,6 +20,7 @@ use Lorekeeper\Core\World\Shop\ShopName;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Mention\Mention;
 use Lorekeeper\Server\Event\Mention\Mentions;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -35,6 +36,8 @@ use Psl\Type\Exception\CoercionException;
  */
 final readonly class ShopLoadedEvent implements Event, Mentions
 {
+    use NamedAfterClass;
+
     /**
      * @param list<ShopLoadedItem> $items
      * @param list<Mention> $mentions
@@ -203,5 +206,11 @@ final readonly class ShopLoadedEvent implements Event, Mentions
             'am' => Option\some(EquipmentSlot::Necklace),
             default => throw new MalformedEventException(static::class, "unknown equipment slot '{$code}'"),
         };
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return "{$this->name->value}: " . count($this->items) . ' items';
     }
 }

@@ -40,4 +40,10 @@ final readonly class PlayersPresentEvent extends MapArrivalEvent
             $players,
         ));
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return count($this->players) . ' players are in the map';
+    }
 }

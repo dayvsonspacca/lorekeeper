@@ -7,7 +7,6 @@ namespace Lorekeeper\Client\Bot\Script;
 use Closure;
 use Generator;
 use Lorekeeper\Client\Bot\Character;
-use Lorekeeper\Client\Bot\Log\EventSummary;
 use Lorekeeper\Client\Command\Attack;
 use Lorekeeper\Client\Command\MoveToCellCommand;
 use Lorekeeper\Client\Script\Game\JoinMapScript;
@@ -94,7 +93,7 @@ abstract readonly class BotScript implements Script
     private static function why(mixed $answer): string
     {
         return match (true) {
-            $answer instanceof Event => EventSummary::of($answer),
+            $answer instanceof Event => $answer->summary(),
             $answer instanceof TimedOut => 'no answer',
             default => 'the server refused',
         };

@@ -80,8 +80,8 @@ final readonly class StepLog
             $event instanceof ConnectionEstablishedEvent => [LogLevel::Info, 'Connected'],
             $event instanceof LoginSucceededEvent => [LogLevel::Success, 'Logged in'],
             $event instanceof LoginFailedEvent => [LogLevel::Error, 'Login refused'],
-            $event instanceof LeveledUpEvent => [LogLevel::Success, EventSummary::of($event)],
-            $event instanceof PlayerDiedEvent => [LogLevel::Warning, EventSummary::of($event)],
+            $event instanceof LeveledUpEvent => [LogLevel::Success, $event->summary()],
+            $event instanceof PlayerDiedEvent => [LogLevel::Warning, $event->summary()],
             $event instanceof MovedToMapEvent && $command instanceof JoinInitialMapCommand => [
                 LogLevel::Success,
                 "Entered the game in {$event->map->value} (room {$event->roomId->value})",
@@ -90,7 +90,7 @@ final readonly class StepLog
                 LogLevel::Success,
                 "Entered the house in {$event->map->value}",
             ],
-            $event instanceof MovedToMapEvent => [LogLevel::Success, 'Moved to ' . EventSummary::moved($event)],
+            $event instanceof MovedToMapEvent => [LogLevel::Success, 'Moved to ' . $event->summary()],
             $event instanceof PlayerInventoryLoadedEvent => [
                 LogLevel::Info,
                 'Inventory loaded: ' . count($event->items) . ' items',
@@ -99,10 +99,10 @@ final readonly class StepLog
             $event instanceof MapMemberOnlyEvent,
             $event instanceof MapNotAvailableEvent,
             $event instanceof MapRequiresQuestEvent,
-                => [LogLevel::Warning, EventSummary::of($event)],
-            $event instanceof ShopLoadedEvent => [LogLevel::Info, 'Opened ' . EventSummary::of($event)],
-            $event instanceof QuestLoadedEvent => [LogLevel::Info, 'Loaded ' . EventSummary::of($event)],
-            default => [LogLevel::Info, EventSummary::of($event)],
+                => [LogLevel::Warning, $event->summary()],
+            $event instanceof ShopLoadedEvent => [LogLevel::Info, 'Opened ' . $event->summary()],
+            $event instanceof QuestLoadedEvent => [LogLevel::Info, 'Loaded ' . $event->summary()],
+            default => [LogLevel::Info, $event->summary()],
         };
     }
 }

@@ -10,6 +10,8 @@ use Psl\Option;
 
 abstract readonly class NoticeEvent implements Event
 {
+    use NamedAfterClass;
+
     final public function __construct() {}
 
     abstract protected static function channel(): string;

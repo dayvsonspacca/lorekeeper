@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Combat;
 
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
 use Override;
@@ -12,6 +13,8 @@ use Psl\Option;
 
 final readonly class AttackRejectedEvent implements Event
 {
+    use NamedAfterClass;
+
     /** @return Option\Option<static> */
     #[Override]
     public static function from(Message $message): Option\Option
@@ -21,5 +24,11 @@ final readonly class AttackRejectedEvent implements Event
         && ($message->data['iRes'] ?? null) === 0
             ? Option\some(new static())
             : Option\none();
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return 'The attack was not played';
     }
 }

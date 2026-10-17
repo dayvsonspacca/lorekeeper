@@ -6,6 +6,7 @@ namespace Lorekeeper\Server\Event\Item;
 
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -17,6 +18,8 @@ use Psl\Type\Exception\CoercionException;
 
 final readonly class ItemUnequippedEvent implements Event
 {
+    use NamedAfterClass;
+
     public function __construct(
         public SocketId $player,
         public ItemId $itemId,
@@ -40,5 +43,11 @@ final readonly class ItemUnequippedEvent implements Event
         }
 
         return Option\some(new static(new SocketId($data['uid']), new ItemId($data['ItemID'])));
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return "Socket {$this->player->value} unequipped item {$this->itemId->value}";
     }
 }

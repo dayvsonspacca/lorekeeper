@@ -7,6 +7,7 @@ namespace Lorekeeper\Server\Event\Progression;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -17,6 +18,8 @@ use Psl\Type\Exception\CoercionException;
 
 final readonly class LeveledUpEvent implements Event
 {
+    use NamedAfterClass;
+
     public function __construct(
         public PlayerLevel $level,
         public Experience $toNextLevel,
@@ -40,5 +43,11 @@ final readonly class LeveledUpEvent implements Event
         }
 
         return Option\some(new static(new PlayerLevel($data['intLevel']), new Experience($data['intExpToLevel'])));
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return "Reached level {$this->level->value}";
     }
 }

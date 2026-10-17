@@ -6,6 +6,7 @@ namespace Lorekeeper\Server\Event\Player;
 
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\Message;
@@ -17,6 +18,8 @@ use Psl\Type\Exception\CoercionException;
 
 final readonly class PlayerLeftEvent implements Event
 {
+    use NamedAfterClass;
+
     public function __construct(
         public SocketId $socketId,
         public PlayerName $name,
@@ -38,5 +41,11 @@ final readonly class PlayerLeftEvent implements Event
         }
 
         return Option\some(new static(new SocketId($socketId), new PlayerName($name)));
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return "{$this->name->value} (socket {$this->socketId->value}) left";
     }
 }

@@ -11,6 +11,8 @@ use Psl\Option;
 
 final readonly class ConnectionEstablishedEvent implements Event
 {
+    use NamedAfterClass;
+
     /** @return Option\Option<static> */
     #[Override]
     public static function from(Message $message): Option\Option
@@ -20,5 +22,11 @@ final readonly class ConnectionEstablishedEvent implements Event
         }
 
         return Option\some(new static());
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return 'Connection established';
     }
 }

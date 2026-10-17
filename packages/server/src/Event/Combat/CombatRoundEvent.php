@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Combat;
 
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -15,6 +16,8 @@ use Psl\Type\Exception\CoercionException;
 
 abstract readonly class CombatRoundEvent implements Event
 {
+    use NamedAfterClass;
+
     /**
      * @param array<positive-int, array{intHP?: non-negative-int, intMP?: non-negative-int, intState?: int<0, 2>}> $monsters
      * @param array<non-empty-string, array{intHP?: non-negative-int, intMP?: non-negative-int, intState?: int<0, 2>}> $players

@@ -30,4 +30,13 @@ final readonly class PlayersHealthChangedEvent extends CombatRoundEvent
 
         return $changed === [] ? Option\none() : Option\some(new static($changed));
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return implode(', ', array_map(
+            static fn(PlayerHealth $player): string => "{$player->player->value} has {$player->health->value} health",
+            $this->players,
+        ));
+    }
 }

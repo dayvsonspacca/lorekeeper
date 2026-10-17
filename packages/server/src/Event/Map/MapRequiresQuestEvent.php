@@ -20,4 +20,10 @@ final readonly class MapRequiresQuestEvent extends NoticeEvent implements MapRef
     {
         return 'that map requires special quest actions';
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return 'That map requires special quest actions';
+    }
 }

@@ -19,4 +19,10 @@ final readonly class ActionTooSoonEvent extends NoticeEvent
     {
         return 'last action was too soon';
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return 'Action too soon';
+    }
 }

@@ -148,4 +148,16 @@ final readonly class MovedToMapEvent extends MapArrivalEvent implements Mentions
             default => throw new MalformedEventException(static::class, "unknown race '{$race}'"),
         };
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return sprintf(
+            '%s (room %d) · %d monsters, %d players',
+            $this->map->value,
+            $this->roomId->value,
+            count($this->monsters),
+            count($this->players),
+        );
+    }
 }

@@ -15,6 +15,7 @@ use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemPrice;
 use Lorekeeper\Core\Item\Type;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -26,6 +27,8 @@ use Psl\Type\Exception\CoercionException;
 /** @mago-expect lint:cyclomatic-complexity */
 final readonly class PlayerInventoryLoadedEvent implements Event
 {
+    use NamedAfterClass;
+
     /** @param list<InventoryItem> $items */
     public function __construct(
         public array $items,
@@ -137,5 +140,11 @@ final readonly class PlayerInventoryLoadedEvent implements Event
             'am' => Option\some(EquipmentSlot::Necklace),
             default => throw new MalformedEventException(static::class, "unknown equipment slot '{$code}'"),
         };
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return 'Inventory loaded: ' . count($this->items) . ' items';
     }
 }

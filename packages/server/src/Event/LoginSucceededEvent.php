@@ -15,6 +15,8 @@ use Psl\Type\Exception\CoercionException;
 
 final readonly class LoginSucceededEvent implements Event
 {
+    use NamedAfterClass;
+
     public function __construct(
         public SocketId $socketId,
     ) {}
@@ -38,5 +40,11 @@ final readonly class LoginSucceededEvent implements Event
         }
 
         return Option\some(new static(new SocketId($socketId)));
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return "Logged in as socket {$this->socketId->value}";
     }
 }

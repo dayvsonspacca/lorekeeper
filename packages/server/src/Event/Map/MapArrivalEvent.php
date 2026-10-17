@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Map;
 
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -13,6 +14,8 @@ use Psl\Option;
 
 abstract readonly class MapArrivalEvent implements Event
 {
+    use NamedAfterClass;
+
     /**
      * @param array<array-key, mixed> $data
      *

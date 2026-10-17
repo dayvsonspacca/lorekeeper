@@ -58,6 +58,7 @@ final class CombatEventsTest extends TestCase
             ], $event->skills),
         );
         static::assertSame([SkillSlot::AutoAttack, SkillSlot::First, SkillSlot::Potion], $event->usable);
+        static::assertSame('5 skills, 3 unlocked', $event->summary());
     }
 
     #[Test]
@@ -88,6 +89,12 @@ final class CombatEventsTest extends TestCase
 
         static::assertSame(189, PlayersHealthChangedEvent::from($hit)->unwrap()->players[0]->health->value);
         static::assertTrue(PlayersHealthChangedEvent::from($kill)->isNone());
+
+        static::assertSame('Monster 4 died', MonstersDiedEvent::from($kill)->unwrap()->summary());
+        static::assertSame('Monster 3 has 677 health', MonstersHealthChangedEvent::from($hit)->unwrap()->summary());
+        static::assertSame('lorekeeper03 has 189 health', PlayersHealthChangedEvent::from($hit)->unwrap()->summary());
+        static::assertSame('lorekeeper03 has 87 mana', PlayersManaChangedEvent::from($kill)->unwrap()->summary());
+        static::assertSame('MonstersHealthChanged', MonstersHealthChangedEvent::from($hit)->unwrap()->name());
     }
 
     #[Test]

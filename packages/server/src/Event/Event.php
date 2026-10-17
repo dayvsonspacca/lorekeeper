@@ -16,4 +16,8 @@ interface Event
      * @return Option<static>
      */
     public static function from(Message $message): Option;
+
+    public function name(): string;
+
+    public function summary(): string;
 }

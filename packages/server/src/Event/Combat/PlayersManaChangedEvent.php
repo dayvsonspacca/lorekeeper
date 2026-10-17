@@ -30,4 +30,13 @@ final readonly class PlayersManaChangedEvent extends CombatRoundEvent
 
         return $changed === [] ? Option\none() : Option\some(new static($changed));
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return implode(', ', array_map(
+            static fn(PlayerMana $player): string => "{$player->player->value} has {$player->mana->value} mana",
+            $this->players,
+        ));
+    }
 }

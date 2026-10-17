@@ -32,6 +32,7 @@ final class MapArrivalEventsTest extends TestCase
                 $placement->level?->value,
             ], $placed->placements),
         );
+        static::assertSame('3 monsters stand in the map', $placed->summary());
     }
 
     #[Test]
@@ -42,6 +43,8 @@ final class MapArrivalEventsTest extends TestCase
         static::assertCount(1, $present->players);
         static::assertSame('lorekeeper03', $present->players[0]->name->value);
         static::assertSame(1, $present->players[0]->level?->value);
+        static::assertSame('1 players are in the map', $present->summary());
+        static::assertSame('PlayersPresent', $present->name());
     }
 
     #[Test]

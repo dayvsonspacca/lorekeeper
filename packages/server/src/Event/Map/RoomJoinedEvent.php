@@ -7,6 +7,7 @@ namespace Lorekeeper\Server\Event\Map;
 use DOMElement;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\Message;
 use Lorekeeper\Server\Message\XmlMessage;
@@ -17,6 +18,8 @@ use Psl\Type\Exception\CoercionException;
 
 final readonly class RoomJoinedEvent implements Event
 {
+    use NamedAfterClass;
+
     /** @param list<PlayerName> $players */
     public function __construct(
         public array $players,
@@ -47,5 +50,11 @@ final readonly class RoomJoinedEvent implements Event
         }
 
         return Option\some(new static($players));
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return 'Joined a room with ' . count($this->players) . ' players';
     }
 }

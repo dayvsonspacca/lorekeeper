@@ -6,6 +6,7 @@ namespace Lorekeeper\Server\Event\Combat;
 
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\Message;
@@ -16,6 +17,8 @@ use Psl\Type\Exception\CoercionException;
 
 final readonly class MonsterRespawnedEvent implements Event
 {
+    use NamedAfterClass;
+
     public function __construct(
         public MonsterSpawnId $id,
     ) {}
@@ -35,5 +38,11 @@ final readonly class MonsterRespawnedEvent implements Event
         }
 
         return Option\some(new static(new MonsterSpawnId($id)));
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return "Monster {$this->id->value} came back";
     }
 }

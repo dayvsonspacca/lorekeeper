@@ -20,4 +20,10 @@ final readonly class AlreadyInMapEvent extends NoticeEvent implements MapJoinedE
     {
         return 'already in';
     }
+
+    #[Override]
+    public function summary(): string
+    {
+        return 'Already in that map';
+    }
 }

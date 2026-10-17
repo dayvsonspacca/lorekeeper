@@ -9,6 +9,7 @@ use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -20,6 +21,8 @@ use Psl\Type\Exception\CoercionException;
 
 final readonly class SkillsLoadedEvent implements Event
 {
+    use NamedAfterClass;
+
     /**
      * @param list<Skill> $skills
      * @param list<SkillSlot> $usable
@@ -97,5 +100,11 @@ final readonly class SkillsLoadedEvent implements Event
             'f' => SkillTarget::Ally,
             default => throw new MalformedEventException(static::class, "unknown skill target '{$target}'"),
         };
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return count($this->skills) . ' skills, ' . count($this->usable) . ' unlocked';
     }
 }

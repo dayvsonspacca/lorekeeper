@@ -9,6 +9,7 @@ use Lorekeeper\Core\CharacterClass\ClassDescription;
 use Lorekeeper\Core\CharacterClass\ClassName;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -20,6 +21,8 @@ use Psl\Type\Exception\CoercionException;
 
 final readonly class ClassChangedEvent implements Event
 {
+    use NamedAfterClass;
+
     /** @param Option\Option<ClassDescription> $description */
     public function __construct(
         public SocketId $player,
@@ -70,5 +73,11 @@ final readonly class ClassChangedEvent implements Event
             'C' => ClassCategory::Caster,
             default => throw new MalformedEventException(static::class, "unknown class category '{$code}'"),
         };
+    }
+
+    #[Override]
+    public function summary(): string
+    {
+        return "Socket {$this->player->value} is {$this->className->value} ({$this->category->name}, {$this->points->value} CP)";
     }
 }
