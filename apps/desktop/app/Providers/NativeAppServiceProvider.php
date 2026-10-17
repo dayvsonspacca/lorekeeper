@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Providers;
 
 use Lorekeeper\Apps\Desktop\Models\BotRun;
+use Lorekeeper\Apps\Desktop\Native\MainWindow;
+use Lorekeeper\Apps\Desktop\Native\Tray;
 use Native\Desktop\Contracts\ProvidesPhpIni;
-use Native\Desktop\Facades\Window;
+use Native\Desktop\Facades\ChildProcess;
 use Override;
 
 final class NativeAppServiceProvider implements ProvidesPhpIni
@@ -15,13 +17,9 @@ final class NativeAppServiceProvider implements ProvidesPhpIni
     {
         BotRun::interrupted();
 
-        Window::open()
-            ->title('Lorekeeper')
-            ->width(1280)
-            ->height(820)
-            ->minWidth(900)
-            ->minHeight(600)
-            ->rememberState();
+        MainWindow::open();
+        Tray::create();
+        ChildProcess::artisan(['tray:watch'], 'tray', persistent: true);
     }
 
     /** @return array<string, string> */

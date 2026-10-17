@@ -45,6 +45,15 @@ final class Account extends Model
         return $run instanceof BotRun ? $run : null;
     }
 
+    public function start(): void
+    {
+        if ($this->activeRun() !== null) {
+            return;
+        }
+
+        $this->runs()->create();
+    }
+
     /**
      * @return array<string, string>
      *

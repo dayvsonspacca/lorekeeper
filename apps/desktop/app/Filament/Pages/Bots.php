@@ -33,12 +33,7 @@ final class Bots extends Page
 
     public function start(int $account): void
     {
-        $found = Account::query()->find($account);
-        if ($found === null || $found->activeRun() !== null) {
-            return;
-        }
-
-        $found->runs()->create();
+        Account::query()->find($account)?->start();
     }
 
     public function stop(int $run, Launcher $launcher): void
