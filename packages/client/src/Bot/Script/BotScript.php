@@ -8,6 +8,7 @@ use Closure;
 use Generator;
 use Lorekeeper\Client\Bot\Character;
 use Lorekeeper\Client\Bot\Log\EventSummary;
+use Lorekeeper\Client\Command\Attack;
 use Lorekeeper\Client\Command\MoveToCellCommand;
 use Lorekeeper\Client\Script\Game\JoinMapScript;
 use Lorekeeper\Client\Script\Instruction;
@@ -85,10 +86,10 @@ abstract readonly class BotScript implements Script
      *
      * @return Generator<int, Instruction, null|Event|TimedOut, void>
      */
-    protected function kill(Cell $cell, Pad $pad, Closure $until): Generator
+    protected function kill(Cell $cell, Pad $pad, Attack $attack, Closure $until): Generator
     {
         yield from $this->jump($cell, $pad);
-        yield from new KillScript($this->me, $cell, $pad, $until, $this->clock)->run();
+        yield from new KillScript($this->me, $cell, $pad, $attack, $until, $this->clock)->run();
     }
 
     private static function why(mixed $answer): string

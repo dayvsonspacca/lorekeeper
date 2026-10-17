@@ -6,11 +6,12 @@ namespace Lorekeeper\Client\Command;
 
 use InvalidArgumentException;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Combat\Targetable;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\AreaId;
 use Override;
 
-final readonly class AttackMonsterCommand implements Command
+final readonly class AttackMonsterCommand implements Attack
 {
     /** @throws InvalidArgumentException */
     public function __construct(
@@ -21,6 +22,28 @@ final readonly class AttackMonsterCommand implements Command
         if ($skill === SkillSlot::Potion) {
             throw new InvalidArgumentException('A potion is not an attack.');
         }
+    }
+
+    #[Override]
+    public function target(): MonsterSpawnId
+    {
+        return $this->monster;
+    }
+
+    #[Override]
+    public function with(SkillSlot $skill): static
+    {
+        return new static($this->area, $skill, $this->monster);
+    }
+
+    #[Override]
+    public function at(Targetable $target): static
+    {
+        if (!$target instanceof MonsterSpawnId) {
+            throw new InvalidArgumentException('A monster attack can only aim at a monster.');
+        }
+
+        return new static($this->area, $this->skill, $target);
     }
 
     #[Override]

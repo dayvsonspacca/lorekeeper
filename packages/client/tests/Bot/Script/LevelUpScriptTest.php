@@ -45,6 +45,7 @@ use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
 use RuntimeException;
 
+/** @mago-expect lint:too-many-methods */
 final class LevelUpScriptTest extends TestCase
 {
     #[Test]
@@ -134,6 +135,46 @@ final class LevelUpScriptTest extends TestCase
             self::sent($steps),
         );
         static::assertEquals(new Done('Reached level 21'), $result);
+    }
+
+    #[Test]
+    public function when_its_target_dies_it_fights_another_of_the_same_kind_and_never_another_kind(): void
+    {
+        $me = self::me(level: 20, map: 'battleon');
+        $grunt = new MonsterId(4001);
+        $arrival = [
+            self::moved('icestormarena', 732_692),
+            new MonstersPlacedEvent([
+                new MonsterPlacement(new MonsterSpawnId(13), $grunt, new Cell('r7'), new MonsterLevel(20)),
+                new MonsterPlacement(new MonsterSpawnId(50), new MonsterId(4999), new Cell('r7'), new MonsterLevel(9)),
+                new MonsterPlacement(new MonsterSpawnId(14), $grunt, new Cell('r7'), new MonsterLevel(20)),
+            ]),
+        ];
+
+        [$steps] = Play::run(self::script($me, target: 21), $me, [
+            $arrival,
+            null,
+            null,
+            null,
+            new MonstersDiedEvent([new MonsterSpawnId(13)]),
+            null,
+            new MonstersDiedEvent([new MonsterSpawnId(14)]),
+            new MonsterRespawnedEvent(new MonsterSpawnId(13)),
+            null,
+            new LeveledUpEvent(new PlayerLevel(21), new Experience(9000)),
+            null,
+        ]);
+
+        static::assertSame(
+            [
+                '%xt%zm%cmd%1%tfer%lorekeeper03%icestormarena%',
+                '%xt%zm%moveToCell%732692%r7%Left%',
+                '%xt%zm%gar%732692%0%a1>m:13%wvz%',
+                '%xt%zm%gar%732692%0%aa>m:14%wvz%',
+                '%xt%zm%gar%732692%0%a1>m:13%wvz%',
+            ],
+            self::sent($steps),
+        );
     }
 
     #[Test]

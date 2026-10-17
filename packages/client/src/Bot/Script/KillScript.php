@@ -7,7 +7,7 @@ namespace Lorekeeper\Client\Bot\Script;
 use Closure;
 use Generator;
 use Lorekeeper\Client\Bot\Character;
-use Lorekeeper\Client\Command\AttackMonsterCommand;
+use Lorekeeper\Client\Command\Attack;
 use Lorekeeper\Client\Command\MoveToCellCommand;
 use Lorekeeper\Client\Command\ResurrectCommand;
 use Lorekeeper\Client\Script\Await;
@@ -19,6 +19,7 @@ use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Combat\Targetable;
 use Lorekeeper\Core\World\Map\Cell;
 use Lorekeeper\Core\World\Map\Pad;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
@@ -54,11 +55,14 @@ final readonly class KillScript implements Script
     /**
      * @param Closure(): bool $until
      * @param Closure(): Timestamp $clock
+     *
+     * @mago-expect lint:excessive-parameter-list
      */
     public function __construct(
         private Character $me,
         private Cell $cell,
         private Pad $pad,
+        private Attack $attack,
         private Closure $until,
         private Closure $clock,
     ) {}
@@ -67,13 +71,7 @@ final readonly class KillScript implements Script
     #[Override]
     public function run(): Generator
     {
-        $monsters = array_map(
-            static fn(MonsterPlacement $placement): MonsterSpawnId => $placement->id,
-            $this->me->map()->monstersIn($this->cell),
-        );
-        if ($monsters === []) {
-            throw new RuntimeException("There are no monsters in {$this->cell->value}.");
-        }
+        $targets = $this->targets();
 
         $dead = [];
         $ready = [];
@@ -85,11 +83,11 @@ final readonly class KillScript implements Script
                 continue;
             }
 
-            $target = self::firstAlive($monsters, $dead);
+            $target = self::firstAlive($targets, $dead);
             $now = ($this->clock)();
             $skill = $target === null ? null : $this->ready($ready, $now);
             if ($target !== null && $skill !== null) {
-                yield new Send(new AttackMonsterCommand($this->me->position()->area, $skill->slot, $target));
+                yield new Send($this->attack->at($target)->with($skill->slot));
                 $ready[$skill->slot->name] = $now->plus($skill->cooldown);
                 $ready['next'] = $now->plus(Duration::seconds(1));
             }
@@ -111,6 +109,46 @@ final readonly class KillScript implements Script
         );
         yield new Send(new MoveToCellCommand($this->me->position()->area, $this->cell, $this->pad));
         yield new Pause(Duration::seconds(1));
+    }
+
+    /**
+     * @throws RuntimeException
+     *
+     * @return non-empty-list<Targetable>
+     */
+    private function targets(): array
+    {
+        $aimed = $this->attack->target();
+        if (!$aimed instanceof MonsterSpawnId) {
+            return [$aimed];
+        }
+
+        $placed = $this->me->map()->monstersIn($this->cell);
+        $species = null;
+        foreach ($placed as $placement) {
+            if ($placement->id->value !== $aimed->value) {
+                continue;
+            }
+
+            $species = $placement->monster->value;
+        }
+
+        if ($species === null) {
+            throw new RuntimeException("Monster {$aimed->value} does not stand in {$this->cell->value}.");
+        }
+
+        $same = array_values(array_filter(
+            array_map(
+                static fn(MonsterPlacement $placement): MonsterSpawnId => $placement->id,
+                array_filter(
+                    $placed,
+                    static fn(MonsterPlacement $placement): bool => $placement->monster->value === $species,
+                ),
+            ),
+            static fn(MonsterSpawnId $spawn): bool => $spawn->value !== $aimed->value,
+        ));
+
+        return [$aimed, ...$same];
     }
 
     /** @param array<string, Timestamp> $ready */
@@ -155,14 +193,14 @@ final readonly class KillScript implements Script
     }
 
     /**
-     * @param list<MonsterSpawnId> $monsters
+     * @param non-empty-list<Targetable> $targets
      * @param array<int, true> $dead
      */
-    private static function firstAlive(array $monsters, array $dead): ?MonsterSpawnId
+    private static function firstAlive(array $targets, array $dead): ?Targetable
     {
-        foreach ($monsters as $monster) {
-            if (!array_key_exists($monster->value, $dead)) {
-                return $monster;
+        foreach ($targets as $target) {
+            if (!$target instanceof MonsterSpawnId || !array_key_exists($target->value, $dead)) {
+                return $target;
             }
         }
 
