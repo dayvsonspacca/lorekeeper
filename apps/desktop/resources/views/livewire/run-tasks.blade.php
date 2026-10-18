@@ -35,16 +35,9 @@
                 </span>
             @endif
             @if ($task->cancellable())
-                <x-filament::button
-                    size="xs"
-                    color="gray"
-                    icon="heroicon-m-x-mark"
-                    wire:click="cancel({{ $task->id }})"
-                    x-on:click.stop
-                    wire:confirm="Cancel this task?"
-                >
-                    Cancel
-                </x-filament::button>
+                <div x-on:click.stop>
+                    {{ ($this->cancelAction)(['task' => $task->id]) }}
+                </div>
             @endif
         </div>
         @if ($task->script->report() !== null && $task->started_at !== null)
@@ -62,4 +55,5 @@
             @endif
         </div>
     @endforelse
+    <x-filament-actions::modals />
 </div>

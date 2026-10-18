@@ -66,7 +66,7 @@ final class DesktopTest extends TestCase
                 'Start',
             ])
             ->call('start', $idle->id)
-            ->call('stop', $run->id);
+            ->callAction('stop', arguments: ['run' => $run->id]);
 
         static::assertSame(RunStatus::Pending, $idle->activeRun()?->status);
         static::assertSame(RunStatus::Stopping, $run->refresh()->status);
@@ -108,6 +108,21 @@ final class DesktopTest extends TestCase
                 ->map(static fn(BotTask $task): array => [$task->parameters, $task->status->value])
                 ->all(),
         );
+    }
+
+    #[Test]
+    public function a_task_is_cancelled_after_confirming(): void
+    {
+        $run = $this->account()->runs()->create();
+        $run->update(['status' => RunStatus::Running]);
+        $pending = $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 10]]);
+
+        Livewire::test(RunTasks::class, ['run' => $run])
+            ->mountAction('cancel', ['task' => $pending->id])
+            ->assertActionMounted('cancel')
+            ->callMountedAction();
+
+        static::assertSame(TaskStatus::Cancelled, $pending->refresh()->status);
     }
 
     #[Test]

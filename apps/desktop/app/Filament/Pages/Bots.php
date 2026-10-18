@@ -8,6 +8,7 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Panel;
+use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\AccountResource;
@@ -41,14 +42,27 @@ final class Bots extends Page
         Account::query()->find($account)?->resume();
     }
 
-    public function stop(int $run, Launcher $launcher): void
+    public function stopAction(): Action
     {
-        $found = BotRun::query()->find($run);
-        if ($found === null || !$found->status->isActive()) {
-            return;
-        }
+        return Action::make('stop')
+            ->icon(Heroicon::Stop)
+            ->color('danger')
+            ->size(Size::Small)
+            ->requiresConfirmation()
+            ->modalHeading(static fn(array $arguments): string => 'Stop ' . (BotRun::query()
+                ->find($arguments['run'] ?? 0)
+                ?->account
+                ->name ?? 'this bot') . '?')
+            ->modalDescription('The bot logs out and the run ends as stopped.')
+            ->modalSubmitActionLabel('Stop')
+            ->action(static function (array $arguments, Launcher $launcher): void {
+                $found = BotRun::query()->find($arguments['run'] ?? 0);
+                if ($found === null || !$found->status->isActive()) {
+                    return;
+                }
 
-        $found->stop($launcher);
+                $found->stop($launcher);
+            });
     }
 
     /** @return array<string, mixed> */

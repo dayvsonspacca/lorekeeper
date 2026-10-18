@@ -61,9 +61,7 @@
 
                         <div style="display: flex; gap: .5rem; flex-wrap: wrap;">
                             @if ($active)
-                                <x-filament::button size="sm" color="danger" icon="heroicon-m-stop" wire:click="stop({{ $run->id }})" wire:confirm="Stop {{ $account->name }}? The bot logs out.">
-                                    Stop
-                                </x-filament::button>
+                                {{ ($this->stopAction)(['run' => $run->id]) }}
                             @else
                                 @if ($unfinished !== [])
                                     <x-filament::button size="sm" icon="heroicon-m-arrow-path" wire:click="resume({{ $account->id }})">
