@@ -10,6 +10,7 @@
                         $active = $run !== null && $run->status->isActive();
                         $task = $active ? $run->currentTask() : null;
                         $percent = $task?->percent();
+                        $unfinished = $active ? [] : $account->unfinishedTasks();
                     @endphp
                     <div wire:key="account-{{ $account->id }}" style="display: flex; flex-direction: column; gap: .75rem; padding: 1.125rem 1.25rem; border-radius: 1rem; border: 1px solid {{ $active ? 'color-mix(in oklab, var(--primary-500) 55%, transparent)' : 'color-mix(in oklab, var(--gray-500) 25%, transparent)' }}; background: {{ $active ? 'color-mix(in oklab, var(--primary-500) 7%, transparent)' : 'transparent' }};">
                         <div style="display: flex; align-items: center; justify-content: space-between; gap: .75rem;">
@@ -45,6 +46,14 @@
                                 </div>
                             @elseif ($active)
                                 <div style="color: var(--gray-500, #6b7280); font-size: .875rem;">Waiting for a task</div>
+                            @elseif ($unfinished !== [])
+                                <div style="color: var(--gray-500, #6b7280); font-size: .75rem;">Left off</div>
+                                <div style="font-size: .875rem; font-weight: 600;">
+                                    {{ $unfinished[0]->title() }}
+                                    @if (count($unfinished) > 1)
+                                        <span style="color: var(--gray-500, #6b7280); font-weight: 400;">+{{ count($unfinished) - 1 }} more</span>
+                                    @endif
+                                </div>
                             @else
                                 <div style="color: var(--gray-400, #9ca3af); font-size: .875rem;">Offline</div>
                             @endif
@@ -56,7 +65,12 @@
                                     Stop
                                 </x-filament::button>
                             @else
-                                <x-filament::button size="sm" icon="heroicon-m-play" wire:click="start({{ $account->id }})">
+                                @if ($unfinished !== [])
+                                    <x-filament::button size="sm" icon="heroicon-m-arrow-path" wire:click="resume({{ $account->id }})">
+                                        Resume
+                                    </x-filament::button>
+                                @endif
+                                <x-filament::button size="sm" :color="$unfinished === [] ? 'primary' : 'gray'" icon="heroicon-m-play" wire:click="start({{ $account->id }})">
                                     Start
                                 </x-filament::button>
                             @endif

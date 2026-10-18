@@ -9,7 +9,9 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
+use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 
 /**
  * @property int $id
@@ -52,6 +54,37 @@ final class Account extends Model
         }
 
         $this->runs()->create();
+    }
+
+    public function resume(): void
+    {
+        $unfinished = $this->unfinishedTasks();
+        if ($unfinished === [] || $this->activeRun() !== null) {
+            return;
+        }
+
+        $run = BotRun::withoutEvents(fn(): BotRun => $this->runs()->create());
+        foreach ($unfinished as $task) {
+            $run->tasks()->create(['script' => $task->script, 'parameters' => $task->parameters]);
+        }
+
+        app(Launcher::class)->launch($run);
+    }
+
+    /** @return list<BotTask> */
+    public function unfinishedTasks(): array
+    {
+        $run = $this->runs()->latest('id')->first();
+        if (!$run instanceof BotRun || $run->status->isActive()) {
+            return [];
+        }
+
+        return $run
+            ->tasks()
+            ->whereIn('status', [TaskStatus::Failed, TaskStatus::Cancelled])
+            ->orderBy('id')
+            ->get()
+            ->all();
     }
 
     /**

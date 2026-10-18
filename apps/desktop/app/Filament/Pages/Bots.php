@@ -36,6 +36,11 @@ final class Bots extends Page
         Account::query()->find($account)?->start();
     }
 
+    public function resume(int $account): void
+    {
+        Account::query()->find($account)?->resume();
+    }
+
     public function stop(int $run, Launcher $launcher): void
     {
         $found = BotRun::query()->find($run);

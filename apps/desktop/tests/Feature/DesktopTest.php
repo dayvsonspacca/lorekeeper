@@ -17,6 +17,7 @@ use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
 use Lorekeeper\Apps\Desktop\Livewire\RunTasks;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
+use Lorekeeper\Apps\Desktop\Models\BotTask;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -69,6 +70,44 @@ final class DesktopTest extends TestCase
 
         static::assertSame(RunStatus::Pending, $idle->activeRun()?->status);
         static::assertSame(RunStatus::Stopping, $run->refresh()->status);
+    }
+
+    #[Test]
+    public function a_bot_resumes_the_tasks_its_last_run_left_unfinished(): void
+    {
+        $account = $this->account();
+        $last = $account->runs()->create();
+        $last->tasks()->create([
+            'script' => BotScript::LevelUp,
+            'parameters' => ['level' => 5],
+            'status' => TaskStatus::Done,
+        ]);
+        $last->tasks()->create([
+            'script' => BotScript::LevelUp,
+            'parameters' => ['level' => 50],
+            'status' => TaskStatus::Running,
+        ]);
+        $last->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 60]]);
+        BotRun::interrupted();
+
+        Livewire::test(Bots::class)
+            ->assertSeeInOrder(['Hero', 'Left off', 'Level up · to level 50', '+1 more', 'Resume', 'Start'])
+            ->call('resume', $account->id)
+            ->call('resume', $account->id);
+
+        $run = $account->activeRun();
+        static::assertNotNull($run);
+        static::assertNotSame($last->id, $run->id);
+        static::assertSame([$last->id, $run->id], $this->launcher->launched);
+        static::assertSame(
+            [[['level' => 50], 'pending'], [['level' => 60], 'pending']],
+            $run
+                ->tasks()
+                ->orderBy('id')
+                ->get()
+                ->map(static fn(BotTask $task): array => [$task->parameters, $task->status->value])
+                ->all(),
+        );
     }
 
     #[Test]
