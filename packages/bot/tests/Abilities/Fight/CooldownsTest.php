@@ -17,13 +17,28 @@ use Psl\DateTime\Timestamp;
 final class CooldownsTest extends TestCase
 {
     #[Test]
-    public function it_picks_an_attack_before_the_auto_attack_and_skips_what_it_cannot_afford(): void
+    public function it_picks_a_skill_before_the_auto_attack_and_skips_what_it_cannot_afford(): void
     {
         $cooldowns = new Cooldowns();
-        $skills = [self::auto(), self::bolt(cost: 20), self::heal()];
+        $skills = [self::auto(), self::bolt(cost: 20)];
 
         static::assertSame(SkillSlot::First, $cooldowns->ready($skills, new Mana(100), self::at(0))?->slot);
         static::assertSame(SkillSlot::AutoAttack, $cooldowns->ready($skills, new Mana(10), self::at(0))?->slot);
+    }
+
+    #[Test]
+    public function skills_on_itself_and_on_allies_take_their_turn_like_attacks(): void
+    {
+        $skills = [self::auto(), self::bolt(cost: 20), self::shield(), self::heal()];
+        $cooldowns = new Cooldowns();
+
+        static::assertSame(SkillSlot::First, $cooldowns->ready($skills, new Mana(100), self::at(0))?->slot);
+
+        $cooldowns = $cooldowns->used(self::bolt(cost: 20), self::at(0));
+        static::assertSame(SkillSlot::Third, $cooldowns->ready($skills, new Mana(100), self::at(1))?->slot);
+
+        $cooldowns = $cooldowns->used(self::shield(), self::at(1));
+        static::assertSame(SkillSlot::Fourth, $cooldowns->ready($skills, new Mana(100), self::at(2))?->slot);
     }
 
     #[Test]
@@ -68,6 +83,11 @@ final class CooldownsTest extends TestCase
     private static function bolt(int $cost): Skill
     {
         return new Skill(SkillSlot::First, SkillTarget::Enemy, new Mana($cost), Duration::seconds(6));
+    }
+
+    private static function shield(): Skill
+    {
+        return new Skill(SkillSlot::Third, SkillTarget::Ally, new Mana(15), Duration::seconds(12));
     }
 
     private static function heal(): Skill

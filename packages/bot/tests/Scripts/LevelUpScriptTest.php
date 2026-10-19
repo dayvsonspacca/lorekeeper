@@ -73,6 +73,7 @@ final class LevelUpScriptTest extends TestCase
             null,
             null,
             null,
+            null,
             new LeveledUpEvent(new PlayerLevel(2), new Experience(200)),
             null,
         ]);
@@ -84,7 +85,8 @@ final class LevelUpScriptTest extends TestCase
                 '%xt%zm%gar%946%0%a1>m:4%wvz%',
                 '%xt%zm%resPlayerTimed%946%122628%',
                 '%xt%zm%moveToCell%946%r3%Left%',
-                '%xt%zm%gar%946%0%aa>m:4%wvz%',
+                '%xt%zm%gar%946%0%a4>p:122628%wvz%',
+                '%xt%zm%gar%946%0%a1>m:4%wvz%',
             ],
             self::sent($steps),
         );
@@ -159,6 +161,7 @@ final class LevelUpScriptTest extends TestCase
             null,
             new MonstersDiedEvent([new MonsterSpawnId(13)]),
             null,
+            null,
             new MonstersDiedEvent([new MonsterSpawnId(14)]),
             new MonsterRespawnedEvent(new MonsterSpawnId(13)),
             null,
@@ -171,8 +174,9 @@ final class LevelUpScriptTest extends TestCase
                 '%xt%zm%cmd%1%tfer%lorekeeper03%icestormarena%',
                 '%xt%zm%moveToCell%732692%r7%Left%',
                 '%xt%zm%gar%732692%0%a1>m:13%wvz%',
-                '%xt%zm%gar%732692%0%aa>m:14%wvz%',
-                '%xt%zm%gar%732692%0%a1>m:13%wvz%',
+                '%xt%zm%gar%732692%0%a4>p:122628%wvz%',
+                '%xt%zm%gar%732692%0%a1>m:14%wvz%',
+                '%xt%zm%gar%732692%0%aa>m:13%wvz%',
             ],
             self::sent($steps),
         );

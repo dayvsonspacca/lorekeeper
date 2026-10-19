@@ -6,15 +6,19 @@ namespace Lorekeeper\Bot\Abilities\Moves;
 
 use Closure;
 use Generator;
+use InvalidArgumentException;
 use Lorekeeper\Bot\Abilities\Fight\Cooldowns;
 use Lorekeeper\Bot\Abilities\Fight\Targets;
 use Lorekeeper\Client\Command\Combat\Attack;
 use Lorekeeper\Client\Command\Combat\ResurrectCommand;
+use Lorekeeper\Client\Command\Combat\SupportPlayerCommand;
+use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
@@ -61,7 +65,7 @@ trait Kills
                 ? null
                 : $cooldowns->ready($this->unlocked(), $this->me()->player()->vitals->mana->current, $now);
             if ($target !== null && $skill !== null) {
-                yield $this->send($attack->at($target)->with($skill->slot));
+                yield $this->send($this->cast($skill, $attack->at($target)));
                 $cooldowns = $cooldowns->used($skill, $now);
             }
 
@@ -75,6 +79,16 @@ trait Kills
                 ], $cooldowns->wait($now)),
             );
         }
+    }
+
+    /** @throws InvalidArgumentException */
+    private function cast(Skill $skill, Attack $attack): Command
+    {
+        if ($skill->target === SkillTarget::Enemy) {
+            return $attack->with($skill->slot);
+        }
+
+        return new SupportPlayerCommand($this->me()->location()->area, $skill->slot, $this->me()->socketId());
     }
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, void> */

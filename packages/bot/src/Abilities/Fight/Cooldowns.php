@@ -7,7 +7,6 @@ namespace Lorekeeper\Bot\Abilities\Fight;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Psl\Comparison\Order;
 use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
@@ -30,11 +29,7 @@ final readonly class Cooldowns
 
         $usable = array_values(array_filter(
             $skills,
-            fn(Skill $skill): bool => (
-                $skill->target === SkillTarget::Enemy
-                && !$this->waiting($skill->slot->name, $now)
-                && $skill->cost->value <= $mana->value
-            ),
+            fn(Skill $skill): bool => !$this->waiting($skill->slot->name, $now) && $skill->cost->value <= $mana->value,
         ));
 
         usort(
