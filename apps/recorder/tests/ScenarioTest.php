@@ -20,5 +20,6 @@ final class ScenarioTest extends TestCase
             Scenario::LevelUp->script(['level' => '12'], Duration::seconds(90))->title(),
         );
         static::assertSame('Level up to 100', Scenario::LevelUp->script([], Duration::seconds(90))->title());
+        static::assertSame('Crypto Token daily', Scenario::CryptoToken->script([], Duration::seconds(90))->title());
     }
 }
