@@ -23,7 +23,7 @@ final class PlayerInventoryTest extends TestCase
     {
         $healer = new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer')));
         $ore = new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')));
-        $inventory = new PlayerInventory(new PlayerItems([$healer]), new PlayerItems([$ore]));
+        $inventory = new PlayerInventory(new PlayerItems([$healer]), new Quantity(131), new PlayerItems([$ore]));
 
         static::assertSame($healer, $inventory->find(new ItemId(15_651))->unwrap());
         static::assertSame($ore, $inventory->find(new ItemId(42_658))->unwrap());
@@ -38,6 +38,7 @@ final class PlayerInventoryTest extends TestCase
                 new Resource(new ItemId(42_657), new ItemName('Crypto Token')),
                 new Quantity(3),
             )]),
+            new Quantity(131),
             new PlayerItems([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
         );
 
@@ -49,7 +50,13 @@ final class PlayerInventoryTest extends TestCase
     #[Test]
     public function it_starts_with_nothing_temporary(): void
     {
-        static::assertCount(0, new PlayerInventory(new PlayerItems([]))->temporary->items);
+        static::assertCount(0, new PlayerInventory(new PlayerItems([]), new Quantity(131))->temporary->items);
+    }
+
+    #[Test]
+    public function it_tells_how_many_slots_its_bag_has(): void
+    {
+        static::assertSame(131, new PlayerInventory(new PlayerItems([]), new Quantity(131))->slots->value);
     }
 
     #[Test]
@@ -59,6 +66,6 @@ final class PlayerInventoryTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
 
-        new PlayerInventory(new PlayerItems([$ore]), new PlayerItems([$ore]));
+        new PlayerInventory(new PlayerItems([$ore]), new Quantity(131), new PlayerItems([$ore]));
     }
 }

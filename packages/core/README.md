@@ -35,6 +35,7 @@ $ore = new Resource(new ItemId(42_658), new ItemName('Metal Ore'));
 
 $inventory = new PlayerInventory(
     new PlayerItems([new PlayerItem($healer), new PlayerItem($voucher)]),
+    new Quantity(131),
     new PlayerItems([new PlayerItem($ore)]),
 );
 

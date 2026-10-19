@@ -16,6 +16,7 @@ final readonly class Quest
      * @param list<QuestRequirement> $requirements
      * @param list<QuestObjective> $objectives
      * @param list<QuestReward> $rewards
+     * @param Option<QuestMark> $mark
      *
      * @mago-expect lint:excessive-parameter-list
      */
@@ -26,5 +27,6 @@ final readonly class Quest
         public array $requirements,
         public array $objectives,
         public array $rewards,
+        public Option $mark,
     ) {}
 }

@@ -6,6 +6,7 @@ namespace Lorekeeper\Core\Player;
 
 use InvalidArgumentException;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Support\Quantity;
 use Psl\Option\Option;
 
 final readonly class PlayerInventory
@@ -13,6 +14,7 @@ final readonly class PlayerInventory
     /** @throws InvalidArgumentException */
     public function __construct(
         public PlayerItems $permanent,
+        public Quantity $slots,
         public PlayerItems $temporary = new PlayerItems([]),
     ) {
         foreach ($temporary->items->keys() as $id) {
