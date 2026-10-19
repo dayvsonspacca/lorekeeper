@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Tests\Player;
 
 use InvalidArgumentException;
+use Lorekeeper\Core\Item\Equipment\ClassItem;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
@@ -18,9 +20,9 @@ final class PlayerInventoryTest extends TestCase
     #[Test]
     public function it_finds_an_item_by_its_id(): void
     {
-        $scales = new PlayerItem(new ItemId(11_475), new ItemName('Dragon Scale'), new Quantity(5));
+        $scales = new PlayerItem(new Resource(new ItemId(11_475), new ItemName('Dragon Scale')), new Quantity(5));
         $inventory = new PlayerInventory([
-            new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade')),
+            new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer'))),
             $scales,
         ]);
 
@@ -35,8 +37,8 @@ final class PlayerInventoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         new PlayerInventory([
-            new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade')),
-            new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade')),
+            new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer'))),
+            new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer'))),
         ]);
     }
 }

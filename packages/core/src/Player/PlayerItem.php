@@ -4,18 +4,14 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Player;
 
+use Lorekeeper\Core\Item\HoldsItem;
 use Lorekeeper\Core\Item\Item;
-use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Support\Quantity;
 
-final readonly class PlayerItem extends Item
+final readonly class PlayerItem implements HoldsItem
 {
     public function __construct(
-        ItemId $id,
-        ItemName $name,
+        public Item $item,
         public Quantity $quantity = new Quantity(1),
-    ) {
-        parent::__construct($id, $name);
-    }
+    ) {}
 }

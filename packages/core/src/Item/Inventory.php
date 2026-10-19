@@ -9,7 +9,7 @@ use Psl\Collection\Map;
 use Psl\Option;
 
 /**
- * @template T of Item
+ * @template T of HoldsItem
  */
 abstract readonly class Inventory
 {
@@ -24,12 +24,13 @@ abstract readonly class Inventory
     final public function __construct(array $items)
     {
         $byId = [];
-        foreach ($items as $item) {
-            if (array_key_exists($item->id->value, $byId)) {
-                throw new InvalidArgumentException("Item {$item->id} is in the inventory more than once.");
+        foreach ($items as $holding) {
+            $id = $holding->item->id;
+            if (array_key_exists($id->value, $byId)) {
+                throw new InvalidArgumentException("Item {$id} is in the inventory more than once.");
             }
 
-            $byId[$item->id->value] = $item;
+            $byId[$id->value] = $holding;
         }
 
         $this->items = new Map($byId);

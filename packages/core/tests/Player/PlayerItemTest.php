@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\Player;
 
+use Lorekeeper\Core\Item\Equipment\Weapon;
+use Lorekeeper\Core\Item\Equipment\WeaponType;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemTag;
+use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
@@ -17,30 +20,30 @@ final class PlayerItemTest extends TestCase
     #[Test]
     public function it_keeps_how_many_of_the_item_the_player_has(): void
     {
-        $item = new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade'), new Quantity(3));
+        $scales = new Resource(new ItemId(11_475), new ItemName('Dragon Scale'));
+        $held = new PlayerItem($scales, new Quantity(5));
 
-        static::assertSame(4767, $item->id->value);
-        static::assertSame('Dragonbone Blade', $item->name->value);
-        static::assertSame(3, $item->quantity->value);
+        static::assertSame($scales, $held->item);
+        static::assertSame(5, $held->quantity->value);
     }
 
     #[Test]
     public function it_has_one_unless_told_otherwise(): void
     {
-        $item = new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade'));
+        $held = new PlayerItem(new Weapon(new ItemId(4767), new ItemName('Unidentified 20'), WeaponType::Sword));
 
-        static::assertSame(1, $item->quantity->value);
+        static::assertSame(1, $held->quantity->value);
     }
 
     #[Test]
-    public function it_starts_with_no_tags_and_takes_them_afterwards(): void
+    public function its_item_starts_with_no_tags_and_takes_them_afterwards(): void
     {
-        $blade = new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade'));
+        $voucher = new Resource(new ItemId(4861), new ItemName('Voucher of Nulgath'));
 
-        static::assertFalse($blade->tags->has(ItemTag::MemberOnly));
+        static::assertFalse($voucher->tags->has(ItemTag::MemberOnly));
 
-        $blade->tags->add(ItemTag::MemberOnly);
+        $voucher->tags->add(ItemTag::MemberOnly);
 
-        static::assertTrue($blade->tags->has(ItemTag::MemberOnly));
+        static::assertTrue(new PlayerItem($voucher)->item->tags->has(ItemTag::MemberOnly));
     }
 }
