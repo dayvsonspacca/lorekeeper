@@ -8,6 +8,7 @@ use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -23,13 +24,9 @@ final readonly class SkillsLoadedEvent implements Event
 {
     use NamedAfterClass;
 
-    /**
-     * @param list<Skill> $skills
-     * @param list<SkillSlot> $usable
-     */
+    /** @param list<PlayerSkill> $skills */
     public function __construct(
         public array $skills,
-        public array $usable,
     ) {}
 
     /** @return Option\Option<static> */
@@ -57,25 +54,24 @@ final readonly class SkillsLoadedEvent implements Event
         }
 
         $skills = [];
-        $usable = [];
         foreach ($active as $skill) {
             $slot = self::slot($skill['ref']);
             if ($slot === null) {
                 continue;
             }
 
-            $skills[] = new Skill(
-                $slot,
-                self::target($skill['tgt']),
-                new Mana($skill['mp']),
-                Duration::milliseconds($skill['cd']),
+            $skills[] = new PlayerSkill(
+                new Skill(
+                    $slot,
+                    self::target($skill['tgt']),
+                    new Mana($skill['mp']),
+                    Duration::milliseconds($skill['cd']),
+                ),
+                $skill['isOK'] ?? false,
             );
-            if ($skill['isOK'] ?? false) {
-                $usable[] = $slot;
-            }
         }
 
-        return Option\some(new static($skills, $usable));
+        return Option\some(new static($skills));
     }
 
     private static function slot(string $ref): ?SkillSlot
@@ -105,6 +101,8 @@ final readonly class SkillsLoadedEvent implements Event
     #[Override]
     public function summary(): string
     {
-        return count($this->skills) . ' skills, ' . count($this->usable) . ' unlocked';
+        $unlocked = array_filter($this->skills, static fn(PlayerSkill $skill): bool => $skill->unlocked);
+
+        return count($this->skills) . ' skills, ' . count($unlocked) . ' unlocked';
     }
 }

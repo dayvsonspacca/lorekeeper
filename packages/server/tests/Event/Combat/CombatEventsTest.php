@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Tests\Event\Combat;
 
 use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Combat\AttackRejectedEvent;
 use Lorekeeper\Server\Event\Combat\MonsterHealth;
@@ -50,14 +50,17 @@ final class CombatEventsTest extends TestCase
                 [SkillSlot::Fourth,     SkillTarget::Self,  0,  20_000],
                 [SkillSlot::Potion,     SkillTarget::Ally,  0,  60_000],
             ],
-            array_map(static fn(Skill $skill): array => [
-                $skill->slot,
-                $skill->target,
-                $skill->cost->value,
-                (int) $skill->cooldown->getTotalMilliseconds(),
+            array_map(static fn(PlayerSkill $held): array => [
+                $held->skill->slot,
+                $held->skill->target,
+                $held->skill->cost->value,
+                (int) $held->skill->cooldown->getTotalMilliseconds(),
             ], $event->skills),
         );
-        static::assertSame([SkillSlot::AutoAttack, SkillSlot::First, SkillSlot::Potion], $event->usable);
+        static::assertSame(
+            [true, true, false, false, true],
+            array_map(static fn(PlayerSkill $held): bool => $held->unlocked, $event->skills),
+        );
         static::assertSame('5 skills, 3 unlocked', $event->summary());
     }
 
