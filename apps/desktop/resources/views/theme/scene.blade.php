@@ -120,10 +120,11 @@
     .lk-calm { font-size: .74rem; color: var(--lk-faint); display: flex; align-items: center; gap: .4rem; }
     .lk-calm svg { width: .9rem; height: .9rem; }
 
-    .lk-stage { display: grid; gap: 1rem; margin-bottom: 1.5rem; }
-    .lk-stage__row { display: grid; gap: 1rem; grid-template-columns: minmax(19rem, 25rem) 1fr; align-items: start; }
-    .lk-stage__row--low { grid-template-columns: 1fr minmax(19rem, 25rem); }
-    @media (max-width: 64rem) { .lk-stage__row, .lk-stage__row--low { grid-template-columns: 1fr; } }
+    .lk-stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .lk-stage__row { display: grid; gap: 1rem; grid-template-columns: minmax(19rem, 25rem) minmax(0, 1fr); align-items: start; }
+    .lk-stage__row--low { grid-template-columns: minmax(0, 1fr) minmax(19rem, 25rem); }
+    .lk-stage__row > * { min-width: 0; }
+    @media (max-width: 64rem) { .lk-stage__row, .lk-stage__row--low { grid-template-columns: minmax(0, 1fr); } }
     .lk-panel { position: relative; padding: 1.15rem 1.2rem; border-radius: 1.25rem; background: linear-gradient(180deg, var(--lk-panel-2), var(--lk-ink)); border: 1px solid var(--lk-line); box-shadow: 0 20px 50px -30px rgba(0, 0, 0, .9); }
     .lk-panel__title { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-bottom: .9rem; }
     .lk-panel__title h3 { display: flex; align-items: center; gap: .45rem; font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--lk-muted); font-weight: 800; }
