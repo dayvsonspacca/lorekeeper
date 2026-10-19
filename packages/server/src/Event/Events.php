@@ -47,7 +47,6 @@ final readonly class Events
     public const array ALL = [
         ActionTooSoonEvent::class,
         AttackRejectedEvent::class,
-        AwayFromKeyboardEvent::class,
         ClassChangedEvent::class,
         MonsterRespawnedEvent::class,
         MonsterRewardedEvent::class,
