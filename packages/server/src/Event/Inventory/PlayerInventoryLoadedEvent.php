@@ -4,16 +4,28 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Inventory;
 
-use Lorekeeper\Core\Asset\Gamefile;
-use Lorekeeper\Core\Asset\Linkage;
-use Lorekeeper\Core\Currency\AdventureCoins;
-use Lorekeeper\Core\Currency\Gold;
-use Lorekeeper\Core\Item\EquipmentSlot;
-use Lorekeeper\Core\Item\ItemDescription;
+use InvalidArgumentException;
+use Lorekeeper\Core\Item\Equipment\Armor;
+use Lorekeeper\Core\Item\Equipment\Cape;
+use Lorekeeper\Core\Item\Equipment\ClassItem;
+use Lorekeeper\Core\Item\Equipment\GroundItem;
+use Lorekeeper\Core\Item\Equipment\Helm;
+use Lorekeeper\Core\Item\Equipment\Necklace;
+use Lorekeeper\Core\Item\Equipment\Pet;
+use Lorekeeper\Core\Item\Equipment\Weapon;
+use Lorekeeper\Core\Item\Equipment\WeaponType;
+use Lorekeeper\Core\Item\House\HouseItem;
+use Lorekeeper\Core\Item\House\HouseItemType;
+use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
-use Lorekeeper\Core\Item\ItemPrice;
-use Lorekeeper\Core\Item\Type;
+use Lorekeeper\Core\Item\ItemTag;
+use Lorekeeper\Core\Item\Misc\Boost;
+use Lorekeeper\Core\Item\Misc\Enhancement;
+use Lorekeeper\Core\Item\Misc\Resource;
+use Lorekeeper\Core\Player\PlayerInventory;
+use Lorekeeper\Core\Player\PlayerItem;
+use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -21,17 +33,15 @@ use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
-use Psl\Type as Coerce;
+use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
-/** @mago-expect lint:cyclomatic-complexity */
 final readonly class PlayerInventoryLoadedEvent implements Event
 {
     use NamedAfterClass;
 
-    /** @param list<InventoryItem> $items */
     public function __construct(
-        public array $items,
+        public PlayerInventory $inventory,
     ) {}
 
     /** @return Option\Option<static> */
@@ -43,108 +53,75 @@ final readonly class PlayerInventoryLoadedEvent implements Event
         }
 
         try {
-            $items = Coerce\vec(Coerce\shape([
-                'ItemID' => Coerce\positive_int(),
-                'sName' => Coerce\non_empty_string(),
-                'sType' => Coerce\string(),
-                'sES' => Coerce\string(),
-                'sDesc' => Coerce\optional(Coerce\string()),
-                'iCost' => Coerce\optional(Coerce\uint()),
-                'bCoins' => Coerce\optional(Coerce\bool()),
-                'sFile' => Coerce\optional(Coerce\nullable(Coerce\string())),
-                'sLink' => Coerce\optional(Coerce\string()),
-                'bUpg' => Coerce\optional(Coerce\bool()),
+            $items = Type\vec(Type\shape([
+                'ItemID' => Type\positive_int(),
+                'sName' => Type\non_empty_string(),
+                'sType' => Type\string(),
+                'iQty' => Type\optional(Type\positive_int()),
+                'bUpg' => Type\optional(Type\bool()),
             ], allowUnknownFields: true))
                 ->coerce($message->data['items'] ?? null);
         } catch (CoercionException $exception) {
             throw new MalformedEventException(static::class, 'items are missing or invalid', $exception);
         }
 
-        $inventory = [];
-        foreach ($items as $item) {
-            $description = trim($item['sDesc'] ?? '');
-            $cost = $item['iCost'] ?? 0;
-            $file = $item['sFile'] ?? '';
-            $link = $item['sLink'] ?? '';
-            $hasFile = str_ends_with($file, '.swf');
+        $held = [];
+        foreach ($items as $entry) {
+            $item = self::item(new ItemId($entry['ItemID']), new ItemName($entry['sName']), $entry['sType']);
+            if ($entry['bUpg'] ?? false) {
+                $item->tags->add(ItemTag::MemberOnly);
+            }
 
-            $inventory[] = new InventoryItem(
-                new ItemId($item['ItemID']),
-                new ItemName($item['sName']),
-                self::detail($item['sType']),
-                $description === '' ? Option\none() : Option\some(new ItemDescription($description)),
-                $cost === 0
-                    ? Option\none()
-                    : Option\some(
-                        new ItemPrice($item['bCoins'] ?? false ? new AdventureCoins($cost) : new Gold($cost)),
-                    ),
-                $hasFile ? Option\some(new Gamefile($file)) : Option\none(),
-                $hasFile && $link !== '' ? Option\some(new Linkage($link)) : Option\none(),
-                self::slot($item['sES']),
-                $item['bUpg'] ?? false,
+            $held[] = new PlayerItem(
+                $item,
+                $item instanceof ClassItem ? new Quantity(1) : new Quantity($entry['iQty'] ?? 1),
             );
         }
 
-        return Option\some(new static($inventory));
-    }
-
-    /** @throws MalformedEventException */
-    private static function detail(string $type): Type\Equipment|Type\Weapon|Type\House|Type\Misc
-    {
-        return match ($type) {
-            'Armor' => Type\Equipment::Armor,
-            'Cape' => Type\Equipment::Cape,
-            'Class' => Type\Equipment::CharacterClass,
-            'Misc' => Type\Equipment::Ground,
-            'Helm' => Type\Equipment::Helm,
-            'Necklace' => Type\Equipment::Necklace,
-            'Pet' => Type\Equipment::Pet,
-            'Axe' => Type\Weapon::Axe,
-            'Bow' => Type\Weapon::Bow,
-            'Dagger' => Type\Weapon::Dagger,
-            'Gauntlet' => Type\Weapon::Gauntlet,
-            'Gun' => Type\Weapon::Gun,
-            'HandGun' => Type\Weapon::HandGun,
-            'Mace' => Type\Weapon::Mace,
-            'Polearm' => Type\Weapon::Polearm,
-            'Rifle' => Type\Weapon::Rifle,
-            'Staff' => Type\Weapon::Staff,
-            'Sword' => Type\Weapon::Sword,
-            'Wand' => Type\Weapon::Wand,
-            'Whip' => Type\Weapon::Whip,
-            'Floor Item' => Type\House::Floor,
-            'House' => Type\House::House,
-            'Wall Item' => Type\House::Wall,
-            'ServerUse' => Type\Misc::Boost,
-            'Enhancement' => Type\Misc::Enhancement,
-            'Item', 'Note', 'Quest Item', 'Resource' => Type\Misc::Generic,
-            default => throw new MalformedEventException(static::class, "unknown item type '{$type}'"),
-        };
-    }
-
-    /**
-     * @throws MalformedEventException
-     *
-     * @return Option\Option<EquipmentSlot>
-     */
-    private static function slot(string $code): Option\Option
-    {
-        return match ($code) {
-            'None' => Option\none(),
-            'Weapon' => Option\some(EquipmentSlot::Weapon),
-            'ar', 'co' => Option\some(EquipmentSlot::Armor),
-            'he' => Option\some(EquipmentSlot::Helm),
-            'ba' => Option\some(EquipmentSlot::Cape),
-            'pe' => Option\some(EquipmentSlot::Pet),
-            'mi' => Option\some(EquipmentSlot::Ground),
-            'am' => Option\some(EquipmentSlot::Necklace),
-            default => throw new MalformedEventException(static::class, "unknown equipment slot '{$code}'"),
-        };
+        try {
+            return Option\some(new static(new PlayerInventory($held)));
+        } catch (InvalidArgumentException $exception) {
+            throw new MalformedEventException(static::class, 'an item is in the inventory more than once', $exception);
+        }
     }
 
     #[Override]
     public function summary(): string
     {
-        return 'Inventory loaded: ' . count($this->items) . ' items';
+        return 'Inventory loaded: ' . count($this->inventory->items) . ' items';
+    }
+
+    /** @throws MalformedEventException */
+    private static function item(ItemId $id, ItemName $name, string $type): Item
+    {
+        return match ($type) {
+            'Class' => new ClassItem($id, $name),
+            'Armor' => new Armor($id, $name),
+            'Helm' => new Helm($id, $name),
+            'Cape' => new Cape($id, $name),
+            'Pet' => new Pet($id, $name),
+            'Necklace' => new Necklace($id, $name),
+            'Misc' => new GroundItem($id, $name),
+            'Axe' => new Weapon($id, $name, WeaponType::Axe),
+            'Bow' => new Weapon($id, $name, WeaponType::Bow),
+            'Dagger' => new Weapon($id, $name, WeaponType::Dagger),
+            'Gauntlet' => new Weapon($id, $name, WeaponType::Gauntlet),
+            'Gun' => new Weapon($id, $name, WeaponType::Gun),
+            'HandGun' => new Weapon($id, $name, WeaponType::HandGun),
+            'Mace' => new Weapon($id, $name, WeaponType::Mace),
+            'Polearm' => new Weapon($id, $name, WeaponType::Polearm),
+            'Rifle' => new Weapon($id, $name, WeaponType::Rifle),
+            'Staff' => new Weapon($id, $name, WeaponType::Staff),
+            'Sword' => new Weapon($id, $name, WeaponType::Sword),
+            'Wand' => new Weapon($id, $name, WeaponType::Wand),
+            'Whip' => new Weapon($id, $name, WeaponType::Whip),
+            'Floor Item' => new HouseItem($id, $name, HouseItemType::Floor),
+            'Wall Item' => new HouseItem($id, $name, HouseItemType::Wall),
+            'House' => new HouseItem($id, $name, HouseItemType::House),
+            'ServerUse' => new Boost($id, $name),
+            'Enhancement' => new Enhancement($id, $name),
+            'Item', 'Note', 'Quest Item', 'Resource' => new Resource($id, $name),
+            default => throw new MalformedEventException(static::class, "unknown item type '{$type}'"),
+        };
     }
 }

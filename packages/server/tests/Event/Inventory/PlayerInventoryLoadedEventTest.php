@@ -4,9 +4,23 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Inventory;
 
-use Lorekeeper\Core\Item\EquipmentSlot;
-use Lorekeeper\Core\Item\Type;
-use Lorekeeper\Server\Event\Inventory\InventoryItem;
+use Lorekeeper\Core\Item\Equipment\Armor;
+use Lorekeeper\Core\Item\Equipment\Cape;
+use Lorekeeper\Core\Item\Equipment\ClassItem;
+use Lorekeeper\Core\Item\Equipment\GroundItem;
+use Lorekeeper\Core\Item\Equipment\Helm;
+use Lorekeeper\Core\Item\Equipment\Necklace;
+use Lorekeeper\Core\Item\Equipment\Pet;
+use Lorekeeper\Core\Item\Equipment\Weapon;
+use Lorekeeper\Core\Item\Equipment\WeaponType;
+use Lorekeeper\Core\Item\House\HouseItem;
+use Lorekeeper\Core\Item\House\HouseItemType;
+use Lorekeeper\Core\Item\Item;
+use Lorekeeper\Core\Item\ItemTag;
+use Lorekeeper\Core\Item\Misc\Boost;
+use Lorekeeper\Core\Item\Misc\Enhancement;
+use Lorekeeper\Core\Item\Misc\Resource;
+use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -14,6 +28,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
+/** @mago-expect lint:too-many-methods */
 final class PlayerInventoryLoadedEventTest extends TestCase
 {
     private const string INVENTORY = <<<'JSON'
@@ -21,93 +36,91 @@ final class PlayerInventoryLoadedEventTest extends TestCase
         JSON;
 
     #[Test]
-    public function it_reads_the_equipment_of_a_real_inventory(): void
+    public function it_reads_each_item_of_a_real_inventory_as_its_kind(): void
     {
-        [$sword, $armor, $class] = self::load(self::INVENTORY);
+        [$sword, $armor, $class, $necklace, $voucher] = self::load(self::INVENTORY);
 
-        static::assertSame('Unidentified 20', $sword->name->value);
-        static::assertSame(Type\Weapon::Sword, $sword->detail);
-        static::assertSame(Type\ItemCategory::Equipment, $sword->category);
-        static::assertSame(EquipmentSlot::Weapon, $sword->slot->unwrap());
-        static::assertSame(100, $sword->price->unwrap()->amount->value);
-        static::assertSame('items/swords/MiltonPoolWheelsword01.swf', $sword->file->unwrap()->value);
-        static::assertSame('MiltonPoolWheelsword01', $sword->link->unwrap()->value);
-        static::assertStringStartsWith('Nulgath slayed a dragon', $sword->description->unwrap()->value);
-        static::assertFalse($sword->memberOnly);
-
-        static::assertSame(Type\Equipment::Armor, $armor->detail);
-        static::assertSame(Type\Equipment::CharacterClass, $class->detail);
-        static::assertSame(EquipmentSlot::Armor, $armor->slot->unwrap());
-        static::assertSame(EquipmentSlot::Armor, $class->slot->unwrap());
-        static::assertTrue($armor->price->isNone());
+        static::assertInstanceOf(Weapon::class, $sword->item);
+        static::assertSame(WeaponType::Sword, $sword->item->type);
+        static::assertSame(4767, $sword->item->id->value);
+        static::assertSame('Unidentified 20', $sword->item->name->value);
+        static::assertInstanceOf(Armor::class, $armor->item);
+        static::assertInstanceOf(ClassItem::class, $class->item);
+        static::assertInstanceOf(Necklace::class, $necklace->item);
+        static::assertInstanceOf(Resource::class, $voucher->item);
     }
 
     #[Test]
-    public function it_reads_items_without_file_or_slot(): void
+    public function it_tags_the_items_only_members_can_use(): void
     {
-        [, , , $necklace, $voucher] = self::load(self::INVENTORY);
+        [$sword, , , , $voucher] = self::load(self::INVENTORY);
 
-        static::assertSame(Type\Equipment::Necklace, $necklace->detail);
-        static::assertSame(EquipmentSlot::Necklace, $necklace->slot->unwrap());
-        static::assertTrue($necklace->file->isNone());
-        static::assertTrue($necklace->link->isNone());
-
-        static::assertSame(Type\Misc::Generic, $voucher->detail);
-        static::assertSame(Type\ItemCategory::Misc, $voucher->category);
-        static::assertTrue($voucher->slot->isNone());
-        static::assertSame(1_000_000, $voucher->price->unwrap()->amount->value);
-        static::assertTrue($voucher->memberOnly);
+        static::assertFalse($sword->item->tags->has(ItemTag::MemberOnly));
+        static::assertTrue($voucher->item->tags->has(ItemTag::MemberOnly));
     }
 
     #[Test]
-    #[TestWith(['Armor', Type\Equipment::Armor])]
-    #[TestWith(['Cape', Type\Equipment::Cape])]
-    #[TestWith(['Class', Type\Equipment::CharacterClass])]
-    #[TestWith(['Misc', Type\Equipment::Ground])]
-    #[TestWith(['Helm', Type\Equipment::Helm])]
-    #[TestWith(['Necklace', Type\Equipment::Necklace])]
-    #[TestWith(['Pet', Type\Equipment::Pet])]
-    #[TestWith(['Axe', Type\Weapon::Axe])]
-    #[TestWith(['Bow', Type\Weapon::Bow])]
-    #[TestWith(['Dagger', Type\Weapon::Dagger])]
-    #[TestWith(['Gauntlet', Type\Weapon::Gauntlet])]
-    #[TestWith(['Gun', Type\Weapon::Gun])]
-    #[TestWith(['HandGun', Type\Weapon::HandGun])]
-    #[TestWith(['Mace', Type\Weapon::Mace])]
-    #[TestWith(['Polearm', Type\Weapon::Polearm])]
-    #[TestWith(['Rifle', Type\Weapon::Rifle])]
-    #[TestWith(['Staff', Type\Weapon::Staff])]
-    #[TestWith(['Sword', Type\Weapon::Sword])]
-    #[TestWith(['Wand', Type\Weapon::Wand])]
-    #[TestWith(['Whip', Type\Weapon::Whip])]
-    #[TestWith(['Floor Item', Type\House::Floor])]
-    #[TestWith(['House', Type\House::House])]
-    #[TestWith(['Wall Item', Type\House::Wall])]
-    #[TestWith(['ServerUse', Type\Misc::Boost])]
-    #[TestWith(['Enhancement', Type\Misc::Enhancement])]
-    #[TestWith(['Item', Type\Misc::Generic])]
-    #[TestWith(['Note', Type\Misc::Generic])]
-    #[TestWith(['Quest Item', Type\Misc::Generic])]
-    #[TestWith(['Resource', Type\Misc::Generic])]
-    public function it_translates_the_item_type(
-        string $type,
-        Type\Equipment|Type\Weapon|Type\House|Type\Misc $detail,
-    ): void {
-        static::assertSame($detail, self::load(self::item($type, 'None'))[0]->detail);
+    public function a_class_counts_once_though_its_quantity_holds_its_points(): void
+    {
+        [$sword, , $healer] = self::load(self::INVENTORY);
+
+        static::assertSame(1, $sword->quantity->value);
+        static::assertSame('Healer', $healer->item->name->value);
+        static::assertSame(1, $healer->quantity->value);
+    }
+
+    /** @param class-string<Item> $kind */
+    #[Test]
+    #[TestWith(['Class', ClassItem::class])]
+    #[TestWith(['Armor', Armor::class])]
+    #[TestWith(['Helm', Helm::class])]
+    #[TestWith(['Cape', Cape::class])]
+    #[TestWith(['Pet', Pet::class])]
+    #[TestWith(['Necklace', Necklace::class])]
+    #[TestWith(['Misc', GroundItem::class])]
+    #[TestWith(['ServerUse', Boost::class])]
+    #[TestWith(['Enhancement', Enhancement::class])]
+    #[TestWith(['Item', Resource::class])]
+    #[TestWith(['Note', Resource::class])]
+    #[TestWith(['Quest Item', Resource::class])]
+    #[TestWith(['Resource', Resource::class])]
+    public function it_reads_the_kind_of_item(string $type, string $kind): void
+    {
+        static::assertInstanceOf($kind, self::load(self::item($type))[0]->item);
     }
 
     #[Test]
-    #[TestWith(['Weapon', EquipmentSlot::Weapon])]
-    #[TestWith(['ar', EquipmentSlot::Armor])]
-    #[TestWith(['co', EquipmentSlot::Armor])]
-    #[TestWith(['he', EquipmentSlot::Helm])]
-    #[TestWith(['ba', EquipmentSlot::Cape])]
-    #[TestWith(['pe', EquipmentSlot::Pet])]
-    #[TestWith(['mi', EquipmentSlot::Ground])]
-    #[TestWith(['am', EquipmentSlot::Necklace])]
-    public function it_translates_the_equipment_slot(string $code, EquipmentSlot $slot): void
+    #[TestWith(['Axe', WeaponType::Axe])]
+    #[TestWith(['Bow', WeaponType::Bow])]
+    #[TestWith(['Dagger', WeaponType::Dagger])]
+    #[TestWith(['Gauntlet', WeaponType::Gauntlet])]
+    #[TestWith(['Gun', WeaponType::Gun])]
+    #[TestWith(['HandGun', WeaponType::HandGun])]
+    #[TestWith(['Mace', WeaponType::Mace])]
+    #[TestWith(['Polearm', WeaponType::Polearm])]
+    #[TestWith(['Rifle', WeaponType::Rifle])]
+    #[TestWith(['Staff', WeaponType::Staff])]
+    #[TestWith(['Sword', WeaponType::Sword])]
+    #[TestWith(['Wand', WeaponType::Wand])]
+    #[TestWith(['Whip', WeaponType::Whip])]
+    public function it_reads_the_type_of_weapon(string $type, WeaponType $weapon): void
     {
-        static::assertSame($slot, self::load(self::item('Armor', $code))[0]->slot->unwrap());
+        $item = self::load(self::item($type))[0]->item;
+
+        static::assertInstanceOf(Weapon::class, $item);
+        static::assertSame($weapon, $item->type);
+    }
+
+    #[Test]
+    #[TestWith(['Floor Item', HouseItemType::Floor])]
+    #[TestWith(['Wall Item', HouseItemType::Wall])]
+    #[TestWith(['House', HouseItemType::House])]
+    public function it_reads_the_type_of_house_item(string $type, HouseItemType $house): void
+    {
+        $item = self::load(self::item($type))[0]->item;
+
+        static::assertInstanceOf(HouseItem::class, $item);
+        static::assertSame($house, $item->type);
     }
 
     #[Test]
@@ -116,16 +129,7 @@ final class PlayerInventoryLoadedEventTest extends TestCase
         $this->expectException(MalformedEventException::class);
         $this->expectExceptionMessage("unknown item type 'Spaceship'");
 
-        self::load(self::item('Spaceship', 'None'));
-    }
-
-    #[Test]
-    public function it_rejects_unknown_equipment_slots(): void
-    {
-        $this->expectException(MalformedEventException::class);
-        $this->expectExceptionMessage("unknown equipment slot 'xx'");
-
-        self::load(self::item('Armor', 'xx'));
+        self::load(self::item('Spaceship'));
     }
 
     #[Test]
@@ -144,18 +148,22 @@ final class PlayerInventoryLoadedEventTest extends TestCase
         PlayerInventoryLoadedEvent::from(JsonMessage::from('{"b":{"o":{"cmd":"loadInventoryBig"}}}')->unwrap());
     }
 
-    /** @return list<InventoryItem> */
+    /** @return list<PlayerItem> */
     private static function load(string $message): array
     {
-        return PlayerInventoryLoadedEvent::from(JsonMessage::from($message)->unwrap())->unwrap()->items;
+        return array_values(
+            PlayerInventoryLoadedEvent::from(JsonMessage::from($message)->unwrap())
+                ->unwrap()
+                ->inventory->items->toArray(),
+        );
     }
 
-    private static function item(string $type, string $slot): string
+    private static function item(string $type): string
     {
         return json_encode(['b' => ['o' => [
             'cmd' => 'loadInventoryBig',
             'items' => [
-                ['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type, 'sES' => $slot],
+                ['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type],
             ],
         ]]], flags: JSON_THROW_ON_ERROR);
     }
