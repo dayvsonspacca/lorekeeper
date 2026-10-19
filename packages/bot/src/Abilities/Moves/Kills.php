@@ -7,6 +7,7 @@ namespace Lorekeeper\Bot\Abilities\Moves;
 use Closure;
 use Generator;
 use InvalidArgumentException;
+use Lorekeeper\Bot\Abilities\Fight\ClassRules;
 use Lorekeeper\Bot\Abilities\Fight\Cooldowns;
 use Lorekeeper\Bot\Abilities\Fight\Targets;
 use Lorekeeper\Client\Command\Combat\Attack;
@@ -63,7 +64,12 @@ trait Kills
             $now = $this->now();
             $skill = $target === null
                 ? null
-                : $cooldowns->ready($this->unlocked(), $this->me()->player()->vitals->mana->current, $now);
+                : $cooldowns->ready(
+                    $this->unlocked(),
+                    $this->me()->player()->vitals,
+                    ClassRules::of($this->me()->player()->class->class->name),
+                    $now,
+                );
             if ($target !== null && $skill !== null) {
                 yield $this->send($this->cast($skill, $attack->at($target)));
                 $cooldowns = $cooldowns->used($skill, $now);

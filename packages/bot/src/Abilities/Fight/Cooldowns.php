@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Bot\Abilities\Fight;
 
-use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Psl\Comparison\Order;
@@ -21,7 +21,7 @@ final readonly class Cooldowns
     ) {}
 
     /** @param list<Skill> $skills */
-    public function ready(array $skills, Mana $mana, Timestamp $now): ?Skill
+    public function ready(array $skills, Vitals $vitals, ClassRules $rules, Timestamp $now): ?Skill
     {
         if ($this->waiting(self::ANY, $now)) {
             return null;
@@ -32,16 +32,12 @@ final readonly class Cooldowns
             fn(Skill $skill): bool => (
                 $skill->slot !== SkillSlot::Potion
                 && !$this->waiting($skill->slot->name, $now)
-                && $skill->cost->value <= $mana->value
+                && $skill->cost->value <= $vitals->mana->current->value
+                && $rules->allows($skill, $vitals)
             ),
         ));
 
-        usort(
-            $usable,
-            static fn(Skill $a, Skill $b): int => (
-                (int) ($a->slot === SkillSlot::AutoAttack) <=> (int) ($b->slot === SkillSlot::AutoAttack)
-            ),
-        );
+        usort($usable, static fn(Skill $a, Skill $b): int => self::turn($a, $rules) <=> self::turn($b, $rules));
 
         return $usable[0] ?? null;
     }
@@ -66,6 +62,15 @@ final readonly class Cooldowns
         }
 
         return $soonest->compare(Duration::milliseconds(200)) === Order::Less ? Duration::milliseconds(200) : $soonest;
+    }
+
+    private static function turn(Skill $skill, ClassRules $rules): int
+    {
+        return match (true) {
+            $rules->guards($skill) => 0,
+            $skill->slot === SkillSlot::AutoAttack => 2,
+            default => 1,
+        };
     }
 
     private function waiting(string $slot, Timestamp $now): bool

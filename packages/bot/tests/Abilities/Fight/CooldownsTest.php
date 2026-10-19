@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Bot\Tests\Abilities\Fight;
 
+use Lorekeeper\Bot\Abilities\Fight\ClassRules;
 use Lorekeeper\Bot\Abilities\Fight\Cooldowns;
+use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Support\Gauge;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;
@@ -17,13 +21,25 @@ use Psl\DateTime\Timestamp;
 final class CooldownsTest extends TestCase
 {
     #[Test]
-    public function it_picks_a_skill_before_the_auto_attack_and_skips_what_it_cannot_afford(): void
+    public function it_picks_a_skill_before_the_auto_attack_and_skips_what_it_cannot_afford_and_the_potion(): void
     {
         $cooldowns = new Cooldowns();
         $skills = [self::auto(), self::bolt(cost: 20)];
+        $potion = new Skill(SkillSlot::Potion, SkillTarget::Ally, new Mana(0), Duration::seconds(60));
 
-        static::assertSame(SkillSlot::First, $cooldowns->ready($skills, new Mana(100), self::at(0))?->slot);
-        static::assertSame(SkillSlot::AutoAttack, $cooldowns->ready($skills, new Mana(10), self::at(0))?->slot);
+        static::assertSame(
+            SkillSlot::First,
+            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(0))?->slot,
+        );
+        static::assertSame(
+            SkillSlot::AutoAttack,
+            $cooldowns->ready($skills, self::vitals(mana: 10), ClassRules::none(), self::at(0))?->slot,
+        );
+        static::assertSame(
+            SkillSlot::AutoAttack,
+            $cooldowns->ready([$potion, self::auto()], self::vitals(mana: 100), ClassRules::none(), self::at(0))?->slot,
+        );
+        static::assertNull($cooldowns->ready([$potion], self::vitals(mana: 100), ClassRules::none(), self::at(0)));
     }
 
     #[Test]
@@ -32,25 +48,22 @@ final class CooldownsTest extends TestCase
         $skills = [self::auto(), self::bolt(cost: 20), self::shield(), self::heal()];
         $cooldowns = new Cooldowns();
 
-        static::assertSame(SkillSlot::First, $cooldowns->ready($skills, new Mana(100), self::at(0))?->slot);
+        static::assertSame(
+            SkillSlot::First,
+            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(0))?->slot,
+        );
 
         $cooldowns = $cooldowns->used(self::bolt(cost: 20), self::at(0));
-        static::assertSame(SkillSlot::Third, $cooldowns->ready($skills, new Mana(100), self::at(1))?->slot);
+        static::assertSame(
+            SkillSlot::Third,
+            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(1))?->slot,
+        );
 
         $cooldowns = $cooldowns->used(self::shield(), self::at(1));
-        static::assertSame(SkillSlot::Fourth, $cooldowns->ready($skills, new Mana(100), self::at(2))?->slot);
-    }
-
-    #[Test]
-    public function it_never_picks_the_potion(): void
-    {
-        $potion = new Skill(SkillSlot::Potion, SkillTarget::Ally, new Mana(0), Duration::seconds(60));
-
         static::assertSame(
-            SkillSlot::AutoAttack,
-            new Cooldowns()->ready([self::auto(), $potion], new Mana(100), self::at(0))?->slot,
+            SkillSlot::Fourth,
+            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(2))?->slot,
         );
-        static::assertNull(new Cooldowns()->ready([$potion], new Mana(100), self::at(0)));
     }
 
     #[Test]
@@ -59,9 +72,15 @@ final class CooldownsTest extends TestCase
         $skills = [self::auto(), self::bolt(cost: 20)];
         $cooldowns = new Cooldowns()->used(self::bolt(cost: 20), self::at(0));
 
-        static::assertNull($cooldowns->ready($skills, new Mana(100), self::at(0)));
-        static::assertSame(SkillSlot::AutoAttack, $cooldowns->ready($skills, new Mana(100), self::at(1))?->slot);
-        static::assertSame(SkillSlot::First, $cooldowns->ready($skills, new Mana(100), self::at(6))?->slot);
+        static::assertNull($cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(0)));
+        static::assertSame(
+            SkillSlot::AutoAttack,
+            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(1))?->slot,
+        );
+        static::assertSame(
+            SkillSlot::First,
+            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(6))?->slot,
+        );
     }
 
     #[Test]
@@ -80,6 +99,11 @@ final class CooldownsTest extends TestCase
                 ->wait(self::at(0))
                 ->getTotalMilliseconds(),
         );
+    }
+
+    private static function vitals(int $mana): Vitals
+    {
+        return new Vitals(new Gauge(new Health(390), new Health(390)), new Gauge(new Mana($mana), new Mana(100)));
     }
 
     private static function at(int $seconds): Timestamp
