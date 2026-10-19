@@ -16,7 +16,7 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
-final readonly class PlayerUpdatedEvent implements Event
+readonly class PlayerUpdatedEvent implements Event
 {
     use NamedAfterClass;
 
@@ -24,7 +24,11 @@ final readonly class PlayerUpdatedEvent implements Event
         public PlayerName $name,
     ) {}
 
-    /** @return Option\Option<static> */
+    /**
+     * @return Option\Option<static>
+     *
+     * @mago-expect analysis:unsafe-instantiation
+     */
     #[Override]
     public static function from(Message $message): Option\Option
     {

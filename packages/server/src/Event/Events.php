@@ -29,6 +29,7 @@ use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
 use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
 use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
+use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
@@ -75,6 +76,7 @@ final readonly class Events
         PlayerEnteredEvent::class,
         PlayerLeftEvent::class,
         PlayerUpdatedEvent::class,
+        PlayerVitalsUpdatedEvent::class,
         QuestLoadedEvent::class,
         ShopLoadedEvent::class,
     ];
