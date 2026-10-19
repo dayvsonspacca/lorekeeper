@@ -9,22 +9,21 @@ use Lorekeeper\Core\Player\PlayerName;
 use Psl\Async\LinkedCancellationToken;
 use Psl\Async\SignalCancellationToken;
 use Psl\Async\TimeoutCancellationToken;
-use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
 use Psl\IO;
 use Revolt\EventLoop;
+use RuntimeException;
 use SensitiveParameter;
 use Throwable;
 
 final readonly class Command
 {
     private const string USAGE = <<<'TEXT'
-        Usage: AQW_PLAYER=name AQW_PASSWORD=secret bin/record <scenario> [--for=seconds] [--level=n]
+        Usage: AQW_PLAYER=name AQW_PASSWORD=secret bin/record <script.php> [--for=seconds]
 
-        Enters the game, plays the scenario and records every message sent and
-        received in records/. AQW_SERVER picks a server; Ctrl+C stops early.
-
-        Scenarios:
+        Enters the game, plays the script the file returns and records every
+        message sent and received in records/. The run stops after --for seconds
+        (60 by default) or on Ctrl+C. AQW_SERVER picks a server.
 
         TEXT;
 
@@ -37,7 +36,7 @@ final readonly class Command
         $screen = IO\output_handle();
         $request = Request::parse($arguments, $environment);
         if ($request === null) {
-            $screen->writeAll(self::usage());
+            $screen->writeAll(self::USAGE);
 
             return 1;
         }
@@ -48,7 +47,21 @@ final readonly class Command
             return 1;
         }
 
-        $path = $records . '/' . Timestamp::now()->format('yyyyMMdd-HHmmss') . "-{$request->scenario->value}.jsonl";
+        try {
+            $script = ScriptFile::load($request->script);
+        } catch (RuntimeException $missing) {
+            $screen->writeAll("{$missing->getMessage()}\n");
+
+            return 1;
+        }
+
+        $path =
+            $records
+            . '/'
+            . Timestamp::now()->format('yyyyMMdd-HHmmss')
+            . '-'
+            . ScriptFile::name($request->script)
+            . '.jsonl';
         $stop = new SignalCancellationToken();
         if (extension_loaded('pcntl')) {
             /** @mago-expect lint:prefer-first-class-callable */
@@ -59,18 +72,11 @@ final readonly class Command
         try {
             $summary = new Session()->record(
                 new Credentials(new PlayerName($request->player), $request->password, $request->server),
-                $request->scenario->script($request->options, $request->length),
+                $script,
                 static function (#[SensitiveParameter] string $token) use ($path, $screen, &$recording): Recording {
                     return $recording = new Recording($path, $token, $screen);
                 },
-                new LinkedCancellationToken(
-                    $stop,
-                    new TimeoutCancellationToken(
-                        $request->scenario === Scenario::Watch
-                            ? $request->length->plus(Duration::seconds(30))
-                            : $request->length,
-                    ),
-                ),
+                new LinkedCancellationToken($stop, new TimeoutCancellationToken($request->length)),
             );
         } catch (Throwable $failure) {
             $summary = "Failed: {$failure->getMessage()}";
@@ -79,15 +85,5 @@ final readonly class Command
         $screen->writeAll("\n{$summary}\n" . ($recording?->messages() ?? 0) . " messages recorded in {$path}\n");
 
         return 0;
-    }
-
-    private static function usage(): string
-    {
-        $usage = self::USAGE;
-        foreach (Scenario::cases() as $scenario) {
-            $usage .= sprintf("  %-10s %s\n", $scenario->value, $scenario->description());
-        }
-
-        return $usage;
     }
 }

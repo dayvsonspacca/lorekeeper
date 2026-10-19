@@ -5,34 +5,32 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Recorder\Tests;
 
 use Lorekeeper\Apps\Recorder\Request;
-use Lorekeeper\Apps\Recorder\Scenario;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class RequestTest extends TestCase
 {
     #[Test]
-    public function it_reads_the_scenario_and_its_options_and_takes_the_account_from_the_environment(): void
+    public function it_takes_the_script_file_and_how_long_to_play_and_the_account_from_the_environment(): void
     {
-        $request = Request::parse(['level-up', '--for=300', '--level=12'], [
+        $request = Request::parse(['scripts/LevelUp.php', '--for=300'], [
             ...self::environment(),
             'AQW_SERVER' => 'Twilly',
         ]);
 
         static::assertNotNull($request);
-        static::assertSame(Scenario::LevelUp, $request->scenario);
-        static::assertSame(['lorekeeper03', 'Twilly', 300], [
+        static::assertSame(['scripts/LevelUp.php', 'lorekeeper03', 'Twilly', 300], [
+            $request->script,
             $request->player,
             $request->server,
             (int) $request->length->getTotalSeconds(),
         ]);
-        static::assertSame(['for' => '300', 'level' => '12'], $request->options);
     }
 
     #[Test]
-    public function it_watches_for_a_minute_on_any_server_unless_told_otherwise(): void
+    public function it_plays_for_a_minute_on_any_server_unless_told_otherwise(): void
     {
-        $request = Request::parse(['watch'], self::environment());
+        $request = Request::parse(['scripts/Watch.php'], self::environment());
 
         static::assertNotNull($request);
         static::assertNull($request->server);
@@ -40,11 +38,10 @@ final class RequestTest extends TestCase
     }
 
     #[Test]
-    public function it_needs_a_known_scenario_and_the_account_in_the_environment(): void
+    public function it_needs_a_script_and_the_account_in_the_environment(): void
     {
         static::assertNull(Request::parse([], self::environment()));
-        static::assertNull(Request::parse(['dance'], self::environment()));
-        static::assertNull(Request::parse(['watch'], ['AQW_PLAYER' => 'lorekeeper03']));
+        static::assertNull(Request::parse(['scripts/Watch.php'], ['AQW_PLAYER' => 'lorekeeper03']));
     }
 
     /** @return array<string, string> */

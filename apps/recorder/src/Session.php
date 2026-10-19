@@ -24,7 +24,7 @@ final readonly class Session
     ) {}
 
     /**
-     * @param Script<object> $script
+     * @param Script<mixed> $script
      * @param Closure(string): Recording $recording
      *
      * @throws RuntimeException

@@ -13,18 +13,14 @@ final readonly class Request
 
     /**
      * @param non-empty-string $player
-     * @param array<string, string> $options
-     *
-     * @mago-expect lint:excessive-parameter-list
      */
     public function __construct(
-        public Scenario $scenario,
+        public string $script,
         public string $player,
         #[SensitiveParameter]
         public string $password,
         public ?string $server,
         public Duration $length,
-        public array $options,
     ) {}
 
     /**
@@ -33,34 +29,31 @@ final readonly class Request
      */
     public static function parse(array $arguments, #[SensitiveParameter] array $environment): ?self
     {
-        $scenario = null;
-        $options = [];
+        $script = null;
+        $seconds = self::DEFAULT_SECONDS;
         foreach ($arguments as $argument) {
             $option = [];
-            if (preg_match('/^--([a-z]+)=(.+)$/', $argument, $option) === 1) {
-                $options[$option[1]] = $option[2];
+            if (preg_match('/^--for=(\d+)$/', $argument, $option) === 1) {
+                $seconds = (int) $option[1];
 
                 continue;
             }
 
-            $scenario ??= Scenario::tryFrom($argument);
+            $script ??= $argument;
         }
 
         $player = $environment['AQW_PLAYER'] ?? '';
         $password = $environment['AQW_PASSWORD'] ?? '';
-        if ($scenario === null || $player === '' || $password === '') {
+        if ($script === null || $player === '' || $password === '') {
             return null;
         }
 
-        $seconds = (int) ($options['for'] ?? self::DEFAULT_SECONDS);
-
         return new self(
-            $scenario,
+            $script,
             $player,
             $password,
             ($environment['AQW_SERVER'] ?? '') === '' ? null : $environment['AQW_SERVER'],
             Duration::seconds(max(1, $seconds)),
-            $options,
         );
     }
 }
