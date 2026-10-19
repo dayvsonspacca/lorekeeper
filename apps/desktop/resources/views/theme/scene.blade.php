@@ -136,7 +136,8 @@
     .lk-hero__name { font-size: 1.45rem; font-weight: 900; letter-spacing: -.02em; margin-top: .4rem; }
     .lk-hero__class { font-size: .82rem; color: var(--lk-muted); display: flex; align-items: center; gap: .45rem; }
     .lk-hero__facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; margin-top: 1rem; }
-    .lk-fact { padding: .55rem .6rem; border-radius: .75rem; background: rgba(2, 6, 23, .5); border: 1px solid var(--lk-line); text-align: center; }
+    .lk-fact { padding: .55rem .6rem; border-radius: .75rem; background: rgba(2, 6, 23, .5); border: 1px solid var(--lk-line); text-align: center; color: inherit; text-decoration: none; }
+    a.lk-fact:hover { border-color: var(--lk-line-2); }
     .lk-fact strong { display: block; font-size: .98rem; font-weight: 800; }
     .lk-fact span { font-size: .64rem; color: var(--lk-faint); text-transform: uppercase; letter-spacing: .08em; }
 
@@ -208,5 +209,30 @@
 
     .lk-waiting { display: grid; place-items: center; gap: .8rem; padding: 3rem 1rem; text-align: center; color: var(--lk-muted); }
     .lk-waiting__orb { width: 3.5rem; height: 3.5rem; border-radius: 50%; background: conic-gradient(from 0deg, var(--lk-gold), transparent 70%); animation: lk-spin 1.4s linear infinite; mask: radial-gradient(circle, transparent 55%, #000 57%); }
+    .lk-backpack__tools { display: flex; gap: .75rem; align-items: start; flex-wrap: wrap; margin-bottom: .4rem; }
+    .lk-backpack__tools .lk-tabs { flex: 1; min-width: 0; margin-bottom: 0; }
+    .lk-backpack__tools .lk-tab { text-transform: capitalize; letter-spacing: .02em; }
+    .lk-search { display: flex; align-items: center; gap: .4rem; padding: .3rem .65rem; border-radius: 999px; background: rgba(2, 6, 23, .55); border: 1px solid var(--lk-line); color: var(--lk-faint); }
+    .lk-search svg { width: .85rem; height: .85rem; }
+    .lk-search input { width: 11rem; background: transparent; border: 0; outline: 0; padding: 0; color: var(--lk-text); font-size: .78rem; box-shadow: none; }
+    .lk-backpack__label { margin: .9rem 0 .5rem; font-size: .68rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--lk-muted); }
+    .lk-bag { display: grid; grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr)); gap: .45rem; max-height: 21rem; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, .25) transparent; }
+    .lk-item { display: flex; align-items: center; gap: .55rem; min-width: 0; padding: .45rem .55rem; border-radius: .7rem; background: linear-gradient(180deg, rgba(34, 43, 65, .7), rgba(15, 21, 37, .7)); border: 1px solid var(--lk-line); }
+    .lk-item[data-temporary] { border-style: dashed; border-color: rgba(251, 191, 36, .45); background: radial-gradient(120% 140% at 0% 0%, rgba(251, 191, 36, .1), transparent 60%), rgba(15, 21, 37, .7); }
+    .lk-item__icon { width: 1.9rem; height: 1.9rem; flex-shrink: 0; display: grid; place-items: center; border-radius: .55rem; color: var(--tone, #94a3b8); background: color-mix(in oklab, var(--tone, #94a3b8) 16%, transparent); }
+    .lk-item__icon svg { width: 1rem; height: 1rem; }
+    .lk-item__icon[data-kind="class"] { --tone: #fbbf24; }
+    .lk-item__icon[data-kind="armor"] { --tone: #60a5fa; }
+    .lk-item__icon[data-kind="helm"] { --tone: #a5b4fc; }
+    .lk-item__icon[data-kind="cape"] { --tone: #c084fc; }
+    .lk-item__icon[data-kind="weapon"] { --tone: #f87171; }
+    .lk-item__icon[data-kind="pet"] { --tone: #4ade80; }
+    .lk-item__icon[data-kind="necklace"] { --tone: #22d3ee; }
+    .lk-item__icon[data-kind="house"] { --tone: #fb923c; }
+    .lk-item__icon[data-kind="boost"], .lk-item__icon[data-kind="enhancement"] { --tone: #f0abfc; }
+    .lk-item__name { flex: 1; min-width: 0; font-size: .78rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lk-item__name small { display: block; font-size: .64rem; font-weight: 500; color: var(--lk-faint); }
+    .lk-item__qty { flex-shrink: 0; font-size: .72rem; font-weight: 800; color: var(--lk-muted); }
+    .lk-item__member { flex-shrink: 0; padding: 0 .3rem; border-radius: .3rem; font-size: .6rem; font-weight: 900; color: #1c1917; background: var(--lk-gold); }
     @keyframes lk-spin { to { transform: rotate(360deg); } }
 </style>

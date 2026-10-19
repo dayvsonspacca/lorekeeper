@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
+use Lorekeeper\Apps\Desktop\Bots\Scene\Backpack;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Feed;
 use Lorekeeper\Apps\Desktop\Bots\Scene\FeedKind;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Pulse;
@@ -130,6 +131,13 @@ final class DesktopTest extends TestCase
             'r3a · fighting here',
             'Frost Spirit',
             'Lv 33',
+            'Inventory · 3 items',
+            'Held for now',
+            'Metal Ore',
+            'Kept',
+            'Healer',
+            'Crypto Token',
+            '×4',
             'Pace',
             'XP per hour',
             '1,200',
@@ -455,6 +463,7 @@ final class DesktopTest extends TestCase
                     ->rewarded($now - 60, experience: 700),
                 new Feed()->add($now - 30, FeedKind::Defeated, 'Defeated Frost Spirit', '+700 XP · +40 gold'),
                 $now,
+                self::backpack(),
             )->toArray(),
         ]);
 
@@ -470,6 +479,35 @@ final class DesktopTest extends TestCase
         ]);
 
         return $run;
+    }
+
+    private static function backpack(): Backpack
+    {
+        return new Backpack([
+            [
+                'id' => 15_651,
+                'name' => 'Healer',
+                'kind' => 'class',
+                'type' => 'Class',
+                'quantity' => 1,
+                'member' => false,
+            ],
+            [
+                'id' => 42_657,
+                'name' => 'Crypto Token',
+                'kind' => 'resource',
+                'type' => 'Resource',
+                'quantity' => 4,
+                'member' => false,
+            ],
+        ], [[
+            'id' => 42_658,
+            'name' => 'Metal Ore',
+            'kind' => 'resource',
+            'type' => 'Resource',
+            'quantity' => 1,
+            'member' => false,
+        ]]);
     }
 
     private function account(): Account

@@ -62,6 +62,7 @@ final readonly class Scene
         public Pulse $pulse,
         public Feed $feed,
         public int $at,
+        public Backpack $backpack = new Backpack(),
     ) {}
 
     public static function capture(Character $me, Room $room, Pulse $pulse, Feed $feed, int $now): self
@@ -112,6 +113,7 @@ final readonly class Scene
             $pulse,
             $feed,
             $now,
+            Backpack::of($player->inventory),
         );
     }
 
@@ -130,6 +132,7 @@ final readonly class Scene
             new Pulse($scene['pulse']),
             new Feed($scene['feed']),
             $scene['at'],
+            Backpack::fromArray($scene['backpack'] ?? ['kept' => [], 'temporary' => []]),
         );
     }
 
@@ -143,6 +146,7 @@ final readonly class Scene
             'pulse' => $this->pulse->minutes,
             'feed' => $this->feed->lines,
             'at' => $this->at,
+            'backpack' => $this->backpack->toArray(),
         ];
     }
 
@@ -206,6 +210,10 @@ final readonly class Scene
      *     pulse: array<int, array{int, int}>,
      *     feed: list<array{at: int, kind: string, text: string, detail: ?string}>,
      *     at: int,
+     *     backpack?: array{
+     *         kept: list<array{id: int, name: string, kind: string, type: string, quantity: int, member: bool}>,
+     *         temporary: list<array{id: int, name: string, kind: string, type: string, quantity: int, member: bool}>,
+     *     },
      * }>
      */
     private static function type(): Type\TypeInterface
@@ -257,6 +265,7 @@ final readonly class Scene
                 'detail' => Type\nullable(Type\string()),
             ])),
             'at' => Type\int(),
+            'backpack' => Type\optional(Backpack::type()),
         ]);
     }
 }

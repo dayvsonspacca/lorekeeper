@@ -53,10 +53,10 @@
                         <strong>{{ number_format($hero['points']) }}</strong>
                         <span>class points</span>
                     </div>
-                    <div class="lk-fact">
+                    <a class="lk-fact" href="#lk-inventory">
                         <strong>{{ number_format($hero['items']) }}</strong>
                         <span>items</span>
-                    </div>
+                    </a>
                 </div>
             </section>
 
@@ -138,6 +138,13 @@
                 @endif
             </section>
         </div>
+
+        <section class="lk-panel" id="lk-inventory">
+            <div class="lk-panel__title">
+                <h3><x-scene.glyph name="package" /> Inventory · {{ number_format($scene->backpack->count()) }} items</h3>
+            </div>
+            <x-scene.backpack :backpack="$scene->backpack" />
+        </section>
 
         @php
             $panel = $task?->script->view(\Lorekeeper\Apps\Desktop\Bots\ScriptView::Panel);
