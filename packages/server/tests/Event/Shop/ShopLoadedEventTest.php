@@ -6,17 +6,24 @@ namespace Lorekeeper\Server\Tests\Event\Shop;
 
 use Lorekeeper\Core\Currency\AdventureCoins;
 use Lorekeeper\Core\Currency\Gold;
-use Lorekeeper\Core\Item\EquipmentSlot;
+use Lorekeeper\Core\Item\Equipment\Armor;
+use Lorekeeper\Core\Item\Equipment\Weapon;
+use Lorekeeper\Core\Item\Equipment\WeaponType;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
-use Lorekeeper\Core\Item\Type;
+use Lorekeeper\Core\Item\ItemTag;
+use Lorekeeper\Core\Item\Misc\Boost;
+use Lorekeeper\Core\Item\Misc\Resource;
+use Lorekeeper\Core\World\Shop\CurrencyShop;
+use Lorekeeper\Core\World\Shop\CurrencyShopItem;
+use Lorekeeper\Core\World\Shop\MergeShop;
+use Lorekeeper\Core\World\Shop\MergeShopItem;
+use Lorekeeper\Core\World\Shop\ShopTag;
 use Lorekeeper\Server\Event\Mention\Mention;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
-use Lorekeeper\Server\Event\Shop\ShopLoadedItem;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
 final class ShopLoadedEventTest extends TestCase
@@ -30,102 +37,61 @@ final class ShopLoadedEventTest extends TestCase
         JSON;
 
     #[Test]
-    public function it_reads_a_real_shop(): void
+    public function it_reads_a_real_shop_that_sells_for_gold_and_adventure_coins(): void
     {
-        $shop = self::load(self::ASSORTED_SHOP);
-        [$fan, $armor, $map] = $shop->items;
+        $shop = self::load(self::ASSORTED_SHOP)->shop;
 
+        static::assertInstanceOf(CurrencyShop::class, $shop);
         static::assertSame(31, $shop->id->value);
         static::assertSame('Battleon Assorted shop', $shop->name->value);
-        static::assertFalse($shop->memberOnly);
+        static::assertFalse($shop->tags->has(ShopTag::MemberOnly));
+        static::assertFalse($shop->tags->has(ShopTag::House));
 
-        static::assertSame('Lovely Fan', $fan->name->value);
-        static::assertSame(Type\Weapon::Dagger, $fan->detail);
-        static::assertSame(Type\ItemCategory::Equipment, $fan->category);
-        static::assertSame(EquipmentSlot::Weapon, $fan->slot->unwrap());
-        static::assertInstanceOf(Gold::class, $fan->price->unwrap()->amount);
-        static::assertSame(5000, $fan->price->unwrap()->amount->value);
-        static::assertSame('items/daggers/Fan01.swf', $fan->file->unwrap()->value);
-        static::assertTrue($fan->link->isNone());
-        static::assertSame([], $fan->costs);
+        /** @var list<CurrencyShopItem> $items */
+        $items = array_values($shop->inventory->items->toArray());
+        [$fan, $armor, $map] = $items;
 
-        static::assertInstanceOf(AdventureCoins::class, $armor->price->unwrap()->amount);
-        static::assertSame('GladiatorOfCircumstance', $armor->link->unwrap()->value);
-
-        static::assertSame(Type\Misc::Generic, $map->detail);
-        static::assertTrue($map->slot->isNone());
-        static::assertTrue($map->file->isNone());
+        static::assertInstanceOf(Weapon::class, $fan->item);
+        static::assertSame(WeaponType::Dagger, $fan->item->type);
+        static::assertSame('Lovely Fan', $fan->item->name->value);
+        static::assertInstanceOf(Gold::class, $fan->price->amount);
+        static::assertSame(5000, $fan->price->amount->value);
+        static::assertInstanceOf(Armor::class, $armor->item);
+        static::assertInstanceOf(AdventureCoins::class, $armor->price->amount);
+        static::assertSame(450, $armor->price->amount->value);
+        static::assertInstanceOf(Resource::class, $map->item);
+        static::assertFalse($map->item->tags->has(ItemTag::MemberOnly));
     }
 
     #[Test]
-    public function it_reads_the_merge_costs_and_mentions_each_material_once(): void
+    public function it_reads_a_real_merge_shop_and_mentions_each_material_once(): void
     {
-        $shop = self::load(self::MERGE_SHOP);
+        $event = self::load(self::MERGE_SHOP);
+        $shop = $event->shop;
 
+        static::assertInstanceOf(MergeShop::class, $shop);
         static::assertSame('Reward Gem Shop', $shop->name->value);
+
+        /** @var list<MergeShopItem> $items */
+        $items = array_values($shop->inventory->items->toArray());
+
         static::assertSame(
             [15, 5, 7, 3, 10],
-            array_map(static fn(ShopLoadedItem $item): int => $item->costs[0]->quantity->value, $shop->items),
+            array_map(static fn(MergeShopItem $item): int => $item->costs[0]->quantity->value, $items),
         );
-        static::assertSame(17_109, $shop->items[0]->costs[0]->itemId->value);
-        static::assertTrue($shop->items[0]->price->isNone());
-        static::assertSame(Type\Misc::Boost, $shop->items[3]->detail);
-
-        $mentions = $shop->mentions();
-
-        static::assertEquals([new Mention(new ItemId(17_109), new ItemName('Realm Gem'))], $mentions);
+        static::assertSame(17_109, $items[0]->costs[0]->itemId->value);
+        static::assertInstanceOf(Boost::class, $items[3]->item);
+        static::assertEquals([new Mention(new ItemId(17_109), new ItemName('Realm Gem'))], $event->mentions());
         static::assertSame([], self::load(self::ASSORTED_SHOP)->mentions());
     }
 
     #[Test]
-    #[TestWith(['Armor', Type\Equipment::Armor])]
-    #[TestWith(['Cape', Type\Equipment::Cape])]
-    #[TestWith(['Class', Type\Equipment::CharacterClass])]
-    #[TestWith(['Misc', Type\Equipment::Ground])]
-    #[TestWith(['Helm', Type\Equipment::Helm])]
-    #[TestWith(['Necklace', Type\Equipment::Necklace])]
-    #[TestWith(['Pet', Type\Equipment::Pet])]
-    #[TestWith(['Axe', Type\Weapon::Axe])]
-    #[TestWith(['Bow', Type\Weapon::Bow])]
-    #[TestWith(['Dagger', Type\Weapon::Dagger])]
-    #[TestWith(['Gauntlet', Type\Weapon::Gauntlet])]
-    #[TestWith(['Gun', Type\Weapon::Gun])]
-    #[TestWith(['HandGun', Type\Weapon::HandGun])]
-    #[TestWith(['Mace', Type\Weapon::Mace])]
-    #[TestWith(['Polearm', Type\Weapon::Polearm])]
-    #[TestWith(['Rifle', Type\Weapon::Rifle])]
-    #[TestWith(['Staff', Type\Weapon::Staff])]
-    #[TestWith(['Sword', Type\Weapon::Sword])]
-    #[TestWith(['Wand', Type\Weapon::Wand])]
-    #[TestWith(['Whip', Type\Weapon::Whip])]
-    #[TestWith(['Floor Item', Type\House::Floor])]
-    #[TestWith(['House', Type\House::House])]
-    #[TestWith(['Wall Item', Type\House::Wall])]
-    #[TestWith(['ServerUse', Type\Misc::Boost])]
-    #[TestWith(['Enhancement', Type\Misc::Enhancement])]
-    #[TestWith(['Item', Type\Misc::Generic])]
-    #[TestWith(['Note', Type\Misc::Generic])]
-    #[TestWith(['Quest Item', Type\Misc::Generic])]
-    #[TestWith(['Resource', Type\Misc::Generic])]
-    public function it_translates_the_item_type(
-        string $type,
-        Type\Equipment|Type\Weapon|Type\House|Type\Misc $detail,
-    ): void {
-        static::assertSame($detail, self::load(self::shop($type, 'None'))->items[0]->detail);
-    }
-
-    #[Test]
-    #[TestWith(['Weapon', EquipmentSlot::Weapon])]
-    #[TestWith(['ar', EquipmentSlot::Armor])]
-    #[TestWith(['co', EquipmentSlot::Armor])]
-    #[TestWith(['he', EquipmentSlot::Helm])]
-    #[TestWith(['ba', EquipmentSlot::Cape])]
-    #[TestWith(['pe', EquipmentSlot::Pet])]
-    #[TestWith(['mi', EquipmentSlot::Ground])]
-    #[TestWith(['am', EquipmentSlot::Necklace])]
-    public function it_translates_the_equipment_slot(string $code, EquipmentSlot $slot): void
+    public function it_tags_shops_for_members_and_for_houses(): void
     {
-        static::assertSame($slot, self::load(self::shop('Armor', $code))->items[0]->slot->unwrap());
+        $shop = self::load(self::shop(['bUpgrd' => true, 'bHouse' => true]))->shop;
+
+        static::assertTrue($shop->tags->has(ShopTag::MemberOnly));
+        static::assertTrue($shop->tags->has(ShopTag::House));
     }
 
     #[Test]
@@ -134,16 +100,16 @@ final class ShopLoadedEventTest extends TestCase
         $this->expectException(MalformedEventException::class);
         $this->expectExceptionMessage("unknown item type 'Spaceship'");
 
-        self::load(self::shop('Spaceship', 'None'));
+        self::load(self::shop(type: 'Spaceship'));
     }
 
     #[Test]
-    public function it_rejects_unknown_equipment_slots(): void
+    public function it_rejects_a_merge_that_costs_nothing(): void
     {
         $this->expectException(MalformedEventException::class);
-        $this->expectExceptionMessage("unknown equipment slot 'xx'");
+        $this->expectExceptionMessage('Merging Hero Item costs nothing.');
 
-        self::load(self::shop('Armor', 'xx'));
+        self::load(self::shop(['bMerge' => true]));
     }
 
     #[Test]
@@ -167,15 +133,16 @@ final class ShopLoadedEventTest extends TestCase
         return ShopLoadedEvent::from(JsonMessage::from($message)->unwrap())->unwrap();
     }
 
-    private static function shop(string $type, string $slot): string
+    /** @param array<string, bool> $flags */
+    private static function shop(array $flags = [], string $type = 'Armor'): string
     {
         return json_encode(['b' => ['o' => [
             'cmd' => 'loadShop',
             'shopinfo' => [
                 'ShopID' => 1,
                 'sName' => 'Hero Shop',
-                'bUpgrd' => true,
-                'items' => [['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type, 'sES' => $slot]],
+                ...$flags,
+                'items' => [['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type, 'iCost' => 0]],
             ],
         ]]], flags: JSON_THROW_ON_ERROR);
     }
