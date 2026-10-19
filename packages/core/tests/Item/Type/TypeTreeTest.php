@@ -22,7 +22,7 @@ final class TypeTreeTest extends TestCase
     public function every_equipment_belongs_to_the_equipment_category(): void
     {
         foreach (Type\Equipment::cases() as $equipment) {
-            static::assertSame(Type\Category::Equipment, $equipment->parent());
+            static::assertSame(Type\ItemCategory::Equipment, $equipment->parent());
         }
     }
 
@@ -30,7 +30,7 @@ final class TypeTreeTest extends TestCase
     public function every_house_item_belongs_to_the_house_category(): void
     {
         foreach (Type\House::cases() as $house) {
-            static::assertSame(Type\Category::House, $house->parent());
+            static::assertSame(Type\ItemCategory::House, $house->parent());
         }
     }
 
@@ -38,7 +38,7 @@ final class TypeTreeTest extends TestCase
     public function every_misc_item_belongs_to_the_misc_category(): void
     {
         foreach (Type\Misc::cases() as $misc) {
-            static::assertSame(Type\Category::Misc, $misc->parent());
+            static::assertSame(Type\ItemCategory::Misc, $misc->parent());
         }
     }
 }

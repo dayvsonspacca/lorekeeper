@@ -15,8 +15,8 @@ enum Equipment
     case Pet;
     case Weapon;
 
-    public function parent(): Category
+    public function parent(): ItemCategory
     {
-        return Category::Equipment;
+        return ItemCategory::Equipment;
     }
 }

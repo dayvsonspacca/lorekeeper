@@ -10,8 +10,8 @@ enum Misc
     case Enhancement;
     case Generic;
 
-    public function parent(): Category
+    public function parent(): ItemCategory
     {
-        return Category::Misc;
+        return ItemCategory::Misc;
     }
 }

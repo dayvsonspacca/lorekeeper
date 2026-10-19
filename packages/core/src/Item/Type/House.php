@@ -10,8 +10,8 @@ enum House
     case House;
     case Wall;
 
-    public function parent(): Category
+    public function parent(): ItemCategory
     {
-        return Category::House;
+        return ItemCategory::House;
     }
 }
