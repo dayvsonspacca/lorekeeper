@@ -13,7 +13,7 @@ use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Item\ItemKinds;
+use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;

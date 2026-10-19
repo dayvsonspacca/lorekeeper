@@ -25,7 +25,7 @@ use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopName;
 use Lorekeeper\Core\World\Shop\ShopTag;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Item\ItemKinds;
+use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Event\Mention\Mention;
 use Lorekeeper\Server\Event\Mention\Mentions;
 use Lorekeeper\Server\Event\NamedAfterClass;

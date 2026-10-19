@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Server\Tests\Event\Item;
+namespace Lorekeeper\Server\Tests\Event\Item\Helper;
 
 use Lorekeeper\Core\Item\Equipment\Armor;
 use Lorekeeper\Core\Item\Equipment\Cape;
@@ -22,7 +22,7 @@ use Lorekeeper\Core\Item\Misc\Boost;
 use Lorekeeper\Core\Item\Misc\Enhancement;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
-use Lorekeeper\Server\Event\Item\ItemKinds;
+use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;

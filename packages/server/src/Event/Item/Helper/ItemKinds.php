@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Server\Event\Item;
+namespace Lorekeeper\Server\Event\Item\Helper;
 
 use Lorekeeper\Core\Item\Equipment\Armor;
 use Lorekeeper\Core\Item\Equipment\Cape;
