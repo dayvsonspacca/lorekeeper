@@ -101,7 +101,7 @@ final class RunBot extends Command
         $client->subscribe($recorder->heard(...));
         $client->character()->subscribe($recorder);
         $recorder->update($client->character());
-        $run->log("Entered the game in {$client->character()->position()->map->value}", LogLevel::Success);
+        $run->log("Entered the game in {$client->character()->location()->map->name->value}", LogLevel::Success);
 
         $waiting = false;
         while (!$stop->isCancelled()) {
@@ -110,7 +110,7 @@ final class RunBot extends Command
             if ($task === null) {
                 if (!$waiting) {
                     $waiting = true;
-                    $run->log("Waiting for tasks in {$client->character()->position()->map->value}");
+                    $run->log("Waiting for tasks in {$client->character()->location()->map->name->value}");
                 }
 
                 $waited = $client->wait(Duration::seconds(2), $stop);

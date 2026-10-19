@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Bots;
 
-use LogicException;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
 use Lorekeeper\Client\Character;
@@ -50,12 +49,8 @@ final class RunRecorder implements ObserverInterface
             return;
         }
 
-        try {
-            $map = $subject->position()->map->value;
-            $level = $subject->level()->value;
-        } catch (LogicException) {
-            return;
-        }
+        $map = $subject->location()->map->name->value;
+        $level = $subject->player()->level->value;
 
         if ($this->run->map !== $map) {
             $this->run->update(['map' => $map]);
