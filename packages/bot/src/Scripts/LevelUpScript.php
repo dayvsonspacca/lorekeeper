@@ -9,12 +9,10 @@ use Generator;
 use Lorekeeper\Bot\Abilities\Moves\Joins;
 use Lorekeeper\Bot\Abilities\Moves\Kills;
 use Lorekeeper\Bot\BotScript;
-use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Client\Script\Done;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\TimedOut;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapName;
@@ -23,7 +21,6 @@ use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\Event\Event;
 use Override;
 use Psl\DateTime\Timestamp;
-use RuntimeException;
 
 final class LevelUpScript extends BotScript
 {
@@ -88,18 +85,6 @@ final class LevelUpScript extends BotScript
             yield from $this->kill($spot, $this->attackIn($spot->cell), fn(): bool => $this->level() >= $next);
             yield $this->progress();
         }
-    }
-
-    /** @throws RuntimeException */
-    private function attackIn(MapCell $cell): AttackMonsterCommand
-    {
-        foreach ($this->me()->location()->map->monsters as $monster) {
-            if ($monster->cell->value === $cell->value) {
-                return new AttackMonsterCommand($this->me()->location()->area, SkillSlot::AutoAttack, $monster->id);
-            }
-        }
-
-        throw new RuntimeException("There are no monsters in {$cell->value}.");
     }
 
     private function level(): int

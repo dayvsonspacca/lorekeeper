@@ -11,6 +11,7 @@ use Lorekeeper\Bot\Abilities\Fight\ClassRules;
 use Lorekeeper\Bot\Abilities\Fight\Cooldowns;
 use Lorekeeper\Bot\Abilities\Fight\Targets;
 use Lorekeeper\Client\Command\Combat\Attack;
+use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Client\Command\Combat\ResurrectCommand;
 use Lorekeeper\Client\Command\Combat\SupportPlayerCommand;
 use Lorekeeper\Client\Command\Command;
@@ -19,8 +20,10 @@ use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Player\PlayerSkill;
+use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
@@ -95,6 +98,18 @@ trait Kills
         }
 
         return new SupportPlayerCommand($this->me()->location()->area, $skill->slot, $this->me()->socketId());
+    }
+
+    /** @throws RuntimeException */
+    protected function attackIn(MapCell $cell): AttackMonsterCommand
+    {
+        foreach ($this->me()->location()->map->monsters as $monster) {
+            if ($monster->cell->value === $cell->value) {
+                return new AttackMonsterCommand($this->me()->location()->area, SkillSlot::AutoAttack, $monster->id);
+            }
+        }
+
+        throw new RuntimeException("There are no monsters in {$cell->value}.");
     }
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, void> */
