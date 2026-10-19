@@ -6,6 +6,7 @@ namespace Lorekeeper\Client\Tracking;
 
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
@@ -16,10 +17,22 @@ final readonly class StateTracking
     {
         return match (true) {
             $event instanceof MovedToMapEvent => self::arrived($state, $event, $me),
+            $event instanceof PlayersStateChangedEvent => self::changed($state, $event, $me),
             $event instanceof PlayerDiedEvent => CombatState::Dead,
             $event instanceof ResurrectedEvent => CombatState::Idle,
             default => $state,
         };
+    }
+
+    private static function changed(CombatState $state, PlayersStateChangedEvent $event, Identity $me): CombatState
+    {
+        foreach ($event->players as $player) {
+            if ($me->is($player->player)) {
+                return $player->state;
+            }
+        }
+
+        return $state;
     }
 
     private static function arrived(CombatState $state, MovedToMapEvent $event, Identity $me): CombatState
