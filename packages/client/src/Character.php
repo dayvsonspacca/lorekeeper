@@ -16,6 +16,7 @@ use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerSkill;
+use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
@@ -28,6 +29,7 @@ use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
+use Lorekeeper\Server\Event\Reward\RewardedEvent;
 use Lorekeeper\Server\SocketId;
 use Psl\Observer\SubjectInterface;
 
@@ -38,8 +40,6 @@ use Psl\Observer\SubjectInterface;
 final class Character implements SubjectInterface
 {
     use Observable;
-
-    private ?ClassChangedEvent $changingClass = null;
 
     public function __construct(
         private readonly SocketId $socketId,
@@ -96,8 +96,9 @@ final class Character implements SubjectInterface
             $event instanceof PlayerDiedEvent => $this->died(),
             $event instanceof ResurrectedEvent => $this->resurrected(),
             $event instanceof LeveledUpEvent => $this->leveled($event->level),
-            $event instanceof ClassChangedEvent => $this->classChanging($event),
+            $event instanceof ClassChangedEvent => $this->classChanged($event),
             $event instanceof SkillsLoadedEvent => $this->skillsLoaded($event),
+            $event instanceof RewardedEvent => $this->rewarded($event->classPoints),
             $event instanceof PlayerInventoryLoadedEvent => $this->inventory($event->inventory),
             default => null,
         };
@@ -141,13 +142,35 @@ final class Character implements SubjectInterface
         $this->vitals($event->vitals);
     }
 
-    private function classChanging(ClassChangedEvent $event): void
+    private function classChanged(ClassChangedEvent $event): void
     {
         if ($event->player->value !== $this->socketId->value) {
             return;
         }
 
-        $this->changingClass = $event;
+        $this->playing(
+            new PlayerClass(
+                new CharacterClass($event->className, $event->category, $event->description, []),
+                $event->points,
+                [],
+            ),
+        );
+    }
+
+    private function rewarded(ClassPoints $points): void
+    {
+        if ($points->value === 0) {
+            return;
+        }
+
+        $current = $this->player->class;
+        $this->playing(
+            new PlayerClass(
+                $current->class,
+                new ClassPoints($current->points->value + $points->value),
+                $current->skills,
+            ),
+        );
     }
 
     private function arrived(MovedToMapEvent $event): void
@@ -245,29 +268,25 @@ final class Character implements SubjectInterface
 
     private function skillsLoaded(SkillsLoadedEvent $event): void
     {
-        $player = $this->player;
-        $changing = $this->changingClass;
-        $current = $player->class;
-        $skills = array_map(static fn(PlayerSkill $skill): Skill => $skill->skill, $event->skills);
+        $current = $this->player->class;
 
-        $class = $changing === null
-            ? new PlayerClass(
+        $this->playing(
+            new PlayerClass(
                 new CharacterClass(
                     $current->class->name,
                     $current->class->category,
                     $current->class->description,
-                    $skills,
+                    array_map(static fn(PlayerSkill $skill): Skill => $skill->skill, $event->skills),
                 ),
                 $current->points,
                 $event->skills,
-            )
-            : new PlayerClass(
-                new CharacterClass($changing->className, $changing->category, $changing->description, $skills),
-                $changing->points,
-                $event->skills,
-            );
+            ),
+        );
+    }
 
-        $this->changingClass = null;
+    private function playing(PlayerClass $class): void
+    {
+        $player = $this->player;
         $this->player = new Player($player->name, $player->level, $player->vitals, $class, $player->inventory);
     }
 

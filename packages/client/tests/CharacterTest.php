@@ -13,6 +13,7 @@ use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
@@ -27,6 +28,7 @@ use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapPlayer;
 use Lorekeeper\Core\World\Map\MapSpot;
+use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerHealth;
@@ -39,6 +41,7 @@ use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Map\RoomPlayer;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
+use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Lorekeeper\Server\SocketId;
 use Override;
 use PHPUnit\Framework\Attributes\Test;
@@ -48,6 +51,7 @@ use Psl\Observer\ObserverInterface;
 use Psl\Observer\SubjectInterface;
 use Psl\Option;
 
+/** @mago-expect lint:too-many-methods */
 final class CharacterTest extends TestCase
 {
     #[Test]
@@ -144,22 +148,41 @@ final class CharacterTest extends TestCase
     }
 
     #[Test]
-    public function it_changes_class_only_once_the_skills_of_the_new_one_arrive(): void
+    public function it_changes_class_at_once_and_learns_its_skills_when_they_arrive(): void
     {
         $me = Fixture::me();
         $fireBolt = new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new Mana(0), Duration::seconds(2));
         $burn = new Skill(SkillSlot::First, SkillTarget::Enemy, new Mana(10), Duration::seconds(3));
 
         $me->hear(self::changed(new SocketId(1), 'Warrior'));
-        $me->hear(self::changed(new SocketId(122_628), 'Blaze Binder'));
         static::assertSame('Mage', $me->player()->class->class->name->value);
+
+        $me->hear(self::changed(new SocketId(122_628), 'Blaze Binder'));
+        static::assertSame('Blaze Binder', $me->player()->class->class->name->value);
+        static::assertSame(302_500, $me->player()->class->points->value);
+        static::assertSame([], $me->player()->class->skills);
 
         $skills = [new PlayerSkill($fireBolt, true), new PlayerSkill($burn, false)];
         $me->hear(new SkillsLoadedEvent($skills));
         static::assertSame('Blaze Binder', $me->player()->class->class->name->value);
-        static::assertSame(302_500, $me->player()->class->points->value);
         static::assertSame([$fireBolt, $burn], $me->player()->class->class->skills);
         static::assertSame($skills, $me->player()->class->skills);
+    }
+
+    #[Test]
+    public function it_earns_class_points_from_each_reward(): void
+    {
+        $me = Fixture::me();
+
+        $me->hear(
+            new MonsterRewardedEvent(new Gold(3), new Experience(10), new ClassPoints(510), new MonsterSpawnId(4)),
+        );
+        $me->hear(
+            new MonsterRewardedEvent(new Gold(3), new Experience(10), new ClassPoints(3_090), new MonsterSpawnId(4)),
+        );
+
+        static::assertSame(3_600, $me->player()->class->points->value);
+        static::assertSame(3, $me->player()->class->rank()->value);
     }
 
     #[Test]
