@@ -4,21 +4,14 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Player;
 
-use Psl\Type;
-use Stringable;
+use Lorekeeper\Core\Progression\Level;
+use Override;
 
-final readonly class PlayerLevel implements Stringable
+final readonly class PlayerLevel extends Level
 {
-    /** @var int<1, 100> */
-    public int $value;
-
-    public function __construct(int $value)
+    #[Override]
+    protected static function maximum(): int
     {
-        $this->value = Type\int_range(min: 1, max: 100)->assert($value);
-    }
-
-    public function __toString(): string
-    {
-        return (string) $this->value;
+        return 100;
     }
 }

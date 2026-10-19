@@ -4,21 +4,14 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Monster;
 
-use Psl\Type;
-use Stringable;
+use Lorekeeper\Core\Progression\Level;
+use Override;
 
-final readonly class MonsterLevel implements Stringable
+final readonly class MonsterLevel extends Level
 {
-    /** @var int<1, 255> */
-    public int $value;
-
-    public function __construct(int $value)
+    #[Override]
+    protected static function maximum(): int
     {
-        $this->value = Type\int_range(min: 1, max: 255)->assert($value);
-    }
-
-    public function __toString(): string
-    {
-        return (string) $this->value;
+        return 255;
     }
 }
