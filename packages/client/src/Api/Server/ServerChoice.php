@@ -17,7 +17,11 @@ final readonly class ServerChoice
     public static function pick(array $servers, ?string $name = null): Option\Option
     {
         foreach ($servers as $server) {
-            if ($server->online && !$server->memberOnly && ($name ?? $server->name) === $server->name) {
+            if (!$server->online) {
+                continue;
+            }
+
+            if ($name === null ? !$server->memberOnly : $server->name === $name) {
                 return Option\some($server);
             }
         }

@@ -35,4 +35,17 @@ final class ServerChoiceTest extends TestCase
         static::assertSame('Twig', ServerChoice::pick($servers, 'Twig')->unwrap()->name);
         static::assertTrue(ServerChoice::pick($servers, 'Artix')->isNone());
     }
+
+    #[Test]
+    public function it_picks_a_members_server_when_asked_for_it_by_name(): void
+    {
+        $servers = [
+            new Server('Twilly', Address::tcp('c', 3), true, false),
+            new Server('Sir Ver', Address::tcp('b', 2), true, true),
+            new Server('Offline', Address::tcp('a', 1), false, true),
+        ];
+
+        static::assertSame('Sir Ver', ServerChoice::pick($servers, 'Sir Ver')->unwrap()->name);
+        static::assertTrue(ServerChoice::pick($servers, 'Offline')->isNone());
+    }
 }
