@@ -9,6 +9,7 @@ use Filament\Schemas\Components\Component;
 use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasLabel;
 use Lorekeeper\Bot\Scripts\CryptoTokenScript;
+use Lorekeeper\Bot\Scripts\EldersBloodScript;
 use Lorekeeper\Bot\Scripts\LevelUpScript;
 use Lorekeeper\Client\Script\Script;
 use Override;
@@ -17,6 +18,7 @@ enum BotScript: string implements HasLabel, HasDescription
 {
     case LevelUp = 'level-up';
     case CryptoToken = 'crypto-token';
+    case EldersBlood = 'elders-blood';
 
     /** @return array<string, null> */
     public static function blankParameters(): array
@@ -34,6 +36,7 @@ enum BotScript: string implements HasLabel, HasDescription
         return match ($this) {
             self::LevelUp => 'Level up',
             self::CryptoToken => 'Crypto Token daily',
+            self::EldersBlood => "Elders' Blood daily",
         };
     }
 
@@ -45,6 +48,8 @@ enum BotScript: string implements HasLabel, HasDescription
                 => 'Fights until the character reaches the level: oaklore, then swordhavenundead, then icestormarena.',
             self::CryptoToken
                 => "Odd's 'n' Ends in boxes: hunts a Sneevil's Metal Ore, turns it in and picks up a Crypto Token, once a day.",
+            self::EldersBlood
+                => "Experiment 107 in arcangrove: slays 50 Gorillaphants, turns them in and picks up an Elders' Blood, once a day.",
         };
     }
 
@@ -53,7 +58,7 @@ enum BotScript: string implements HasLabel, HasDescription
     {
         return match ($this) {
             self::LevelUp => ['level' => 100],
-            self::CryptoToken => [],
+            self::CryptoToken, self::EldersBlood => [],
         };
     }
 
@@ -62,7 +67,7 @@ enum BotScript: string implements HasLabel, HasDescription
     {
         return match ($this) {
             self::LevelUp => [Parameters::levelField()],
-            self::CryptoToken => [],
+            self::CryptoToken, self::EldersBlood => [],
         };
     }
 
@@ -71,7 +76,7 @@ enum BotScript: string implements HasLabel, HasDescription
     {
         return match ($this) {
             self::LevelUp => 'to level ' . Parameters::level($parameters)->value,
-            self::CryptoToken => 'for today',
+            self::CryptoToken, self::EldersBlood => 'for today',
         };
     }
 
@@ -90,6 +95,7 @@ enum BotScript: string implements HasLabel, HasDescription
         return match ($this) {
             self::LevelUp => new LevelUpScript(Parameters::level($parameters)),
             self::CryptoToken => new CryptoTokenScript(),
+            self::EldersBlood => new EldersBloodScript(),
         };
     }
 }

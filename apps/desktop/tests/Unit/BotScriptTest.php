@@ -7,6 +7,7 @@ namespace Lorekeeper\Apps\Desktop\Tests\Unit;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
 use Lorekeeper\Apps\Desktop\Bots\ScriptView;
 use Lorekeeper\Bot\Scripts\CryptoTokenScript;
+use Lorekeeper\Bot\Scripts\EldersBloodScript;
 use Lorekeeper\Bot\Scripts\LevelUpScript;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -40,5 +41,14 @@ final class BotScriptTest extends TestCase
         static::assertSame([], BotScript::CryptoToken->fields());
         static::assertSame('for today', BotScript::CryptoToken->summary([]));
         static::assertSame('scripts.crypto-token.plate', BotScript::CryptoToken->view(ScriptView::Plate));
+    }
+
+    #[Test]
+    public function the_elders_blood_daily_takes_nothing_and_has_its_own_views(): void
+    {
+        static::assertInstanceOf(EldersBloodScript::class, BotScript::EldersBlood->script([]));
+        static::assertSame([], BotScript::EldersBlood->fields());
+        static::assertSame("Elders' Blood daily", BotScript::EldersBlood->getLabel());
+        static::assertSame('scripts.elders-blood.panel', BotScript::EldersBlood->view(ScriptView::Panel));
     }
 }
