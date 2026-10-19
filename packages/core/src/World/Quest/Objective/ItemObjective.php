@@ -5,17 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\World\Quest\Objective;
 
 use Lorekeeper\Core\Item\ItemId;
-use Psl\Type;
+use Lorekeeper\Core\Support\Quantity;
 
 final readonly class ItemObjective implements QuestObjective
 {
-    /** @var positive-int */
-    public int $quantity;
-
     public function __construct(
         public ItemId $itemId,
-        int $quantity,
-    ) {
-        $this->quantity = Type\positive_int()->assert($quantity);
-    }
+        public Quantity $quantity,
+    ) {}
 }

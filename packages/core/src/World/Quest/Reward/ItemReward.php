@@ -5,19 +5,14 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\World\Quest\Reward;
 
 use Lorekeeper\Core\Item\ItemId;
-use Psl\Type;
+use Lorekeeper\Core\Support\Quantity;
 
 final readonly class ItemReward implements QuestReward
 {
-    /** @var positive-int */
-    public int $quantity;
-
     public function __construct(
         public ItemId $itemId,
         public DropRate $dropRate,
-        int $quantity,
+        public Quantity $quantity,
         public ItemRewardType $type,
-    ) {
-        $this->quantity = Type\positive_int()->assert($quantity);
-    }
+    ) {}
 }
