@@ -7,6 +7,8 @@ namespace Lorekeeper\Bot\Scripts;
 use Closure;
 use Generator;
 use Lorekeeper\Bot\BotScript;
+use Lorekeeper\Bot\Moves\Joins;
+use Lorekeeper\Bot\Moves\Kills;
 use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Client\Script\Done;
 use Lorekeeper\Client\Script\Instruction;
@@ -25,6 +27,9 @@ use RuntimeException;
 
 final class LevelUpScript extends BotScript
 {
+    use Joins;
+    use Kills;
+
     private int $from = 1;
 
     /** @param null|Closure(): Timestamp $clock */
@@ -88,9 +93,9 @@ final class LevelUpScript extends BotScript
     /** @throws RuntimeException */
     private function attackIn(MapCell $cell): AttackMonsterCommand
     {
-        foreach ($this->me->location()->map->monsters as $monster) {
+        foreach ($this->me()->location()->map->monsters as $monster) {
             if ($monster->cell->value === $cell->value) {
-                return new AttackMonsterCommand($this->me->location()->area, SkillSlot::AutoAttack, $monster->id);
+                return new AttackMonsterCommand($this->me()->location()->area, SkillSlot::AutoAttack, $monster->id);
             }
         }
 
@@ -99,7 +104,7 @@ final class LevelUpScript extends BotScript
 
     private function level(): int
     {
-        return $this->me->player()->level->value;
+        return $this->me()->player()->level->value;
     }
 
     private function below(int $level): bool
