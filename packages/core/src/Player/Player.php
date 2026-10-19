@@ -12,5 +12,6 @@ final readonly class Player
         public PlayerName $name,
         public PlayerLevel $level,
         public Vitals $vitals,
+        public PlayerClass $class,
     ) {}
 }
