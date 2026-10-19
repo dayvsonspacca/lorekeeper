@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Lorekeeper\Client;
 
 use Lorekeeper\Client\Command\Command;
-use Lorekeeper\Client\Exception\PeerClosedException;
-use Lorekeeper\Client\Message\MessageParser;
 use Lorekeeper\Server\Message\Message;
 use Lorekeeper\Server\Server;
 use Psl\Async\CancellationTokenInterface;

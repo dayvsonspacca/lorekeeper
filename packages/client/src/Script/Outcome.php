@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Script;
 
-use Lorekeeper\Client\Bot\Done;
 use Lorekeeper\Server\Event\Event;
 
 final readonly class Outcome

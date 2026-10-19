@@ -6,7 +6,7 @@ namespace Lorekeeper\Client\Tests;
 
 use Lorekeeper\Client\Command\Session\LogoutCommand;
 use Lorekeeper\Client\Connection;
-use Lorekeeper\Client\Exception\PeerClosedException;
+use Lorekeeper\Client\PeerClosedException;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;

@@ -7,8 +7,8 @@ namespace Lorekeeper\Apps\Wiki\Tests\Unit;
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Cache\Repository;
 use Lorekeeper\Apps\Wiki\Game\GameCatalog;
-use Lorekeeper\Client\Login\ServerListClient;
-use Lorekeeper\Client\TravelMap\TravelMapClient;
+use Lorekeeper\Client\Api\Server\ServerListClient;
+use Lorekeeper\Client\Api\TravelMap\TravelMapClient;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

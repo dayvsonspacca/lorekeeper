@@ -6,8 +6,8 @@ namespace Lorekeeper\Apps\Wiki\Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Lorekeeper\Apps\Wiki\Game\GameCatalog;
-use Lorekeeper\Client\Login\ServerListClient;
-use Lorekeeper\Client\TravelMap\TravelMapClient;
+use Lorekeeper\Client\Api\Server\ServerListClient;
+use Lorekeeper\Client\Api\TravelMap\TravelMapClient;
 use Override;
 
 abstract class TestCase extends BaseTestCase

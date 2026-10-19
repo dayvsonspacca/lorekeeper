@@ -8,7 +8,7 @@ use Filament\Forms\Components\Field;
 use Filament\Schemas\Components\Component;
 use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasLabel;
-use Lorekeeper\Client\Bot\Script\LevelUpScript;
+use Lorekeeper\Client\Bot\LevelUpScript;
 use Lorekeeper\Client\Script\Script;
 use Override;
 

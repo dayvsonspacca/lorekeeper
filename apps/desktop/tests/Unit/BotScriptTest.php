@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Tests\Unit;
 
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
-use Lorekeeper\Client\Bot\Script\LevelUpScript;
+use Lorekeeper\Client\Bot\LevelUpScript;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

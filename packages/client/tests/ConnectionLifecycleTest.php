@@ -6,7 +6,7 @@ namespace Lorekeeper\Client\Tests;
 
 use Lorekeeper\Client\Command\Session\LogoutCommand;
 use Lorekeeper\Client\Connection;
-use Lorekeeper\Client\Exception\PeerClosedException;
+use Lorekeeper\Client\PeerClosedException;
 use Lorekeeper\Server\Server;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

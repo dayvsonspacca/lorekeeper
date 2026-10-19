@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Game;
 
 use Illuminate\Contracts\Cache\Repository;
-use Lorekeeper\Client\Login\ServerListClient;
-use Lorekeeper\Client\TravelMap\TravelMapClient;
+use Lorekeeper\Client\Api\Server\ServerListClient;
+use Lorekeeper\Client\Api\TravelMap\TravelMapClient;
 use Lorekeeper\Server\Server;
 use RuntimeException;
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Command\Session;
 
-use Lorekeeper\Client\ClientVersion;
 use Lorekeeper\Client\Command\Command;
+use Lorekeeper\Client\Session\ClientVersion;
 use Lorekeeper\Core\Player\PlayerName;
 use Override;
 use SensitiveParameter;

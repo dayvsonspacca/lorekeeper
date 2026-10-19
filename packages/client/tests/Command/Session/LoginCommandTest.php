@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Command\Session;
 
-use Lorekeeper\Client\ClientVersion;
 use Lorekeeper\Client\Command\Session\LoginCommand;
+use Lorekeeper\Client\Session\ClientVersion;
 use Lorekeeper\Core\Player\PlayerName;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

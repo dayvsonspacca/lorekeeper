@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tests;
 
 use Lorekeeper\Client\Client;
-use Lorekeeper\Client\ClientVersion;
 use Lorekeeper\Client\Connection;
-use Lorekeeper\Client\Login\GameLogin;
 use Lorekeeper\Client\Script\Outcome;
 use Lorekeeper\Client\Script\TimedOut;
+use Lorekeeper\Client\Session\ClientVersion;
+use Lorekeeper\Client\Session\GameLogin;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\Combat\CombatState;
