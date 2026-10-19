@@ -4,18 +4,13 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Quest;
 
-use Lorekeeper\Core\Asset\Gamefile;
-use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\CharacterClass\ClassId;
 use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\Currency\AdventureCoins;
 use Lorekeeper\Core\Currency\Gold;
-use Lorekeeper\Core\Item\EquipmentSlot;
-use Lorekeeper\Core\Item\ItemDescription;
+use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
-use Lorekeeper\Core\Item\ItemPrice;
-use Lorekeeper\Core\Item\Type;
+use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
@@ -26,6 +21,7 @@ use Lorekeeper\Core\World\Faction\FactionId;
 use Lorekeeper\Core\World\Faction\FactionName;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
 use Lorekeeper\Core\World\Quest\Objective\QuestObjective;
+use Lorekeeper\Core\World\Quest\Quest;
 use Lorekeeper\Core\World\Quest\QuestDescription;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
@@ -44,6 +40,7 @@ use Lorekeeper\Core\World\Quest\Reward\ItemRewardType;
 use Lorekeeper\Core\World\Quest\Reward\QuestReward;
 use Lorekeeper\Core\World\Quest\Reward\ReputationReward;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Event\Mention\Mention;
 use Lorekeeper\Server\Event\Mention\Mentions;
 use Lorekeeper\Server\Event\NamedAfterClass;
@@ -56,8 +53,8 @@ use Psl\Type as Coerce;
 use Psl\Type\Exception\CoercionException;
 
 /**
- * @psalm-type Item = array{ItemID: positive-int, sName: non-empty-string, sType: string, sES: string, sDesc?: string, iCost?: non-negative-int, bCoins?: bool, sFile?: null|string, sLink?: string, bUpg?: bool, ...}
- * @psalm-type Quest = array{QuestID: positive-int, sName: non-empty-string, sDesc: string, sEndText?: string, iLvl: non-negative-int, iExp: non-negative-int, iGold: non-negative-int, iClass: non-negative-int, sClass?: string, iReqCP: non-negative-int, FactionID: positive-int, sFaction: string, iReqRep: non-negative-int, iRep: non-negative-int, bUpg: bool, bQuest?: bool|int, strPrevious?: string, turnin?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, reward?: list<array{ItemID: positive-int, iQty: positive-int, iRate: float|int, iType: int, ...}>, reqd?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, oItems?: array<array-key, Item>, oReqd?: array<array-key, Item>, oRewards?: array{itemsS?: array<array-key, Item>, itemsR?: array<array-key, Item>, ...}, ...}
+ * @psalm-type ItemData = array{ItemID: positive-int, sName: non-empty-string, sType: string, bUpg?: bool, ...}
+ * @psalm-type QuestData = array{QuestID: positive-int, sName: non-empty-string, sDesc: string, sEndText?: string, iLvl: non-negative-int, iExp: non-negative-int, iGold: non-negative-int, iClass: non-negative-int, sClass?: string, iReqCP: non-negative-int, FactionID: positive-int, sFaction: string, iReqRep: non-negative-int, iRep: non-negative-int, bUpg: bool, bQuest?: bool|int, strPrevious?: string, turnin?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, reward?: list<array{ItemID: positive-int, iQty: positive-int, iRate: float|int, iType: int, ...}>, reqd?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, oItems?: array<array-key, ItemData>, oReqd?: array<array-key, ItemData>, oRewards?: array{itemsS?: array<array-key, ItemData>, itemsR?: array<array-key, ItemData>, ...}, ...}
  *
  * @mago-expect lint:cyclomatic-complexity
  * @mago-expect lint:kan-defect
@@ -70,7 +67,7 @@ final readonly class QuestLoadedEvent implements Event, Mentions
     private const int NO_FACTION = 1;
 
     /**
-     * @param list<QuestLoadedQuest> $quests
+     * @param list<Quest> $quests
      * @param list<Mention> $mentions
      */
     public function __construct(
@@ -104,19 +101,13 @@ final readonly class QuestLoadedEvent implements Event, Mentions
         return Option\some(new static(array_map(self::quest(...), $quests), self::mentionsOf($quests)));
     }
 
-    /** @return Coerce\TypeInterface<Quest> */
+    /** @return Coerce\TypeInterface<QuestData> */
     private static function questType(): Coerce\TypeInterface
     {
         $items = Coerce\optional(Coerce\dict(Coerce\array_key(), Coerce\shape([
             'ItemID' => Coerce\positive_int(),
             'sName' => Coerce\non_empty_string(),
             'sType' => Coerce\string(),
-            'sES' => Coerce\string(),
-            'sDesc' => Coerce\optional(Coerce\string()),
-            'iCost' => Coerce\optional(Coerce\uint()),
-            'bCoins' => Coerce\optional(Coerce\bool()),
-            'sFile' => Coerce\optional(Coerce\nullable(Coerce\string())),
-            'sLink' => Coerce\optional(Coerce\string()),
             'bUpg' => Coerce\optional(Coerce\bool()),
         ], allowUnknownFields: true)));
         $entry = Coerce\shape([
@@ -159,35 +150,43 @@ final readonly class QuestLoadedEvent implements Event, Mentions
         ], allowUnknownFields: true);
     }
 
-    /** @param Quest $quest */
-    private static function quest(array $quest): QuestLoadedQuest
+    /**
+     * @param QuestData $quest
+     *
+     * @throws MalformedEventException
+     */
+    private static function quest(array $quest): Quest
     {
         $description = trim($quest['sDesc']);
+        $items = self::items($quest);
 
-        return new QuestLoadedQuest(
+        return new Quest(
             new QuestId($quest['QuestID']),
             new QuestName($quest['sName']),
             $description === ''
                 ? Option\none()
                 : Option\some(new QuestDescription($quest['sDesc'], trim($quest['sEndText'] ?? ''))),
-            self::requirements($quest),
+            self::requirements($quest, $items),
             array_map(
                 static fn(array $turnIn): QuestObjective => new ItemObjective(
-                    new ItemId($turnIn['ItemID']),
+                    self::described($items, $turnIn['ItemID']),
                     new Quantity($turnIn['iQty']),
                 ),
                 $quest['turnin'] ?? [],
             ),
-            self::rewards($quest),
+            self::rewards($quest, $items),
         );
     }
 
     /**
-     * @param Quest $quest
+     * @param QuestData $quest
+     * @param array<int, Item> $items
+     *
+     * @throws MalformedEventException
      *
      * @return list<QuestRequirement>
      */
-    private static function requirements(array $quest): array
+    private static function requirements(array $quest, array $items): array
     {
         $requirements = [];
 
@@ -219,18 +218,24 @@ final readonly class QuestLoadedEvent implements Event, Mentions
         }
 
         foreach ($quest['reqd'] ?? [] as $item) {
-            $requirements[] = new ItemRequirement(new ItemId($item['ItemID']), new Quantity($item['iQty']));
+            $requirements[] = new ItemRequirement(
+                self::described($items, $item['ItemID']),
+                new Quantity($item['iQty']),
+            );
         }
 
         return $requirements;
     }
 
     /**
-     * @param Quest $quest
+     * @param QuestData $quest
+     * @param array<int, Item> $items
+     *
+     * @throws MalformedEventException
      *
      * @return list<QuestReward>
      */
-    private static function rewards(array $quest): array
+    private static function rewards(array $quest, array $items): array
     {
         $rewards = [];
 
@@ -248,7 +253,7 @@ final readonly class QuestLoadedEvent implements Event, Mentions
 
         foreach ($quest['reward'] ?? [] as $item) {
             $rewards[] = new ItemReward(
-                new ItemId($item['ItemID']),
+                self::described($items, $item['ItemID']),
                 new DropRate((float) $item['iRate']),
                 new Quantity($item['iQty']),
                 self::rewardType($item['iType']),
@@ -256,6 +261,53 @@ final readonly class QuestLoadedEvent implements Event, Mentions
         }
 
         return $rewards;
+    }
+
+    /**
+     * @param QuestData $quest
+     *
+     * @throws MalformedEventException
+     *
+     * @return array<int, Item>
+     */
+    private static function items(array $quest): array
+    {
+        $rewards = $quest['oRewards'] ?? [];
+        $items = [];
+        foreach ([
+            ...array_values($quest['oItems'] ?? []),
+            ...array_values($quest['oReqd'] ?? []),
+            ...array_values($rewards['itemsS'] ?? []),
+            ...array_values($rewards['itemsR'] ?? []),
+        ] as $described) {
+            if (array_key_exists($described['ItemID'], $items)) {
+                continue;
+            }
+
+            $item = ItemKinds::read(
+                new ItemId($described['ItemID']),
+                new ItemName($described['sName']),
+                $described['sType'],
+                static::class,
+            );
+            if ($described['bUpg'] ?? false) {
+                $item->tags->add(ItemTag::MemberOnly);
+            }
+
+            $items[$described['ItemID']] = $item;
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param array<int, Item> $items
+     *
+     * @throws MalformedEventException
+     */
+    private static function described(array $items, int $id): Item
+    {
+        return $items[$id] ?? throw new MalformedEventException(static::class, "item {$id} is not described");
     }
 
     /** @throws MalformedEventException */
@@ -269,30 +321,14 @@ final readonly class QuestLoadedEvent implements Event, Mentions
     }
 
     /**
-     * @param list<Quest> $quests
+     * @param list<QuestData> $quests
      *
-     * @return list<Mention<ItemId|FactionId, object>>
+     * @return list<Mention<FactionId|ClassId, object>>
      */
     private static function mentionsOf(array $quests): array
     {
         $mentions = [];
         foreach ($quests as $quest) {
-            $rewards = $quest['oRewards'] ?? [];
-            $items = [
-                ...($quest['oItems'] ?? []),
-                ...($quest['oReqd'] ?? []),
-                ...($rewards['itemsS'] ?? []),
-                ...($rewards['itemsR'] ?? []),
-            ];
-            foreach ($items as $item) {
-                foreach (self::itemValues($item) as $value) {
-                    $mentions['item:' . $item['ItemID'] . ':' . $value::class] ??= new Mention(
-                        new ItemId($item['ItemID']),
-                        $value,
-                    );
-                }
-            }
-
             if ($quest['FactionID'] !== self::NO_FACTION && $quest['sFaction'] !== '') {
                 $mentions["faction:{$quest['FactionID']}"] ??= new Mention(
                     new FactionId($quest['FactionID']),
@@ -312,97 +348,13 @@ final readonly class QuestLoadedEvent implements Event, Mentions
         return array_values($mentions);
     }
 
-    /**
-     * @param Item $item
-     *
-     * @return list<object>
-     */
-    private static function itemValues(array $item): array
-    {
-        $description = trim($item['sDesc'] ?? '');
-        $cost = $item['iCost'] ?? 0;
-        $file = $item['sFile'] ?? '';
-        $link = $item['sLink'] ?? '';
-        $hasFile = str_ends_with($file, '.swf');
-
-        return [
-            new ItemName($item['sName']),
-            self::detail($item['sType']),
-            ...($description === '' ? [] : [new ItemDescription($description)]),
-            ...(
-                $cost === 0
-                    ? []
-                    : [new ItemPrice($item['bCoins'] ?? false ? new AdventureCoins($cost) : new Gold($cost))]
-            ),
-            ...($hasFile ? [new Gamefile($file)] : []),
-            ...($hasFile && $link !== '' ? [new Linkage($link)] : []),
-            ...self::slot($item['sES'])
-                ->map(static fn(EquipmentSlot $slot): array => [$slot])
-                ->unwrapOr([]),
-        ];
-    }
-
-    /** @throws MalformedEventException */
-    private static function detail(string $type): Type\Equipment|Type\Weapon|Type\House|Type\Misc
-    {
-        return match ($type) {
-            'Armor' => Type\Equipment::Armor,
-            'Cape' => Type\Equipment::Cape,
-            'Class' => Type\Equipment::CharacterClass,
-            'Misc' => Type\Equipment::Ground,
-            'Helm' => Type\Equipment::Helm,
-            'Necklace' => Type\Equipment::Necklace,
-            'Pet' => Type\Equipment::Pet,
-            'Axe' => Type\Weapon::Axe,
-            'Bow' => Type\Weapon::Bow,
-            'Dagger' => Type\Weapon::Dagger,
-            'Gauntlet' => Type\Weapon::Gauntlet,
-            'Gun' => Type\Weapon::Gun,
-            'HandGun' => Type\Weapon::HandGun,
-            'Mace' => Type\Weapon::Mace,
-            'Polearm' => Type\Weapon::Polearm,
-            'Rifle' => Type\Weapon::Rifle,
-            'Staff' => Type\Weapon::Staff,
-            'Sword' => Type\Weapon::Sword,
-            'Wand' => Type\Weapon::Wand,
-            'Whip' => Type\Weapon::Whip,
-            'Floor Item' => Type\House::Floor,
-            'House' => Type\House::House,
-            'Wall Item' => Type\House::Wall,
-            'ServerUse' => Type\Misc::Boost,
-            'Enhancement' => Type\Misc::Enhancement,
-            'Item', 'Note', 'Quest Item', 'Resource' => Type\Misc::Generic,
-            default => throw new MalformedEventException(static::class, "unknown item type '{$type}'"),
-        };
-    }
-
-    /**
-     * @throws MalformedEventException
-     *
-     * @return Option\Option<EquipmentSlot>
-     */
-    private static function slot(string $code): Option\Option
-    {
-        return match ($code) {
-            'None' => Option\none(),
-            'Weapon' => Option\some(EquipmentSlot::Weapon),
-            'ar', 'co' => Option\some(EquipmentSlot::Armor),
-            'he' => Option\some(EquipmentSlot::Helm),
-            'ba' => Option\some(EquipmentSlot::Cape),
-            'pe' => Option\some(EquipmentSlot::Pet),
-            'mi' => Option\some(EquipmentSlot::Ground),
-            'am' => Option\some(EquipmentSlot::Necklace),
-            default => throw new MalformedEventException(static::class, "unknown equipment slot '{$code}'"),
-        };
-    }
-
     #[Override]
     public function summary(): string
     {
         return (
             count($this->quests)
             . ' quests: '
-            . implode(', ', array_map(static fn(QuestLoadedQuest $quest): string => $quest->name->value, $this->quests))
+            . implode(', ', array_map(static fn(Quest $quest): string => $quest->name->value, $this->quests))
         );
     }
 }

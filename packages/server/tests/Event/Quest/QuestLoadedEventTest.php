@@ -4,40 +4,33 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Quest;
 
-use Lorekeeper\Core\Asset\Gamefile;
-use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\CharacterClass\ClassId;
 use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\Currency\AdventureCoins;
 use Lorekeeper\Core\Currency\Gold;
-use Lorekeeper\Core\Item\EquipmentSlot;
-use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Item\ItemName;
-use Lorekeeper\Core\Item\ItemPrice;
-use Lorekeeper\Core\Item\Type;
+use Lorekeeper\Core\Item\Equipment\Pet;
+use Lorekeeper\Core\Item\Equipment\Weapon;
+use Lorekeeper\Core\Item\Equipment\WeaponType;
+use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Progression\Experience;
-use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Faction\FactionName;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
+use Lorekeeper\Core\World\Quest\Quest;
 use Lorekeeper\Core\World\Quest\Requirement\ClassRankRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\FactionRankRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\ItemRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\MemberRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\PlayerLevelRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\PreviousQuestRequirement;
-use Lorekeeper\Core\World\Quest\Reward\DropRate;
 use Lorekeeper\Core\World\Quest\Reward\ExperienceReward;
 use Lorekeeper\Core\World\Quest\Reward\GoldReward;
 use Lorekeeper\Core\World\Quest\Reward\ItemReward;
 use Lorekeeper\Core\World\Quest\Reward\ItemRewardType;
 use Lorekeeper\Server\Event\Mention\Mention;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
-use Lorekeeper\Server\Event\Quest\QuestLoadedQuest;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
 final class QuestLoadedEventTest extends TestCase
@@ -61,35 +54,45 @@ final class QuestLoadedEventTest extends TestCase
             "Great work - now we'll never run out of rats!",
             $rats->description->unwrap()->endText->unwrap(),
         );
-        static::assertEquals(
+        static::assertSame(
             [
-                new ItemObjective(new ItemId(325), new Quantity(1)),
-                new ItemObjective(new ItemId(15_198), new Quantity(1)),
+                [325,    'Rat Leader',    1],
+                [15_198, 'Rat King Clue', 1],
             ],
-            $rats->objectives,
+            array_map(static fn(ItemObjective $objective): array => [
+                $objective->item->id->value,
+                $objective->item->name->value,
+                $objective->quantity->value,
+            ], $rats->objectives),
         );
-        static::assertEquals(
-            [
-                new GoldReward(new Gold(100)),
-                new ExperienceReward(new Experience(100)),
-                new ItemReward(new ItemId(333), new DropRate(100.0), new Quantity(1), ItemRewardType::Guaranteed),
-            ],
-            $rats->rewards,
-        );
+        static::assertInstanceOf(Resource::class, $rats->objectives[0]->item);
 
-        $random = array_filter($quests[3777]->rewards, static fn($reward): bool => $reward instanceof ItemReward);
+        [$gold, $experience, $letter] = $rats->rewards;
+        static::assertEquals(new GoldReward(new Gold(100)), $gold);
+        static::assertEquals(new ExperienceReward(new Experience(100)), $experience);
+        static::assertInstanceOf(ItemReward::class, $letter);
+        static::assertSame('Recommendation Letter', $letter->item->name->value);
+        static::assertSame(100.0, $letter->dropRate->percentage);
+        static::assertSame(1, $letter->quantity->value);
+        static::assertSame(ItemRewardType::Guaranteed, $letter->type);
+
+        $random = array_values(array_filter(
+            $quests[3777]->rewards,
+            static fn($reward): bool => $reward instanceof ItemReward,
+        ));
         static::assertCount(5, $random);
         foreach ($random as $reward) {
             static::assertSame(ItemRewardType::Random, $reward->type);
             static::assertSame(10.0, $reward->dropRate->percentage);
         }
+        static::assertInstanceOf(Pet::class, $random[0]->item);
     }
 
     #[Test]
     public function it_reads_what_is_needed_to_accept_real_quests(): void
     {
         $quests = self::quests();
-        $only = static function (string $class, QuestLoadedQuest $quest): object {
+        $only = static function (string $class, Quest $quest): object {
             $found = array_values(array_filter(
                 $quest->requirements,
                 static fn(object $r): bool => $r instanceof $class,
@@ -108,7 +111,9 @@ final class QuestLoadedEventTest extends TestCase
         static::assertSame(4, $dwarfhold->rank->value);
 
         $blade = $only(ItemRequirement::class, $quests[3777]);
-        static::assertSame(25_550, $blade->itemId->value);
+        static::assertInstanceOf(Weapon::class, $blade->item);
+        static::assertSame(WeaponType::Sword, $blade->item->type);
+        static::assertSame('Deep Terror Blade', $blade->item->name->value);
         static::assertSame(1, $blade->quantity->value);
 
         $healer = $only(ClassRankRequirement::class, $quests[5682]);
@@ -116,12 +121,12 @@ final class QuestLoadedEventTest extends TestCase
         static::assertSame(10, $healer->rank->value);
         static::assertSame(5, $only(FactionRankRequirement::class, $quests[5682])->rank->value);
 
-        $chained = self::load(self::quest('Armor', 'None', 0, ['bQuest' => 1, 'strPrevious' => '39']))->quests[0];
+        $chained = self::load(self::quest('Armor', 0, ['bQuest' => 1, 'strPrevious' => '39']))->quests[0];
         static::assertSame(39, $only(PreviousQuestRequirement::class, $chained)->questId->value);
     }
 
     #[Test]
-    public function it_mentions_what_the_message_says_about_items_factions_and_classes(): void
+    public function it_mentions_the_factions_and_classes_the_message_names(): void
     {
         $mentions = self::load(self::QUESTS)->mentions();
         $about = static fn(int $id, string $value): array => array_values(array_map(
@@ -135,23 +140,18 @@ final class QuestLoadedEventTest extends TestCase
             ),
         ));
 
-        static::assertEquals(
-            [
-                new ItemName('Deep Terror Blade'),
-                Type\Weapon::Sword,
-                new ItemPrice(new AdventureCoins(1000)),
-                new Gamefile('items/swords/DeepTerrorBlade.swf'),
-                new Linkage('DeepTerrorBlade'),
-                EquipmentSlot::Weapon,
-            ],
-            array_values(array_map(
-                static fn(Mention $mention): object => $mention->value,
-                array_filter($mentions, static fn(Mention $mention): bool => $mention->about->value === 25_550),
-            )),
-        );
         static::assertEquals([new FactionName('Good')], $about(5, FactionName::class));
         static::assertEquals([new FactionName('Dwarfhold')], $about(2, FactionName::class));
         static::assertEquals([new ClassName('Healer')], $about(15_651, ClassName::class));
+        static::assertSame(
+            [],
+            array_values(array_filter(
+                $mentions,
+                static fn(Mention $mention): bool => (
+                    !$mention->value instanceof FactionName && !$mention->value instanceof ClassName
+                ),
+            )),
+        );
         static::assertInstanceOf(
             ClassId::class,
             array_values(array_filter(
@@ -159,58 +159,6 @@ final class QuestLoadedEventTest extends TestCase
                 static fn(Mention $mention): bool => $mention->value instanceof ClassName,
             ))[0]->about,
         );
-        static::assertCount(1, $about(325, ItemName::class));
-    }
-
-    #[Test]
-    #[TestWith(['Armor', Type\Equipment::Armor])]
-    #[TestWith(['Cape', Type\Equipment::Cape])]
-    #[TestWith(['Class', Type\Equipment::CharacterClass])]
-    #[TestWith(['Misc', Type\Equipment::Ground])]
-    #[TestWith(['Helm', Type\Equipment::Helm])]
-    #[TestWith(['Necklace', Type\Equipment::Necklace])]
-    #[TestWith(['Pet', Type\Equipment::Pet])]
-    #[TestWith(['Axe', Type\Weapon::Axe])]
-    #[TestWith(['Bow', Type\Weapon::Bow])]
-    #[TestWith(['Dagger', Type\Weapon::Dagger])]
-    #[TestWith(['Gauntlet', Type\Weapon::Gauntlet])]
-    #[TestWith(['Gun', Type\Weapon::Gun])]
-    #[TestWith(['HandGun', Type\Weapon::HandGun])]
-    #[TestWith(['Mace', Type\Weapon::Mace])]
-    #[TestWith(['Polearm', Type\Weapon::Polearm])]
-    #[TestWith(['Rifle', Type\Weapon::Rifle])]
-    #[TestWith(['Staff', Type\Weapon::Staff])]
-    #[TestWith(['Sword', Type\Weapon::Sword])]
-    #[TestWith(['Wand', Type\Weapon::Wand])]
-    #[TestWith(['Whip', Type\Weapon::Whip])]
-    #[TestWith(['Floor Item', Type\House::Floor])]
-    #[TestWith(['House', Type\House::House])]
-    #[TestWith(['Wall Item', Type\House::Wall])]
-    #[TestWith(['ServerUse', Type\Misc::Boost])]
-    #[TestWith(['Enhancement', Type\Misc::Enhancement])]
-    #[TestWith(['Item', Type\Misc::Generic])]
-    #[TestWith(['Note', Type\Misc::Generic])]
-    #[TestWith(['Quest Item', Type\Misc::Generic])]
-    #[TestWith(['Resource', Type\Misc::Generic])]
-    public function it_translates_the_item_type(
-        string $type,
-        Type\Equipment|Type\Weapon|Type\House|Type\Misc $detail,
-    ): void {
-        static::assertSame($detail, self::load(self::quest($type, 'None', 0))->mentions()[1]->value);
-    }
-
-    #[Test]
-    #[TestWith(['Weapon', EquipmentSlot::Weapon])]
-    #[TestWith(['ar', EquipmentSlot::Armor])]
-    #[TestWith(['co', EquipmentSlot::Armor])]
-    #[TestWith(['he', EquipmentSlot::Helm])]
-    #[TestWith(['ba', EquipmentSlot::Cape])]
-    #[TestWith(['pe', EquipmentSlot::Pet])]
-    #[TestWith(['mi', EquipmentSlot::Ground])]
-    #[TestWith(['am', EquipmentSlot::Necklace])]
-    public function it_translates_the_equipment_slot(string $code, EquipmentSlot $slot): void
-    {
-        static::assertSame($slot, self::load(self::quest('Armor', $code, 0))->mentions()[2]->value);
     }
 
     #[Test]
@@ -226,13 +174,13 @@ final class QuestLoadedEventTest extends TestCase
     /** @return iterable<string, array{string, string}> */
     public static function malformed(): iterable
     {
-        yield 'unknown item type' => [self::quest('Spaceship', 'None', 0), "unknown item type 'Spaceship'"];
-        yield 'unknown slot' => [self::quest('Armor', 'xx', 0), "unknown equipment slot 'xx'"];
-        yield 'unknown reward type' => [self::quest('Armor', 'None', 7), "unknown reward type '7'"];
+        yield 'unknown item type' => [self::quest('Spaceship', 0), "unknown item type 'Spaceship'"];
+        yield 'unknown reward type' => [self::quest('Armor', 7), "unknown reward type '7'"];
+        yield 'item not described' => [self::quest('Armor', 0, ['oItems' => []]), 'item 1 is not described'];
         yield 'no quests' => ['{"b":{"o":{"cmd":"getQuests"}}}', 'quests are missing or invalid'];
     }
 
-    /** @return array<int, QuestLoadedQuest> */
+    /** @return array<int, Quest> */
     private static function quests(): array
     {
         $quests = [];
@@ -249,7 +197,7 @@ final class QuestLoadedEventTest extends TestCase
     }
 
     /** @param array<string, mixed> $extra */
-    private static function quest(string $type, string $slot, int $rewardType, array $extra = []): string
+    private static function quest(string $type, int $rewardType, array $extra = []): string
     {
         return json_encode(['b' => ['o' => [
             'cmd' => 'getQuests',
@@ -268,7 +216,7 @@ final class QuestLoadedEventTest extends TestCase
                 'iRep' => 0,
                 'bUpg' => false,
                 'reward' => [['ItemID' => 1, 'iQty' => 1, 'iRate' => 100, 'iType' => $rewardType]],
-                'oItems' => ['1' => ['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type, 'sES' => $slot]],
+                'oItems' => ['1' => ['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type]],
                 ...$extra,
             ]],
         ]]], flags: JSON_THROW_ON_ERROR);
