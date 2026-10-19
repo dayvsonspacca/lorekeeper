@@ -14,6 +14,18 @@ final class RunScene extends Component
 {
     public BotRun $run;
 
+    public ?string $cell = null;
+
+    public function show(string $cell): void
+    {
+        $this->cell = $cell;
+    }
+
+    public function follow(): void
+    {
+        $this->cell = null;
+    }
+
     #[On('run-changed')]
     public function refreshScene(): void
     {

@@ -121,8 +121,12 @@ final class DesktopTest extends TestCase
             '×3',
             '23%',
             'icestormarena',
-            '1 of 1 monsters standing',
+            '2 of 2 monsters standing',
             'Artix',
+            'r3a',
+            '1/1',
+            'r4',
+            '1/1',
             'r3a · fighting here',
             'Frost Spirit',
             'Lv 33',
@@ -134,6 +138,22 @@ final class DesktopTest extends TestCase
             'Defeated Frost Spirit',
             '+700 XP · +40 gold',
         ]);
+    }
+
+    #[Test]
+    public function the_map_shows_one_cell_at_a_time_and_goes_back_to_the_fight(): void
+    {
+        $scene = Livewire::test(RunScene::class, ['run' => $this->botInTheGame()]);
+
+        $scene->assertSee('Frost Spirit')->assertDontSee('Snow Golem');
+
+        $scene
+            ->call('show', 'r4')
+            ->assertSee('Snow Golem')
+            ->assertDontSee('Lv 33')
+            ->assertSee('back to the fight in r3a');
+
+        $scene->call('follow')->assertSee('r3a · fighting here')->assertDontSee('Snow Golem');
     }
 
     #[Test]
@@ -405,17 +425,30 @@ final class DesktopTest extends TestCase
                         ],
                     ],
                 ],
-                [[
-                    'id' => 3,
-                    'name' => 'Frost Spirit',
-                    'level' => 33,
-                    'race' => 'elemental',
-                    'cell' => 'r3a',
-                    'health' => 900,
-                    'maxHealth' => 3000,
-                    'state' => 'fighting',
-                    'struck' => $now,
-                ]],
+                [
+                    [
+                        'id' => 3,
+                        'name' => 'Frost Spirit',
+                        'level' => 33,
+                        'race' => 'elemental',
+                        'cell' => 'r3a',
+                        'health' => 900,
+                        'maxHealth' => 3000,
+                        'state' => 'fighting',
+                        'struck' => $now,
+                    ],
+                    [
+                        'id' => 7,
+                        'name' => 'Snow Golem',
+                        'level' => 35,
+                        'race' => 'elemental',
+                        'cell' => 'r4',
+                        'health' => 4000,
+                        'maxHealth' => 4000,
+                        'state' => 'idle',
+                        'struck' => null,
+                    ],
+                ],
                 ['Artix'],
                 new Pulse()
                     ->rewarded($now - 120, experience: 500)

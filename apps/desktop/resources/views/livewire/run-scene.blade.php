@@ -89,23 +89,51 @@
                 @if ($scene->monsters === [])
                     <div class="lk-dim" style="font-size: .85rem; padding: 2rem 0; text-align: center;">No monsters here. A quiet map.</div>
                 @else
-                    <div class="lk-cells">
-                        @foreach ($scene->cells($now) as $cell => $monsters)
-                            <div class="lk-cell" wire:key="cell-{{ $cell }}" @if (in_array($cell, $engaged, true)) data-engaged @endif>
-                                <div class="lk-cell__name">
-                                    @if (in_array($cell, $engaged, true))
-                                        <x-scene.glyph name="swords" /> {{ $cell }} · fighting here
-                                    @else
-                                        {{ $cell }}
-                                    @endif
-                                </div>
-                                <div class="lk-cell__mobs">
-                                    @foreach ($monsters as $monster)
-                                        <x-scene.mob :monster="$monster" :now="$now" wire:key="mob-{{ $monster['id'] }}" />
-                                    @endforeach
-                                </div>
-                            </div>
+                    @php
+                        $cells = $scene->cells($now);
+                        $shown = $cell !== null && array_key_exists($cell, $cells) ? $cell : ($engaged[0] ?? array_key_first($cells));
+                    @endphp
+                    <div class="lk-tabs" role="tablist">
+                        @foreach ($cells as $name => $monsters)
+                            @php
+                                $standing = count(array_filter($monsters, static fn (array $monster): bool => $monster['state'] !== 'dead'));
+                            @endphp
+                            <button
+                                type="button"
+                                role="tab"
+                                class="lk-tab"
+                                wire:key="tab-{{ $name }}"
+                                wire:click="show(@js($name))"
+                                aria-selected="{{ $name === $shown ? 'true' : 'false' }}"
+                                @if (in_array($name, $engaged, true)) data-engaged @endif
+                                @if ($standing === 0) data-empty @endif
+                            >
+                                @if (in_array($name, $engaged, true))
+                                    <x-scene.glyph name="swords" />
+                                @endif
+                                {{ $name }}
+                                <span class="lk-tab__count">{{ $standing }}/{{ count($monsters) }}</span>
+                            </button>
                         @endforeach
+                    </div>
+                    <div class="lk-cell" role="tabpanel" wire:key="cell-{{ $shown }}" @if (in_array($shown, $engaged, true)) data-engaged @endif>
+                        <div class="lk-cell__name">
+                            @if (in_array($shown, $engaged, true))
+                                <x-scene.glyph name="swords" /> {{ $shown }} · fighting here
+                            @else
+                                {{ $shown }}
+                                @if ($cell !== null && $engaged !== [])
+                                    <button type="button" class="lk-cell__follow" wire:click="follow">
+                                        <x-scene.glyph name="swords" /> back to the fight in {{ $engaged[0] }}
+                                    </button>
+                                @endif
+                            @endif
+                        </div>
+                        <div class="lk-cell__mobs">
+                            @foreach ($cells[$shown] as $monster)
+                                <x-scene.mob :monster="$monster" :now="$now" wire:key="mob-{{ $monster['id'] }}" />
+                            @endforeach
+                        </div>
                     </div>
                 @endif
             </section>

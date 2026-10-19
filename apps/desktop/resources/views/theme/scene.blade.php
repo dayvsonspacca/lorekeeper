@@ -92,7 +92,7 @@
     .lk-meters--lg .lk-meter__label { font-size: .78rem; }
     .lk-meter--compact .lk-bar { height: .32rem; }
     .lk-meter--compact .lk-bar::after { display: none; }
-    .lk-cells, .lk-feed { scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, .25) transparent; }
+    .lk-feed { scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, .25) transparent; }
 
     .lk-quest { display: flex; align-items: center; gap: .8rem; padding: .7rem .8rem; border-radius: .9rem; background: rgba(2, 6, 23, .45); border: 1px solid var(--lk-line); }
     .lk-quest__body { flex: 1; min-width: 0; }
@@ -158,13 +158,22 @@
     .lk-field__sub { font-size: .78rem; color: var(--lk-muted); margin-top: .3rem; }
     .lk-crowd { display: flex; gap: .35rem; flex-wrap: wrap; justify-content: end; }
     .lk-crowd span { padding: .18rem .5rem; border-radius: 999px; font-size: .7rem; background: rgba(148, 163, 184, .1); border: 1px solid var(--lk-line); color: var(--lk-muted); }
-    .lk-cells { display: grid; gap: .75rem; max-height: 30rem; overflow-y: auto; padding-right: .25rem; }
+    .lk-tabs { display: flex; gap: .4rem; overflow-x: auto; padding-bottom: .55rem; margin-bottom: .6rem; scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, .25) transparent; }
+    .lk-tab { display: inline-flex; align-items: center; gap: .35rem; flex-shrink: 0; padding: .35rem .7rem; border-radius: 999px; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--lk-muted); background: rgba(2, 6, 23, .45); border: 1px solid var(--lk-line); cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+    .lk-tab:hover { color: var(--lk-text); border-color: var(--lk-line-2); }
+    .lk-tab svg { width: .85rem; height: .85rem; }
+    .lk-tab__count { font-weight: 600; letter-spacing: 0; color: var(--lk-faint); }
+    .lk-tab[data-engaged] { color: var(--lk-gold); border-color: rgba(251, 191, 36, .4); }
+    .lk-tab[data-empty] { opacity: .55; }
+    .lk-tab[aria-selected="true"] { color: var(--lk-text); background: color-mix(in oklab, var(--lk-hue, #fbbf24) 18%, rgba(2, 6, 23, .6)); border-color: color-mix(in oklab, var(--lk-hue, #fbbf24) 55%, transparent); }
+    .lk-tab[aria-selected="true"][data-engaged] { color: var(--lk-gold); background: rgba(251, 191, 36, .14); border-color: rgba(251, 191, 36, .6); }
+    .lk-cell__follow { margin-left: auto; display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .5rem; border-radius: 999px; font-size: .64rem; font-weight: 800; letter-spacing: .06em; color: var(--lk-gold); background: rgba(251, 191, 36, .1); border: 1px solid rgba(251, 191, 36, .35); cursor: pointer; text-transform: uppercase; }
     .lk-cell { padding: .7rem; border-radius: 1rem; border: 1px dashed var(--lk-line-2); background: rgba(2, 6, 23, .35); }
     .lk-cell[data-engaged] { border-style: solid; border-color: rgba(251, 191, 36, .45); background: radial-gradient(100% 120% at 0% 0%, rgba(251, 191, 36, .1), transparent 60%), rgba(2, 6, 23, .45); }
     .lk-cell__name { display: flex; align-items: center; gap: .4rem; font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--lk-faint); margin-bottom: .55rem; }
     .lk-cell[data-engaged] .lk-cell__name { color: var(--lk-gold); }
     .lk-cell__name svg { width: .9rem; height: .9rem; }
-    .lk-cell__mobs { display: grid; grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr)); gap: .5rem; }
+    .lk-cell__mobs { display: grid; grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr)); gap: .5rem; max-height: 22rem; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(148, 163, 184, .25) transparent; }
     .lk-mob { position: relative; padding: .5rem .6rem .55rem .7rem; border-radius: .75rem; background: linear-gradient(180deg, rgba(34, 43, 65, .85), rgba(15, 21, 37, .85)); border: 1px solid var(--lk-line); border-left: 3px solid var(--race); transition: opacity .6s, filter .6s; }
     .lk-mob__top { display: flex; justify-content: space-between; gap: .5rem; align-items: baseline; margin-bottom: .35rem; }
     .lk-mob__name { font-size: .78rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
