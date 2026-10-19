@@ -42,6 +42,18 @@ final class CooldownsTest extends TestCase
     }
 
     #[Test]
+    public function it_never_picks_the_potion(): void
+    {
+        $potion = new Skill(SkillSlot::Potion, SkillTarget::Ally, new Mana(0), Duration::seconds(60));
+
+        static::assertSame(
+            SkillSlot::AutoAttack,
+            new Cooldowns()->ready([self::auto(), $potion], new Mana(100), self::at(0))?->slot,
+        );
+        static::assertNull(new Cooldowns()->ready([$potion], new Mana(100), self::at(0)));
+    }
+
+    #[Test]
     public function a_used_skill_waits_its_cooldown_and_any_skill_waits_a_second(): void
     {
         $skills = [self::auto(), self::bolt(cost: 20)];

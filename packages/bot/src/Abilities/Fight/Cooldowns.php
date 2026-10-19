@@ -29,7 +29,11 @@ final readonly class Cooldowns
 
         $usable = array_values(array_filter(
             $skills,
-            fn(Skill $skill): bool => !$this->waiting($skill->slot->name, $now) && $skill->cost->value <= $mana->value,
+            fn(Skill $skill): bool => (
+                $skill->slot !== SkillSlot::Potion
+                && !$this->waiting($skill->slot->name, $now)
+                && $skill->cost->value <= $mana->value
+            ),
         ));
 
         usort(
