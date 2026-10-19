@@ -127,7 +127,7 @@ final class MovedToMapEventTest extends TestCase
         $last = $seen->players[8]->player;
 
         static::assertCount(9, $seen->players);
-        static::assertSame(116_500, $seen->players[8]->socket->value);
+        static::assertSame(116_500, $seen->players[8]->socketId->value);
         static::assertSame('Hero 9', $last->name->value);
         static::assertSame(81, $last->level->value);
         static::assertSame('Enter', $last->spot->cell->value);

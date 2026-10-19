@@ -7,10 +7,10 @@ namespace Lorekeeper\Server\Event\Map;
 use Lorekeeper\Core\World\Map\MapPlayer;
 use Lorekeeper\Server\SocketId;
 
-final readonly class SeenPlayer
+final readonly class RoomPlayer
 {
     public function __construct(
-        public SocketId $socket,
+        public SocketId $socketId,
         public MapPlayer $player,
     ) {}
 }

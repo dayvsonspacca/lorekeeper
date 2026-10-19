@@ -61,7 +61,7 @@ final readonly class MovedToMapEvent implements Event
 {
     use NamedAfterClass;
 
-    /** @param list<SeenPlayer> $players */
+    /** @param list<RoomPlayer> $players */
     public function __construct(
         public AreaId $areaId,
         public RoomId $roomId,
@@ -199,12 +199,12 @@ final readonly class MovedToMapEvent implements Event
      *
      * @throws MalformedEventException
      *
-     * @return list<SeenPlayer>
+     * @return list<RoomPlayer>
      */
     private static function players(array $data): array
     {
         return array_map(
-            static fn(array $player): SeenPlayer => new SeenPlayer(
+            static fn(array $player): RoomPlayer => new RoomPlayer(
                 new SocketId($player['entID']),
                 new MapPlayer(
                     new PlayerName($player['strUsername']),
