@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Tests\World\Quest\Reward;
 
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Quest\Reward\DropRate;
 use Lorekeeper\Core\World\Quest\Reward\ItemReward;
@@ -17,9 +19,10 @@ final class ItemRewardTest extends TestCase
     #[Test]
     public function it_holds_item_drop_rate_quantity_and_type(): void
     {
-        $reward = new ItemReward(new ItemId(1234), new DropRate(10.0), new Quantity(3), ItemRewardType::Random);
+        $gem = new Resource(new ItemId(1234), new ItemName('Realm Gem'));
+        $reward = new ItemReward($gem, new DropRate(10.0), new Quantity(3), ItemRewardType::Random);
 
-        static::assertSame(1234, $reward->itemId->value);
+        static::assertSame($gem, $reward->item);
         static::assertSame(10.0, $reward->dropRate->percentage);
         static::assertSame(3, $reward->quantity->value);
         static::assertSame(ItemRewardType::Random, $reward->type);
