@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Map;
 
-enum Pad
+enum MapPad
 {
     case Left;
     case Right;
