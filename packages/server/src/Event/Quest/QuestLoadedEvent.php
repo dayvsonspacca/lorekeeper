@@ -40,6 +40,7 @@ use Lorekeeper\Core\World\Quest\Reward\ReputationReward;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Event\NamedAfterClass;
+use Lorekeeper\Server\Event\Quest\Helper\QuestMarks;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -50,7 +51,7 @@ use Psl\Type\Exception\CoercionException;
 
 /**
  * @psalm-type ItemData = array{ItemID: positive-int, sName: non-empty-string, sType: string, bUpg?: bool, ...}
- * @psalm-type QuestData = array{QuestID: positive-int, sName: non-empty-string, sDesc: string, sEndText?: string, iLvl: non-negative-int, iExp: non-negative-int, iGold: non-negative-int, iClass: non-negative-int, iReqCP: non-negative-int, FactionID: positive-int, iReqRep: non-negative-int, iRep: non-negative-int, bUpg: bool, bQuest?: bool|int, strPrevious?: string, turnin?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, reward?: list<array{ItemID: positive-int, iQty: positive-int, iRate: float|int, iType: int, ...}>, reqd?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, oItems?: array<array-key, ItemData>, oReqd?: array<array-key, ItemData>, oRewards?: array{itemsS?: array<array-key, ItemData>, itemsR?: array<array-key, ItemData>, ...}, ...}
+ * @psalm-type QuestData = array{QuestID: positive-int, sName: non-empty-string, sDesc: string, sEndText?: string, iLvl: non-negative-int, iExp: non-negative-int, iGold: non-negative-int, iClass: non-negative-int, iReqCP: non-negative-int, FactionID: positive-int, iReqRep: non-negative-int, iRep: non-negative-int, bUpg: bool, bQuest?: bool|int, strPrevious?: string, sField?: string, iIndex?: int, turnin?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, reward?: list<array{ItemID: positive-int, iQty: positive-int, iRate: float|int, iType: int, ...}>, reqd?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, oItems?: array<array-key, ItemData>, oReqd?: array<array-key, ItemData>, oRewards?: array{itemsS?: array<array-key, ItemData>, itemsR?: array<array-key, ItemData>, ...}, ...}
  *
  * @mago-expect lint:cyclomatic-complexity
  * @mago-expect lint:kan-defect
@@ -115,6 +116,8 @@ final readonly class QuestLoadedEvent implements Event
             'bUpg' => Coerce\bool(),
             'bQuest' => Coerce\optional(Coerce\union(Coerce\bool(), Coerce\int())),
             'strPrevious' => Coerce\optional(Coerce\string()),
+            'sField' => Coerce\optional(Coerce\string()),
+            'iIndex' => Coerce\optional(Coerce\int()),
             'turnin' => Coerce\optional(Coerce\vec($entry)),
             'reward' => Coerce\optional(Coerce\vec(Coerce\shape([
                 'ItemID' => Coerce\positive_int(),
@@ -157,6 +160,7 @@ final readonly class QuestLoadedEvent implements Event
                 $quest['turnin'] ?? [],
             ),
             self::rewards($quest, $items),
+            QuestMarks::of($quest['sField'] ?? '', $quest['iIndex'] ?? -1),
         );
     }
 

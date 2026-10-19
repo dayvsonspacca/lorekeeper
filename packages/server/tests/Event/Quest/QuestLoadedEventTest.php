@@ -12,6 +12,8 @@ use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
 use Lorekeeper\Core\World\Quest\Quest;
+use Lorekeeper\Core\World\Quest\QuestMark;
+use Lorekeeper\Core\World\Quest\QuestPeriod;
 use Lorekeeper\Core\World\Quest\Requirement\ClassRankRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\FactionRankRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\ItemRequirement;
@@ -45,6 +47,8 @@ final class QuestLoadedEventTest extends TestCase
             QuestLoadedEvent::from(JsonMessage::from('{"b":{"o":{"cmd":"loadShop"}}}')->unwrap())->isNone(),
         );
         static::assertSame([39, 40, 342, 3295, 3777, 5682], array_keys($quests));
+        static::assertEquals(new QuestMark(QuestPeriod::Day, 0, 3), $quests[342]->mark->unwrap());
+        static::assertTrue($rats->mark->isNone());
         static::assertSame('Missing King', $rats->name->value);
         static::assertSame(
             "Great work - now we'll never run out of rats!",

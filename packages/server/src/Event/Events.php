@@ -31,6 +31,7 @@ use Lorekeeper\Server\Event\Map\MapRequiresQuestEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
 use Lorekeeper\Server\Event\Player\PlayerAwayUpdatedEvent;
+use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
 use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
 use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
@@ -40,6 +41,7 @@ use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
 use Lorekeeper\Server\Event\Quest\QuestCompletedEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
+use Lorekeeper\Server\Event\Quest\QuestMarkedEvent;
 use Lorekeeper\Server\Event\Quest\QuestTurnInRefusedEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
@@ -90,11 +92,13 @@ final readonly class Events
         PlayerUpdatedEvent::class,
         PlayerAwayUpdatedEvent::class,
         PlayerVitalsUpdatedEvent::class,
+        PlayerDataLoadedEvent::class,
         QuestLoadedEvent::class,
         ItemsTurnedInEvent::class,
         QuestAcceptedEvent::class,
         QuestCompletedEvent::class,
         QuestTurnInRefusedEvent::class,
+        QuestMarkedEvent::class,
         ShopLoadedEvent::class,
     ];
 
