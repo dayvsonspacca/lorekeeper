@@ -10,6 +10,8 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -31,6 +33,7 @@ final class DesktopPanelProvider extends PanelProvider
             ->defaultThemeMode(ThemeMode::Dark)
             ->topNavigation()
             ->spa()
+            ->renderHook(PanelsRenderHook::HEAD_END, static fn(): View => view('theme.scene'))
             ->pages([Bots::class])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'Lorekeeper\Apps\Desktop\Filament\Resources')
             ->middleware([

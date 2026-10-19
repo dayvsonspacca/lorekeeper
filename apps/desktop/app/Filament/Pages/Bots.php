@@ -11,6 +11,7 @@ use Filament\Panel;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
+use Lorekeeper\Apps\Desktop\Bots\Scene\Realm;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\AccountResource;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
@@ -69,11 +70,16 @@ final class Bots extends Page
     #[Override]
     protected function getViewData(): array
     {
+        $accounts = Account::query()
+            ->with('latestRun')
+            ->orderBy('name')
+            ->get();
+        $now = now()->getTimestamp();
+
         return [
-            'accounts' => Account::query()
-                ->with('latestRun')
-                ->orderBy('name')
-                ->get(),
+            'accounts' => $accounts,
+            'now' => $now,
+            'realm' => Realm::of($accounts->all(), $now),
         ];
     }
 

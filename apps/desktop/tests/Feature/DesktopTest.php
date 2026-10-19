@@ -10,10 +10,15 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
+use Lorekeeper\Apps\Desktop\Bots\Scene\Feed;
+use Lorekeeper\Apps\Desktop\Bots\Scene\FeedKind;
+use Lorekeeper\Apps\Desktop\Bots\Scene\Pulse;
+use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Filament\Pages\Bots;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Pages\ManageAccounts;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
+use Lorekeeper\Apps\Desktop\Livewire\RunScene;
 use Lorekeeper\Apps\Desktop\Livewire\RunTasks;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
@@ -57,8 +62,9 @@ final class DesktopTest extends TestCase
             ->assertSeeInOrder([
                 'Busy',
                 'Lv 6 · icestormarena',
-                'Level up',
+                'Entering',
                 '25%',
+                'Level up',
                 '12 kills',
                 'Stop',
                 'Hero',
@@ -70,6 +76,106 @@ final class DesktopTest extends TestCase
 
         static::assertSame(RunStatus::Pending, $idle->activeRun()?->status);
         static::assertSame(RunStatus::Stopping, $run->refresh()->status);
+    }
+
+    #[Test]
+    public function the_home_and_the_run_show_what_a_bot_in_the_game_sees(): void
+    {
+        $account = $this->account();
+        $run = $account->runs()->create();
+        $now = now()->getTimestamp();
+        $run->update([
+            'status' => RunStatus::Running,
+            'scene' => new Scene(
+                [
+                    'name' => 'Hero',
+                    'level' => 34,
+                    'health' => 1840,
+                    'maxHealth' => 2300,
+                    'mana' => 61,
+                    'maxMana' => 100,
+                    'class' => 'Mage',
+                    'category' => 'caster',
+                    'rank' => 7,
+                    'points' => 90_000,
+                    'rankFrom' => 78_400,
+                    'rankTo' => 129_600,
+                    'state' => 'fighting',
+                    'away' => false,
+                    'map' => 'icestormarena',
+                    'items' => 41,
+                    'skills' => [
+                        [
+                            'slot' => 'AutoAttack',
+                            'cost' => 0,
+                            'cooldown' => 2.0,
+                            'targets' => 1,
+                            'target' => 'enemy',
+                            'unlocked' => true,
+                        ],
+                        [
+                            'slot' => 'First',
+                            'cost' => 20,
+                            'cooldown' => 6.0,
+                            'targets' => 3,
+                            'target' => 'enemy',
+                            'unlocked' => true,
+                        ],
+                    ],
+                ],
+                [[
+                    'id' => 3,
+                    'name' => 'Frost Spirit',
+                    'level' => 33,
+                    'race' => 'elemental',
+                    'cell' => 'r3a',
+                    'health' => 900,
+                    'maxHealth' => 3000,
+                    'state' => 'fighting',
+                    'struck' => $now,
+                ]],
+                ['Artix'],
+                new Pulse()
+                    ->rewarded($now - 120, experience: 500)
+                    ->rewarded($now - 60, experience: 700),
+                new Feed()->add($now - 30, FeedKind::Defeated, 'Defeated Frost Spirit', '+700 XP · +40 gold'),
+                $now,
+            )->toArray(),
+        ]);
+
+        Livewire::test(Bots::class)->assertSeeInOrder([
+            'Online',
+            '1 / 1',
+            'Hero',
+            'Mage',
+            'icestormarena',
+            'Fighting',
+            '1,840',
+            '2,300',
+            'Frost Spirit',
+            'XP / hour',
+            'Watch',
+        ]);
+
+        Livewire::test(RunScene::class, ['run' => $run])->assertSeeInOrder([
+            'Hero',
+            'Mage',
+            'Rank 7',
+            'Fighting',
+            '1,840',
+            '×3',
+            '23%',
+            'icestormarena',
+            '1 of 1 monsters standing',
+            'Artix',
+            'r3a · fighting here',
+            'Frost Spirit',
+            'Lv 33',
+            'XP per hour',
+            '1,200',
+            'Defeated Frost Spirit',
+            '+700 XP · +40 gold',
+        ]);
     }
 
     #[Test]
