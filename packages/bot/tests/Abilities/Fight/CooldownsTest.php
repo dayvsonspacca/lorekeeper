@@ -9,6 +9,8 @@ use Lorekeeper\Bot\Abilities\Fight\Cooldowns;
 use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Attribute\Vitals;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
@@ -25,7 +27,7 @@ final class CooldownsTest extends TestCase
     {
         $cooldowns = new Cooldowns();
         $skills = [self::auto(), self::bolt(cost: 20)];
-        $potion = new Skill(SkillSlot::Potion, SkillTarget::Ally, new Mana(0), Duration::seconds(60));
+        $potion = new Skill(SkillSlot::Potion, SkillTarget::Ally, new ManaCost(new Mana(0)), Duration::seconds(60));
 
         static::assertSame(
             SkillSlot::First,
@@ -40,6 +42,12 @@ final class CooldownsTest extends TestCase
             $cooldowns->ready([$potion, self::auto()], self::vitals(mana: 100), ClassRules::none(), self::at(0))?->slot,
         );
         static::assertNull($cooldowns->ready([$potion], self::vitals(mana: 100), ClassRules::none(), self::at(0)));
+
+        $fire = new Skill(SkillSlot::Second, SkillTarget::Enemy, new ManaRestore(new Mana(15)), Duration::seconds(7));
+        static::assertSame(
+            SkillSlot::Second,
+            $cooldowns->ready([self::auto(), $fire], self::vitals(mana: 0), ClassRules::none(), self::at(0))?->slot,
+        );
     }
 
     #[Test]
@@ -113,21 +121,21 @@ final class CooldownsTest extends TestCase
 
     private static function auto(): Skill
     {
-        return new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new Mana(0), Duration::seconds(2));
+        return new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new ManaCost(new Mana(0)), Duration::seconds(2));
     }
 
     private static function bolt(int $cost): Skill
     {
-        return new Skill(SkillSlot::First, SkillTarget::Enemy, new Mana($cost), Duration::seconds(6));
+        return new Skill(SkillSlot::First, SkillTarget::Enemy, new ManaCost(new Mana($cost)), Duration::seconds(6));
     }
 
     private static function shield(): Skill
     {
-        return new Skill(SkillSlot::Third, SkillTarget::Ally, new Mana(15), Duration::seconds(12));
+        return new Skill(SkillSlot::Third, SkillTarget::Ally, new ManaCost(new Mana(15)), Duration::seconds(12));
     }
 
     private static function heal(): Skill
     {
-        return new Skill(SkillSlot::Fourth, SkillTarget::Self, new Mana(0), Duration::seconds(20));
+        return new Skill(SkillSlot::Fourth, SkillTarget::Self, new ManaCost(new Mana(0)), Duration::seconds(20));
     }
 }

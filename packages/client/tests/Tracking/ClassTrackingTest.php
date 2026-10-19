@@ -10,6 +10,7 @@ use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\ClassName;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
@@ -48,8 +49,13 @@ final class ClassTrackingTest extends TestCase
     #[Test]
     public function it_learns_the_skills_of_the_class_it_plays(): void
     {
-        $fireBolt = new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new Mana(0), Duration::seconds(2));
-        $burn = new Skill(SkillSlot::First, SkillTarget::Enemy, new Mana(10), Duration::seconds(3));
+        $fireBolt = new Skill(
+            SkillSlot::AutoAttack,
+            SkillTarget::Enemy,
+            new ManaCost(new Mana(0)),
+            Duration::seconds(2),
+        );
+        $burn = new Skill(SkillSlot::First, SkillTarget::Enemy, new ManaCost(new Mana(10)), Duration::seconds(3));
         $skills = [new PlayerSkill($fireBolt, true), new PlayerSkill($burn, false)];
         $changed = ClassTracking::follow(
             self::mage(),

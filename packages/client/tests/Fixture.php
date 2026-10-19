@@ -14,6 +14,7 @@ use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\CharacterClass;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\ClassName;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
@@ -88,9 +89,9 @@ final readonly class Fixture
     public static function mage(): CharacterClass
     {
         return new CharacterClass(new ClassName('Mage'), ClassCategory::Caster, Option\none(), [
-            new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new Mana(0), Duration::seconds(2)),
-            new Skill(SkillSlot::First, SkillTarget::Enemy, new Mana(20), Duration::seconds(6)),
-            new Skill(SkillSlot::Fourth, SkillTarget::Self, new Mana(0), Duration::seconds(20)),
+            new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new ManaCost(new Mana(0)), Duration::seconds(2)),
+            new Skill(SkillSlot::First, SkillTarget::Enemy, new ManaCost(new Mana(20)), Duration::seconds(6)),
+            new Skill(SkillSlot::Fourth, SkillTarget::Self, new ManaCost(new Mana(0)), Duration::seconds(20)),
         ]);
     }
 

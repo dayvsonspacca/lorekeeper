@@ -32,7 +32,7 @@ final readonly class Cooldowns
             fn(Skill $skill): bool => (
                 $skill->slot !== SkillSlot::Potion
                 && !$this->waiting($skill->slot->name, $now)
-                && $skill->cost->value <= $vitals->mana->current->value
+                && $skill->cost->affordable($vitals)
                 && $rules->allows($skill, $vitals)
             ),
         ));

@@ -10,6 +10,7 @@ use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\ClassName;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
@@ -55,8 +56,8 @@ final class ClassRulesTest extends TestCase
     {
         return new Cooldowns()->ready(
             [
-                new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new Mana(0), Duration::seconds(2)),
-                new Skill(SkillSlot::First, SkillTarget::Self, new Mana(5), Duration::seconds(8)),
+                new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new ManaCost(new Mana(0)), Duration::seconds(2)),
+                new Skill(SkillSlot::First, SkillTarget::Self, new ManaCost(new Mana(5)), Duration::seconds(8)),
                 self::heal(),
             ],
             self::vitals($health, $mana),
@@ -67,7 +68,13 @@ final class ClassRulesTest extends TestCase
 
     private static function heal(): Skill
     {
-        return new Skill(SkillSlot::Second, SkillTarget::Ally, new Mana(30), Duration::seconds(8), new Quantity(7));
+        return new Skill(
+            SkillSlot::Second,
+            SkillTarget::Ally,
+            new ManaCost(new Mana(30)),
+            Duration::seconds(8),
+            new Quantity(7),
+        );
     }
 
     private static function vitals(int $health, int $mana): Vitals
