@@ -106,7 +106,7 @@ final readonly class InventoryTracking
 
             $held[$added->item->value] = new PlayerItem(
                 $before->item,
-                new Quantity($before->quantity->value + $added->quantity->value),
+                $added->held ?? new Quantity($before->quantity->value + $added->quantity->value),
             );
         }
 

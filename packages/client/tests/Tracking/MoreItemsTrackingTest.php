@@ -38,14 +38,14 @@ final class MoreItemsTrackingTest extends TestCase
             $inventory,
             new MoreItemsAddedEvent([
                 new AddedItem(new ItemId(5574), new Quantity(49)),
-                new AddedItem(new ItemId(42_657), new Quantity(2)),
+                new AddedItem(new ItemId(42_657), new Quantity(1), new Quantity(11)),
                 new AddedItem(new ItemId(1), new Quantity(1)),
             ]),
             new Identity(new SocketId(122_628), new PlayerName('lorekeeper03')),
         );
 
         static::assertSame(50, $inventory->temporary->find(new ItemId(5574))->unwrap()->quantity->value);
-        static::assertSame(5, $inventory->permanent->find(new ItemId(42_657))->unwrap()->quantity->value);
+        static::assertSame(11, $inventory->permanent->find(new ItemId(42_657))->unwrap()->quantity->value);
         static::assertTrue($inventory->find(new ItemId(1))->isNone());
     }
 }
