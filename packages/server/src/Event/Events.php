@@ -16,6 +16,7 @@ use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
+use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
 use Lorekeeper\Server\Event\Item\ItemEquippedEvent;
 use Lorekeeper\Server\Event\Item\ItemUnequippedEvent;
 use Lorekeeper\Server\Event\Item\ItemUnwornEvent;
@@ -33,6 +34,7 @@ use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
 use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
+use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
@@ -62,6 +64,7 @@ final readonly class Events
         SkillsLoadedEvent::class,
         ConnectionEstablishedEvent::class,
         PlayerInventoryLoadedEvent::class,
+        TemporaryItemsAddedEvent::class,
         ItemEquippedEvent::class,
         ItemUnequippedEvent::class,
         ItemUnwornEvent::class,
@@ -81,6 +84,7 @@ final readonly class Events
         PlayerAwayUpdatedEvent::class,
         PlayerVitalsUpdatedEvent::class,
         QuestLoadedEvent::class,
+        ItemsTurnedInEvent::class,
         ShopLoadedEvent::class,
     ];
 
