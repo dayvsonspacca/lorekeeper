@@ -20,6 +20,7 @@ use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Map\MapCell;
@@ -153,11 +154,12 @@ final class CharacterTest extends TestCase
         $me->hear(self::changed(new SocketId(122_628), 'Blaze Binder'));
         static::assertSame('Mage', $me->player()->class->class->name->value);
 
-        $me->hear(new SkillsLoadedEvent([$fireBolt, $burn], [SkillSlot::AutoAttack]));
+        $skills = [new PlayerSkill($fireBolt, true), new PlayerSkill($burn, false)];
+        $me->hear(new SkillsLoadedEvent($skills));
         static::assertSame('Blaze Binder', $me->player()->class->class->name->value);
         static::assertSame(302_500, $me->player()->class->points->value);
         static::assertSame([$fireBolt, $burn], $me->player()->class->class->skills);
-        static::assertSame([$fireBolt], $me->usableSkills());
+        static::assertSame($skills, $me->player()->skills);
     }
 
     #[Test]

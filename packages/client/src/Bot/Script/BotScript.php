@@ -22,6 +22,7 @@ use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Combat\Targetable;
+use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapName;
@@ -214,7 +215,10 @@ abstract class BotScript implements Script
         }
 
         $usable = array_filter(
-            $this->me->usableSkills(),
+            array_map(
+                static fn(PlayerSkill $held): Skill => $held->skill,
+                array_filter($this->me->player()->skills, static fn(PlayerSkill $held): bool => $held->unlocked),
+            ),
             fn(Skill $skill): bool => (
                 $skill->target === SkillTarget::Enemy
                 && !(array_key_exists($skill->slot->name, $ready) && $ready[$skill->slot->name]->after($now))

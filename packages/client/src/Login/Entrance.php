@@ -9,10 +9,12 @@ use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Location;
 use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\CharacterClass;
+use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerClass;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\World\Map\MapPlayer;
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
@@ -99,15 +101,20 @@ final class Entrance
                 $me->level,
                 $vitals,
                 new PlayerClass(
-                    new CharacterClass($class->className, $class->category, $class->description, $skills->skills),
+                    new CharacterClass(
+                        $class->className,
+                        $class->category,
+                        $class->description,
+                        array_map(static fn(PlayerSkill $skill): Skill => $skill->skill, $skills->skills),
+                    ),
                     $class->points,
                 ),
+                $skills->skills,
                 $inventory,
             ),
             new Location($arrival->areaId, $arrival->map, $me->spot),
             $me->state,
             $me->away,
-            $skills->usable,
         );
     }
 

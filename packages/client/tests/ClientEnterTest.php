@@ -11,12 +11,12 @@ use Lorekeeper\Client\Login\GameLogin;
 use Lorekeeper\Client\Script\Outcome;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
-use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Item\Equipment\ClassItem;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Server\Event\Session\LoginFailedEvent;
 use PHPUnit\Framework\Attributes\Test;
@@ -100,7 +100,10 @@ final class ClientEnterTest extends TestCase
         static::assertCount(5, $player->class->class->skills);
         static::assertSame(
             [SkillSlot::AutoAttack, SkillSlot::First, SkillSlot::Potion],
-            array_map(static fn(Skill $skill): SkillSlot => $skill->slot, $me->usableSkills()),
+            array_values(array_map(
+                static fn(PlayerSkill $held): SkillSlot => $held->skill->slot,
+                array_filter($player->skills, static fn(PlayerSkill $held): bool => $held->unlocked),
+            )),
         );
         static::assertInstanceOf(ClassItem::class, $player->inventory->find(new ItemId(15_651))->unwrap()->item);
 

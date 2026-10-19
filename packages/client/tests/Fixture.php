@@ -23,6 +23,7 @@ use Lorekeeper\Core\Player\PlayerClass;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\World\Map\Map;
@@ -56,6 +57,7 @@ final readonly class Fixture
                 new PlayerLevel($level),
                 self::vitals(),
                 new PlayerClass(self::mage(), new ClassPoints(0)),
+                array_map(static fn(Skill $skill): PlayerSkill => new PlayerSkill($skill, true), self::mage()->skills),
                 new PlayerInventory([]),
             ),
             new Location(
@@ -65,7 +67,6 @@ final readonly class Fixture
             ),
             CombatState::Idle,
             false,
-            [SkillSlot::AutoAttack, SkillSlot::First, SkillSlot::Fourth],
         );
     }
 
