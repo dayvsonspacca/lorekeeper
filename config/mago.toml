@@ -48,6 +48,10 @@ namespace = "Lorekeeper\\Client"
 permit = ["@layer:ext", "Lorekeeper\\Client\\**", "Lorekeeper\\Server\\**", "Lorekeeper\\Core\\**"]
 
 [[guard.perimeter.rules]]
+namespace = "Lorekeeper\\Bot"
+permit = ["@layer:ext", "Lorekeeper\\Bot\\**", "Lorekeeper\\Client\\**", "Lorekeeper\\Server\\**", "Lorekeeper\\Core\\**"]
+
+[[guard.perimeter.rules]]
 namespace = "Lorekeeper\\Apps\\Wiki"
 permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**", "Livewire\\**", "Symfony\\**"]
 

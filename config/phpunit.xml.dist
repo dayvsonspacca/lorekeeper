@@ -20,12 +20,16 @@
         <testsuite name="client">
             <directory>../packages/client/tests</directory>
         </testsuite>
+        <testsuite name="bot">
+            <directory>../packages/bot/tests</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>../packages/core/src</directory>
             <directory>../packages/server/src</directory>
             <directory>../packages/client/src</directory>
+            <directory>../packages/bot/src</directory>
         </include>
     </source>
 </phpunit>

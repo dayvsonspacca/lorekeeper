@@ -1,0 +1,19 @@
+{
+  "name": "dayvsonspacca/lorekeeper-bot",
+  "description": "Bots that play AQW: what to do and how, on top of the client",
+  "license": "MIT",
+  "version": "dev-main",
+  "require": {
+    "php": "~8.4.0 || ~8.5.0",
+    "dayvsonspacca/lorekeeper-core": "dev-main",
+    "dayvsonspacca/lorekeeper-server": "dev-main",
+    "dayvsonspacca/lorekeeper-client": "dev-main",
+    "php-standard-library/date-time": "^6.2",
+    "php-standard-library/option": "^6.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Lorekeeper\\Bot\\": "src/"
+    }
+  }
+}

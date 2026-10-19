@@ -9,8 +9,9 @@ A toolbox for AdventureQuest Worlds: framework-free PHP packages (`packages/`) a
   name things by what they mean in the game, shape them the way Lorekeeper wants to use them, and hide the
   protocol's quirks. Do not mirror wire field names, command codes or raw numeric values into the API; for example,
   do not back an enum with the integers the server happens to send.
-- `client` plays the game: commands, scripts, sessions.
-- Layers only point down: `core` ← `server` ← `client` ← apps. `just guard` enforces it.
+- `client` plays the game: the connection, commands, entering the game, the character and the script engine.
+- `bot` decides what to play: bot scripts and the moves they share.
+- Layers only point down: `core` ← `server` ← `client` ← `bot` ← apps. `just guard` enforces it.
 - Before creating a new concept, discuss with the user which package it belongs to, especially when it could be
   `core`. Do not decide placement alone.
 
@@ -46,8 +47,8 @@ Run `just fmt`, `just lint`, `just analyze` and the tests before committing.
 
 - Work on a branch and commit each finished part.
 - Subject: `type(scope): what it does`, lowercase, imperative, no period. The scope is the package or app (`core`,
-  `server`, `client`, `wiki`, `desktop`); leave it out when a change spans several. Mark breaking changes with `!`,
-  as in `refactor(core)!: ...`.
+  `server`, `client`, `bot`, `wiki`, `desktop`); leave it out when a change spans several. Mark breaking changes with
+  `!`, as in `refactor(core)!: ...`.
 - Body: `- ` bullets wrapped at about 76 columns, or a short paragraph; a paragraph of context may come before the
   bullets. Describe what changed and why, in plain words.
 - End with the `Co-Authored-By` trailer.

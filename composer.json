@@ -21,13 +21,18 @@
         {
             "type": "path",
             "url": "packages/client"
+        },
+        {
+            "type": "path",
+            "url": "packages/bot"
         }
     ],
     "require": {
         "php": "~8.4.0 || ~8.5.0",
         "dayvsonspacca/lorekeeper-core": "dev-main",
         "dayvsonspacca/lorekeeper-server": "dev-main",
-        "dayvsonspacca/lorekeeper-client": "dev-main"
+        "dayvsonspacca/lorekeeper-client": "dev-main",
+        "dayvsonspacca/lorekeeper-bot": "dev-main"
     },
     "require-dev": {
         "phpunit/phpunit": "^13.0.5",
@@ -39,7 +44,8 @@
         "psr-4": {
             "Lorekeeper\\Core\\Tests\\": "packages/core/tests/",
             "Lorekeeper\\Server\\Tests\\": "packages/server/tests/",
-            "Lorekeeper\\Client\\Tests\\": "packages/client/tests/"
+            "Lorekeeper\\Client\\Tests\\": "packages/client/tests/",
+            "Lorekeeper\\Bot\\Tests\\": "packages/bot/tests/"
         }
     },
     "config": {

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3d5e740a19e8516e361bd403971fe102",
+    "content-hash": "1b3471c8b3e789933e5920d030c93d9b",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -768,6 +768,36 @@
             "time": "2026-09-18T07:38:01+00:00"
         },
         {
+            "name": "dayvsonspacca/lorekeeper-bot",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../../packages/bot",
+                "reference": "d51d4aa58267a21bf8cc6bed80977503a8832883"
+            },
+            "require": {
+                "dayvsonspacca/lorekeeper-client": "dev-main",
+                "dayvsonspacca/lorekeeper-core": "dev-main",
+                "dayvsonspacca/lorekeeper-server": "dev-main",
+                "php": "~8.4.0 || ~8.5.0",
+                "php-standard-library/date-time": "^6.2",
+                "php-standard-library/option": "^6.2"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Lorekeeper\\Bot\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Bots that play AQW: what to do and how, on top of the client",
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "dayvsonspacca/lorekeeper-client",
             "version": "dev-main",
             "dist": {
@@ -810,10 +840,11 @@
             "dist": {
                 "type": "path",
                 "url": "../../packages/core",
-                "reference": "609f1f1430a5b26156b432f8989efbe3f564ca94"
+                "reference": "e5766fb786b87c91da06cfbd69ff7791f2e40bdd"
             },
             "require": {
                 "php": "~8.4.0 || ~8.5.0",
+                "php-standard-library/collection": "^6.2",
                 "php-standard-library/date-time": "^6.2",
                 "php-standard-library/option": "^6.2",
                 "php-standard-library/type": "^6.2"
@@ -11540,6 +11571,7 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
+        "dayvsonspacca/lorekeeper-bot": 20,
         "dayvsonspacca/lorekeeper-client": 20,
         "dayvsonspacca/lorekeeper-core": 20,
         "dayvsonspacca/lorekeeper-server": 20

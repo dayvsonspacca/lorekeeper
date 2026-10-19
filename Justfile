@@ -20,6 +20,6 @@ fmt *args:
 analyze *args:
     ./vendor/bin/mago --config config/mago.toml analyze {{ args }}
 
-# Enforce layer boundaries (core ← server ← client)
+# Enforce layer boundaries (core ← server ← client ← bot)
 guard *args:
     ./vendor/bin/mago --config config/mago.toml guard {{ args }}

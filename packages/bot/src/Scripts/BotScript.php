@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Bot;
+namespace Lorekeeper\Bot\Scripts;
 
 use Closure;
 use Generator;

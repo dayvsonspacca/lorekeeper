@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Bot;
+namespace Lorekeeper\Bot\Tests\Scripts;
 
 use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Script\Instruction;

@@ -37,10 +37,14 @@ if (MapRefusals::contains($joined)) {
 }
 ```
 
-Ready-made scripts enter the game and level a character up, telling how far along they are.
+To play, log in to get a `Client` already in the game, with the player and their character put together from what
+the server sends on the way in. The client keeps the character up to date with what the server says, and tells
+whoever subscribes about every event it hears.
 
-To play, log in to get a `Client` already in the game, then run scripts on it. The client keeps the character up to
-date with what the server says, and tells whoever subscribes about every event it hears.
+### `bot`
+
+Decides what to play. Bot scripts are built on moves every bot needs, like joining a map, fighting in a cell and
+coming back from the dead, and tell how far along they are; the first one levels a character up.
 
 ```php
 $client = Login::enter(new Credentials($player, getenv('AQW_PASSWORD')));

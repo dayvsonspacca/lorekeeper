@@ -15,10 +15,15 @@
         {
             "type": "path",
             "url": "../../packages/client"
+        },
+        {
+            "type": "path",
+            "url": "../../packages/bot"
         }
     ],
     "require": {
         "php": "~8.4.0 || ~8.5.0",
+        "dayvsonspacca/lorekeeper-bot": "dev-main",
         "dayvsonspacca/lorekeeper-client": "dev-main",
         "dayvsonspacca/lorekeeper-core": "dev-main",
         "dayvsonspacca/lorekeeper-server": "dev-main",

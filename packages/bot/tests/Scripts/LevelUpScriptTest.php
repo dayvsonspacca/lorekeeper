@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Tests\Bot;
+namespace Lorekeeper\Bot\Tests\Scripts;
 
-use Lorekeeper\Client\Bot\LevelUpScript;
+use Lorekeeper\Bot\Scripts\LevelUpScript;
 use Lorekeeper\Client\Script\Done;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Progress;
