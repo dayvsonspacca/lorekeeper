@@ -25,6 +25,19 @@ trait Loots
     abstract protected function send(Command $command): Send;
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, bool> */
+    protected function collect(ItemId $reward, int $heldBefore): Generator
+    {
+        if ($this->me()->player()->inventory->quantity($reward) > $heldBefore) {
+            return true;
+        }
+
+        $pickingUp = $this->pickUp($reward);
+        yield from $pickingUp;
+
+        return $pickingUp->getReturn();
+    }
+
+    /** @return Generator<int, Instruction, null|Event|TimedOut, bool> */
     protected function pickUp(ItemId $item): Generator
     {
         if ($this->me()->drops()->find($item) === null) {

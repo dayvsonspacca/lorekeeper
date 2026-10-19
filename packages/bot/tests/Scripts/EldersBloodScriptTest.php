@@ -20,8 +20,10 @@ use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Quest\QuestPeriod;
+use Lorekeeper\Server\Event\Inventory\AddedItem;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
+use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
@@ -73,6 +75,36 @@ final class EldersBloodScriptTest extends TestCase
             self::sent($steps),
         );
         static::assertEquals(new Done("got today's Elders' Blood, 1 held now"), $result);
+    }
+
+    #[Test]
+    public function a_reward_that_lands_straight_in_the_inventory_needs_no_pick_up(): void
+    {
+        $me = Fixture::me(level: 30);
+        $me->hear(new PlayerInventoryLoadedEvent(new PlayerItems([new PlayerItem(
+            new Resource(new ItemId(5586), new ItemName("Elders' Blood")),
+            new Quantity(10),
+        )])));
+
+        [$steps, $result] = Play::run(new EldersBloodScript(), $me, [
+            Fixture::arrival('arcangrove', 7_101, ['LeftBack' => [2, 30]]),
+            self::loaded(),
+            new QuestAcceptedEvent(new QuestId(802)),
+            null,
+            null,
+            null,
+            new TemporaryItemsAddedEvent([
+                new PlayerItem(new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant')), new Quantity(50)),
+            ]),
+            [
+                new QuestCompletedEvent(new QuestId(802), new QuestName("Experiment 107: Elder's Blood Potion")),
+                new ItemsTurnedInEvent([new TurnedInItem(new ItemId(5574), new Quantity(50))]),
+                new MoreItemsAddedEvent([new AddedItem(new ItemId(5586), new Quantity(1), new Quantity(11))]),
+            ],
+        ]);
+
+        static::assertEquals(new Done("got today's Elders' Blood, 11 held now"), $result);
+        static::assertStringNotContainsString('getDrop', implode(' ', self::sent($steps)));
     }
 
     #[Test]

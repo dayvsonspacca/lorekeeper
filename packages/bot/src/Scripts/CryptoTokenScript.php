@@ -76,6 +76,10 @@ final class CryptoTokenScript extends BotScript
             return new Failed('no Metal Ore dropped after ' . self::HUNTING_MINUTES . ' minutes of hunting Sneevils');
         }
 
+        $heldBefore = $this
+            ->me()
+            ->player()
+            ->inventory->quantity($reward);
         $turningIn = $this->turnIn($quest);
         yield from $turningIn;
         $refusal = $turningIn->getReturn();
@@ -83,9 +87,9 @@ final class CryptoTokenScript extends BotScript
             return new Failed(self::refused($refusal));
         }
 
-        $pickingUp = $this->pickUp($reward);
-        yield from $pickingUp;
-        if (!$pickingUp->getReturn()) {
+        $collecting = $this->collect($reward, $heldBefore);
+        yield from $collecting;
+        if (!$collecting->getReturn()) {
             return new Failed("Odd's 'n' Ends was completed, but the Crypto Token could not be picked up");
         }
 

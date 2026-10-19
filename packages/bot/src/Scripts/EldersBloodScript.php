@@ -84,6 +84,10 @@ final class EldersBloodScript extends BotScript
             );
         }
 
+        $heldBefore = $this
+            ->me()
+            ->player()
+            ->inventory->quantity($reward);
         $turningIn = $this->turnIn($quest);
         yield from $turningIn;
         $refusal = $turningIn->getReturn();
@@ -91,9 +95,9 @@ final class EldersBloodScript extends BotScript
             return new Failed("the game would not complete Experiment 107 ({$refusal})");
         }
 
-        $pickingUp = $this->pickUp($reward);
-        yield from $pickingUp;
-        if (!$pickingUp->getReturn()) {
+        $collecting = $this->collect($reward, $heldBefore);
+        yield from $collecting;
+        if (!$collecting->getReturn()) {
             return new Failed("Experiment 107 was completed, but the Elders' Blood could not be picked up");
         }
 
