@@ -8,6 +8,7 @@ use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Psl\Comparison\Order;
 use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
 
@@ -60,12 +61,12 @@ final readonly class Cooldowns
         $soonest = Duration::seconds(2);
         foreach ($this->ready as $at) {
             $left = $at->since($now);
-            if ($left->isPositive() && $left->compare($soonest) < 0) {
+            if ($left->isPositive() && $left->compare($soonest) === Order::Less) {
                 $soonest = $left;
             }
         }
 
-        return $soonest->compare(Duration::milliseconds(200)) < 0 ? Duration::milliseconds(200) : $soonest;
+        return $soonest->compare(Duration::milliseconds(200)) === Order::Less ? Duration::milliseconds(200) : $soonest;
     }
 
     private function waiting(string $slot, Timestamp $now): bool
