@@ -12,7 +12,7 @@ final readonly class Skill
     public function __construct(
         public SkillSlot $slot,
         public SkillTarget $target,
-        public Mana $mana,
+        public Mana $cost,
         public Duration $cooldown,
     ) {}
 }
