@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Tests\Event\Combat;
 
 use Lorekeeper\Core\Attribute\Health;
+use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\SkillCost;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Combat\CombatState;
@@ -46,18 +50,18 @@ final class CombatEventsTest extends TestCase
             {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":89,"nam":"Auto Attack","typ":"aa","ref":"aa","tgt":"h","fx":"m","damage":0.9,"range":301,"mp":0,"cd":2000,"auto":true,"isOK":true},{"id":115,"nam":"Fireball","typ":"m","ref":"a1","tgt":"h","tgtMax":1,"mp":20,"cd":6000,"isOK":true},{"id":116,"nam":"Ice Shard","typ":"m","ref":"a2","tgt":"h","mp":15,"cd":6000,"isOK":false},{"id":118,"nam":"Arcane Shield","typ":"m","ref":"a4","tgt":"s","mp":0,"cd":20000,"isOK":false},{"nam":"Potions","typ":"i","ref":"i1","tgt":"f","mp":0,"cd":60000,"isOK":true}],"passive":[{"nam":"Hot Headed","ref":"p1"}]}}}}
             JSON)->unwrap())->unwrap();
 
-        static::assertSame(
+        static::assertEquals(
             [
-                [SkillSlot::AutoAttack, SkillTarget::Enemy, 0,  2000],
-                [SkillSlot::First,      SkillTarget::Enemy, 20, 6000],
-                [SkillSlot::Second,     SkillTarget::Enemy, 15, 6000],
-                [SkillSlot::Fourth,     SkillTarget::Self,  0,  20_000],
-                [SkillSlot::Potion,     SkillTarget::Ally,  0,  60_000],
+                [SkillSlot::AutoAttack, SkillTarget::Enemy, new ManaCost(new Mana(0)), 2000],
+                [SkillSlot::First, SkillTarget::Enemy, new ManaCost(new Mana(20)), 6000],
+                [SkillSlot::Second, SkillTarget::Enemy, new ManaCost(new Mana(15)), 6000],
+                [SkillSlot::Fourth, SkillTarget::Self, new ManaCost(new Mana(0)), 20_000],
+                [SkillSlot::Potion, SkillTarget::Ally, new ManaCost(new Mana(0)), 60_000],
             ],
             array_map(static fn(PlayerSkill $held): array => [
                 $held->skill->slot,
                 $held->skill->target,
-                $held->skill->cost->value,
+                $held->skill->cost,
                 (int) $held->skill->cooldown->getTotalMilliseconds(),
             ], $event->skills),
         );
@@ -66,6 +70,26 @@ final class CombatEventsTest extends TestCase
             array_map(static fn(PlayerSkill $held): bool => $held->unlocked, $event->skills),
         );
         static::assertSame('5 skills, 3 unlocked', $event->summary());
+    }
+
+    #[Test]
+    public function a_skill_that_gives_mana_back_restores_it_instead_of_costing_it(): void
+    {
+        $event = SkillsLoadedEvent::from(JsonMessage::from(<<<'JSON'
+            {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":638,"nam":"Arcane Strike","typ":"aa","ref":"aa","tgt":"h","mp":-10,"cd":2000,"isOK":true},{"id":642,"nam":"Arcane Devastation","typ":"m","ref":"a1","tgt":"h","tgtMax":3,"mp":50,"cd":10000,"isOK":true},{"id":639,"nam":"Arcane Fire","typ":"m","ref":"a2","tgt":"h","tgtMax":3,"mp":-15,"cd":7000,"isOK":true},{"id":641,"nam":"Explosive Shield","typ":"m","ref":"a3","tgt":"h","tgtMax":3,"mp":20,"cd":23000,"isOK":true},{"id":640,"nam":"Enchanted Blade","typ":"m","ref":"a4","tgt":"s","mp":40,"cd":4000,"isOK":true},{"nam":"Potions","typ":"i","ref":"i1","tgt":"f","mp":0,"cd":60000,"isOK":true}],"passive":[{"nam":"Heavy Armor Expertise","ref":"p1"},{"nam":"Battle Hardened Mage","ref":"p2"},{"nam":"Mana Rush","ref":"p3"}]}}}}
+            JSON)->unwrap())->unwrap();
+
+        static::assertEquals(
+            [
+                new ManaRestore(new Mana(10)),
+                new ManaCost(new Mana(50)),
+                new ManaRestore(new Mana(15)),
+                new ManaCost(new Mana(20)),
+                new ManaCost(new Mana(40)),
+                new ManaCost(new Mana(0)),
+            ],
+            array_map(static fn(PlayerSkill $held): SkillCost => $held->skill->cost, $event->skills),
+        );
     }
 
     #[Test]

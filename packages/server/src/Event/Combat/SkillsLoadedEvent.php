@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Combat;
 
 use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
@@ -44,7 +46,7 @@ final readonly class SkillsLoadedEvent implements Event
                     'active' => Type\vec(Type\shape([
                         'ref' => Type\non_empty_string(),
                         'tgt' => Type\string(),
-                        'mp' => Type\uint(),
+                        'mp' => Type\int(),
                         'cd' => Type\uint(),
                         'tgtMax' => Type\optional(Type\positive_int()),
                         'isOK' => Type\optional(Type\bool()),
@@ -52,7 +54,11 @@ final readonly class SkillsLoadedEvent implements Event
                 ], allowUnknownFields: true),
             ], allowUnknownFields: true)->coerce($message->data)['actions']['active'];
         } catch (CoercionException $exception) {
-            throw new MalformedEventException(static::class, 'skills are missing or invalid', $exception);
+            throw new MalformedEventException(
+                static::class,
+                'skills are missing or invalid: ' . $exception->getMessage(),
+                $exception,
+            );
         }
 
         $skills = [];
@@ -66,7 +72,7 @@ final readonly class SkillsLoadedEvent implements Event
                 new Skill(
                     $slot,
                     self::target($skill['tgt']),
-                    new Mana($skill['mp']),
+                    $skill['mp'] < 0 ? new ManaRestore(new Mana(-$skill['mp'])) : new ManaCost(new Mana($skill['mp'])),
                     Duration::milliseconds($skill['cd']),
                     new Quantity($skill['tgtMax'] ?? 1),
                 ),
