@@ -9,12 +9,6 @@ namespace Lorekeeper\Core\Support\Tag;
  */
 trait Taggable
 {
-    /** @var list<T> */
-    public readonly array $tags;
-
-    /** @param T $tag */
-    public function has(Tag $tag): bool
-    {
-        return in_array($tag, $this->tags, strict: true);
-    }
+    /** @var Tags<T> */
+    public readonly Tags $tags;
 }

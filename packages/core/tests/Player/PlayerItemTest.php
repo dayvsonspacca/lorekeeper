@@ -33,12 +33,14 @@ final class PlayerItemTest extends TestCase
     }
 
     #[Test]
-    public function it_tells_the_tags_it_has(): void
+    public function it_starts_with_no_tags_and_takes_them_afterwards(): void
     {
-        $blade = new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade'), tags: [ItemTag::MemberOnly]);
-        $sword = new PlayerItem(new ItemId(1), new ItemName('Default Sword'));
+        $blade = new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade'));
 
-        static::assertTrue($blade->has(ItemTag::MemberOnly));
-        static::assertFalse($sword->has(ItemTag::MemberOnly));
+        static::assertFalse($blade->tags->has(ItemTag::MemberOnly));
+
+        $blade->tags->add(ItemTag::MemberOnly);
+
+        static::assertTrue($blade->tags->has(ItemTag::MemberOnly));
     }
 }
