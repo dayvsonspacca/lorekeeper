@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Quest;
 
-use Lorekeeper\Core\CharacterClass\ClassId;
-use Lorekeeper\Core\CharacterClass\ClassName;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Equipment\Pet;
 use Lorekeeper\Core\Item\Equipment\Weapon;
 use Lorekeeper\Core\Item\Equipment\WeaponType;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Progression\Experience;
-use Lorekeeper\Core\World\Faction\FactionName;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
 use Lorekeeper\Core\World\Quest\Quest;
 use Lorekeeper\Core\World\Quest\Requirement\ClassRankRequirement;
@@ -25,7 +22,6 @@ use Lorekeeper\Core\World\Quest\Reward\ExperienceReward;
 use Lorekeeper\Core\World\Quest\Reward\GoldReward;
 use Lorekeeper\Core\World\Quest\Reward\ItemReward;
 use Lorekeeper\Core\World\Quest\Reward\ItemRewardType;
-use Lorekeeper\Server\Event\Mention\Mention;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -123,42 +119,6 @@ final class QuestLoadedEventTest extends TestCase
 
         $chained = self::load(self::quest('Armor', 0, ['bQuest' => 1, 'strPrevious' => '39']))->quests[0];
         static::assertSame(39, $only(PreviousQuestRequirement::class, $chained)->questId->value);
-    }
-
-    #[Test]
-    public function it_mentions_the_factions_and_classes_the_message_names(): void
-    {
-        $mentions = self::load(self::QUESTS)->mentions();
-        $about = static fn(int $id, string $value): array => array_values(array_map(
-            static fn(Mention $mention): object => $mention->value,
-            array_filter(
-                $mentions,
-                static fn(Mention $mention): bool => (
-                    $mention->about->value === $id
-                    && $mention->value instanceof $value
-                ),
-            ),
-        ));
-
-        static::assertEquals([new FactionName('Good')], $about(5, FactionName::class));
-        static::assertEquals([new FactionName('Dwarfhold')], $about(2, FactionName::class));
-        static::assertEquals([new ClassName('Healer')], $about(15_651, ClassName::class));
-        static::assertSame(
-            [],
-            array_values(array_filter(
-                $mentions,
-                static fn(Mention $mention): bool => (
-                    !$mention->value instanceof FactionName && !$mention->value instanceof ClassName
-                ),
-            )),
-        );
-        static::assertInstanceOf(
-            ClassId::class,
-            array_values(array_filter(
-                $mentions,
-                static fn(Mention $mention): bool => $mention->value instanceof ClassName,
-            ))[0]->about,
-        );
     }
 
     #[Test]

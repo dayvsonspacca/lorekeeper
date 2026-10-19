@@ -9,8 +9,6 @@ use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Equipment\Armor;
 use Lorekeeper\Core\Item\Equipment\Weapon;
 use Lorekeeper\Core\Item\Equipment\WeaponType;
-use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Boost;
 use Lorekeeper\Core\Item\Misc\Resource;
@@ -19,7 +17,6 @@ use Lorekeeper\Core\World\Shop\CurrencyShopItem;
 use Lorekeeper\Core\World\Shop\MergeShop;
 use Lorekeeper\Core\World\Shop\MergeShopItem;
 use Lorekeeper\Core\World\Shop\ShopTag;
-use Lorekeeper\Server\Event\Mention\Mention;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -64,10 +61,9 @@ final class ShopLoadedEventTest extends TestCase
     }
 
     #[Test]
-    public function it_reads_a_real_merge_shop_and_mentions_each_material_once(): void
+    public function it_reads_a_real_merge_shop(): void
     {
-        $event = self::load(self::MERGE_SHOP);
-        $shop = $event->shop;
+        $shop = self::load(self::MERGE_SHOP)->shop;
 
         static::assertInstanceOf(MergeShop::class, $shop);
         static::assertSame('Reward Gem Shop', $shop->name->value);
@@ -81,8 +77,6 @@ final class ShopLoadedEventTest extends TestCase
         );
         static::assertSame(17_109, $items[0]->costs[0]->itemId->value);
         static::assertInstanceOf(Boost::class, $items[3]->item);
-        static::assertEquals([new Mention(new ItemId(17_109), new ItemName('Realm Gem'))], $event->mentions());
-        static::assertSame([], self::load(self::ASSORTED_SHOP)->mentions());
     }
 
     #[Test]

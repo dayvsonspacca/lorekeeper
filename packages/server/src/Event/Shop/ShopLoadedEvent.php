@@ -26,8 +26,6 @@ use Lorekeeper\Core\World\Shop\ShopName;
 use Lorekeeper\Core\World\Shop\ShopTag;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
-use Lorekeeper\Server\Event\Mention\Mention;
-use Lorekeeper\Server\Event\Mention\Mentions;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -38,26 +36,17 @@ use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
 /**
- * @psalm-type ShopEntry = array{ItemID: positive-int, sName: non-empty-string, sType: string, iCost?: non-negative-int, bCoins?: bool, bUpg?: bool, turnin?: list<array{ItemID: positive-int, sName: non-empty-string, iQty: positive-int, ...}>, ...}
+ * @psalm-type ShopEntry = array{ItemID: positive-int, sName: non-empty-string, sType: string, iCost?: non-negative-int, bCoins?: bool, bUpg?: bool, turnin?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, ...}
  *
  * @mago-expect lint:cyclomatic-complexity
  */
-final readonly class ShopLoadedEvent implements Event, Mentions
+final readonly class ShopLoadedEvent implements Event
 {
     use NamedAfterClass;
 
-    /** @param list<Mention> $mentions */
     public function __construct(
         public Shop $shop,
-        private array $mentions,
     ) {}
-
-    /** @return list<Mention> */
-    #[Override]
-    public function mentions(): array
-    {
-        return $this->mentions;
-    }
 
     /** @return Option\Option<static> */
     #[Override]
@@ -83,7 +72,6 @@ final readonly class ShopLoadedEvent implements Event, Mentions
                     'bUpg' => Type\optional(Type\bool()),
                     'turnin' => Type\optional(Type\vec(Type\shape([
                         'ItemID' => Type\positive_int(),
-                        'sName' => Type\non_empty_string(),
                         'iQty' => Type\positive_int(),
                     ], allowUnknownFields: true))),
                 ], allowUnknownFields: true)),
@@ -111,7 +99,7 @@ final readonly class ShopLoadedEvent implements Event, Mentions
             $shop->tags->add(ShopTag::House);
         }
 
-        return Option\some(new static($shop, self::materials($info['items'])));
+        return Option\some(new static($shop));
     }
 
     #[Override]
@@ -177,25 +165,5 @@ final readonly class ShopLoadedEvent implements Event, Mentions
         }
 
         return $item;
-    }
-
-    /**
-     * @param list<ShopEntry> $items
-     *
-     * @return list<Mention<ItemId, ItemName>>
-     */
-    private static function materials(array $items): array
-    {
-        $mentions = [];
-        foreach ($items as $item) {
-            foreach ($item['turnin'] ?? [] as $material) {
-                $mentions[$material['ItemID']] ??= new Mention(
-                    new ItemId($material['ItemID']),
-                    new ItemName($material['sName']),
-                );
-            }
-        }
-
-        return array_values($mentions);
     }
 }

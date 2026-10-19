@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Quest;
 
 use Lorekeeper\Core\CharacterClass\ClassId;
-use Lorekeeper\Core\CharacterClass\ClassName;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
@@ -18,7 +17,6 @@ use Lorekeeper\Core\Progression\Rank;
 use Lorekeeper\Core\Progression\Reputation;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Faction\FactionId;
-use Lorekeeper\Core\World\Faction\FactionName;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
 use Lorekeeper\Core\World\Quest\Objective\QuestObjective;
 use Lorekeeper\Core\World\Quest\Quest;
@@ -41,8 +39,6 @@ use Lorekeeper\Core\World\Quest\Reward\QuestReward;
 use Lorekeeper\Core\World\Quest\Reward\ReputationReward;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
-use Lorekeeper\Server\Event\Mention\Mention;
-use Lorekeeper\Server\Event\Mention\Mentions;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -54,33 +50,21 @@ use Psl\Type\Exception\CoercionException;
 
 /**
  * @psalm-type ItemData = array{ItemID: positive-int, sName: non-empty-string, sType: string, bUpg?: bool, ...}
- * @psalm-type QuestData = array{QuestID: positive-int, sName: non-empty-string, sDesc: string, sEndText?: string, iLvl: non-negative-int, iExp: non-negative-int, iGold: non-negative-int, iClass: non-negative-int, sClass?: string, iReqCP: non-negative-int, FactionID: positive-int, sFaction: string, iReqRep: non-negative-int, iRep: non-negative-int, bUpg: bool, bQuest?: bool|int, strPrevious?: string, turnin?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, reward?: list<array{ItemID: positive-int, iQty: positive-int, iRate: float|int, iType: int, ...}>, reqd?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, oItems?: array<array-key, ItemData>, oReqd?: array<array-key, ItemData>, oRewards?: array{itemsS?: array<array-key, ItemData>, itemsR?: array<array-key, ItemData>, ...}, ...}
+ * @psalm-type QuestData = array{QuestID: positive-int, sName: non-empty-string, sDesc: string, sEndText?: string, iLvl: non-negative-int, iExp: non-negative-int, iGold: non-negative-int, iClass: non-negative-int, iReqCP: non-negative-int, FactionID: positive-int, iReqRep: non-negative-int, iRep: non-negative-int, bUpg: bool, bQuest?: bool|int, strPrevious?: string, turnin?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, reward?: list<array{ItemID: positive-int, iQty: positive-int, iRate: float|int, iType: int, ...}>, reqd?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, oItems?: array<array-key, ItemData>, oReqd?: array<array-key, ItemData>, oRewards?: array{itemsS?: array<array-key, ItemData>, itemsR?: array<array-key, ItemData>, ...}, ...}
  *
  * @mago-expect lint:cyclomatic-complexity
  * @mago-expect lint:kan-defect
- * @mago-expect lint:too-many-methods
  */
-final readonly class QuestLoadedEvent implements Event, Mentions
+final readonly class QuestLoadedEvent implements Event
 {
     use NamedAfterClass;
 
     private const int NO_FACTION = 1;
 
-    /**
-     * @param list<Quest> $quests
-     * @param list<Mention> $mentions
-     */
+    /** @param list<Quest> $quests */
     public function __construct(
         public array $quests,
-        private array $mentions,
     ) {}
-
-    /** @return list<Mention> */
-    #[Override]
-    public function mentions(): array
-    {
-        return $this->mentions;
-    }
 
     /** @return Option\Option<static> */
     #[Override]
@@ -98,7 +82,7 @@ final readonly class QuestLoadedEvent implements Event, Mentions
             throw new MalformedEventException(static::class, 'quests are missing or invalid', $exception);
         }
 
-        return Option\some(new static(array_map(self::quest(...), $quests), self::mentionsOf($quests)));
+        return Option\some(new static(array_map(self::quest(...), $quests)));
     }
 
     /** @return Coerce\TypeInterface<QuestData> */
@@ -124,10 +108,8 @@ final readonly class QuestLoadedEvent implements Event, Mentions
             'iExp' => Coerce\uint(),
             'iGold' => Coerce\uint(),
             'iClass' => Coerce\uint(),
-            'sClass' => Coerce\optional(Coerce\string()),
             'iReqCP' => Coerce\uint(),
             'FactionID' => Coerce\positive_int(),
-            'sFaction' => Coerce\string(),
             'iReqRep' => Coerce\uint(),
             'iRep' => Coerce\uint(),
             'bUpg' => Coerce\bool(),
@@ -318,34 +300,6 @@ final readonly class QuestLoadedEvent implements Event, Mentions
             1 => ItemRewardType::Random,
             default => throw new MalformedEventException(static::class, "unknown reward type '{$type}'"),
         };
-    }
-
-    /**
-     * @param list<QuestData> $quests
-     *
-     * @return list<Mention<FactionId|ClassId, object>>
-     */
-    private static function mentionsOf(array $quests): array
-    {
-        $mentions = [];
-        foreach ($quests as $quest) {
-            if ($quest['FactionID'] !== self::NO_FACTION && $quest['sFaction'] !== '') {
-                $mentions["faction:{$quest['FactionID']}"] ??= new Mention(
-                    new FactionId($quest['FactionID']),
-                    new FactionName($quest['sFaction']),
-                );
-            }
-
-            $class = trim($quest['sClass'] ?? '');
-            if ($quest['iClass'] > 0 && $class !== '') {
-                $mentions["class:{$quest['iClass']}"] ??= new Mention(
-                    new ClassId($quest['iClass']),
-                    new ClassName($class),
-                );
-            }
-        }
-
-        return array_values($mentions);
     }
 
     #[Override]
