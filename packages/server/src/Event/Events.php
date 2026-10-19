@@ -26,6 +26,7 @@ use Lorekeeper\Server\Event\Map\MapNotAvailableEvent;
 use Lorekeeper\Server\Event\Map\MapRequiresQuestEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
+use Lorekeeper\Server\Event\Player\PlayerAwayUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
 use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
 use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
@@ -76,6 +77,7 @@ final readonly class Events
         PlayerEnteredEvent::class,
         PlayerLeftEvent::class,
         PlayerUpdatedEvent::class,
+        PlayerAwayUpdatedEvent::class,
         PlayerVitalsUpdatedEvent::class,
         QuestLoadedEvent::class,
         ShopLoadedEvent::class,
