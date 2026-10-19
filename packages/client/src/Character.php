@@ -6,6 +6,7 @@ namespace Lorekeeper\Client;
 
 use Lorekeeper\Client\Tracking\AwayTracking;
 use Lorekeeper\Client\Tracking\ClassTracking;
+use Lorekeeper\Client\Tracking\DropTracking;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Client\Tracking\InventoryTracking;
 use Lorekeeper\Client\Tracking\LevelTracking;
@@ -22,12 +23,14 @@ final class Character implements SubjectInterface
 {
     use Observable;
 
+    /** @mago-expect lint:excessive-parameter-list */
     public function __construct(
         private readonly SocketId $socketId,
         private Player $player,
         private Location $location,
         private CombatState $state,
         private bool $away,
+        private Drops $drops = new Drops(),
     ) {}
 
     public function socketId(): SocketId
@@ -55,6 +58,11 @@ final class Character implements SubjectInterface
         return $this->away;
     }
 
+    public function drops(): Drops
+    {
+        return $this->drops;
+    }
+
     public function hear(Event $event): void
     {
         $me = new Identity($this->socketId, $this->player->name);
@@ -63,7 +71,8 @@ final class Character implements SubjectInterface
         $level = LevelTracking::follow($was->level, $event);
         $vitals = VitalsTracking::follow($was->vitals, $event, $me);
         $class = ClassTracking::follow($was->class, $event, $me);
-        $inventory = InventoryTracking::follow($was->inventory, $event);
+        $inventory = InventoryTracking::follow($was->inventory, $event, $this->drops);
+        $drops = DropTracking::follow($this->drops, $event);
         $location = LocationTracking::follow($this->location, $event, $me);
         $state = StateTracking::follow($this->state, $event, $me);
         $away = AwayTracking::follow($this->away, $event, $me);
@@ -76,6 +85,7 @@ final class Character implements SubjectInterface
             && $location === $this->location
             && $state === $this->state
             && $away === $this->away
+            && $drops === $this->drops
         ) {
             return;
         }
@@ -84,6 +94,7 @@ final class Character implements SubjectInterface
         $this->location = $location;
         $this->state = $state;
         $this->away = $away;
+        $this->drops = $drops;
         $this->notify();
     }
 }

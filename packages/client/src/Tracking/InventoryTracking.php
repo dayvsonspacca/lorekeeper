@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tracking;
 
+use Lorekeeper\Client\Drops;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
@@ -16,9 +18,10 @@ use Lorekeeper\Server\Event\Quest\TurnedInItem;
 
 final readonly class InventoryTracking
 {
-    public static function follow(PlayerInventory $inventory, Event $event): PlayerInventory
+    public static function follow(PlayerInventory $inventory, Event $event, Drops $drops = new Drops()): PlayerInventory
     {
         return match (true) {
+            $event instanceof DropPickedUpEvent => self::pickedUp($inventory, $event, $drops),
             $event instanceof PlayerInventoryLoadedEvent => new PlayerInventory(
                 $event->inventory->permanent,
                 $inventory->temporary,
@@ -33,6 +36,22 @@ final readonly class InventoryTracking
             ),
             default => $inventory,
         };
+    }
+
+    private static function pickedUp(
+        PlayerInventory $inventory,
+        DropPickedUpEvent $event,
+        Drops $drops,
+    ): PlayerInventory {
+        $item = $drops->find($event->item)->item ?? $inventory->permanent->find($event->item)->unwrapOr(null)?->item;
+        if ($item === null) {
+            return $inventory;
+        }
+
+        $held = $inventory->permanent->items->toArray();
+        $held[$event->item->value] = new PlayerItem($item, $event->held);
+
+        return new PlayerInventory(new PlayerItems(array_values($held)), $inventory->temporary);
     }
 
     /** @param non-empty-list<PlayerItem> $added */

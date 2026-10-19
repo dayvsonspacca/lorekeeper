@@ -19,6 +19,7 @@ use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapPlayer;
@@ -27,6 +28,8 @@ use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerHealth;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
+use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Map\RoomPlayer;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
@@ -66,6 +69,21 @@ final class CharacterTest extends TestCase
         static::assertSame(189, $player->vitals->health->current->value);
         static::assertSame('Blaze Binder', $player->class->class->name->value);
         static::assertSame($scales, $player->inventory->find(new ItemId(11_475))->unwrap());
+    }
+
+    #[Test]
+    public function a_reward_left_in_the_drops_joins_the_inventory_once_picked_up(): void
+    {
+        $me = Fixture::me(level: 4);
+        $token = new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token')));
+
+        $me->hear(new ItemDroppedEvent([$token]));
+        static::assertSame($token, $me->drops()->find(new ItemId(42_657)));
+        static::assertSame(0, $me->player()->inventory->quantity(new ItemId(42_657)));
+
+        $me->hear(new DropPickedUpEvent(new ItemId(42_657), new Quantity(1), new Quantity(1)));
+        static::assertNull($me->drops()->find(new ItemId(42_657)));
+        static::assertSame(1, $me->player()->inventory->quantity(new ItemId(42_657)));
     }
 
     #[Test]

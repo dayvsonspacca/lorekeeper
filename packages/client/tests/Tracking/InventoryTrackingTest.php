@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Tracking;
 
+use Lorekeeper\Client\Drops;
 use Lorekeeper\Client\Tracking\InventoryTracking;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
@@ -13,6 +14,7 @@ use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
@@ -66,6 +68,30 @@ final class InventoryTrackingTest extends TestCase
             $inventory->quantity(new ItemId(42_657)),
             $inventory->quantity(new ItemId(42_658)),
         ]);
+    }
+
+    #[Test]
+    public function a_picked_up_drop_joins_the_kept_items_with_how_many_are_held_now(): void
+    {
+        $drops = new Drops([42_657 => self::token(1)]);
+        $picked = new DropPickedUpEvent(new ItemId(42_657), new Quantity(1), new Quantity(4));
+
+        $empty = InventoryTracking::follow(new PlayerInventory(new PlayerItems([])), $picked, $drops);
+        $holding = InventoryTracking::follow(new PlayerInventory(new PlayerItems([self::token(3)])), $picked);
+
+        static::assertSame(4, $empty->permanent->find(new ItemId(42_657))->unwrap()->quantity->value);
+        static::assertSame(4, $holding->quantity(new ItemId(42_657)));
+    }
+
+    #[Test]
+    public function a_picked_up_drop_it_never_saw_is_left_for_the_next_load(): void
+    {
+        $inventory = new PlayerInventory(new PlayerItems([]));
+
+        static::assertSame($inventory, InventoryTracking::follow(
+            $inventory,
+            new DropPickedUpEvent(new ItemId(42_657), new Quantity(1), new Quantity(1)),
+        ));
     }
 
     #[Test]
