@@ -49,6 +49,7 @@ final readonly class PlayerAwayUpdatedEvent extends PlayerUpdatedEvent
      */
     private static function delimited(DelimitedMessage $message): Option\Option
     {
+        $matches = [];
         if (preg_match('/(?:^|,)afk:([^,]*)/', $message->data[4] ?? '', $matches) !== 1) {
             return Option\none();
         }

@@ -7,6 +7,7 @@ namespace Lorekeeper\Client\Tracking;
 use Lorekeeper\Server\Event\AwayFromKeyboardEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Player\PlayerAwayUpdatedEvent;
 
 final readonly class AwayTracking
 {
@@ -15,6 +16,10 @@ final readonly class AwayTracking
     {
         if ($event instanceof AwayFromKeyboardEvent) {
             return true;
+        }
+
+        if ($event instanceof PlayerAwayUpdatedEvent) {
+            return $me->is($event->name) ? $event->away : $away;
         }
 
         if (!$event instanceof MovedToMapEvent) {

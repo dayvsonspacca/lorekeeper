@@ -9,6 +9,7 @@ use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\AwayFromKeyboardEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Player\PlayerAwayUpdatedEvent;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,6 +26,18 @@ final class AwayTrackingTest extends TestCase
 
         static::assertTrue(AwayTracking::follow(false, $flagged, self::me()));
         static::assertFalse(AwayTracking::follow(false, new PlayerDiedEvent(), self::me()));
+    }
+
+    #[Test]
+    public function it_goes_away_and_comes_back_when_the_server_says_so_about_it(): void
+    {
+        $away = new PlayerAwayUpdatedEvent(new PlayerName('LoreKeeper03'), away: true);
+        $back = new PlayerAwayUpdatedEvent(new PlayerName('lorekeeper03'), away: false);
+        $someoneElse = new PlayerAwayUpdatedEvent(new PlayerName('Someone'), away: true);
+
+        static::assertTrue(AwayTracking::follow(false, $away, self::me()));
+        static::assertFalse(AwayTracking::follow(true, $back, self::me()));
+        static::assertFalse(AwayTracking::follow(false, $someoneElse, self::me()));
     }
 
     private static function me(): Identity
