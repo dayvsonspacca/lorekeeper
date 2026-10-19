@@ -39,9 +39,9 @@ final readonly class TemporaryItemsAddedEvent implements Event
         try {
             $items = Type\dict(Type\string(), Type\shape([
                 'ItemID' => Type\positive_int(),
-                'sName' => Type\non_empty_string(),
-                'sType' => Type\string(),
-                'bTemp' => Type\bool(),
+                'sName' => Type\optional(Type\non_empty_string()),
+                'sType' => Type\optional(Type\string()),
+                'bTemp' => Type\optional(Type\bool()),
                 'iQty' => Type\positive_int(),
             ], allowUnknownFields: true))->coerce($message->data['items'] ?? null);
         } catch (CoercionException $exception) {
@@ -50,7 +50,7 @@ final readonly class TemporaryItemsAddedEvent implements Event
 
         $added = [];
         foreach ($items as $entry) {
-            if (!$entry['bTemp']) {
+            if (!($entry['bTemp'] ?? false) || !array_key_exists('sName', $entry)) {
                 continue;
             }
 
@@ -58,7 +58,7 @@ final readonly class TemporaryItemsAddedEvent implements Event
                 ItemKinds::read(
                     new ItemId($entry['ItemID']),
                     new ItemName($entry['sName']),
-                    $entry['sType'],
+                    $entry['sType'] ?? '',
                     static::class,
                 ),
                 new Quantity($entry['iQty']),

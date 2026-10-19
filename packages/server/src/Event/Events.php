@@ -17,6 +17,7 @@ use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
+use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
 use Lorekeeper\Server\Event\Item\ItemEquippedEvent;
@@ -72,6 +73,7 @@ final readonly class Events
         ConnectionEstablishedEvent::class,
         PlayerInventoryLoadedEvent::class,
         TemporaryItemsAddedEvent::class,
+        MoreItemsAddedEvent::class,
         ItemDroppedEvent::class,
         DropPickedUpEvent::class,
         ItemEquippedEvent::class,
