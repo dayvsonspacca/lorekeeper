@@ -27,6 +27,7 @@ final readonly class Outcome
     {
         return match (true) {
             is_string($result) => $result,
+            $result instanceof Failed => $result->reason,
             $result instanceof TimedOut => 'no answer while waiting for '
                 . implode(', ', array_map(static fn(string $event): string => substr(
                     $event,
