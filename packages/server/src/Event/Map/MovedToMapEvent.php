@@ -10,7 +10,6 @@ use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Attribute\Vitals;
-use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Support\Gauge;
@@ -28,6 +27,7 @@ use Lorekeeper\Core\World\Monster\MonsterName;
 use Lorekeeper\Core\World\Monster\MonsterRace;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\AreaId;
+use Lorekeeper\Server\Event\Combat\Helper\CombatStates;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -54,8 +54,6 @@ use Psl\Type\Exception\CoercionException;
  * }
  *
  * @mago-expect lint:cyclomatic-complexity
- * @mago-expect lint:kan-defect
- * @mago-expect lint:too-many-methods
  */
 final readonly class MovedToMapEvent implements Event
 {
@@ -187,7 +185,7 @@ final readonly class MovedToMapEvent implements Event
                 $kind,
                 new MapCell($placement['strFrame']),
                 self::vitals($spawn),
-                self::state($spawn['intState']),
+                CombatStates::read($spawn['intState']),
             );
         }
 
@@ -211,7 +209,7 @@ final readonly class MovedToMapEvent implements Event
                     new PlayerLevel($player['intLevel']),
                     self::vitals($player),
                     new MapSpot(new MapCell($player['strFrame']), self::pad($player['strPad'])),
-                    self::state($player['intState']),
+                    CombatStates::read($player['intState']),
                     $player['afk'],
                 ),
             ),
@@ -276,15 +274,6 @@ final readonly class MovedToMapEvent implements Event
             'center' => MapPad::Center,
             'spawn' => MapPad::Spawn,
             default => throw new MalformedEventException(static::class, "unknown pad '{$pad}'"),
-        };
-    }
-
-    private static function state(int $state): CombatState
-    {
-        return match ($state) {
-            0 => CombatState::Dead,
-            2 => CombatState::Fighting,
-            default => CombatState::Idle,
         };
     }
 }

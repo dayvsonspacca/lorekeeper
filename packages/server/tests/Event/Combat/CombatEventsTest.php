@@ -7,6 +7,8 @@ namespace Lorekeeper\Server\Tests\Event\Combat;
 use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Combat\AttackRejectedEvent;
@@ -17,6 +19,8 @@ use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -97,6 +101,12 @@ final class CombatEventsTest extends TestCase
         static::assertSame('Monster 3 has 677 health', MonstersHealthChangedEvent::from($hit)->unwrap()->summary());
         static::assertSame('lorekeeper03 has 189 health', PlayersHealthChangedEvent::from($hit)->unwrap()->summary());
         static::assertSame('lorekeeper03 has 87 mana', PlayersManaChangedEvent::from($kill)->unwrap()->summary());
+        static::assertEquals(
+            [new PlayerState(new PlayerName('lorekeeper03'), CombatState::Idle)],
+            PlayersStateChangedEvent::from($kill)->unwrap()->players,
+        );
+        static::assertTrue(PlayersStateChangedEvent::from($hit)->isNone());
+        static::assertSame('lorekeeper03 is idle', PlayersStateChangedEvent::from($kill)->unwrap()->summary());
         static::assertSame('MonstersHealthChanged', MonstersHealthChangedEvent::from($hit)->unwrap()->name());
     }
 

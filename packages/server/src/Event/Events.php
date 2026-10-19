@@ -12,6 +12,7 @@ use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
@@ -55,6 +56,7 @@ final readonly class Events
         LeveledUpEvent::class,
         PlayersHealthChangedEvent::class,
         PlayersManaChangedEvent::class,
+        PlayersStateChangedEvent::class,
         PlayerDiedEvent::class,
         ResurrectedEvent::class,
         SkillsLoadedEvent::class,
