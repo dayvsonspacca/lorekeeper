@@ -17,9 +17,6 @@ use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Support\Gauge;
-use Lorekeeper\Core\World\Map\Map;
-use Lorekeeper\Core\World\Map\MapSpot;
-use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
@@ -53,11 +50,9 @@ final class Character implements SubjectInterface
      * @mago-expect lint:excessive-parameter-list
      */
     public function __construct(
-        private Player $player,
         private readonly SocketId $socketId,
-        private AreaId $area,
-        private Map $map,
-        private MapSpot $spot,
+        private Player $player,
+        private Location $location,
         private CombatState $state,
         private bool $away,
         array $usable,
@@ -65,29 +60,19 @@ final class Character implements SubjectInterface
         $this->usable = $usable;
     }
 
-    public function player(): Player
-    {
-        return $this->player;
-    }
-
     public function socketId(): SocketId
     {
         return $this->socketId;
     }
 
-    public function area(): AreaId
+    public function player(): Player
     {
-        return $this->area;
+        return $this->player;
     }
 
-    public function map(): Map
+    public function location(): Location
     {
-        return $this->map;
-    }
-
-    public function spot(): MapSpot
-    {
-        return $this->spot;
+        return $this->location;
     }
 
     public function state(): CombatState
@@ -158,10 +143,10 @@ final class Character implements SubjectInterface
             $player->class->points->value,
             array_map(static fn(Skill $skill): string => $skill->slot->name, $player->class->class->skills),
             $items,
-            $this->area->value,
-            $this->map->name->value,
-            $this->spot->cell->value,
-            $this->spot->pad,
+            $this->location->area->value,
+            $this->location->map->name->value,
+            $this->location->spot->cell->value,
+            $this->location->spot->pad,
             $this->state,
             $this->away,
             $this->usable,
@@ -188,18 +173,19 @@ final class Character implements SubjectInterface
 
     private function arrived(MovedToMapEvent $event): void
     {
-        $this->area = $event->areaId;
-        $this->map = $event->map;
+        $spot = $this->location->spot;
 
         foreach ($event->players as $seen) {
             if ($seen->socketId->value !== $this->socketId->value) {
                 continue;
             }
 
-            $this->spot = $seen->player->spot;
+            $spot = $seen->player->spot;
             $this->state = $seen->player->state;
             $this->away = $seen->player->away;
         }
+
+        $this->location = new Location($event->areaId, $event->map, $spot);
     }
 
     private function healthChanged(PlayersHealthChangedEvent $event): void

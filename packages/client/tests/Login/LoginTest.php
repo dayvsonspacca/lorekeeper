@@ -65,7 +65,7 @@ final class LoginTest extends TestCase
         static::assertSame(['MovedToMap'], $heard);
         static::assertSame('%xt%zm%cmd%1%tfer%Hero%forest%', $sent[4]);
         static::assertSame('%xt%zm%logout%1%', end($sent));
-        static::assertSame('forest', $client->character()->map()->name->value);
+        static::assertSame('forest', $client->character()->location()->map->name->value);
     }
 
     #[Test]

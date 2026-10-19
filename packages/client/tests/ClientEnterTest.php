@@ -105,10 +105,10 @@ final class ClientEnterTest extends TestCase
         static::assertInstanceOf(ClassItem::class, $player->inventory->find(new ItemId(15_651))->unwrap()->item);
 
         static::assertSame(93_426, $me->socketId()->value);
-        static::assertSame(1350, $me->area()->value);
-        static::assertSame('battleon', $me->map()->name->value);
-        static::assertSame('Enter', $me->spot()->cell->value);
-        static::assertSame(MapPad::Spawn, $me->spot()->pad);
+        static::assertSame(1350, $me->location()->area->value);
+        static::assertSame('battleon', $me->location()->map->name->value);
+        static::assertSame('Enter', $me->location()->spot->cell->value);
+        static::assertSame(MapPad::Spawn, $me->location()->spot->pad);
         static::assertSame(CombatState::Idle, $me->state());
         static::assertFalse($me->away());
     }

@@ -6,6 +6,7 @@ namespace Lorekeeper\Client\Login;
 
 use LogicException;
 use Lorekeeper\Client\Character;
+use Lorekeeper\Client\Location;
 use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\CharacterClass;
 use Lorekeeper\Core\Player\Player;
@@ -92,6 +93,7 @@ final class Entrance
         }
 
         return new Character(
+            $socketId,
             new Player(
                 $this->name,
                 $me->level,
@@ -102,10 +104,7 @@ final class Entrance
                 ),
                 $inventory,
             ),
-            $socketId,
-            $arrival->areaId,
-            $arrival->map,
-            $me->spot,
+            new Location($arrival->areaId, $arrival->map, $me->spot),
             $me->state,
             $me->away,
             $skills->usable,

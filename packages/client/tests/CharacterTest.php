@@ -134,9 +134,9 @@ final class CharacterTest extends TestCase
             ],
         ));
 
-        static::assertSame(946, $me->area()->value);
-        static::assertSame('oaklore', $me->map()->name->value);
-        static::assertSame($spot, $me->spot());
+        static::assertSame(946, $me->location()->area->value);
+        static::assertSame('oaklore', $me->location()->map->name->value);
+        static::assertSame($spot, $me->location()->spot);
         static::assertSame(CombatState::Fighting, $me->state());
         static::assertTrue($me->away());
         static::assertSame(4, $me->player()->level->value);

@@ -89,7 +89,7 @@ abstract class BotScript implements Script
      */
     protected function join(MapName $map): Generator
     {
-        if ($this->me->map()->name->value === $map->value) {
+        if ($this->me->location()->map->name->value === $map->value) {
             return;
         }
 
@@ -113,7 +113,7 @@ abstract class BotScript implements Script
     /** @return Generator<int, Instruction, null|Event|TimedOut, void> */
     protected function jump(MapSpot $spot): Generator
     {
-        yield $this->send(new MoveToCellCommand($this->me->area(), $spot));
+        yield $this->send(new MoveToCellCommand($this->me->location()->area, $spot));
         yield new Pause(Duration::seconds(1));
     }
 
@@ -157,7 +157,7 @@ abstract class BotScript implements Script
     private function resurrect(MapSpot $spot): Generator
     {
         yield new Pause(Duration::seconds(10));
-        yield $this->send(new ResurrectCommand($this->me->area(), $this->me->socketId()))->awaits(
+        yield $this->send(new ResurrectCommand($this->me->location()->area, $this->me->socketId()))->awaits(
             Duration::seconds(15),
             ResurrectedEvent::class,
         );
@@ -177,7 +177,7 @@ abstract class BotScript implements Script
         }
 
         $here = array_values(array_filter(
-            $this->me->map()->monsters,
+            $this->me->location()->map->monsters,
             static fn(MapMonster $monster): bool => $monster->cell->value === $cell->value,
         ));
 

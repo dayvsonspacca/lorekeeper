@@ -87,9 +87,9 @@ final class LevelUpScript extends BotScript
     /** @throws RuntimeException */
     private function attackIn(MapCell $cell): AttackMonsterCommand
     {
-        foreach ($this->me->map()->monsters as $monster) {
+        foreach ($this->me->location()->map->monsters as $monster) {
             if ($monster->cell->value === $cell->value) {
-                return new AttackMonsterCommand($this->me->area(), SkillSlot::AutoAttack, $monster->id);
+                return new AttackMonsterCommand($this->me->location()->area, SkillSlot::AutoAttack, $monster->id);
             }
         }
 

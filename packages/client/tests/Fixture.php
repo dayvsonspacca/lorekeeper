@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tests;
 
 use Lorekeeper\Client\Character;
+use Lorekeeper\Client\Location;
 use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\Attribute\Health;
@@ -49,6 +50,7 @@ final readonly class Fixture
     public static function me(int $level = 1, string $map = 'battleon', int $area = 1): Character
     {
         return new Character(
+            new SocketId(122_628),
             new Player(
                 new PlayerName('lorekeeper03'),
                 new PlayerLevel($level),
@@ -56,10 +58,11 @@ final readonly class Fixture
                 new PlayerClass(self::mage(), new ClassPoints(0)),
                 new PlayerInventory([]),
             ),
-            new SocketId(122_628),
-            new AreaId($area),
-            new Map(new MapName($map), new Gamefile("{$map}.swf"), []),
-            new MapSpot(new MapCell('Enter'), MapPad::Spawn),
+            new Location(
+                new AreaId($area),
+                new Map(new MapName($map), new Gamefile("{$map}.swf"), []),
+                new MapSpot(new MapCell('Enter'), MapPad::Spawn),
+            ),
             CombatState::Idle,
             false,
             [SkillSlot::AutoAttack, SkillSlot::First, SkillSlot::Fourth],
