@@ -1,0 +1,50 @@
+{
+    "name": "dayvsonspacca/lorekeeper-recorder",
+    "description": "Runs a script in the game and records every message sent and received",
+    "type": "project",
+    "license": "MIT",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../packages/core"
+        },
+        {
+            "type": "path",
+            "url": "../../packages/server"
+        },
+        {
+            "type": "path",
+            "url": "../../packages/client"
+        },
+        {
+            "type": "path",
+            "url": "../../packages/bot"
+        }
+    ],
+    "require": {
+        "php": "~8.4.0 || ~8.5.0",
+        "dayvsonspacca/lorekeeper-bot": "dev-main",
+        "dayvsonspacca/lorekeeper-client": "dev-main",
+        "dayvsonspacca/lorekeeper-core": "dev-main",
+        "dayvsonspacca/lorekeeper-server": "dev-main"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.5.12"
+    },
+    "autoload": {
+        "psr-4": {
+            "Lorekeeper\\Apps\\Recorder\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Lorekeeper\\Apps\\Recorder\\Tests\\": "tests/"
+        }
+    },
+    "bin": ["bin/record"],
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

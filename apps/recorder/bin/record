@@ -1,0 +1,10 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Lorekeeper\Apps\Recorder\Command;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+exit(Command::run(array_slice($argv, offset: 1), getenv(), dirname(__DIR__) . '/records'));
