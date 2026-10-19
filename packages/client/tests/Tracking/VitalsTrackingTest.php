@@ -1,0 +1,119 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Lorekeeper\Client\Tests\Tracking;
+
+use Lorekeeper\Client\Tests\Fixture;
+use Lorekeeper\Client\Tracking\Identity;
+use Lorekeeper\Client\Tracking\VitalsTracking;
+use Lorekeeper\Core\Attribute\Health;
+use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\Attribute\Vitals;
+use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\PlayerHealth;
+use Lorekeeper\Server\Event\Combat\PlayerMana;
+use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
+use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
+use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
+use Lorekeeper\Server\SocketId;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+final class VitalsTrackingTest extends TestCase
+{
+    #[Test]
+    public function it_takes_the_health_and_mana_the_server_says_are_mine(): void
+    {
+        $vitals = Fixture::vitals();
+
+        $theirs = VitalsTracking::follow(
+            $vitals,
+            new PlayerVitalsUpdatedEvent(new PlayerName('Someone'), Fixture::vitals(10, 10, 10, 10)),
+            self::me(),
+        );
+        $mine = VitalsTracking::follow(
+            $vitals,
+            new PlayerVitalsUpdatedEvent(new PlayerName('LoreKeeper03'), Fixture::vitals(2585, 2585, 90, 100)),
+            self::me(),
+        );
+
+        static::assertSame($vitals, $theirs);
+        static::assertSame([2585, 2585, 90, 100], self::values($mine));
+    }
+
+    #[Test]
+    public function it_keeps_the_same_vitals_when_nothing_changes(): void
+    {
+        $vitals = Fixture::vitals();
+
+        static::assertSame($vitals, VitalsTracking::follow(
+            $vitals,
+            new PlayerVitalsUpdatedEvent(new PlayerName('lorekeeper03'), Fixture::vitals()),
+            self::me(),
+        ));
+    }
+
+    #[Test]
+    public function a_fight_changes_health_and_mana_but_not_how_high_they_go(): void
+    {
+        $hit = VitalsTracking::follow(
+            Fixture::vitals(),
+            new PlayersHealthChangedEvent([
+                new PlayerHealth(new PlayerName('Someone'), new Health(1)),
+                new PlayerHealth(new PlayerName('lorekeeper03'), new Health(189)),
+            ]),
+            self::me(),
+        );
+        $spent = VitalsTracking::follow(
+            $hit,
+            new PlayersManaChangedEvent([new PlayerMana(new PlayerName('lorekeeper03'), new Mana(87))]),
+            self::me(),
+        );
+
+        static::assertSame([189, 390, 87, 100], self::values($spent));
+    }
+
+    #[Test]
+    public function more_than_the_maximum_it_knew_becomes_the_new_maximum(): void
+    {
+        $healed = VitalsTracking::follow(
+            Fixture::vitals(),
+            new PlayersHealthChangedEvent([
+                new PlayerHealth(new PlayerName('lorekeeper03'), new Health(450)),
+            ]),
+            self::me(),
+        );
+
+        static::assertSame([450, 450, 100, 100], self::values($healed));
+    }
+
+    #[Test]
+    public function dying_leaves_no_health_and_coming_back_fills_it(): void
+    {
+        $dead = VitalsTracking::follow(Fixture::vitals(health: 189), new PlayerDiedEvent(), self::me());
+        $back = VitalsTracking::follow($dead, new ResurrectedEvent(), self::me());
+
+        static::assertFalse($dead->alive());
+        static::assertSame([0, 390, 100, 100], self::values($dead));
+        static::assertSame([390, 390, 100, 100], self::values($back));
+    }
+
+    private static function me(): Identity
+    {
+        return new Identity(new SocketId(122_628), new PlayerName('lorekeeper03'));
+    }
+
+    /** @return list<int> */
+    private static function values(Vitals $vitals): array
+    {
+        return [
+            $vitals->health->current->value,
+            $vitals->health->maximum->value,
+            $vitals->mana->current->value,
+            $vitals->mana->maximum->value,
+        ];
+    }
+}
