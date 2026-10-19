@@ -10,7 +10,7 @@ final readonly class Monster
         public MonsterId $id,
         public MonsterName $name,
         public MonsterLevel $level,
-        public Race $race,
-        public Appearance $appearance,
+        public MonsterRace $race,
+        public MonsterAppearance $appearance,
     ) {}
 }

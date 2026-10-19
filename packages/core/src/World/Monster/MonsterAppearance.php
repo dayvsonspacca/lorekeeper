@@ -7,7 +7,7 @@ namespace Lorekeeper\Core\World\Monster;
 use Lorekeeper\Core\Asset\Gamefile;
 use Lorekeeper\Core\Asset\Linkage;
 
-final readonly class Appearance
+final readonly class MonsterAppearance
 {
     public function __construct(
         public Gamefile $file,
