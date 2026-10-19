@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Bots;
 
+use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
+use Lorekeeper\Apps\Desktop\Bots\Scene\Witness;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
 use Lorekeeper\Client\Character;
@@ -22,9 +24,13 @@ final class RunRecorder implements ObserverInterface
 {
     private ?BotTask $task = null;
 
+    private readonly Witness $witness;
+
     public function __construct(
         private readonly BotRun $run,
-    ) {}
+    ) {
+        $this->witness = new Witness();
+    }
 
     public function working(?BotTask $task): void
     {
@@ -40,6 +46,8 @@ final class RunRecorder implements ObserverInterface
             $event instanceof LeveledUpEvent => $this->log($event, LogLevel::Success),
             default => null,
         };
+
+        $this->keep($this->witness->heard($event, now()->getTimestamp()));
     }
 
     #[Override]
@@ -61,6 +69,14 @@ final class RunRecorder implements ObserverInterface
         }
 
         $this->reached($level);
+        $this->keep($this->witness->saw($subject, now()->getTimestamp()));
+    }
+
+    private function keep(?Scene $scene): void
+    {
+        if ($scene !== null) {
+            $this->run->update(['scene' => $scene->toArray()]);
+        }
     }
 
     private function rewarded(MonsterRewardedEvent $event): void

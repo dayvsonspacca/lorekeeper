@@ -13,6 +13,7 @@ use Lorekeeper\Apps\Desktop\Bots\Elapsed;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
 use Lorekeeper\Apps\Desktop\Bots\LogLevel;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
+use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Override;
 
@@ -23,13 +24,14 @@ use Override;
  * @property null|int $pid
  * @property null|string $result
  * @property null|string $map
+ * @property null|array<string, mixed> $scene
  * @property null|Carbon $started_at
  * @property null|Carbon $finished_at
  * @property Account $account
  *
  * @mago-expect lint:too-many-methods
  */
-#[Fillable(['account_id', 'status', 'pid', 'result', 'map', 'started_at', 'finished_at'])]
+#[Fillable(['account_id', 'status', 'pid', 'result', 'map', 'scene', 'started_at', 'finished_at'])]
 final class BotRun extends Model
 {
     /** @var array<string, mixed> */
@@ -95,6 +97,11 @@ final class BotRun extends Model
         return $this->hasMany(BotRunLog::class);
     }
 
+    public function scene(): ?Scene
+    {
+        return $this->scene === null ? null : Scene::fromArray($this->scene);
+    }
+
     public function duration(): ?string
     {
         return Elapsed::between($this->started_at, $this->finished_at);
@@ -147,6 +154,7 @@ final class BotRun extends Model
     {
         return [
             'status' => RunStatus::class,
+            'scene' => 'array',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
         ];

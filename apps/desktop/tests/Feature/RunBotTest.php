@@ -16,6 +16,7 @@ use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Location;
 use Lorekeeper\Core\Asset\Gamefile;
+use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Attribute\Vitals;
@@ -34,9 +35,15 @@ use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\World\Map\Map;
 use Lorekeeper\Core\World\Map\MapCell;
+use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapSpot;
+use Lorekeeper\Core\World\Monster\Monster;
+use Lorekeeper\Core\World\Monster\MonsterAppearance;
+use Lorekeeper\Core\World\Monster\MonsterLevel;
+use Lorekeeper\Core\World\Monster\MonsterName;
+use Lorekeeper\Core\World\Monster\MonsterRace;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\Event\Combat\MonsterHealth;
@@ -133,6 +140,61 @@ final class RunBotTest extends TestCase
     }
 
     #[Test]
+    public function the_recorder_keeps_what_the_bot_sees_for_the_screen(): void
+    {
+        $this->travelTo(now()->setTimestamp(1_800_000_000));
+        $run = $this->botRun();
+        $recorder = new RunRecorder($run);
+        $me = self::me('lorekeeper03', level: 12, map: 'oaklore', monsters: [new MapMonster(
+            new MonsterSpawnId(1),
+            new Monster(
+                new MonsterName('Bonemuncher'),
+                new MonsterLevel(4),
+                MonsterRace::Undead,
+                new MonsterAppearance(new Gamefile('mon/bonemuncher.swf'), new Linkage('Bonemuncher')),
+            ),
+            new MapCell('r3'),
+            new Vitals(new Gauge(new Health(260), new Health(260)), new Gauge(new Mana(0), new Mana(0))),
+            CombatState::Idle,
+        )]);
+
+        $me->subscribe($recorder);
+        $recorder->update($me);
+        $scene = $run->refresh()->scene();
+        static::assertNotNull($scene);
+        static::assertSame(['lorekeeper03', 12, 390, 'Mage', 'idle'], [
+            $scene->hero['name'],
+            $scene->hero['level'],
+            $scene->hero['maxHealth'],
+            $scene->hero['class'],
+            $scene->hero['state'],
+        ]);
+        static::assertSame(['Bonemuncher', 260, null], [
+            $scene->monsters[0]['name'],
+            $scene->monsters[0]['health'],
+            $scene->monsters[0]['struck'],
+        ]);
+
+        $recorder->heard(new MonstersHealthChangedEvent([new MonsterHealth(new MonsterSpawnId(1), new Health(90))]));
+        static::assertSame(260, $run->refresh()->scene()?->monsters[0]['health']);
+
+        $this->travel(1)->seconds();
+        $recorder->heard(new MonstersHealthChangedEvent([new MonsterHealth(new MonsterSpawnId(1), new Health(40))]));
+        $recorder->heard(
+            new MonsterRewardedEvent(new Gold(15), new Experience(120), new ClassPoints(5), new MonsterSpawnId(1)),
+        );
+
+        $scene = $run->refresh()->scene();
+        static::assertNotNull($scene);
+        static::assertSame([40, 1_800_000_001], [$scene->monsters[0]['health'], $scene->monsters[0]['struck']]);
+        static::assertSame(['Defeated Bonemuncher', '+120 XP · +15 gold'], [
+            $scene->feed->lines[0]['text'],
+            $scene->feed->lines[0]['detail'],
+        ]);
+        static::assertSame(120, array_sum($scene->pulse->experience(now()->getTimestamp())));
+    }
+
+    #[Test]
     public function a_run_stopped_before_its_bot_started_never_logs_in(): void
     {
         $run = $this->botRun();
@@ -152,7 +214,8 @@ final class RunBotTest extends TestCase
             ->create();
     }
 
-    private static function me(string $name, int $level, string $map): Character
+    /** @param list<MapMonster> $monsters */
+    private static function me(string $name, int $level, string $map, array $monsters = []): Character
     {
         return new Character(
             new SocketId(1),
@@ -169,7 +232,7 @@ final class RunBotTest extends TestCase
             ),
             new Location(
                 new AreaId(1),
-                new Map(new MapName($map), new Gamefile("{$map}.swf"), []),
+                new Map(new MapName($map), new Gamefile("{$map}.swf"), $monsters),
                 new MapSpot(new MapCell('Enter'), MapPad::Spawn),
             ),
             CombatState::Idle,
