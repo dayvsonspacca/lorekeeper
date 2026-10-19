@@ -11,5 +11,6 @@ enum MonsterRace
     case Human;
     case Elemental;
     case Dragonkin;
+    case Chaos;
     case Unknown;
 }

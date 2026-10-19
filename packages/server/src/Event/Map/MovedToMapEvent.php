@@ -256,6 +256,7 @@ final readonly class MovedToMapEvent implements Event
             'Human' => MonsterRace::Human,
             'Elemental' => MonsterRace::Elemental,
             'Dragonkin' => MonsterRace::Dragonkin,
+            'Chaos' => MonsterRace::Chaos,
             'Unknown' => MonsterRace::Unknown,
             default => throw new MalformedEventException(static::class, "unknown race '{$race}'"),
         };

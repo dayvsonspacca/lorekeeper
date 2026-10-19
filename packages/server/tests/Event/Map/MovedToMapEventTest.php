@@ -108,6 +108,7 @@ final class MovedToMapEventTest extends TestCase
     #[TestWith(['Human', MonsterRace::Human])]
     #[TestWith(['Elemental', MonsterRace::Elemental])]
     #[TestWith(['Dragonkin', MonsterRace::Dragonkin])]
+    #[TestWith(['Chaos', MonsterRace::Chaos])]
     #[TestWith(['Unknown', MonsterRace::Unknown])]
     public function it_translates_the_race(string $race, MonsterRace $expected): void
     {

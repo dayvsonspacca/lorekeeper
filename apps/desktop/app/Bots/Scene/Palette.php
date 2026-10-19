@@ -22,6 +22,7 @@ final readonly class Palette
             'human' => '#fbbf24',
             'elemental' => '#22d3ee',
             'dragonkin' => '#f87171',
+            'chaos' => '#c084fc',
             default => '#94a3b8',
         };
     }
