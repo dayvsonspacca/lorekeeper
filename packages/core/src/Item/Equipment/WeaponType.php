@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Item\Type;
+namespace Lorekeeper\Core\Item\Equipment;
 
-enum Weapon
+enum WeaponType
 {
     case Axe;
     case Bow;
@@ -19,9 +19,4 @@ enum Weapon
     case Sword;
     case Wand;
     case Whip;
-
-    public function parent(): Equipment
-    {
-        return Equipment::Weapon;
-    }
 }
