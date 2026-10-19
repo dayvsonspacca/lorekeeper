@@ -10,11 +10,14 @@ use Lorekeeper\Server\Server;
 use Psl\Async\CancellationTokenInterface;
 use Psl\Async\NullCancellationToken;
 use Psl\IO;
+use Psl\Observer\SubjectInterface;
 use Psl\Option;
 use Psl\TCP;
 
-final class Connection
+final class Connection implements SubjectInterface
 {
+    use Observable;
+
     private const string TERMINATOR = "\0";
 
     private readonly IO\Reader $reader;
@@ -22,6 +25,8 @@ final class Connection
     private ?string $closedBecause = null;
 
     private bool $closedHere = false;
+
+    private ?Traffic $traffic = null;
 
     public function __construct(
         private readonly TCP\StreamInterface $stream,
@@ -41,14 +46,17 @@ final class Connection
             throw new PeerClosedException($this->closedBecause);
         }
 
+        $message = $command->toMessage();
         try {
-            $this->stream->writeAll($command->toMessage() . self::TERMINATOR);
+            $this->stream->writeAll($message . self::TERMINATOR);
         } catch (IO\Exception\RuntimeException $exception) {
             throw new PeerClosedException(
                 'Connection error while sending: ' . $exception->getMessage(),
                 previous: $exception,
             );
         }
+
+        $this->witnessed(TrafficDirection::Sent, $message);
     }
 
     /**
@@ -72,7 +80,24 @@ final class Connection
             throw new PeerClosedException($this->closedBecause);
         }
 
-        return MessageParser::parse($raw);
+        $message = MessageParser::parse($raw);
+        $this->witnessed(
+            TrafficDirection::Received,
+            $message->map(static fn(Message $parsed): string => $parsed->raw)->unwrapOr($raw),
+        );
+
+        return $message;
+    }
+
+    public function traffic(): ?Traffic
+    {
+        return $this->traffic;
+    }
+
+    private function witnessed(TrafficDirection $direction, string $message): void
+    {
+        $this->traffic = new Traffic($direction, $message);
+        $this->notify();
     }
 
     public function close(): void
