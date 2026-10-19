@@ -58,11 +58,17 @@ machine. There is no login: it only talks to the game. Add your accounts, start 
 for it; each bot runs in its own process, the log shows what it does and each task reports how it is going. Data is
 kept in SQLite.
 
+Builds for Linux (AppImage and `.deb`) are on the [releases](https://github.com/dayvsonspacca/lorekeeper/releases)
+page, tagged `desktop-v*`. They are alpha: expect rough edges and keep a copy of anything you care about.
+
+To build it yourself, or to work on it:
+
 ```sh
 cd apps/desktop
 composer install && php artisan migrate
 php artisan native:install   # once, sets up Electron
 php artisan native:run       # or: php artisan serve, to use it in a browser while developing
+php artisan native:build linux x64   # AppImage and .deb in nativephp/electron/dist
 ```
 
 ### `wiki`
