@@ -57,4 +57,4 @@ permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**", "Liv
 
 [[guard.perimeter.rules]]
 namespace = "Lorekeeper\\Apps\\Desktop"
-permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**", "Livewire\\**", "Symfony\\**", "Native\\**"]
+permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**", "Livewire\\**", "Symfony\\**", "Native\\**", "BladeUI\\Icons\\**"]
