@@ -8,14 +8,17 @@ use Generator;
 use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Client\Command\Quest\AcceptQuestCommand;
+use Lorekeeper\Client\Command\Quest\LoadQuestCommand;
 use Lorekeeper\Client\Command\Quest\TurnInQuestCommand;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\World\Quest\QuestId;
+use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
 use Lorekeeper\Server\Event\Quest\QuestCompletedEvent;
+use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Lorekeeper\Server\Event\Quest\QuestTurnInRefusedEvent;
 use Psl\DateTime\Duration;
 
@@ -24,6 +27,32 @@ trait Quests
     abstract protected function me(): Character;
 
     abstract protected function send(Command $command): Send;
+
+    /** @return Generator<int, Instruction, null|Event|TimedOut, bool> */
+    protected function alreadyDone(QuestId $quest): Generator
+    {
+        /** @var Event|TimedOut $answer */
+        $answer = yield $this->send(new LoadQuestCommand($this->me()->location()->area, $quest))->awaits(
+            Duration::seconds(10),
+            QuestLoadedEvent::class,
+        );
+        if (!$answer instanceof QuestLoadedEvent) {
+            return false;
+        }
+
+        foreach ($answer->quests as $loaded) {
+            if ($loaded->id->value !== $quest->value) {
+                continue;
+            }
+
+            return $loaded
+                ->mark
+                ->map(fn(QuestMark $mark): bool => $this->me()->player()->marks->has($mark))
+                ->unwrapOr(false);
+        }
+
+        return false;
+    }
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, bool> */
     protected function accept(QuestId $quest): Generator
