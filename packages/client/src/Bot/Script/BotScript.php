@@ -217,7 +217,7 @@ abstract class BotScript implements Script
         $usable = array_filter(
             array_map(
                 static fn(PlayerSkill $held): Skill => $held->skill,
-                array_filter($this->me->player()->skills, static fn(PlayerSkill $held): bool => $held->unlocked),
+                array_filter($this->me->player()->class->skills, static fn(PlayerSkill $held): bool => $held->unlocked),
             ),
             fn(Skill $skill): bool => (
                 $skill->target === SkillTarget::Enemy

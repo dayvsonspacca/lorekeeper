@@ -102,7 +102,7 @@ final class ClientEnterTest extends TestCase
             [SkillSlot::AutoAttack, SkillSlot::First, SkillSlot::Potion],
             array_values(array_map(
                 static fn(PlayerSkill $held): SkillSlot => $held->skill->slot,
-                array_filter($player->skills, static fn(PlayerSkill $held): bool => $held->unlocked),
+                array_filter($player->class->skills, static fn(PlayerSkill $held): bool => $held->unlocked),
             )),
         );
         static::assertInstanceOf(ClassItem::class, $player->inventory->find(new ItemId(15_651))->unwrap()->item);

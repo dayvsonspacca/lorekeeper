@@ -159,7 +159,7 @@ final class CharacterTest extends TestCase
         static::assertSame('Blaze Binder', $me->player()->class->class->name->value);
         static::assertSame(302_500, $me->player()->class->points->value);
         static::assertSame([$fireBolt, $burn], $me->player()->class->class->skills);
-        static::assertSame($skills, $me->player()->skills);
+        static::assertSame($skills, $me->player()->class->skills);
     }
 
     #[Test]

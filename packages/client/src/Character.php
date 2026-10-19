@@ -128,7 +128,7 @@ final class Character implements SubjectInterface
             $this->location->spot->pad,
             $this->state,
             $this->away,
-            array_map(static fn(PlayerSkill $skill): bool => $skill->unlocked, $player->skills),
+            array_map(static fn(PlayerSkill $skill): bool => $skill->unlocked, $player->class->skills),
         ];
     }
 
@@ -228,40 +228,19 @@ final class Character implements SubjectInterface
     private function vitals(Vitals $vitals): void
     {
         $player = $this->player;
-        $this->player = new Player(
-            $player->name,
-            $player->level,
-            $vitals,
-            $player->class,
-            $player->skills,
-            $player->inventory,
-        );
+        $this->player = new Player($player->name, $player->level, $vitals, $player->class, $player->inventory);
     }
 
     private function leveled(PlayerLevel $level): void
     {
         $player = $this->player;
-        $this->player = new Player(
-            $player->name,
-            $level,
-            $player->vitals,
-            $player->class,
-            $player->skills,
-            $player->inventory,
-        );
+        $this->player = new Player($player->name, $level, $player->vitals, $player->class, $player->inventory);
     }
 
     private function inventory(PlayerInventory $inventory): void
     {
         $player = $this->player;
-        $this->player = new Player(
-            $player->name,
-            $player->level,
-            $player->vitals,
-            $player->class,
-            $player->skills,
-            $inventory,
-        );
+        $this->player = new Player($player->name, $player->level, $player->vitals, $player->class, $inventory);
     }
 
     private function skillsLoaded(SkillsLoadedEvent $event): void
@@ -280,21 +259,16 @@ final class Character implements SubjectInterface
                     $skills,
                 ),
                 $current->points,
+                $event->skills,
             )
             : new PlayerClass(
                 new CharacterClass($changing->className, $changing->category, $changing->description, $skills),
                 $changing->points,
+                $event->skills,
             );
 
         $this->changingClass = null;
-        $this->player = new Player(
-            $player->name,
-            $player->level,
-            $player->vitals,
-            $class,
-            $event->skills,
-            $player->inventory,
-        );
+        $this->player = new Player($player->name, $player->level, $player->vitals, $class, $player->inventory);
     }
 
     private function is(PlayerName $name): bool

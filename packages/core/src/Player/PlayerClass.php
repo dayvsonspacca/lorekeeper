@@ -10,9 +10,11 @@ use Lorekeeper\Core\Progression\Rank;
 
 final readonly class PlayerClass
 {
+    /** @param list<PlayerSkill> $skills */
     public function __construct(
         public CharacterClass $class,
         public ClassPoints $points,
+        public array $skills,
     ) {}
 
     public function rank(): Rank

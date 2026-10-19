@@ -24,6 +24,6 @@ final class PlayerClassTest extends TestCase
     {
         $mage = new CharacterClass(new ClassName('Mage'), ClassCategory::Caster, Option\none(), []);
 
-        static::assertSame($rank, new PlayerClass($mage, new ClassPoints($points))->rank()->value);
+        static::assertSame($rank, new PlayerClass($mage, new ClassPoints($points), [])->rank()->value);
     }
 }

@@ -56,8 +56,14 @@ final readonly class Fixture
                 new PlayerName('lorekeeper03'),
                 new PlayerLevel($level),
                 self::vitals(),
-                new PlayerClass(self::mage(), new ClassPoints(0)),
-                array_map(static fn(Skill $skill): PlayerSkill => new PlayerSkill($skill, true), self::mage()->skills),
+                new PlayerClass(
+                    self::mage(),
+                    new ClassPoints(0),
+                    array_map(
+                        static fn(Skill $skill): PlayerSkill => new PlayerSkill($skill, true),
+                        self::mage()->skills,
+                    ),
+                ),
                 new PlayerInventory([]),
             ),
             new Location(
