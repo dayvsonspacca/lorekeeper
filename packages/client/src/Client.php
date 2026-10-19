@@ -8,6 +8,7 @@ use Closure;
 use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Client\Command\Inventory\LoadPlayerInventoryCommand;
 use Lorekeeper\Client\Command\Map\JoinInitialMapCommand;
+use Lorekeeper\Client\Command\Session\LoadPlayerDataCommand;
 use Lorekeeper\Client\Command\Session\LoginCommand;
 use Lorekeeper\Client\Command\Session\PolicyFileRequestCommand;
 use Lorekeeper\Client\Script\Await;
@@ -92,7 +93,7 @@ final class Client
                 return $arrival;
             }
 
-            $connection->send(new LoadPlayerInventoryCommand($arrival->areaId, $logged->socketId));
+            self::askForThePlayer($connection, $arrival, $logged);
             $missing = $entrance->missing();
             while ($missing !== []) {
                 $heard = self::receive($connection, new Await($missing, Duration::seconds(15)), $stop, $hear);
@@ -113,6 +114,16 @@ final class Client
 
             return new Stopped();
         }
+    }
+
+    /** @throws PeerClosedException */
+    private static function askForThePlayer(
+        Connection $connection,
+        MovedToMapEvent $arrival,
+        LoginSucceededEvent $logged,
+    ): void {
+        $connection->send(new LoadPlayerInventoryCommand($arrival->areaId, $logged->socketId));
+        $connection->send(new LoadPlayerDataCommand($arrival->areaId, $logged->socketId));
     }
 
     /** @param Closure(Event): void $subscriber */

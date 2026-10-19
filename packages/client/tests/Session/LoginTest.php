@@ -36,6 +36,8 @@ final class LoginTest extends TestCase
 
     private const string VITALS = "{\"b\":{\"o\":{\"cmd\":\"uotls\",\"unm\":\"Hero\",\"o\":{\"intHP\":390,\"intHPMax\":390,\"intMP\":100,\"intMPMax\":100}}}}\0";
 
+    private const string PLAYER_DATA = "{\"b\":{\"o\":{\"cmd\":\"initUserDatas\",\"a\":[{\"uid\":59878,\"data\":{\"strUsername\":\"Hero\",\"intLevel\":1,\"intExp\":0,\"intExpToLevel\":100,\"intGold\":0,\"intCoins\":0,\"iUpg\":0,\"iBagSlots\":30}}]}}}\0";
+
     #[Test]
     public function it_enters_the_game_and_hands_back_a_client_that_plays_scripts(): void
     {
@@ -48,6 +50,7 @@ final class LoginTest extends TestCase
             self::CLASS_CHANGE,
             self::SKILLS,
             self::VITALS,
+            self::PLAYER_DATA,
             self::moved('forest', 7),
         ]);
         $heard = [];
@@ -63,7 +66,7 @@ final class LoginTest extends TestCase
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $again);
         static::assertTrue($loggedOut);
         static::assertSame(['MovedToMap'], $heard);
-        static::assertSame('%xt%zm%cmd%1%tfer%Hero%forest%', $sent[4]);
+        static::assertSame('%xt%zm%cmd%1%tfer%Hero%forest%', $sent[5]);
         static::assertSame('%xt%zm%logout%1%', end($sent));
         static::assertSame('forest', $client->character()->location()->map->name->value);
     }
@@ -80,6 +83,7 @@ final class LoginTest extends TestCase
             self::CLASS_CHANGE,
             self::SKILLS,
             self::VITALS,
+            self::PLAYER_DATA,
         ]);
         $cancel = new SignalCancellationToken();
         $cancel->cancel();

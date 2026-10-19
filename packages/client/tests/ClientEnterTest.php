@@ -17,7 +17,10 @@ use Lorekeeper\Core\Item\Equipment\ClassItem;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerSkill;
+use Lorekeeper\Core\Player\PlayerTag;
 use Lorekeeper\Core\World\Map\MapPad;
+use Lorekeeper\Core\World\Quest\QuestMark;
+use Lorekeeper\Core\World\Quest\QuestPeriod;
 use Lorekeeper\Server\Event\Session\LoginFailedEvent;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -28,30 +31,34 @@ use Psl\TCP;
 
 final class ClientEnterTest extends TestCase
 {
-    private const string POLICY = '<cross-domain-policy><allow-access-from domain="*" to-ports="*" /></cross-domain-policy>';
+    private const string POLICY = "<cross-domain-policy><allow-access-from domain='*' to-ports='*' /></cross-domain-policy>";
 
-    private const string LOGIN = '%xt%loginResponse%-1%true%93426%made2903%Welcome!%2026-10-15T08:51:16%sNews=1189,sMap=news/Map-UI_r38.swf%';
+    private const string LOGIN = '%xt%loginResponse%-1%true%45466%made2903%Welcome!%2026-10-19T15:34:06%sNews=1191,sMap=news/Map-UI_r38.swf,sBook=news/spiderbook3.swf,sAssets=Assets_20260731.swf,gMenu=dynamic-gameMenu-17Jan22.swf,sVersion=R0048,QSInfo=519,iMaxBagSlots=525,iMaxBankSlots=950,iMaxHouseSlots=325,iMaxGuildMembers=800,iMaxFriends=300,iMaxLoadoutSlots=50%5.1%';
 
     private const string REFUSED = '%xt%loginResponse%-1%0%-1%%Your game client is an older version. Server requires AQW game version 5.1 or higher. Please close the AQW game window and try again.%';
 
     private const string ARRIVAL = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"moveToArea","areaId":1350,"areaName":"battleon-2","intType":"2","sExtra":"","strMapName":"battleon","strMapFileName":"Battleon/town-Battleon-9Oct26.swf","uoBranch":[{"uoName":"hero","entType":"p","entID":106762,"strUsername":"Hero","strFrame":"Enter","strPad":"Spawn","intState":1,"intLevel":100,"intHP":4185,"intMP":100,"intHPMax":4185,"intMPMax":100,"tx":0,"ty":0,"afk":true,"showCloak":true,"showHelm":true},{"uoName":"made2903","entType":"p","entID":93426,"strUsername":"made2903","strFrame":"Enter","strPad":"Spawn","intState":1,"intLevel":100,"intHP":2585,"intMP":100,"intHPMax":2585,"intMPMax":100,"tx":0,"ty":0,"afk":false,"showCloak":true,"showHelm":true}],"monBranch":[]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"moveToArea","areaId":65897,"areaName":"battleon-3","intType":"2","sExtra":"","strMapName":"battleon","strMapFileName":"Battleon/town-Battleon-16Oct26.swf","uoBranch":[{"uoName":"made2903","entType":"p","entID":45466,"strUsername":"made2903","strFrame":"Enter","strPad":"Spawn","intState":1,"intLevel":81,"intHP":500,"intMP":100,"intHPMax":500,"intMPMax":100,"tx":0,"ty":0,"afk":false,"showCloak":true,"showHelm":true}],"monBranch":[]}}}
         JSON;
 
     private const string INVENTORY = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"loadInventoryBig","items":[{"ItemID":15651,"sName":"Healer","iStk":1,"bUpg":false,"sType":"Class","sES":"ar","CharItemID":695648125,"iQty":177790,"bEquip":false}]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"loadInventoryBig","items":[{"ItemID":15651,"sName":"Healer","iStk":1,"bUpg":false,"sType":"Class","iQty":177790,"bTemp":false},{"ItemID":4723,"sName":"Unidentified 10","iStk":1000,"bUpg":false,"sType":"Item","iQty":212,"bTemp":false}]}}}
         JSON;
 
     private const string CLASS_CHANGE = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"updateClass","uid":93426,"sClassName":"Blaze Binder","sClassCat":"C1","iCP":302500,"sDesc":"Blaze Binders control the power of fire and darkness. They are known to burn their enemies to a crisp and bind their souls into service","aMRM":["Blaze Binder gain mana from all hits landed in combat, and especially on crits.  The amount depends on damage relative to *their own* HP total."]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"updateClass","uid":45466,"sClassName":"Blaze Binder","sClassCat":"C1","iCP":302500,"sDesc":"Blaze Binders control the power of fire and darkness. They are known to burn their enemies to a crisp and bind their souls into service"}}}
         JSON;
 
     private const string SKILLS = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":89,"nam":"Auto Attack","typ":"aa","ref":"aa","tgt":"h","fx":"m","damage":0.9,"range":301,"mp":0,"cd":2000,"auto":true,"isOK":true},{"id":115,"nam":"Fireball","typ":"m","ref":"a1","tgt":"h","tgtMax":1,"mp":20,"cd":6000,"isOK":true},{"id":116,"nam":"Ice Shard","typ":"m","ref":"a2","tgt":"h","mp":15,"cd":6000,"isOK":false},{"id":118,"nam":"Arcane Shield","typ":"m","ref":"a4","tgt":"s","mp":0,"cd":20000,"isOK":false},{"nam":"Potions","typ":"i","ref":"i1","tgt":"f","mp":0,"cd":60000,"isOK":true}],"passive":[{"nam":"Hot Headed","ref":"p1"}]}}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":1354,"nam":"Fire Bolt","typ":"aa","ref":"aa","tgt":"h","tgtMax":3,"mp":0,"cd":2000,"isOK":true},{"id":848,"nam":"Combustion Blaze","typ":"m","ref":"a1","tgt":"h","tgtMax":3,"mp":10,"cd":4000,"isOK":true},{"id":849,"nam":"Choking Shadow Smoke","typ":"m","ref":"a2","tgt":"h","tgtMax":3,"mp":25,"cd":8000,"isOK":true},{"id":850,"nam":"Fire in Your Skin","typ":"m","ref":"a3","tgt":"s","tgtMax":1,"mp":30,"cd":16000,"isOK":true},{"id":851,"nam":"Dark Fire","typ":"m","ref":"a4","tgt":"h","tgtMax":3,"mp":25,"cd":12000,"isOK":true},{"nam":"Potions","typ":"i","ref":"i1","tgt":"f","mp":0,"cd":60000,"isOK":true}],"passive":[{"nam":"Sear Flesh","ref":"p1"},{"nam":"Sear Bone","ref":"p2"},{"nam":"Burn At Both Ends","ref":"p3"}]}}}}
         JSON;
 
     private const string VITALS = <<<'JSON'
         {"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"made2903","o":{"intHPMax":2585,"intMPMax":100,"intHP":2585,"intMP":100}}}}
+        JSON;
+
+    private const string PLAYER_DATA = <<<'JSON'
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"initUserDatas","a":[{"uid":45466,"data":{"strUsername":"made2903","intLevel":81,"intExp":4514754,"intExpToLevel":5280000,"intGold":6800132,"intCoins":2899,"iUpg":0,"iBagSlots":131,"id0":0,"id1":0,"id2":64,"id3":0,"id4":0,"id5":0,"id6":0,"id7":0,"iw0":0,"im0":0}}]}}}
         JSON;
 
     #[Test]
@@ -68,6 +75,7 @@ final class ClientEnterTest extends TestCase
                 self::CLASS_CHANGE,
                 self::SKILLS,
                 self::VITALS,
+                self::PLAYER_DATA,
             ),
             self::login(),
         );
@@ -78,7 +86,8 @@ final class ClientEnterTest extends TestCase
                 "<policy-file-request/>\0",
                 "<msg t='sys'><body action='login' r='0'><login z='zone_master'><nick><![CDATA[SPIDER#0001~made2903~5.1]]></nick><pword><![CDATA[TOKEN]]></pword></login></body></msg>\0",
                 "%xt%zm%firstJoin%1%\0",
-                "%xt%zm%retrieveInventory%1350%93426%\0",
+                "%xt%zm%retrieveInventory%65897%45466%\0",
+                "%xt%zm%retrieveUserDatas%65897%45466%\0",
             ],
             $sent,
         );
@@ -86,7 +95,15 @@ final class ClientEnterTest extends TestCase
         $me = $client->character();
         $player = $me->player();
         static::assertSame('made2903', $player->name->value);
-        static::assertSame(100, $player->level->value);
+        static::assertSame([81, 4_514_754, 5_280_000], [
+            $player->progress->level->value,
+            $player->progress->experience->current->value,
+            $player->progress->experience->maximum->value,
+        ]);
+        static::assertSame([6_800_132, 2899], [$player->wallet->gold->value, $player->wallet->coins->value]);
+        static::assertFalse($player->tags->has(PlayerTag::Member));
+        static::assertSame(131, $player->inventory->slots->value);
+        static::assertTrue($player->marks->has(new QuestMark(QuestPeriod::Day, 2, 6)));
         static::assertSame([2585, 2585, 100, 100], [
             $player->vitals->health->current->value,
             $player->vitals->health->maximum->value,
@@ -97,9 +114,16 @@ final class ClientEnterTest extends TestCase
         static::assertSame(ClassCategory::Caster, $player->class->class->category);
         static::assertSame(302_500, $player->class->points->value);
         static::assertSame(10, $player->class->rank()->value);
-        static::assertCount(5, $player->class->class->skills);
+        static::assertCount(6, $player->class->class->skills);
         static::assertSame(
-            [SkillSlot::AutoAttack, SkillSlot::First, SkillSlot::Potion],
+            [
+                SkillSlot::AutoAttack,
+                SkillSlot::First,
+                SkillSlot::Second,
+                SkillSlot::Third,
+                SkillSlot::Fourth,
+                SkillSlot::Potion,
+            ],
             array_values(array_map(
                 static fn(PlayerSkill $held): SkillSlot => $held->skill->slot,
                 array_filter($player->class->skills, static fn(PlayerSkill $held): bool => $held->unlocked),
@@ -107,8 +131,8 @@ final class ClientEnterTest extends TestCase
         );
         static::assertInstanceOf(ClassItem::class, $player->inventory->find(new ItemId(15_651))->unwrap()->item);
 
-        static::assertSame(93_426, $me->socketId()->value);
-        static::assertSame(1350, $me->location()->area->value);
+        static::assertSame(45_466, $me->socketId()->value);
+        static::assertSame(65_897, $me->location()->area->value);
         static::assertSame('battleon', $me->location()->map->name->value);
         static::assertSame('Enter', $me->location()->spot->cell->value);
         static::assertSame(MapPad::Spawn, $me->location()->spot->pad);
@@ -128,6 +152,7 @@ final class ClientEnterTest extends TestCase
                 self::ARRIVAL,
                 self::VITALS,
                 self::SKILLS,
+                self::PLAYER_DATA,
                 self::CLASS_CHANGE,
                 self::INVENTORY,
             ),
@@ -160,7 +185,7 @@ final class ClientEnterTest extends TestCase
 
         static::assertInstanceOf(TimedOut::class, $result);
         static::assertSame(
-            'no answer while waiting for ClassChangedEvent, SkillsLoadedEvent, PlayerVitalsUpdatedEvent',
+            'no answer while waiting for PlayerDataLoadedEvent, ClassChangedEvent, SkillsLoadedEvent, PlayerVitalsUpdatedEvent',
             Outcome::of($result)->summary,
         );
     }

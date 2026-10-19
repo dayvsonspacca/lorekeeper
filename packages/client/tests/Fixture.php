@@ -19,15 +19,22 @@ use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Currency\AdventureCoins;
+use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerClass;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Player\PlayerLevel;
+use Lorekeeper\Core\Player\PlayerLevelProgress;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerQuestMarks;
 use Lorekeeper\Core\Player\PlayerSkill;
+use Lorekeeper\Core\Player\Wallet;
 use Lorekeeper\Core\Progression\ClassPoints;
+use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\Support\Gauge;
+use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Map\Map;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapMonster;
@@ -56,7 +63,7 @@ final readonly class Fixture
             new SocketId(122_628),
             new Player(
                 new PlayerName('lorekeeper03'),
-                new PlayerLevel($level),
+                new PlayerLevelProgress(new PlayerLevel($level), new Gauge(new Experience(0), new Experience(1000))),
                 self::vitals(),
                 new PlayerClass(
                     self::mage(),
@@ -66,7 +73,9 @@ final readonly class Fixture
                         self::mage()->skills,
                     ),
                 ),
-                new PlayerInventory(new PlayerItems([])),
+                new PlayerInventory(new PlayerItems([]), new Quantity(30)),
+                new Wallet(new Gold(0), new AdventureCoins(0)),
+                new PlayerQuestMarks(),
             ),
             new Location(
                 new AreaId($area),

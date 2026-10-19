@@ -12,7 +12,6 @@ use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Player\PlayerLevel;
@@ -61,11 +60,11 @@ final class CharacterTest extends TestCase
                 Option\none(),
             ),
         );
-        $me->hear(new PlayerInventoryLoadedEvent(new PlayerInventory(new PlayerItems([$scales]))));
+        $me->hear(new PlayerInventoryLoadedEvent(new PlayerItems([$scales])));
 
         $player = $me->player();
         static::assertSame('lorekeeper03', $player->name->value);
-        static::assertSame(5, $player->level->value);
+        static::assertSame(5, $player->progress->level->value);
         static::assertSame(189, $player->vitals->health->current->value);
         static::assertSame('Blaze Binder', $player->class->class->name->value);
         static::assertSame($scales, $player->inventory->find(new ItemId(11_475))->unwrap());
@@ -115,7 +114,7 @@ final class CharacterTest extends TestCase
         static::assertSame($spot, $me->location()->spot);
         static::assertSame(CombatState::Fighting, $me->state());
         static::assertTrue($me->away());
-        static::assertSame(4, $me->player()->level->value);
+        static::assertSame(4, $me->player()->progress->level->value);
 
         $me->hear(new PlayerDiedEvent());
         static::assertSame(CombatState::Dead, $me->state());
@@ -133,7 +132,7 @@ final class CharacterTest extends TestCase
             #[Override]
             public function update(SubjectInterface $subject): void
             {
-                $this->levels[] = $subject instanceof Character ? $subject->player()->level->value : null;
+                $this->levels[] = $subject instanceof Character ? $subject->player()->progress->level->value : null;
             }
         };
 

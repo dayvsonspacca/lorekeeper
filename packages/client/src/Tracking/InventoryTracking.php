@@ -13,29 +13,48 @@ use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
+use Lorekeeper\Server\Event\Player\PlayerData;
+use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\TurnedInItem;
 
 final readonly class InventoryTracking
 {
-    public static function follow(PlayerInventory $inventory, Event $event, Drops $drops = new Drops()): PlayerInventory
-    {
+    public static function follow(
+        PlayerInventory $inventory,
+        Event $event,
+        Identity $me,
+        Drops $drops = new Drops(),
+    ): PlayerInventory {
         return match (true) {
             $event instanceof DropPickedUpEvent => self::pickedUp($inventory, $event, $drops),
             $event instanceof PlayerInventoryLoadedEvent => new PlayerInventory(
-                $event->inventory->permanent,
+                $event->items,
+                $inventory->slots,
                 $inventory->temporary,
             ),
+            $event instanceof PlayerDataLoadedEvent => self::resized($inventory, PlayerDataTracking::mine($event, $me)),
             $event instanceof TemporaryItemsAddedEvent => new PlayerInventory(
                 $inventory->permanent,
+                $inventory->slots,
                 self::added($inventory->temporary, $event->items),
             ),
             $event instanceof ItemsTurnedInEvent => new PlayerInventory(
                 self::taken($inventory->permanent, $event->items),
+                $inventory->slots,
                 self::taken($inventory->temporary, $event->items),
             ),
             default => $inventory,
         };
+    }
+
+    private static function resized(PlayerInventory $inventory, ?PlayerData $data): PlayerInventory
+    {
+        if ($data === null || $data->bagSlots->value === $inventory->slots->value) {
+            return $inventory;
+        }
+
+        return new PlayerInventory($inventory->permanent, $data->bagSlots, $inventory->temporary);
     }
 
     private static function pickedUp(
@@ -51,7 +70,7 @@ final readonly class InventoryTracking
         $held = $inventory->permanent->items->toArray();
         $held[$event->item->value] = new PlayerItem($item, $event->held);
 
-        return new PlayerInventory(new PlayerItems(array_values($held)), $inventory->temporary);
+        return new PlayerInventory(new PlayerItems(array_values($held)), $inventory->slots, $inventory->temporary);
     }
 
     /** @param non-empty-list<PlayerItem> $added */
