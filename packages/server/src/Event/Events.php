@@ -37,6 +37,7 @@ use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
+use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
@@ -89,6 +90,7 @@ final readonly class Events
         PlayerVitalsUpdatedEvent::class,
         QuestLoadedEvent::class,
         ItemsTurnedInEvent::class,
+        QuestAcceptedEvent::class,
         ShopLoadedEvent::class,
     ];
 
