@@ -20,11 +20,13 @@
             data-slot="{{ $skill['slot'] }}"
             data-target="{{ $skill['target'] }}"
             @unless ($skill['unlocked']) data-locked @endunless
-            title="{{ $skill['unlocked'] ? '' : 'Locked · ' }}{{ ucfirst($skill['target']) }}{{ $skill['targets'] > 1 ? ', up to ' . $skill['targets'] . ' targets' : '' }} · {{ $skill['cost'] }} mana · {{ $skill['cooldown'] }}s cooldown"
+            title="{{ $skill['unlocked'] ? '' : 'Locked · ' }}{{ ucfirst($skill['target']) }}{{ $skill['targets'] > 1 ? ', up to ' . $skill['targets'] . ' targets' : '' }} · {{ ($skill['restores'] ?? 0) > 0 ? 'restores ' . $skill['restores'] . ' mana' : $skill['cost'] . ' mana' }} · {{ $skill['cooldown'] }}s cooldown"
         >
             <span class="lk-slot__key">{{ $key }}</span>
             <x-scene.glyph :name="$glyph" />
-            @if ($skill['cost'] > 0)
+            @if (($skill['restores'] ?? 0) > 0)
+                <span class="lk-slot__cost" data-restores>+{{ $skill['restores'] }}</span>
+            @elseif ($skill['cost'] > 0)
                 <span class="lk-slot__cost">{{ $skill['cost'] }}</span>
             @endif
             @if ($skill['targets'] > 1)

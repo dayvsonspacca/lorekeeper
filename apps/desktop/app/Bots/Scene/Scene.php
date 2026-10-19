@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Bots\Scene;
 
 use Lorekeeper\Client\Character;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
 use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\Progression\Rank;
 use Lorekeeper\Core\World\Map\MapMonster;
@@ -12,7 +14,7 @@ use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
 /**
- * @psalm-type Skill = array{slot: string, cost: int, cooldown: float, targets: int, target: string, unlocked: bool}
+ * @psalm-type Skill = array{slot: string, cost: int, restores?: int, cooldown: float, targets: int, target: string, unlocked: bool}
  * @psalm-type Hero = array{
  *     name: string,
  *     level: int,
@@ -91,7 +93,8 @@ final readonly class Scene
                 'items' => count($player->inventory->permanent->items) + count($player->inventory->temporary->items),
                 'skills' => array_map(static fn(PlayerSkill $skill): array => [
                     'slot' => $skill->skill->slot->name,
-                    'cost' => $skill->skill->cost->value,
+                    'cost' => $skill->skill->cost instanceof ManaCost ? $skill->skill->cost->mana->value : 0,
+                    'restores' => $skill->skill->cost instanceof ManaRestore ? $skill->skill->cost->mana->value : 0,
                     'cooldown' => round($skill->skill->cooldown->getTotalSeconds(), precision: 1),
                     'targets' => $skill->skill->targets->value,
                     'target' => strtolower($skill->skill->target->name),
@@ -239,6 +242,7 @@ final readonly class Scene
                 'skills' => Type\vec(Type\shape([
                     'slot' => Type\string(),
                     'cost' => Type\int(),
+                    'restores' => Type\optional(Type\int()),
                     'cooldown' => Type\float(),
                     'targets' => Type\int(),
                     'target' => Type\string(),

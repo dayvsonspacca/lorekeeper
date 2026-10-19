@@ -151,6 +151,7 @@
     .lk-slot[data-slot="Potion"] svg { color: #f0abfc; }
     .lk-slot__key { position: absolute; top: 2px; left: 5px; font-size: .58rem; font-weight: 800; color: var(--lk-faint); }
     .lk-slot__cost { position: absolute; bottom: 2px; right: 4px; font-size: .58rem; font-weight: 800; color: var(--lk-mp-b); }
+    .lk-slot__cost[data-restores] { color: var(--lk-good); }
     .lk-slot__aoe { position: absolute; top: -.4rem; right: -.4rem; padding: 0 .3rem; border-radius: 999px; font-size: .58rem; font-weight: 900; color: #1c1917; background: var(--lk-gold); box-shadow: 0 0 8px rgba(251, 191, 36, .6); }
     .lk-slot[data-locked] { opacity: .3; filter: grayscale(1); }
     .lk-slot__lock { position: absolute; inset: 0; display: grid; place-items: center; }
