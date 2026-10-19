@@ -9,7 +9,7 @@
 >
     @unless ($compact)
         <div class="lk-meter__label">
-            <span>{{ $kind === 'health' ? 'HP' : 'MP' }}</span>
+            <span>{{ match ($kind) { 'health' => 'HP', 'mana' => 'MP', default => 'XP' } }}</span>
             <span class="lk-num">{{ number_format($current) }} <span class="lk-faint">/ {{ number_format($maximum) }}</span></span>
         </div>
     @endunless

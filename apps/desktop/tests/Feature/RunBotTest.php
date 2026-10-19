@@ -24,16 +24,21 @@ use Lorekeeper\Core\CharacterClass\CharacterClass;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\ClassName;
 use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Currency\AdventureCoins;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerClass;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Player\PlayerLevel;
+use Lorekeeper\Core\Player\PlayerLevelProgress;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerQuestMarks;
+use Lorekeeper\Core\Player\Wallet;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\Support\Gauge;
+use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Map\Map;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapMonster;
@@ -223,14 +228,16 @@ final class RunBotTest extends TestCase
             new SocketId(1),
             new Player(
                 new PlayerName($name),
-                new PlayerLevel($level),
+                new PlayerLevelProgress(new PlayerLevel($level), new Gauge(new Experience(0), new Experience(1000))),
                 new Vitals(new Gauge(new Health(390), new Health(390)), new Gauge(new Mana(100), new Mana(100))),
                 new PlayerClass(
                     new CharacterClass(new ClassName('Mage'), ClassCategory::Caster, Option\none(), []),
                     new ClassPoints(0),
                     [],
                 ),
-                new PlayerInventory(new PlayerItems([])),
+                new PlayerInventory(new PlayerItems([]), new Quantity(30)),
+                new Wallet(new Gold(0), new AdventureCoins(0)),
+                new PlayerQuestMarks(),
             ),
             new Location(
                 new AreaId(1),

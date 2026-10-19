@@ -67,7 +67,7 @@ final class Witness
         $seen = implode('|', [
             $me->state()->name,
             $me->location()->map->name->value,
-            $me->player()->level->value,
+            $me->player()->progress->level->value,
             $rank,
             $me->away() ? 'away' : 'here',
         ]);

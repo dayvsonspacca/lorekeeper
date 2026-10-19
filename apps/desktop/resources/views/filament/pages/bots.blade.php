@@ -54,6 +54,9 @@
                                 @if ($hero !== null)
                                     <div class="lk-head__line">
                                         {{ $hero['class'] }} <x-scene.pips :rank="$hero['rank']" />
+                                        @if ($hero['member'] ?? false)
+                                            <span class="lk-member" title="Member">M</span>
+                                        @endif
                                     </div>
                                     <div class="lk-head__line">
                                         <x-scene.glyph name="pin" /> {{ $hero['map'] }}
@@ -72,6 +75,9 @@
                             <div class="lk-meters">
                                 <x-scene.bar :current="$hero['health']" :maximum="$hero['maxHealth']" kind="health" />
                                 <x-scene.bar :current="$hero['mana']" :maximum="$hero['maxMana']" kind="mana" />
+                                @if (($hero['maxExperience'] ?? 0) > 0)
+                                    <x-scene.bar :current="$hero['experience']" :maximum="$hero['maxExperience']" kind="experience" />
+                                @endif
                             </div>
                         @elseif (!$active && $scene !== null)
                             <div class="lk-head__line">

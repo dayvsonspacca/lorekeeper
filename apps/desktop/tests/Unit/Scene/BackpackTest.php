@@ -34,6 +34,7 @@ final class BackpackTest extends TestCase
                     new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer'))),
                     new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token')), new Quantity(4)),
                 ]),
+                new Quantity(131),
                 new PlayerItems([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
             ),
         );

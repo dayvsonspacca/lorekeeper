@@ -117,11 +117,15 @@ final class DesktopTest extends TestCase
             'Hero',
             'Mage',
             'Rank 7',
+            'Member',
             'Fighting',
             '1,840',
+            '21,000',
+            '60,000',
             '×3',
             '+15',
             '23%',
+            '123,456',
             'icestormarena',
             '2 of 2 monsters standing',
             'Artix',
@@ -413,51 +417,7 @@ final class DesktopTest extends TestCase
         $run->update([
             'status' => RunStatus::Running,
             'scene' => new Scene(
-                [
-                    'name' => 'Hero',
-                    'level' => 34,
-                    'health' => 1840,
-                    'maxHealth' => 2300,
-                    'mana' => 61,
-                    'maxMana' => 100,
-                    'class' => 'Mage',
-                    'category' => 'caster',
-                    'rank' => 7,
-                    'points' => 90_000,
-                    'rankFrom' => 78_400,
-                    'rankTo' => 129_600,
-                    'state' => 'fighting',
-                    'away' => false,
-                    'map' => 'icestormarena',
-                    'items' => 41,
-                    'skills' => [
-                        [
-                            'slot' => 'AutoAttack',
-                            'cost' => 0,
-                            'cooldown' => 2.0,
-                            'targets' => 1,
-                            'target' => 'enemy',
-                            'unlocked' => true,
-                        ],
-                        [
-                            'slot' => 'First',
-                            'cost' => 20,
-                            'cooldown' => 6.0,
-                            'targets' => 3,
-                            'target' => 'enemy',
-                            'unlocked' => true,
-                        ],
-                        [
-                            'slot' => 'Second',
-                            'cost' => 0,
-                            'restores' => 15,
-                            'cooldown' => 7.0,
-                            'targets' => 3,
-                            'target' => 'enemy',
-                            'unlocked' => true,
-                        ],
-                    ],
-                ],
+                self::hero(),
                 [
                     [
                         'id' => 3,
@@ -504,6 +464,60 @@ final class DesktopTest extends TestCase
         ]);
 
         return $run;
+    }
+
+    /** @return array<string, mixed> */
+    private static function hero(): array
+    {
+        return [
+            'name' => 'Hero',
+            'level' => 34,
+            'experience' => 21_000,
+            'maxExperience' => 60_000,
+            'gold' => 123_456,
+            'member' => true,
+            'health' => 1840,
+            'maxHealth' => 2300,
+            'mana' => 61,
+            'maxMana' => 100,
+            'class' => 'Mage',
+            'category' => 'caster',
+            'rank' => 7,
+            'points' => 90_000,
+            'rankFrom' => 78_400,
+            'rankTo' => 129_600,
+            'state' => 'fighting',
+            'away' => false,
+            'map' => 'icestormarena',
+            'items' => 41,
+            'skills' => [
+                [
+                    'slot' => 'AutoAttack',
+                    'cost' => 0,
+                    'cooldown' => 2.0,
+                    'targets' => 1,
+                    'target' => 'enemy',
+                    'unlocked' => true,
+                ],
+                [
+                    'slot' => 'First',
+                    'cost' => 20,
+                    'cooldown' => 6.0,
+                    'targets' => 3,
+                    'target' => 'enemy',
+                    'unlocked' => true,
+                ],
+                [
+                    'slot' => 'Second',
+                    'cost' => 0,
+                    'restores' => 15,
+                    'cooldown' => 7.0,
+                    'targets' => 3,
+                    'target' => 'enemy',
+                    'unlocked' => true,
+                ],
+            ],
+        ];
     }
 
     private static function backpack(): Backpack

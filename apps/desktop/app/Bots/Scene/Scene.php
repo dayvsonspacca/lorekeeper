@@ -8,6 +8,7 @@ use Lorekeeper\Client\Character;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
 use Lorekeeper\Core\Player\PlayerSkill;
+use Lorekeeper\Core\Player\PlayerTag;
 use Lorekeeper\Core\Progression\Rank;
 use Lorekeeper\Core\World\Map\MapMonster;
 use Psl\Type;
@@ -18,6 +19,10 @@ use Psl\Type\Exception\CoercionException;
  * @psalm-type Hero = array{
  *     name: string,
  *     level: int,
+ *     experience?: int,
+ *     maxExperience?: int,
+ *     gold?: int,
+ *     member?: bool,
  *     health: int,
  *     maxHealth: int,
  *     mana: int,
@@ -76,7 +81,11 @@ final readonly class Scene
         return new self(
             [
                 'name' => $player->name->value,
-                'level' => $player->level->value,
+                'level' => $player->progress->level->value,
+                'experience' => $player->progress->experience->current->value,
+                'maxExperience' => $player->progress->experience->maximum->value,
+                'gold' => $player->wallet->gold->value,
+                'member' => $player->tags->has(PlayerTag::Member),
                 'health' => $player->vitals->health->current->value,
                 'maxHealth' => $player->vitals->health->maximum->value,
                 'mana' => $player->vitals->mana->current->value,
@@ -225,6 +234,10 @@ final readonly class Scene
             'hero' => Type\shape([
                 'name' => Type\string(),
                 'level' => Type\int(),
+                'experience' => Type\optional(Type\int()),
+                'maxExperience' => Type\optional(Type\int()),
+                'gold' => Type\optional(Type\int()),
+                'member' => Type\optional(Type\bool()),
                 'health' => Type\int(),
                 'maxHealth' => Type\int(),
                 'mana' => Type\int(),

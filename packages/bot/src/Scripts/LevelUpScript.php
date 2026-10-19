@@ -89,7 +89,7 @@ final class LevelUpScript extends BotScript
 
     private function level(): int
     {
-        return $this->me()->player()->level->value;
+        return $this->me()->player()->progress->level->value;
     }
 
     private function below(int $level): bool

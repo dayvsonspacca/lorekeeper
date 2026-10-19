@@ -59,7 +59,7 @@ final class RunRecorder implements ObserverInterface
         }
 
         $map = $subject->location()->map->name->value;
-        $level = $subject->player()->level->value;
+        $level = $subject->player()->progress->level->value;
 
         if ($this->run->map !== $map) {
             $this->run->update(['map' => $map]);

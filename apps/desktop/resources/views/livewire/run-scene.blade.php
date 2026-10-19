@@ -31,6 +31,9 @@
                     <div class="lk-hero__name">{{ $hero['name'] }}</div>
                     <div class="lk-hero__class">
                         {{ $hero['class'] }} <span class="lk-faint">·</span> Rank {{ $hero['rank'] }} <x-scene.pips :rank="$hero['rank']" />
+                        @if ($hero['member'] ?? false)
+                            <span class="lk-member">Member</span>
+                        @endif
                     </div>
                     <x-scene.chip :state="$state" />
                 </div>
@@ -38,6 +41,9 @@
                 <div class="lk-meters lk-meters--lg">
                     <x-scene.bar :current="$hero['health']" :maximum="$hero['maxHealth']" kind="health" />
                     <x-scene.bar :current="$hero['mana']" :maximum="$hero['maxMana']" kind="mana" />
+                    @if (($hero['maxExperience'] ?? 0) > 0)
+                        <x-scene.bar :current="$hero['experience']" :maximum="$hero['maxExperience']" kind="experience" />
+                    @endif
                 </div>
 
                 @if ($hero['skills'] !== [])
@@ -53,6 +59,12 @@
                         <strong>{{ number_format($hero['points']) }}</strong>
                         <span>class points</span>
                     </div>
+                    @if (array_key_exists('gold', $hero))
+                        <div class="lk-fact">
+                            <strong style="color: var(--lk-gold);">{{ number_format($hero['gold']) }}</strong>
+                            <span>gold</span>
+                        </div>
+                    @endif
                     <a class="lk-fact" href="#lk-inventory">
                         <strong>{{ number_format($hero['items']) }}</strong>
                         <span>items</span>
