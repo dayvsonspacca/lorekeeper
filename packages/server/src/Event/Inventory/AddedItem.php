@@ -12,5 +12,6 @@ final readonly class AddedItem
     public function __construct(
         public ItemId $item,
         public Quantity $quantity,
+        public ?Quantity $held = null,
     ) {}
 }

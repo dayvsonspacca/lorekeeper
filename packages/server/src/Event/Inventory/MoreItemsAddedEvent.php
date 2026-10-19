@@ -34,9 +34,10 @@ final readonly class MoreItemsAddedEvent implements Event
         }
 
         try {
-            $items = Type\dict(Type\string(), Type\shape([
-                'ItemID' => Type\positive_int(),
+            $items = Type\dict(Type\positive_int(), Type\shape([
+                'ItemID' => Type\optional(Type\positive_int()),
                 'iQty' => Type\positive_int(),
+                'iQtyNow' => Type\optional(Type\positive_int()),
                 'sName' => Type\optional(Type\string()),
             ], allowUnknownFields: true))->coerce($message->data['items'] ?? null);
         } catch (CoercionException $exception) {
@@ -44,12 +45,16 @@ final readonly class MoreItemsAddedEvent implements Event
         }
 
         $added = [];
-        foreach ($items as $entry) {
+        foreach ($items as $id => $entry) {
             if (array_key_exists('sName', $entry)) {
                 continue;
             }
 
-            $added[] = new AddedItem(new ItemId($entry['ItemID']), new Quantity($entry['iQty']));
+            $added[] = new AddedItem(
+                new ItemId($entry['ItemID'] ?? $id),
+                new Quantity($entry['iQty']),
+                array_key_exists('iQtyNow', $entry) ? new Quantity($entry['iQtyNow']) : null,
+            );
         }
 
         return $added === [] ? Option\none() : Option\some(new static($added));
@@ -60,7 +65,10 @@ final readonly class MoreItemsAddedEvent implements Event
     {
         return 'Got '
         . implode(', ', array_map(
-            static fn(AddedItem $added): string => "{$added->quantity->value} more of item {$added->item->value}",
+            static fn(AddedItem $added): string => (
+                "{$added->quantity->value} more of item {$added->item->value}"
+                . ($added->held === null ? '' : ", {$added->held->value} held now")
+            ),
             $this->items,
         ));
     }
