@@ -155,6 +155,23 @@ final class CombatEventsTest extends TestCase
     }
 
     #[Test]
+    public function it_reads_how_many_targets_each_skill_of_a_real_class_hits(): void
+    {
+        $event = SkillsLoadedEvent::from(JsonMessage::from(<<<'JSON'
+            {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":1354,"nam":"Fire Bolt","typ":"aa","ref":"aa","desc":"Blast your opponents at long range with fire bolts.","tgt":"h","tgtMax":3,"fx":"m","damage":1,"dsrc":"AP2","range":808,"mp":0,"cd":2000,"anim":"Cast1","icon":"iwstaff","tgtMin":1,"auto":true,"isOK":true},{"id":848,"nam":"Combustion Blaze","typ":"m","ref":"a1","desc":"Unleash explosive flames on three enemies and then watch them burn with a small DoT for 4 seconds afterwards.","tgt":"h","tgtMax":3,"fx":"m","strl":"sp_ed1","damage":0.65,"dsrc":"SP1","range":808,"mp":10,"cd":4000,"anim":"Castgood","icon":"iel2,ief1","auras":[{}],"tgtMin":1,"forceResult":"crit","isOK":true},{"id":849,"nam":"Choking Shadow Smoke","typ":"m","ref":"a2","desc":"Your smoke is infused with the power of Darkness and causes your opponents to have a reduced chance of hitting you and occasionally stuns them for 3 seconds. Inhaling the smoke also causes a large DoT lasting for 8 seconds.","tgt":"h","tgtMax":3,"fx":"m","strl":"sp_ed1","range":808,"mp":25,"cd":8000,"icon":"imp1,ied2","auras":[{},{}],"tgtMin":1,"isOK":true},{"id":850,"nam":"Fire in Your Skin","typ":"m","ref":"a3","desc":"Kindle a flame within you, setting yourself ablaze. Applies Burning Ward which reduces damage taken by 40% while damaging opponents that attack you for 6 seconds, and Blazing Speed which increases haste by 15% for 14 seconds. You also use your darkness powers to restore your life from the ashes around you to apply an HoT for 8 seconds.","tgt":"s","tgtMax":1,"fx":"m","strl":"sp_ef4","range":301,"mp":30,"cd":16000,"anim":"Attack3","icon":"ipn1","auras":[{},{},{}],"tgtMin":1,"isOK":true},{"id":851,"nam":"Dark Fire","typ":"m","ref":"a4","desc":"You unleash a devastating burst of Dark Fire on 3 opponents. They all take heavy damage and continue to burn from a reasonable DoT for 8 seconds. The fire will also apply either a 10% DoT damage taken debuff or a -10% damage debuff to your enemy.","tgt":"h","tgtMax":3,"fx":"m","damage":3.5,"dsrc":"SP2","range":808,"mp":25,"cd":12000,"anim":"Castgood","icon":"ief2,isi1","auras":[{},{},{}],"tgtMin":1,"forceResult":"hit","randomAura":true,"randomLength":1,"Apply":2,"isOK":true},{"nam":"Potions","ref":"i1","desc":"Equip a potion or scroll from your inventory to use it here.","typ":"i","fx":"","strl":"","tgt":"f","range":808,"mp":0,"cd":60000,"anim":"Cheer","icon":"icu1","isOK":true}],"passive":[{"id":852,"nam":"Sear Flesh","typ":"passive","ref":"p1","desc":"20% Damage to DoTs","tgt":"s","fx":"m","range":301,"icon":"isp2","auras":[{}],"cd":60000,"isOK":true},{"id":853,"nam":"Sear Bone","typ":"passive","ref":"p2","desc":"10% Outgoing Damage","tgt":"s","fx":"m","range":301,"icon":"isp2","auras":[{}],"cd":60000,"isOK":true},{"id":476,"nam":"Burn At Both Ends","typ":"passive","ref":"p3","desc":"Occasionally, your Haste and Mana Regen will GREATLY increase for a short time.","tgt":"s","fx":"m","range":301,"icon":"isp2","auras":[{}],"pRule":"Aura200","auraID":830,"cd":60000,"isOK":true}]}}}}
+            JSON)->unwrap())->unwrap();
+
+        static::assertSame(
+            [3, 3, 3, 1, 3, 1],
+            array_map(static fn(PlayerSkill $held): int => $held->skill->targets->value, $event->skills),
+        );
+        static::assertSame(
+            [true, true, true, true, true, true],
+            array_map(static fn(PlayerSkill $held): bool => $held->unlocked, $event->skills),
+        );
+    }
+
+    #[Test]
     public function it_rejects_a_skill_aimed_at_something_unknown(): void
     {
         $this->expectException(MalformedEventException::class);

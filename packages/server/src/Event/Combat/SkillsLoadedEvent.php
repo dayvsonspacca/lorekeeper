@@ -9,6 +9,7 @@ use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Player\PlayerSkill;
+use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -45,6 +46,7 @@ final readonly class SkillsLoadedEvent implements Event
                         'tgt' => Type\string(),
                         'mp' => Type\uint(),
                         'cd' => Type\uint(),
+                        'tgtMax' => Type\optional(Type\positive_int()),
                         'isOK' => Type\optional(Type\bool()),
                     ], allowUnknownFields: true)),
                 ], allowUnknownFields: true),
@@ -66,6 +68,7 @@ final readonly class SkillsLoadedEvent implements Event
                     self::target($skill['tgt']),
                     new Mana($skill['mp']),
                     Duration::milliseconds($skill['cd']),
+                    new Quantity($skill['tgtMax'] ?? 1),
                 ),
                 $skill['isOK'] ?? false,
             );
