@@ -6,6 +6,7 @@ namespace Lorekeeper\Core\Tests\Player;
 
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,5 +30,15 @@ final class PlayerItemTest extends TestCase
         $item = new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade'));
 
         static::assertSame(1, $item->quantity->value);
+    }
+
+    #[Test]
+    public function it_tells_the_tags_it_has(): void
+    {
+        $blade = new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade'), tags: [ItemTag::MemberOnly]);
+        $sword = new PlayerItem(new ItemId(1), new ItemName('Default Sword'));
+
+        static::assertTrue($blade->has(ItemTag::MemberOnly));
+        static::assertFalse($sword->has(ItemTag::MemberOnly));
     }
 }
