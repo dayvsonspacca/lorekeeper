@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Tests\Event\Map;
 
 use Lorekeeper\Core\Combat\CombatState;
-use Lorekeeper\Core\World\Map\Pad;
-use Lorekeeper\Core\World\Monster\Race;
+use Lorekeeper\Core\World\Map\MapPad;
+use Lorekeeper\Core\World\Monster\MonsterRace;
 use Lorekeeper\Server\Event\Map\MapMonster;
 use Lorekeeper\Server\Event\Map\MonsterPlacement;
 use Lorekeeper\Server\Event\Map\MonstersDescribedEvent;
@@ -57,9 +57,9 @@ final class MapArrivalEventsTest extends TestCase
 
         static::assertSame(
             [
-                [1,  'Zardman Grunt',  3, Race::None],
-                [2,  'Boss Zardman',   3, Race::None],
-                [32, 'Zardman Hunter', 3, Race::None],
+                [1,  'Zardman Grunt',  3, MonsterRace::None],
+                [2,  'Boss Zardman',   3, MonsterRace::None],
+                [32, 'Zardman Hunter', 3, MonsterRace::None],
             ],
             array_map(static fn(MapMonster $monster): array => [
                 $monster->id->value,
@@ -74,13 +74,13 @@ final class MapArrivalEventsTest extends TestCase
     }
 
     #[Test]
-    #[TestWith(['None', Race::None])]
-    #[TestWith(['Undead', Race::Undead])]
-    #[TestWith(['Human', Race::Human])]
-    #[TestWith(['Elemental', Race::Elemental])]
-    #[TestWith(['Dragonkin', Race::Dragonkin])]
-    #[TestWith(['Unknown', Race::Unknown])]
-    public function it_translates_the_race(string $race, Race $expected): void
+    #[TestWith(['None', MonsterRace::None])]
+    #[TestWith(['Undead', MonsterRace::Undead])]
+    #[TestWith(['Human', MonsterRace::Human])]
+    #[TestWith(['Elemental', MonsterRace::Elemental])]
+    #[TestWith(['Dragonkin', MonsterRace::Dragonkin])]
+    #[TestWith(['Unknown', MonsterRace::Unknown])]
+    public function it_translates_the_race(string $race, MonsterRace $expected): void
     {
         static::assertSame(
             $expected,
@@ -131,7 +131,7 @@ final class MapArrivalEventsTest extends TestCase
         static::assertSame('Hero 9', $last->name->value);
         static::assertSame(81, $last->level->value);
         static::assertSame('Enter', $last->cell->value);
-        static::assertSame(Pad::Spawn, $last->pad);
+        static::assertSame(MapPad::Spawn, $last->pad);
         static::assertSame(CombatState::Idle, $last->state);
         static::assertSame([500, 500, 100, 100], [
             $last->health->value,

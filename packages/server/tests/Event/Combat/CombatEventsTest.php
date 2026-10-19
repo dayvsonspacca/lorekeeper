@@ -53,7 +53,7 @@ final class CombatEventsTest extends TestCase
             array_map(static fn(Skill $skill): array => [
                 $skill->slot,
                 $skill->target,
-                $skill->mana->value,
+                $skill->cost->value,
                 (int) $skill->cooldown->getTotalMilliseconds(),
             ], $event->skills),
         );

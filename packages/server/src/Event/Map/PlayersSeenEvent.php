@@ -9,8 +9,8 @@ use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\World\Map\Cell;
-use Lorekeeper\Core\World\Map\Pad;
+use Lorekeeper\Core\World\Map\MapCell;
+use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Override;
 use Psl\Type;
@@ -55,7 +55,7 @@ final readonly class PlayersSeenEvent extends MapArrivalEvent
             static fn(array $player): SeenPlayer => new SeenPlayer(
                 new PlayerName($player['strUsername']),
                 new PlayerLevel($player['intLevel']),
-                new Cell($player['strFrame']),
+                new MapCell($player['strFrame']),
                 self::pad($player['strPad']),
                 self::state($player['intState']),
                 new Health($player['intHP']),
@@ -69,17 +69,17 @@ final readonly class PlayersSeenEvent extends MapArrivalEvent
     }
 
     /** @throws MalformedEventException */
-    private static function pad(string $pad): Pad
+    private static function pad(string $pad): MapPad
     {
         return match (strtolower($pad)) {
-            'left' => Pad::Left,
-            'right' => Pad::Right,
-            'top' => Pad::Top,
-            'bottom' => Pad::Bottom,
-            'up' => Pad::Up,
-            'down' => Pad::Down,
-            'center' => Pad::Center,
-            'spawn' => Pad::Spawn,
+            'left' => MapPad::Left,
+            'right' => MapPad::Right,
+            'top' => MapPad::Top,
+            'bottom' => MapPad::Bottom,
+            'up' => MapPad::Up,
+            'down' => MapPad::Down,
+            'center' => MapPad::Center,
+            'spawn' => MapPad::Spawn,
             default => throw new MalformedEventException(static::class, "unknown pad '{$pad}'"),
         };
     }

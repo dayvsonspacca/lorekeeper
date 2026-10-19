@@ -16,7 +16,7 @@ use Psl\Option\Option;
 
 final readonly class InventoryItem
 {
-    public Type\Category $category;
+    public Type\ItemCategory $category;
 
     /**
      * @param Option<ItemDescription> $description

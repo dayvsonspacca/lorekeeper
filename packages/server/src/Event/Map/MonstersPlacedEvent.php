@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Map;
 
-use Lorekeeper\Core\World\Map\Cell;
+use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Monster\MonsterId;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -38,7 +38,7 @@ final readonly class MonstersPlacedEvent extends MapArrivalEvent
             static fn(array $placement): MonsterPlacement => new MonsterPlacement(
                 new MonsterSpawnId($placement['MonMapID']),
                 new MonsterId($placement['MonID']),
-                new Cell($placement['strFrame']),
+                new MapCell($placement['strFrame']),
             ),
             $data['monmap'] ?? [],
         ));

@@ -27,7 +27,7 @@ final class PlayerInventoryLoadedEventTest extends TestCase
 
         static::assertSame('Unidentified 20', $sword->name->value);
         static::assertSame(Type\Weapon::Sword, $sword->detail);
-        static::assertSame(Type\Category::Equipment, $sword->category);
+        static::assertSame(Type\ItemCategory::Equipment, $sword->category);
         static::assertSame(EquipmentSlot::Weapon, $sword->slot->unwrap());
         static::assertSame(100, $sword->price->unwrap()->amount->value);
         static::assertSame('items/swords/MiltonPoolWheelsword01.swf', $sword->file->unwrap()->value);
@@ -53,7 +53,7 @@ final class PlayerInventoryLoadedEventTest extends TestCase
         static::assertTrue($necklace->link->isNone());
 
         static::assertSame(Type\Misc::Generic, $voucher->detail);
-        static::assertSame(Type\Category::Misc, $voucher->category);
+        static::assertSame(Type\ItemCategory::Misc, $voucher->category);
         static::assertTrue($voucher->slot->isNone());
         static::assertSame(1_000_000, $voucher->price->unwrap()->amount->value);
         static::assertTrue($voucher->memberOnly);

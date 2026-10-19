@@ -14,6 +14,7 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemPrice;
 use Lorekeeper\Core\Item\Type;
+use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Shop\MergeCost;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopName;
@@ -127,7 +128,7 @@ final readonly class ShopLoadedEvent implements Event, Mentions
             array_map(
                 static fn(array $material): MergeCost => new MergeCost(
                     new ItemId($material['ItemID']),
-                    $material['iQty'],
+                    new Quantity($material['iQty']),
                 ),
                 $item['turnin'] ?? [],
             ),

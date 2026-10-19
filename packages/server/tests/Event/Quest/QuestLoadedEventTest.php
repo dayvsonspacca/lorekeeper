@@ -16,6 +16,7 @@ use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemPrice;
 use Lorekeeper\Core\Item\Type;
 use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Faction\FactionName;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
 use Lorekeeper\Core\World\Quest\Requirement\ClassRankRequirement;
@@ -61,14 +62,17 @@ final class QuestLoadedEventTest extends TestCase
             $rats->description->unwrap()->endText->unwrap(),
         );
         static::assertEquals(
-            [new ItemObjective(new ItemId(325), 1), new ItemObjective(new ItemId(15_198), 1)],
+            [
+                new ItemObjective(new ItemId(325), new Quantity(1)),
+                new ItemObjective(new ItemId(15_198), new Quantity(1)),
+            ],
             $rats->objectives,
         );
         static::assertEquals(
             [
                 new GoldReward(new Gold(100)),
                 new ExperienceReward(new Experience(100)),
-                new ItemReward(new ItemId(333), new DropRate(100.0), 1, ItemRewardType::Guaranteed),
+                new ItemReward(new ItemId(333), new DropRate(100.0), new Quantity(1), ItemRewardType::Guaranteed),
             ],
             $rats->rewards,
         );
@@ -105,7 +109,7 @@ final class QuestLoadedEventTest extends TestCase
 
         $blade = $only(ItemRequirement::class, $quests[3777]);
         static::assertSame(25_550, $blade->itemId->value);
-        static::assertSame(1, $blade->quantity);
+        static::assertSame(1, $blade->quantity->value);
 
         $healer = $only(ClassRankRequirement::class, $quests[5682]);
         static::assertSame(15_651, $healer->classId->value);

@@ -9,8 +9,8 @@ use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\World\Map\Cell;
-use Lorekeeper\Core\World\Map\Pad;
+use Lorekeeper\Core\World\Map\MapCell;
+use Lorekeeper\Core\World\Map\MapPad;
 
 final readonly class SeenPlayer
 {
@@ -18,8 +18,8 @@ final readonly class SeenPlayer
     public function __construct(
         public PlayerName $name,
         public PlayerLevel $level,
-        public Cell $cell,
-        public Pad $pad,
+        public MapCell $cell,
+        public MapPad $pad,
         public CombatState $state,
         public Health $health,
         public Health $maxHealth,

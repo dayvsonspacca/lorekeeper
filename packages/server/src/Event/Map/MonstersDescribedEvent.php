@@ -9,7 +9,7 @@ use Lorekeeper\Core\Asset\Linkage;
 use Lorekeeper\Core\World\Monster\MonsterId;
 use Lorekeeper\Core\World\Monster\MonsterLevel;
 use Lorekeeper\Core\World\Monster\MonsterName;
-use Lorekeeper\Core\World\Monster\Race;
+use Lorekeeper\Core\World\Monster\MonsterRace;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Override;
 use Psl\Type;
@@ -60,15 +60,15 @@ final readonly class MonstersDescribedEvent extends MapArrivalEvent
     }
 
     /** @throws MalformedEventException */
-    private static function race(string $race): Race
+    private static function race(string $race): MonsterRace
     {
         return match ($race) {
-            'None' => Race::None,
-            'Undead' => Race::Undead,
-            'Human' => Race::Human,
-            'Elemental' => Race::Elemental,
-            'Dragonkin' => Race::Dragonkin,
-            'Unknown' => Race::Unknown,
+            'None' => MonsterRace::None,
+            'Undead' => MonsterRace::Undead,
+            'Human' => MonsterRace::Human,
+            'Elemental' => MonsterRace::Elemental,
+            'Dragonkin' => MonsterRace::Dragonkin,
+            'Unknown' => MonsterRace::Unknown,
             default => throw new MalformedEventException(static::class, "unknown race '{$race}'"),
         };
     }

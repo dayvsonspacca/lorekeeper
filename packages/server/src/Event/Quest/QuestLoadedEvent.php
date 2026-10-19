@@ -21,6 +21,7 @@ use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\Progression\Rank;
 use Lorekeeper\Core\Progression\Reputation;
+use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Faction\FactionId;
 use Lorekeeper\Core\World\Faction\FactionName;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
@@ -173,7 +174,7 @@ final readonly class QuestLoadedEvent implements Event, Mentions
             array_map(
                 static fn(array $turnIn): QuestObjective => new ItemObjective(
                     new ItemId($turnIn['ItemID']),
-                    $turnIn['iQty'],
+                    new Quantity($turnIn['iQty']),
                 ),
                 $quest['turnin'] ?? [],
             ),
@@ -218,7 +219,7 @@ final readonly class QuestLoadedEvent implements Event, Mentions
         }
 
         foreach ($quest['reqd'] ?? [] as $item) {
-            $requirements[] = new ItemRequirement(new ItemId($item['ItemID']), $item['iQty']);
+            $requirements[] = new ItemRequirement(new ItemId($item['ItemID']), new Quantity($item['iQty']));
         }
 
         return $requirements;
@@ -249,7 +250,7 @@ final readonly class QuestLoadedEvent implements Event, Mentions
             $rewards[] = new ItemReward(
                 new ItemId($item['ItemID']),
                 new DropRate((float) $item['iRate']),
-                $item['iQty'],
+                new Quantity($item['iQty']),
                 self::rewardType($item['iType']),
             );
         }

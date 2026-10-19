@@ -41,7 +41,7 @@ final class ShopLoadedEventTest extends TestCase
 
         static::assertSame('Lovely Fan', $fan->name->value);
         static::assertSame(Type\Weapon::Dagger, $fan->detail);
-        static::assertSame(Type\Category::Equipment, $fan->category);
+        static::assertSame(Type\ItemCategory::Equipment, $fan->category);
         static::assertSame(EquipmentSlot::Weapon, $fan->slot->unwrap());
         static::assertInstanceOf(Gold::class, $fan->price->unwrap()->amount);
         static::assertSame(5000, $fan->price->unwrap()->amount->value);
@@ -65,7 +65,7 @@ final class ShopLoadedEventTest extends TestCase
         static::assertSame('Reward Gem Shop', $shop->name->value);
         static::assertSame(
             [15, 5, 7, 3, 10],
-            array_map(static fn(ShopLoadedItem $item): int => $item->costs[0]->quantity, $shop->items),
+            array_map(static fn(ShopLoadedItem $item): int => $item->costs[0]->quantity->value, $shop->items),
         );
         static::assertSame(17_109, $shop->items[0]->costs[0]->itemId->value);
         static::assertTrue($shop->items[0]->price->isNone());
