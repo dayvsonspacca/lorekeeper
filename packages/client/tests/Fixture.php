@@ -21,6 +21,7 @@ use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerClass;
 use Lorekeeper\Core\Player\PlayerInventory;
+use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerSkill;
@@ -64,7 +65,7 @@ final readonly class Fixture
                         self::mage()->skills,
                     ),
                 ),
-                new PlayerInventory([]),
+                new PlayerInventory(new PlayerItems([])),
             ),
             new Location(
                 new AreaId($area),

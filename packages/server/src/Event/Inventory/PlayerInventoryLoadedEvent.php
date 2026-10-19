@@ -11,6 +11,7 @@ use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
+use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
@@ -71,7 +72,7 @@ final readonly class PlayerInventoryLoadedEvent implements Event
         }
 
         try {
-            return Option\some(new static(new PlayerInventory($held)));
+            return Option\some(new static(new PlayerInventory(new PlayerItems($held))));
         } catch (InvalidArgumentException $exception) {
             throw new MalformedEventException(static::class, 'an item is in the inventory more than once', $exception);
         }
@@ -80,6 +81,6 @@ final readonly class PlayerInventoryLoadedEvent implements Event
     #[Override]
     public function summary(): string
     {
-        return 'Inventory loaded: ' . count($this->inventory->items) . ' items';
+        return 'Inventory loaded: ' . count($this->inventory->permanent->items) . ' items';
     }
 }

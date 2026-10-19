@@ -14,6 +14,7 @@ use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
+use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Progression\ClassPoints;
@@ -57,7 +58,7 @@ final class CharacterTest extends TestCase
                 Option\none(),
             ),
         );
-        $me->hear(new PlayerInventoryLoadedEvent(new PlayerInventory([$scales])));
+        $me->hear(new PlayerInventoryLoadedEvent(new PlayerInventory(new PlayerItems([$scales]))));
 
         $player = $me->player();
         static::assertSame('lorekeeper03', $player->name->value);

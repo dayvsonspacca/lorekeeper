@@ -87,7 +87,7 @@ final readonly class Scene
                 'state' => strtolower($me->state()->name),
                 'away' => $me->away(),
                 'map' => $me->location()->map->name->value,
-                'items' => count($player->inventory->items),
+                'items' => count($player->inventory->permanent->items) + count($player->inventory->temporary->items),
                 'skills' => array_map(static fn(PlayerSkill $skill): array => [
                     'slot' => $skill->skill->slot->name,
                     'cost' => $skill->skill->cost->value,

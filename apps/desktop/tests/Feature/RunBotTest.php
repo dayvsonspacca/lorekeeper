@@ -28,6 +28,7 @@ use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerClass;
 use Lorekeeper\Core\Player\PlayerInventory;
+use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Progression\ClassPoints;
@@ -228,7 +229,7 @@ final class RunBotTest extends TestCase
                     new ClassPoints(0),
                     [],
                 ),
-                new PlayerInventory([]),
+                new PlayerInventory(new PlayerItems([])),
             ),
             new Location(
                 new AreaId(1),

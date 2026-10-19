@@ -89,7 +89,7 @@ final class PlayerInventoryLoadedEventTest extends TestCase
         return array_values(
             PlayerInventoryLoadedEvent::from(JsonMessage::from($message)->unwrap())
                 ->unwrap()
-                ->inventory->items->toArray(),
+                ->inventory->permanent->items->toArray(),
         );
     }
 
