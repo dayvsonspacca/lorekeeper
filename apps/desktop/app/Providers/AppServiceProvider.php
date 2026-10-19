@@ -12,6 +12,7 @@ use Lorekeeper\Apps\Desktop\Bots\Launcher\ProcessLauncher;
 use Lorekeeper\Apps\Desktop\Bots\Notifier\NativeNotifier;
 use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
 use Lorekeeper\Apps\Desktop\Bots\Notifier\SilentNotifier;
+use Lorekeeper\Apps\Desktop\Native\InstallationKey;
 use Lorekeeper\Apps\Desktop\Native\MainWindow;
 use Lorekeeper\Apps\Desktop\Native\Tray;
 use Native\Desktop\Events\MenuBar\MenuBarCreated;
@@ -23,6 +24,10 @@ final class AppServiceProvider extends ServiceProvider
     #[Override]
     public function register(): void
     {
+        if (config('nativephp-internal.running') && !config('app.debug')) {
+            config(['app.key' => new InstallationKey(storage_path('installation.key'))->read(config('app.cipher'))]);
+        }
+
         $this->app->singleton(Launcher::class, static fn(): Launcher => config('nativephp-internal.running')
             ? new NativeLauncher()
             : new ProcessLauncher());
