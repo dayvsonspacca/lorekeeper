@@ -44,6 +44,20 @@ just test         # tests
 just lint         # also: just fmt, just analyze, just guard
 ```
 
+## Acknowledgements
+
+Lorekeeper stands on the work of people who mapped the game long before it existed. Thank you:
+
+- [Froztt13/aqw-python](https://github.com/Froztt13/aqw-python), by dwiki08, letsssgoo and contributors: a Python
+  bot that talks to the game server directly, and the main reference for how a bot can play over the socket;
+- [BrenoHenrike/RBot](https://github.com/BrenoHenrike/RBot): the scriptable bot that showed what AQW automation can do;
+- [auqw/Skua](https://github.com/auqw/Skua), by BrenoHenrike, SharpTheNightmare and contributors: RBot's successor and
+  the bot most of the community plays with today;
+- [133spider/AQLite](https://github.com/133spider/AQLite): an open client for AQWorlds, useful to understand the game's side
+  of the conversation.
+
+Lorekeeper shares no code with these projects; it is a separate implementation in PHP.
+
 ## License
 
 [MIT](LICENSE)
