@@ -41,9 +41,10 @@ final class RunRecorder implements ObserverInterface
     {
         match (true) {
             $event instanceof MonsterRewardedEvent => $this->rewarded($event),
-            $event instanceof PlayerDiedEvent => $this->died($event),
-            $event instanceof ResurrectedEvent, $event instanceof MovedToMapEvent => $this->log($event),
-            $event instanceof LeveledUpEvent => $this->log($event, LogLevel::Success),
+            $event instanceof PlayerDiedEvent => $this->died(),
+            $event instanceof ResurrectedEvent => $this->log('Back on their feet'),
+            $event instanceof MovedToMapEvent => $this->log("Arrived in {$event->map->name->value}"),
+            $event instanceof LeveledUpEvent => $this->log("Reached level {$event->level->value}", LogLevel::Success),
             default => null,
         };
 
@@ -86,13 +87,18 @@ final class RunRecorder implements ObserverInterface
             'experience' => $event->experience->value,
             'gold' => $event->gold->value,
         ]);
-        $this->log($event);
+        $this->log(sprintf(
+            'Defeated %s: +%s XP, +%s gold',
+            $this->witness->monsterName($event->monster) ?? 'a monster',
+            number_format($event->experience->value),
+            number_format($event->gold->value),
+        ));
     }
 
-    private function died(PlayerDiedEvent $event): void
+    private function died(): void
     {
         $this->task?->increment('deaths');
-        $this->log($event, LogLevel::Warning);
+        $this->log('Fell in battle', LogLevel::Warning);
     }
 
     private function reached(int $level): void
@@ -111,8 +117,8 @@ final class RunRecorder implements ObserverInterface
         $task->update(['level_to' => $level, 'progress_done' => $done, 'progress_total' => $total]);
     }
 
-    private function log(Event $event, LogLevel $level = LogLevel::Info): void
+    private function log(string $message, LogLevel $level = LogLevel::Info): void
     {
-        $this->run->log($event->summary(), $level, $this->task);
+        $this->run->log($message, $level, $this->task);
     }
 }

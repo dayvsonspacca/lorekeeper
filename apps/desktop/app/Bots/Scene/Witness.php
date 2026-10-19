@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Bots\Scene;
 
 use Lorekeeper\Client\Character;
+use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
@@ -34,6 +35,15 @@ final class Witness
         $this->room = new Room();
         $this->pulse = new Pulse();
         $this->feed = new Feed();
+    }
+
+    public function monsterName(MonsterSpawnId $id): ?string
+    {
+        return $this->room
+            ->monster($id)
+            ?->monster
+            ->name
+            ->value;
     }
 
     public function saw(Character $me, int $now): ?Scene

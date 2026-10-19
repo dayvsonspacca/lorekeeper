@@ -124,12 +124,12 @@ final class RunBotTest extends TestCase
         static::assertSame([2, 1, 20, 6], [$task->kills, $task->deaths, $task->experience, $task->gold]);
         static::assertSame(
             [
-                ['Earned 10 experience and 3 gold from monster 4', 'info', $task->id],
-                ['Earned 10 experience and 3 gold from monster 4', 'info', $task->id],
-                ['Died', 'warning', $task->id],
-                ['Back to life', 'info', $task->id],
+                ['Defeated a monster: +10 XP, +3 gold', 'info', $task->id],
+                ['Defeated a monster: +10 XP, +3 gold', 'info', $task->id],
+                ['Fell in battle', 'warning', $task->id],
+                ['Back on their feet', 'info', $task->id],
                 ['Reached level 5', 'success', $task->id],
-                ['Died', 'warning', null],
+                ['Fell in battle', 'warning', null],
             ],
             $run
                 ->logs()
@@ -193,6 +193,7 @@ final class RunBotTest extends TestCase
             $scene->feed->lines[0]['detail'],
         ]);
         static::assertSame(120, array_sum($scene->pulse->experience(now()->getTimestamp())));
+        static::assertSame('Defeated Bonemuncher: +120 XP, +15 gold', $run->logs()->latest('id')->first()?->message);
     }
 
     #[Test]
