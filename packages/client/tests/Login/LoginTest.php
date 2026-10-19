@@ -30,6 +30,12 @@ final class LoginTest extends TestCase
 
     private const string INVENTORY = "{\"b\":{\"o\":{\"cmd\":\"loadInventoryBig\",\"items\":[]}}}\0";
 
+    private const string CLASS_CHANGE = "{\"b\":{\"o\":{\"cmd\":\"updateClass\",\"uid\":59878,\"sClassName\":\"Mage\",\"sClassCat\":\"C1\",\"iCP\":0}}}\0";
+
+    private const string SKILLS = "{\"b\":{\"o\":{\"cmd\":\"sAct\",\"actions\":{\"active\":[{\"ref\":\"aa\",\"tgt\":\"h\",\"mp\":0,\"cd\":2000,\"isOK\":true}]}}}}\0";
+
+    private const string VITALS = "{\"b\":{\"o\":{\"cmd\":\"uotls\",\"unm\":\"Hero\",\"o\":{\"intHP\":390,\"intHPMax\":390,\"intMP\":100,\"intMPMax\":100}}}}\0";
+
     #[Test]
     public function it_enters_the_game_and_hands_back_a_client_that_plays_scripts(): void
     {
@@ -39,6 +45,9 @@ final class LoginTest extends TestCase
             self::LOGGED_IN,
             self::moved('battleon', 1350),
             self::INVENTORY,
+            self::CLASS_CHANGE,
+            self::SKILLS,
+            self::VITALS,
             self::moved('forest', 7),
         ]);
         $heard = [];
@@ -53,13 +62,10 @@ final class LoginTest extends TestCase
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $went);
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $again);
         static::assertTrue($loggedOut);
-        static::assertSame(
-            ['MovedToMap', 'MonstersDescribed', 'MonstersPlaced', 'MonstersSeen', 'PlayersSeen'],
-            $heard,
-        );
+        static::assertSame(['MovedToMap'], $heard);
         static::assertSame('%xt%zm%cmd%1%tfer%Hero%forest%', $sent[4]);
         static::assertSame('%xt%zm%logout%1%', end($sent));
-        static::assertSame('forest', $client->character()->position()->map->value);
+        static::assertSame('forest', $client->character()->map()->name->value);
     }
 
     #[Test]
@@ -71,6 +77,9 @@ final class LoginTest extends TestCase
             self::LOGGED_IN,
             self::moved('battleon', 1),
             self::INVENTORY,
+            self::CLASS_CHANGE,
+            self::SKILLS,
+            self::VITALS,
         ]);
         $cancel = new SignalCancellationToken();
         $cancel->cancel();
@@ -107,7 +116,7 @@ final class LoginTest extends TestCase
 
     private static function moved(string $map, int $area): string
     {
-        return "{\"b\":{\"o\":{\"cmd\":\"moveToArea\",\"areaId\":{$area},\"areaName\":\"{$map}-1\",\"strMapName\":\"{$map}\",\"strMapFileName\":\"{$map}.swf\",\"uoBranch\":[],\"monBranch\":[]}}}\0";
+        return "{\"b\":{\"o\":{\"cmd\":\"moveToArea\",\"areaId\":{$area},\"areaName\":\"{$map}-1\",\"strMapName\":\"{$map}\",\"strMapFileName\":\"{$map}.swf\",\"uoBranch\":[{\"entID\":59878,\"strUsername\":\"Hero\",\"intLevel\":1,\"strFrame\":\"Enter\",\"strPad\":\"Spawn\",\"intState\":1,\"intHP\":390,\"intHPMax\":390,\"intMP\":100,\"intMPMax\":100,\"afk\":false}],\"monBranch\":[]}}}\0";
     }
 
     /**

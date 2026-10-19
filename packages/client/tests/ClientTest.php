@@ -18,7 +18,6 @@ use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
-use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
@@ -217,7 +216,7 @@ final class ClientTest extends TestCase
 
     private static function me(): Character
     {
-        return new Character(new PlayerName('Hero'));
+        return Fixture::me();
     }
 
     private static function connection(?string ...$reads): Connection

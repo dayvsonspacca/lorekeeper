@@ -13,9 +13,10 @@ use Lorekeeper\Client\Script\Progress;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\Player\PlayerLevel;
-use Lorekeeper\Core\World\Map\Cell;
+use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapName;
-use Lorekeeper\Core\World\Map\Pad;
+use Lorekeeper\Core\World\Map\MapPad;
+use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\Event\Event;
 use Override;
 use Psl\DateTime\Timestamp;
@@ -43,75 +44,72 @@ final class LevelUpScript extends BotScript
     #[Override]
     protected function rules(): Generator
     {
-        $this->from = $this->me->level()->value;
+        $this->from = $this->level();
 
         if ($this->below(10)) {
             yield from $this->join(new MapName('oaklore'));
-            yield from $this->levelUpIn(new Cell('r3'), Pad::Left, upTo: 10);
+            yield from $this->levelUpIn(new MapSpot(new MapCell('r3'), MapPad::Left), upTo: 10);
         }
 
         if ($this->below(20)) {
             yield from $this->join(new MapName('swordhavenundead'));
-            yield from $this->levelUpIn(new Cell('Gates'), Pad::Left, upTo: 20);
+            yield from $this->levelUpIn(new MapSpot(new MapCell('Gates'), MapPad::Left), upTo: 20);
         }
 
         if ($this->below(75)) {
             yield from $this->join(new MapName('icestormarena'));
-            yield from $this->levelUpIn(new Cell('r7'), Pad::Left, upTo: 25);
-            yield from $this->levelUpIn(new Cell('r10'), Pad::Left, upTo: 30);
-            yield from $this->levelUpIn(new Cell('r11'), Pad::Left, upTo: 35);
-            yield from $this->levelUpIn(new Cell('r14'), Pad::Left, upTo: 50);
-            yield from $this->levelUpIn(new Cell('r16'), Pad::Left, upTo: 61);
-            yield from $this->levelUpIn(new Cell('r17'), Pad::Left, upTo: 75);
+            yield from $this->levelUpIn(new MapSpot(new MapCell('r7'), MapPad::Left), upTo: 25);
+            yield from $this->levelUpIn(new MapSpot(new MapCell('r10'), MapPad::Left), upTo: 30);
+            yield from $this->levelUpIn(new MapSpot(new MapCell('r11'), MapPad::Left), upTo: 35);
+            yield from $this->levelUpIn(new MapSpot(new MapCell('r14'), MapPad::Left), upTo: 50);
+            yield from $this->levelUpIn(new MapSpot(new MapCell('r16'), MapPad::Left), upTo: 61);
+            yield from $this->levelUpIn(new MapSpot(new MapCell('r17'), MapPad::Left), upTo: 75);
         }
 
         if ($this->below(100)) {
             yield from $this->join(new MapName('icestormunder'));
-            yield from $this->levelUpIn(new Cell('r2'), Pad::Top, upTo: 100);
+            yield from $this->levelUpIn(new MapSpot(new MapCell('r2'), MapPad::Top), upTo: 100);
         }
 
-        return new Done("Reached level {$this->me->level()->value}");
+        return new Done("Reached level {$this->level()}");
     }
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, void> */
-    private function levelUpIn(Cell $cell, Pad $pad, int $upTo): Generator
+    private function levelUpIn(MapSpot $spot, int $upTo): Generator
     {
         while ($this->below($upTo)) {
-            $next = $this->me->level()->value + 1;
-            yield from $this->kill(
-                $cell,
-                $pad,
-                $this->attackIn($cell),
-                fn(): bool => $this->me->level()->value >= $next,
-            );
+            $next = $this->level() + 1;
+            yield from $this->kill($spot, $this->attackIn($spot->cell), fn(): bool => $this->level() >= $next);
             yield $this->progress();
         }
     }
 
     /** @throws RuntimeException */
-    private function attackIn(Cell $cell): AttackMonsterCommand
+    private function attackIn(MapCell $cell): AttackMonsterCommand
     {
-        foreach ($this->me->map()->cells() as $mapCell) {
-            $spawn = $mapCell->spawns[0] ?? null;
-            if ($mapCell->cell->value !== $cell->value || $spawn === null) {
-                continue;
+        foreach ($this->me->map()->monsters as $monster) {
+            if ($monster->cell->value === $cell->value) {
+                return new AttackMonsterCommand($this->me->area(), SkillSlot::AutoAttack, $monster->id);
             }
-
-            return new AttackMonsterCommand($this->me->position()->area, SkillSlot::AutoAttack, $spawn->id);
         }
 
         throw new RuntimeException("There are no monsters in {$cell->value}.");
     }
 
+    private function level(): int
+    {
+        return $this->me->player()->level->value;
+    }
+
     private function below(int $level): bool
     {
-        return $this->me->level()->value < min($level, $this->target->value);
+        return $this->level() < min($level, $this->target->value);
     }
 
     private function progress(): Progress
     {
         $total = max(1, $this->target->value - $this->from);
 
-        return new Progress(max(0, min($total, $this->me->level()->value - $this->from)), $total);
+        return new Progress(max(0, min($total, $this->level() - $this->from)), $total);
     }
 }

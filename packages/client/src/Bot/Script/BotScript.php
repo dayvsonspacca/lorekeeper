@@ -22,9 +22,10 @@ use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Combat\Targetable;
-use Lorekeeper\Core\World\Map\Cell;
+use Lorekeeper\Core\World\Map\MapCell;
+use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapName;
-use Lorekeeper\Core\World\Map\Pad;
+use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
@@ -88,12 +89,12 @@ abstract class BotScript implements Script
      */
     protected function join(MapName $map): Generator
     {
-        if ($this->me->position()->map->value === $map->value) {
+        if ($this->me->map()->name->value === $map->value) {
             return;
         }
 
         /** @var Event|TimedOut $joined */
-        $joined = yield $this->send(new JoinMapCommand($this->me->name(), $map, Option\none()))->awaits(
+        $joined = yield $this->send(new JoinMapCommand($this->me->player()->name, $map, Option\none()))->awaits(
             Duration::seconds(15),
             MapJoins::class,
             MapRefusals::class,
@@ -110,9 +111,9 @@ abstract class BotScript implements Script
     }
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, void> */
-    protected function jump(Cell $cell, Pad $pad): Generator
+    protected function jump(MapSpot $spot): Generator
     {
-        yield $this->send(new MoveToCellCommand($this->me->position()->area, $cell, $pad));
+        yield $this->send(new MoveToCellCommand($this->me->area(), $spot));
         yield new Pause(Duration::seconds(1));
     }
 
@@ -123,16 +124,16 @@ abstract class BotScript implements Script
      *
      * @return Generator<int, Instruction, null|Event|TimedOut, void>
      */
-    protected function kill(Cell $cell, Pad $pad, Attack $attack, Closure $until): Generator
+    protected function kill(MapSpot $spot, Attack $attack, Closure $until): Generator
     {
-        yield from $this->jump($cell, $pad);
-        $targets = $this->targets($cell, $attack);
+        yield from $this->jump($spot);
+        $targets = $this->targets($spot->cell, $attack);
 
         $dead = [];
         $ready = [];
         while (!$until()) {
-            if (!$this->me->alive()) {
-                yield from $this->resurrect($cell, $pad);
+            if (!$this->me->player()->vitals->alive()) {
+                yield from $this->resurrect($spot);
                 $dead = [];
 
                 continue;
@@ -153,14 +154,14 @@ abstract class BotScript implements Script
     }
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, void> */
-    private function resurrect(Cell $cell, Pad $pad): Generator
+    private function resurrect(MapSpot $spot): Generator
     {
         yield new Pause(Duration::seconds(10));
-        yield $this->send(new ResurrectCommand($this->me->position()->area, $this->me->socket()))->awaits(
+        yield $this->send(new ResurrectCommand($this->me->area(), $this->me->socketId()))->awaits(
             Duration::seconds(15),
             ResurrectedEvent::class,
         );
-        yield from $this->jump($cell, $pad);
+        yield from $this->jump($spot);
     }
 
     /**
@@ -168,42 +169,38 @@ abstract class BotScript implements Script
      *
      * @return non-empty-list<Targetable>
      */
-    private function targets(Cell $cell, Attack $attack): array
+    private function targets(MapCell $cell, Attack $attack): array
     {
         $aimed = $attack->target();
         if (!$aimed instanceof MonsterSpawnId) {
             return [$aimed];
         }
 
-        $spawns = [];
-        foreach ($this->me->map()->cells() as $mapCell) {
-            if ($mapCell->cell->value !== $cell->value) {
+        $here = array_values(array_filter(
+            $this->me->map()->monsters,
+            static fn(MapMonster $monster): bool => $monster->cell->value === $cell->value,
+        ));
+
+        $kind = null;
+        foreach ($here as $monster) {
+            if ($monster->id->value !== $aimed->value) {
                 continue;
             }
 
-            $spawns = $mapCell->spawns;
+            $kind = $monster->monster;
         }
 
-        $species = null;
-        foreach ($spawns as $spawn) {
-            if ($spawn->id->value !== $aimed->value) {
-                continue;
-            }
-
-            $species = $spawn->monster->id->value;
-        }
-
-        if ($species === null) {
+        if ($kind === null) {
             throw new RuntimeException("Monster {$aimed->value} does not stand in {$cell->value}.");
         }
 
         $same = [];
-        foreach ($spawns as $spawn) {
-            if ($spawn->monster->id->value !== $species || $spawn->id->value === $aimed->value) {
+        foreach ($here as $monster) {
+            if ($monster->monster !== $kind || $monster->id->value === $aimed->value) {
                 continue;
             }
 
-            $same[] = $spawn->id;
+            $same[] = $monster->id;
         }
 
         return [$aimed, ...$same];
@@ -217,12 +214,16 @@ abstract class BotScript implements Script
         }
 
         $usable = array_filter(
-            $this->me->skills(),
+            $this->me->usableSkills(),
             fn(Skill $skill): bool => (
                 $skill->target === SkillTarget::Enemy
                 && !(array_key_exists($skill->slot->name, $ready) && $ready[$skill->slot->name]->after($now))
-                && $skill->mana->value
-                <= ($this->me->mana()->value ?? 100)
+                && $skill->cost->value <= $this->me
+                    ->player()
+                    ->vitals
+                    ->mana
+                    ->current
+                    ->value
             ),
         );
 

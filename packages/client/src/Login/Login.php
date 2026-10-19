@@ -5,15 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Login;
 
 use Lorekeeper\Client\Bot\Credentials;
-use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\ClientVersion;
 use Lorekeeper\Client\Command\Session\LogoutCommand;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Exception\PeerClosedException;
 use Lorekeeper\Client\Script\Disconnected;
-use Lorekeeper\Client\Script\Game\EnterGameScript;
-use Lorekeeper\Client\Script\Game\InGame;
 use Lorekeeper\Client\Script\Outcome;
 use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Core\Player\PlayerName;
@@ -58,24 +55,20 @@ final readonly class Login
         CancellationTokenInterface $stop = new NullCancellationToken(),
         ClientVersion $version = new ClientVersion('5.1'),
     ): Client|Ending {
-        $client = new Client($connection, new Character($player));
+        $entered = Client::enter($connection, new GameLogin($player, $token, $version), $stop);
+        if ($entered instanceof Client) {
+            return $entered;
+        }
 
-        $entered = $client->run(new EnterGameScript(new GameLogin($player, $token, $version)), $stop);
         if ($entered instanceof Disconnected) {
             return new Ending(EndingStatus::Disconnected, $entered->reason);
         }
 
-        if (!$entered instanceof InGame) {
-            $client->close();
+        $connection->close();
 
-            return $entered instanceof Stopped
-                ? new Ending(EndingStatus::Stopped)
-                : new Ending(EndingStatus::Failed, Outcome::of($entered)->summary);
-        }
-
-        $client->character()->entered($entered);
-
-        return $client;
+        return $entered instanceof Stopped
+            ? new Ending(EndingStatus::Stopped)
+            : new Ending(EndingStatus::Failed, Outcome::of($entered)->summary);
     }
 
     public static function leave(Client $client): bool

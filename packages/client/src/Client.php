@@ -6,7 +6,13 @@ namespace Lorekeeper\Client;
 
 use Closure;
 use Lorekeeper\Client\Command\Command;
+use Lorekeeper\Client\Command\Inventory\LoadPlayerInventoryCommand;
+use Lorekeeper\Client\Command\Map\JoinInitialMapCommand;
+use Lorekeeper\Client\Command\Session\LoginCommand;
+use Lorekeeper\Client\Command\Session\PolicyFileRequestCommand;
 use Lorekeeper\Client\Exception\PeerClosedException;
+use Lorekeeper\Client\Login\Entrance;
+use Lorekeeper\Client\Login\GameLogin;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Instruction;
@@ -17,6 +23,10 @@ use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Events;
+use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
+use Lorekeeper\Server\Event\Session\LoginFailedEvent;
+use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use Lorekeeper\Server\Message\Message;
 use Psl\Async;
 use Psl\Async\CancellationTokenInterface;
@@ -28,6 +38,7 @@ use Psl\DateTime\Timestamp;
 /**
  * @mago-expect lint:cyclomatic-complexity
  * @mago-expect lint:kan-defect
+ * @mago-expect lint:too-many-methods
  */
 final class Client
 {
@@ -38,6 +49,72 @@ final class Client
         private readonly Connection $connection,
         private readonly Character $me,
     ) {}
+
+    /** @throws CancelledException */
+    public static function enter(
+        Connection $connection,
+        GameLogin $login,
+        CancellationTokenInterface $stop = new NullCancellationToken(),
+    ): self|LoginFailedEvent|TimedOut|Disconnected|Stopped {
+        $entrance = new Entrance($login->player);
+        $hear = static function (Message $message) use ($entrance): void {
+            foreach (Events::recognize($message) as $event) {
+                if (!$event instanceof Event) {
+                    continue;
+                }
+
+                $entrance->hear($event);
+            }
+        };
+
+        try {
+            $connection->send(new PolicyFileRequestCommand());
+            $policy = self::receive($connection, self::awaiting(ConnectionEstablishedEvent::class), $stop, $hear);
+            if ($policy instanceof TimedOut) {
+                return $policy;
+            }
+
+            $connection->send(new LoginCommand($login->player, $login->token, $login->version));
+            /** @var LoginSucceededEvent|LoginFailedEvent|TimedOut $logged */
+            $logged = self::receive(
+                $connection,
+                self::awaiting(LoginSucceededEvent::class, LoginFailedEvent::class),
+                $stop,
+                $hear,
+            );
+            if (!$logged instanceof LoginSucceededEvent) {
+                return $logged;
+            }
+
+            $connection->send(new JoinInitialMapCommand());
+            /** @var MovedToMapEvent|TimedOut $arrival */
+            $arrival = self::receive($connection, self::awaiting(MovedToMapEvent::class), $stop, $hear);
+            if ($arrival instanceof TimedOut) {
+                return $arrival;
+            }
+
+            $connection->send(new LoadPlayerInventoryCommand($arrival->areaId, $logged->socketId));
+            $missing = $entrance->missing();
+            while ($missing !== []) {
+                $heard = self::receive($connection, new Await($missing, Duration::seconds(15)), $stop, $hear);
+                if ($heard instanceof TimedOut) {
+                    return $heard;
+                }
+
+                $missing = $entrance->missing();
+            }
+
+            return new self($connection, $entrance->character());
+        } catch (PeerClosedException $closed) {
+            return new Disconnected($closed->getMessage());
+        } catch (CancelledException $cancelled) {
+            if (!$stop->isCancelled()) {
+                throw $cancelled;
+            }
+
+            return new Stopped();
+        }
+    }
 
     /** @param Closure(Event): void $subscriber */
     public function subscribe(Closure $subscriber): void
@@ -119,19 +196,32 @@ final class Client
         if ($instruction instanceof Send) {
             $this->connection->send($instruction->command);
 
-            return $instruction->await === null ? null : $this->await($instruction->await, $stop);
+            return (
+                $instruction->await === null
+                    ? null
+                    : self::receive($this->connection, $instruction->await, $stop, $this->hear(...))
+            );
         }
 
         if ($instruction instanceof Await) {
-            return $this->await($instruction, $stop);
+            return self::receive($this->connection, $instruction, $stop, $this->hear(...));
         }
 
         return null;
     }
 
-    /** @throws PeerClosedException */
-    private function await(Await $await, CancellationTokenInterface $stop): Event|TimedOut
-    {
+    /**
+     * @param Closure(Message): void $hear
+     *
+     * @throws PeerClosedException
+     * @throws CancelledException
+     */
+    private static function receive(
+        Connection $connection,
+        Await $await,
+        CancellationTokenInterface $stop,
+        Closure $hear,
+    ): Event|TimedOut {
         $deadline = Timestamp::monotonic()->plus($await->timeout);
 
         while (true) {
@@ -141,7 +231,7 @@ final class Client
             }
 
             try {
-                $message = $this->connection->receive(
+                $message = $connection->receive(
                     new Async\LinkedCancellationToken(new Async\TimeoutCancellationToken($left), $stop),
                 );
             } catch (CancelledException $cancelled) {
@@ -156,7 +246,7 @@ final class Client
                 continue;
             }
 
-            $this->hear($message->unwrap());
+            $hear($message->unwrap());
 
             foreach ($await->events as $event) {
                 /** @mago-expect analysis:possibly-static-access-on-interface */
@@ -198,6 +288,15 @@ final class Client
     public function close(): void
     {
         $this->connection->close();
+    }
+
+    /**
+     * @param class-string<Event> $event
+     * @param class-string<Event> ...$more
+     */
+    private static function awaiting(string $event, string ...$more): Await
+    {
+        return new Await([$event, ...array_values($more)], Duration::seconds(15));
     }
 
     private function hear(Message $message): void

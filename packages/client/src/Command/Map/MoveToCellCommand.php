@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Command\Map;
 
 use Lorekeeper\Client\Command\Command;
-use Lorekeeper\Core\World\Map\Cell;
-use Lorekeeper\Core\World\Map\Pad;
+use Lorekeeper\Core\World\Map\MapPad;
+use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\AreaId;
 use Override;
 
@@ -14,24 +14,23 @@ final readonly class MoveToCellCommand implements Command
 {
     public function __construct(
         private AreaId $area,
-        private Cell $cell,
-        private Pad $pad,
+        private MapSpot $spot,
     ) {}
 
     #[Override]
     public function toMessage(): string
     {
-        $pad = match ($this->pad) {
-            Pad::Left => 'Left',
-            Pad::Right => 'Right',
-            Pad::Top => 'Top',
-            Pad::Bottom => 'Bottom',
-            Pad::Up => 'Up',
-            Pad::Down => 'Down',
-            Pad::Center => 'Center',
-            Pad::Spawn => 'Spawn',
+        $pad = match ($this->spot->pad) {
+            MapPad::Left => 'Left',
+            MapPad::Right => 'Right',
+            MapPad::Top => 'Top',
+            MapPad::Bottom => 'Bottom',
+            MapPad::Up => 'Up',
+            MapPad::Down => 'Down',
+            MapPad::Center => 'Center',
+            MapPad::Spawn => 'Spawn',
         };
 
-        return "%xt%zm%moveToCell%{$this->area}%{$this->cell}%{$pad}%";
+        return "%xt%zm%moveToCell%{$this->area}%{$this->spot->cell}%{$pad}%";
     }
 }
