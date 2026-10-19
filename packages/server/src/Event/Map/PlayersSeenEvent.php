@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Map;
 
+use InvalidArgumentException;
 use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapPad;
+use Lorekeeper\Core\World\Map\MapPlayer;
+use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\Exception\MalformedEventException;
+use Lorekeeper\Server\SocketId;
 use Override;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
@@ -35,6 +41,7 @@ final readonly class PlayersSeenEvent extends MapArrivalEvent
         try {
             $players = Type\shape([
                 'uoBranch' => Type\vec(Type\shape([
+                    'entID' => Type\positive_int(),
                     'strUsername' => Type\non_empty_string(),
                     'intLevel' => Type\int_range(min: 1, max: 100),
                     'strFrame' => Type\non_empty_string(),
@@ -53,16 +60,15 @@ final readonly class PlayersSeenEvent extends MapArrivalEvent
 
         return new static(array_map(
             static fn(array $player): SeenPlayer => new SeenPlayer(
-                new PlayerName($player['strUsername']),
-                new PlayerLevel($player['intLevel']),
-                new MapCell($player['strFrame']),
-                self::pad($player['strPad']),
-                self::state($player['intState']),
-                new Health($player['intHP']),
-                new Health($player['intHPMax']),
-                new Mana($player['intMP']),
-                new Mana($player['intMPMax']),
-                $player['afk'],
+                new SocketId($player['entID']),
+                new MapPlayer(
+                    new PlayerName($player['strUsername']),
+                    new PlayerLevel($player['intLevel']),
+                    self::vitals($player['intHP'], $player['intHPMax'], $player['intMP'], $player['intMPMax']),
+                    new MapSpot(new MapCell($player['strFrame']), self::pad($player['strPad'])),
+                    self::state($player['intState']),
+                    $player['afk'],
+                ),
             ),
             $players,
         ));
@@ -82,6 +88,23 @@ final readonly class PlayersSeenEvent extends MapArrivalEvent
             'spawn' => MapPad::Spawn,
             default => throw new MalformedEventException(static::class, "unknown pad '{$pad}'"),
         };
+    }
+
+    /** @throws MalformedEventException */
+    private static function vitals(int $health, int $maxHealth, int $mana, int $maxMana): Vitals
+    {
+        try {
+            return new Vitals(
+                new Gauge(new Health($health), new Health($maxHealth)),
+                new Gauge(new Mana($mana), new Mana($maxMana)),
+            );
+        } catch (InvalidArgumentException $exception) {
+            throw new MalformedEventException(
+                static::class,
+                'a player has more health or mana than its maximum',
+                $exception,
+            );
+        }
     }
 
     private static function state(int $state): CombatState

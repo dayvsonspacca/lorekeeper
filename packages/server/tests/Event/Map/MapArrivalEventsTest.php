@@ -125,22 +125,23 @@ final class MapArrivalEventsTest extends TestCase
     public function it_sees_each_player_in_the_map(): void
     {
         $seen = PlayersSeenEvent::from(self::message(self::BATTLEON))->unwrap();
-        $last = $seen->players[8];
+        $last = $seen->players[8]->player;
 
         static::assertCount(9, $seen->players);
+        static::assertSame(116_500, $seen->players[8]->socket->value);
         static::assertSame('Hero 9', $last->name->value);
         static::assertSame(81, $last->level->value);
-        static::assertSame('Enter', $last->cell->value);
-        static::assertSame(MapPad::Spawn, $last->pad);
+        static::assertSame('Enter', $last->spot->cell->value);
+        static::assertSame(MapPad::Spawn, $last->spot->pad);
         static::assertSame(CombatState::Idle, $last->state);
         static::assertSame([500, 500, 100, 100], [
-            $last->health->value,
-            $last->maxHealth->value,
-            $last->mana->value,
-            $last->maxMana->value,
+            $last->vitals->health->current->value,
+            $last->vitals->health->maximum->value,
+            $last->vitals->mana->current->value,
+            $last->vitals->mana->maximum->value,
         ]);
         static::assertFalse($last->away);
-        static::assertTrue($seen->players[0]->away);
+        static::assertTrue($seen->players[0]->player->away);
         static::assertSame('9 players are in the map', $seen->summary());
     }
 
