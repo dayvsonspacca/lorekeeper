@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Lorekeeper\Client\Tests\Tracking;
+
+use Lorekeeper\Client\Tracking\Identity;
+use Lorekeeper\Client\Tracking\InventoryTracking;
+use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Item\Misc\Resource;
+use Lorekeeper\Core\Player\PlayerInventory;
+use Lorekeeper\Core\Player\PlayerItem;
+use Lorekeeper\Core\Player\PlayerItems;
+use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Support\Quantity;
+use Lorekeeper\Server\Event\Inventory\AddedItem;
+use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
+use Lorekeeper\Server\SocketId;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+final class MoreItemsTrackingTest extends TestCase
+{
+    #[Test]
+    public function more_of_an_item_grows_the_part_that_holds_it(): void
+    {
+        $inventory = new PlayerInventory(
+            new PlayerItems([new PlayerItem(
+                new Resource(new ItemId(42_657), new ItemName('Crypto Token')),
+                new Quantity(3),
+            )]),
+            new Quantity(30),
+            new PlayerItems([new PlayerItem(new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant')))]),
+        );
+
+        $inventory = InventoryTracking::follow(
+            $inventory,
+            new MoreItemsAddedEvent([
+                new AddedItem(new ItemId(5574), new Quantity(49)),
+                new AddedItem(new ItemId(42_657), new Quantity(2)),
+                new AddedItem(new ItemId(1), new Quantity(1)),
+            ]),
+            new Identity(new SocketId(122_628), new PlayerName('lorekeeper03')),
+        );
+
+        static::assertSame(50, $inventory->temporary->find(new ItemId(5574))->unwrap()->quantity->value);
+        static::assertSame(5, $inventory->permanent->find(new ItemId(42_657))->unwrap()->quantity->value);
+        static::assertTrue($inventory->find(new ItemId(1))->isNone());
+    }
+}
