@@ -24,11 +24,7 @@ use Lorekeeper\Server\Event\Map\MapLockedEvent;
 use Lorekeeper\Server\Event\Map\MapMemberOnlyEvent;
 use Lorekeeper\Server\Event\Map\MapNotAvailableEvent;
 use Lorekeeper\Server\Event\Map\MapRequiresQuestEvent;
-use Lorekeeper\Server\Event\Map\MonstersDescribedEvent;
-use Lorekeeper\Server\Event\Map\MonstersPlacedEvent;
-use Lorekeeper\Server\Event\Map\MonstersSeenEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
-use Lorekeeper\Server\Event\Map\PlayersSeenEvent;
 use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
 use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
@@ -75,10 +71,6 @@ final readonly class Events
         MapNotAvailableEvent::class,
         MapRequiresQuestEvent::class,
         MovedToMapEvent::class,
-        MonstersDescribedEvent::class,
-        MonstersPlacedEvent::class,
-        MonstersSeenEvent::class,
-        PlayersSeenEvent::class,
         RoomJoinedEvent::class,
         PlayerEnteredEvent::class,
         PlayerLeftEvent::class,

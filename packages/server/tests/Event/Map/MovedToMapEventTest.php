@@ -5,15 +5,10 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Tests\Event\Map;
 
 use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Monster\MonsterRace;
-use Lorekeeper\Server\Event\Map\MapMonster;
-use Lorekeeper\Server\Event\Map\MonsterPlacement;
-use Lorekeeper\Server\Event\Map\MonstersDescribedEvent;
-use Lorekeeper\Server\Event\Map\MonstersPlacedEvent;
-use Lorekeeper\Server\Event\Map\MonstersSeenEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
-use Lorekeeper\Server\Event\Map\PlayersSeenEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -21,8 +16,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
-/** @mago-expect lint:too-many-methods */
-final class MapArrivalEventsTest extends TestCase
+final class MovedToMapEventTest extends TestCase
 {
     private const string FOREST = <<<'JSON'
         {"t":"xt","b":{"r":-1,"o":{"cmd":"moveToArea","areaId":687803,"areaName":"forest-1","intType":"1","sExtra":"","strMapName":"forest","strMapFileName":"GreenGuard/town-Forest-13Aug24.swf","monmap":[{"MonMapID":1,"MonID":32,"strFrame":"Forest1","bRed":false,"intRSS":-1},{"MonMapID":2,"MonID":32,"strFrame":"Forest1","bRed":false,"intRSS":-1},{"MonMapID":3,"MonID":32,"strFrame":"Forest2","bRed":false,"intRSS":-1},{"MonMapID":4,"MonID":1,"strFrame":"Forest2","bRed":false,"intRSS":-1},{"MonMapID":5,"MonID":1,"strFrame":"Forest3","bRed":false,"intRSS":-1},{"MonMapID":6,"MonID":1,"strFrame":"Forest3","bRed":false,"intRSS":-1},{"MonMapID":7,"MonID":1,"strFrame":"Forest3","bRed":false,"intRSS":-1},{"MonMapID":8,"MonID":2,"strFrame":"End","bRed":false,"intRSS":-1}],"mondef":[{"sRace":"None","MonID":1,"intLevel":3,"strLinkage":"Zardman","strMonName":"Zardman Grunt","strMonFileName":"Zardman.swf","strBehave":"walk"},{"sRace":"None","MonID":2,"intLevel":3,"strLinkage":"ZardmanBoss","strMonName":"Boss Zardman","strMonFileName":"ZardmanBoss.swf","strBehave":"walk"},{"sRace":"None","MonID":32,"intLevel":3,"strLinkage":"Zardman2","strMonName":"Zardman Hunter","strMonFileName":"Zardman2.swf","strBehave":"walk"}],"uoBranch":[{"uoName":"hero","entType":"p","entID":116500,"strUsername":"Hero","strFrame":"Enter","strPad":"Spawn","intState":1,"intLevel":81,"intHP":2585,"intMP":100,"intHPMax":2585,"intMPMax":100,"tx":0,"ty":0,"afk":false,"showCloak":true,"showHelm":true}],"monBranch":[{"MonMapID":1,"MonID":32,"intState":1,"intHP":610,"intMP":100,"intHPMax":610,"intMPMax":100,"bRed":false,"iLvl":3,"wDPS":1},{"MonMapID":2,"MonID":32,"intState":1,"intHP":610,"intMP":100,"intHPMax":610,"intMPMax":100,"bRed":false,"iLvl":3,"wDPS":1},{"MonMapID":3,"MonID":32,"intState":1,"intHP":610,"intMP":100,"intHPMax":610,"intMPMax":100,"bRed":false,"iLvl":3,"wDPS":1},{"MonMapID":4,"MonID":1,"intState":1,"intHP":610,"intMP":100,"intHPMax":610,"intMPMax":100,"bRed":false,"iLvl":3,"wDPS":1},{"MonMapID":5,"MonID":1,"intState":1,"intHP":610,"intMP":100,"intHPMax":610,"intMPMax":100,"bRed":false,"iLvl":3,"wDPS":1},{"MonMapID":6,"MonID":1,"intState":1,"intHP":610,"intMP":100,"intHPMax":610,"intMPMax":100,"bRed":false,"iLvl":3,"wDPS":1},{"MonMapID":7,"MonID":1,"intState":1,"intHP":610,"intMP":100,"intHPMax":610,"intMPMax":100,"bRed":false,"iLvl":3,"wDPS":1},{"MonMapID":8,"MonID":2,"intState":1,"intHP":970,"intMP":100,"intHPMax":970,"intMPMax":100,"bRed":false,"iLvl":3,"wDPS":2}]}}}
@@ -44,33 +38,68 @@ final class MapArrivalEventsTest extends TestCase
 
         static::assertSame(687_803, $forest->areaId->value);
         static::assertSame(1, $forest->roomId->value);
-        static::assertSame('forest', $forest->map->value);
-        static::assertSame('GreenGuard/town-Forest-13Aug24.swf', $forest->file->value);
+        static::assertSame('forest', $forest->map->name->value);
+        static::assertSame('GreenGuard/town-Forest-13Aug24.swf', $forest->map->file->value);
         static::assertSame('forest (room 1)', $forest->summary());
         static::assertSame(2, $battleon->roomId->value);
     }
 
     #[Test]
-    public function it_describes_each_kind_of_monster_living_in_the_map(): void
+    public function it_lays_out_each_monster_of_the_map_in_its_cell(): void
     {
-        $described = MonstersDescribedEvent::from(self::message(self::FOREST))->unwrap();
+        $forest = MovedToMapEvent::from(self::message(self::FOREST))->unwrap()->map;
 
         static::assertSame(
             [
-                [1,  'Zardman Grunt',  3, MonsterRace::None],
-                [2,  'Boss Zardman',   3, MonsterRace::None],
-                [32, 'Zardman Hunter', 3, MonsterRace::None],
+                [1, 'Zardman Hunter', 'Forest1'],
+                [2, 'Zardman Hunter', 'Forest1'],
+                [3, 'Zardman Hunter', 'Forest2'],
+                [4, 'Zardman Grunt',  'Forest2'],
+                [5, 'Zardman Grunt',  'Forest3'],
+                [6, 'Zardman Grunt',  'Forest3'],
+                [7, 'Zardman Grunt',  'Forest3'],
+                [8, 'Boss Zardman',   'End'],
             ],
             array_map(static fn(MapMonster $monster): array => [
                 $monster->id->value,
-                $monster->name->value,
-                $monster->level->value,
-                $monster->race,
-            ], $described->monsters),
+                $monster->monster->name->value,
+                $monster->cell->value,
+            ], $forest->monsters),
         );
-        static::assertSame('Zardman.swf', $described->monsters[0]->file->value);
-        static::assertSame('Zardman', $described->monsters[0]->linkage->value);
-        static::assertSame([], MonstersDescribedEvent::from(self::message(self::BATTLEON))->unwrap()->monsters);
+
+        $grunt = $forest->monsters[3];
+        static::assertSame(3, $grunt->monster->level->value);
+        static::assertSame(MonsterRace::None, $grunt->monster->race);
+        static::assertSame('Zardman.swf', $grunt->monster->appearance->file->value);
+        static::assertSame('Zardman', $grunt->monster->appearance->linkage->value);
+        static::assertSame(CombatState::Idle, $grunt->state);
+        static::assertSame([610, 610, 100, 100], [
+            $grunt->vitals->health->current->value,
+            $grunt->vitals->health->maximum->value,
+            $grunt->vitals->mana->current->value,
+            $grunt->vitals->mana->maximum->value,
+        ]);
+        static::assertSame(970, $forest->monsters[7]->vitals->health->maximum->value);
+        static::assertSame(
+            [],
+            MovedToMapEvent::from(self::message(self::BATTLEON))
+                ->unwrap()
+                ->map
+                ->monsters,
+        );
+    }
+
+    #[Test]
+    public function it_leaves_out_the_spawns_the_message_does_not_fully_describe(): void
+    {
+        $arena = MovedToMapEvent::from(self::message(self::ICESTORM))->unwrap()->map;
+
+        static::assertSame(
+            [1],
+            array_map(static fn(MapMonster $monster): int => $monster->id->value, $arena->monsters),
+        );
+        static::assertSame('Skeletal Ice Mage', $arena->monsters[0]->monster->name->value);
+        static::assertSame('r4', $arena->monsters[0]->cell->value);
     }
 
     #[Test]
@@ -84,47 +113,17 @@ final class MapArrivalEventsTest extends TestCase
     {
         static::assertSame(
             $expected,
-            MonstersDescribedEvent::from(self::message(self::move($race)))->unwrap()->monsters[0]->race,
+            MovedToMapEvent::from(self::message(self::move($race)))
+                ->unwrap()
+                ->map
+                ->monsters[0]->monster->race,
         );
-    }
-
-    #[Test]
-    public function it_places_each_monster_in_its_cell(): void
-    {
-        $placed = MonstersPlacedEvent::from(self::message(self::ICESTORM))->unwrap();
-
-        static::assertSame(
-            [[1, 3984, 'r4'], [2, 3984, 'r4'], [5, 3985, 'r5']],
-            array_map(static fn(MonsterPlacement $placement): array => [
-                $placement->id->value,
-                $placement->monster->value,
-                $placement->cell->value,
-            ], $placed->placements),
-        );
-    }
-
-    #[Test]
-    public function it_sees_how_each_monster_is_right_now(): void
-    {
-        $seen = MonstersSeenEvent::from(self::message(self::FOREST))->unwrap();
-
-        static::assertCount(8, $seen->monsters);
-        static::assertSame(1, $seen->monsters[0]->id->value);
-        static::assertSame(CombatState::Idle, $seen->monsters[0]->state);
-        static::assertSame([610, 610, 100, 100], [
-            $seen->monsters[0]->health->value,
-            $seen->monsters[0]->maxHealth->value,
-            $seen->monsters[0]->mana->value,
-            $seen->monsters[0]->maxMana->value,
-        ]);
-        static::assertSame(970, $seen->monsters[7]->maxHealth->value);
-        static::assertSame('8 of 8 monsters are alive', $seen->summary());
     }
 
     #[Test]
     public function it_sees_each_player_in_the_map(): void
     {
-        $seen = PlayersSeenEvent::from(self::message(self::BATTLEON))->unwrap();
+        $seen = MovedToMapEvent::from(self::message(self::BATTLEON))->unwrap();
         $last = $seen->players[8]->player;
 
         static::assertCount(9, $seen->players);
@@ -142,19 +141,12 @@ final class MapArrivalEventsTest extends TestCase
         ]);
         static::assertFalse($last->away);
         static::assertTrue($seen->players[0]->player->away);
-        static::assertSame('9 players are in the map', $seen->summary());
     }
 
     #[Test]
-    public function they_ignore_other_messages(): void
+    public function it_ignores_other_messages(): void
     {
-        $shop = self::message('{"b":{"o":{"cmd":"loadShop"}}}');
-
-        static::assertTrue(MovedToMapEvent::from($shop)->isNone());
-        static::assertTrue(MonstersDescribedEvent::from($shop)->isNone());
-        static::assertTrue(MonstersPlacedEvent::from($shop)->isNone());
-        static::assertTrue(MonstersSeenEvent::from($shop)->isNone());
-        static::assertTrue(PlayersSeenEvent::from($shop)->isNone());
+        static::assertTrue(MovedToMapEvent::from(self::message('{"b":{"o":{"cmd":"loadShop"}}}'))->isNone());
     }
 
     #[Test]
@@ -180,7 +172,7 @@ final class MapArrivalEventsTest extends TestCase
         $this->expectException(MalformedEventException::class);
         $this->expectExceptionMessage("unknown race 'Robot'");
 
-        MonstersDescribedEvent::from(self::message(self::move('Robot')));
+        MovedToMapEvent::from(self::message(self::move('Robot')));
     }
 
     private static function message(string $json): Message
@@ -192,6 +184,10 @@ final class MapArrivalEventsTest extends TestCase
     {
         return json_encode(['b' => ['o' => [
             'cmd' => 'moveToArea',
+            'areaId' => 1,
+            'areaName' => 'forest-1',
+            'strMapName' => 'forest',
+            'strMapFileName' => 'forest.swf',
             'mondef' => [[
                 'MonID' => 1,
                 'strMonName' => 'Hero Monster',
@@ -199,6 +195,15 @@ final class MapArrivalEventsTest extends TestCase
                 'sRace' => $race,
                 'strMonFileName' => 'Monster.swf',
                 'strLinkage' => 'Monster',
+            ]],
+            'monmap' => [['MonMapID' => 1, 'MonID' => 1, 'strFrame' => 'r1']],
+            'monBranch' => [[
+                'MonMapID' => 1,
+                'intState' => 1,
+                'intHP' => 100,
+                'intHPMax' => 100,
+                'intMP' => 100,
+                'intMPMax' => 100,
             ]],
         ]]], flags: JSON_THROW_ON_ERROR);
     }
