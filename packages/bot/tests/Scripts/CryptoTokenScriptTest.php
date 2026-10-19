@@ -16,11 +16,14 @@ use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Quest\QuestId;
+use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
+use Lorekeeper\Server\Event\Quest\QuestCompletedEvent;
+use Lorekeeper\Server\Event\Quest\QuestTurnInRefusedEvent;
 use Lorekeeper\Server\Event\Quest\TurnedInItem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -40,7 +43,10 @@ final class CryptoTokenScriptTest extends TestCase
             null,
             null,
             new TemporaryItemsAddedEvent([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
-            new ItemsTurnedInEvent([new TurnedInItem(new ItemId(42_658), new Quantity(1))]),
+            [
+                new QuestCompletedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends")),
+                new ItemsTurnedInEvent([new TurnedInItem(new ItemId(42_658), new Quantity(1))]),
+            ],
             new ItemDroppedEvent([$token]),
             new DropPickedUpEvent(new ItemId(42_657), new Quantity(1), new Quantity(1)),
         ]);
@@ -56,7 +62,7 @@ final class CryptoTokenScriptTest extends TestCase
             ],
             self::sent($steps),
         );
-        static::assertEquals(new Done('Got a Crypto Token, now holding 1'), $result);
+        static::assertEquals(new Done("got today's Crypto Token, 1 held now"), $result);
         static::assertSame(0, $me->player()->inventory->quantity(new ItemId(42_658)));
     }
 
@@ -68,7 +74,7 @@ final class CryptoTokenScriptTest extends TestCase
             null,
         ]);
 
-        static::assertEquals(new Failed('the server did not accept the Crypto Token quest'), $result);
+        static::assertEquals(new Failed("the game would not give the quest Odd's 'n' Ends"), $result);
         static::assertCount(2, self::sent($steps));
     }
 
@@ -84,11 +90,34 @@ final class CryptoTokenScriptTest extends TestCase
             null,
             null,
             new TemporaryItemsAddedEvent([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
-            new ItemsTurnedInEvent([new TurnedInItem(new ItemId(42_658), new Quantity(1))]),
+            new QuestCompletedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends")),
             null,
         ]);
 
-        static::assertEquals(new Failed('the quest was turned in but the Crypto Token was never picked up'), $result);
+        static::assertEquals(
+            new Failed("Odd's 'n' Ends was completed, but the Crypto Token could not be picked up"),
+            $result,
+        );
+    }
+
+    #[Test]
+    public function it_stops_with_the_reason_when_the_game_will_not_complete_the_quest(): void
+    {
+        [$steps, $result] = Play::run(new CryptoTokenScript(), Fixture::me(level: 4), [
+            Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
+            new QuestAcceptedEvent(new QuestId(6187)),
+            null,
+            null,
+            null,
+            new TemporaryItemsAddedEvent([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
+            new QuestTurnInRefusedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends"), 'Missing Badge'),
+        ]);
+
+        static::assertEquals(
+            new Failed("the game would not complete Odd's 'n' Ends: it was already done today"),
+            $result,
+        );
+        static::assertStringNotContainsString('getDrop', implode(' ', self::sent($steps)));
     }
 
     /**

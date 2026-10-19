@@ -43,7 +43,13 @@ final class CryptoTokenScript extends BotScript
         return 'Crypto Token daily';
     }
 
-    /** @mago-expect analysis:redundant-condition */
+    private static function refused(string $reason): string
+    {
+        return $reason === 'Missing Badge'
+            ? "the game would not complete Odd's 'n' Ends: it was already done today"
+            : "the game would not complete Odd's 'n' Ends ({$reason})";
+    }
+
     #[Override]
     protected function rules(): Generator
     {
@@ -52,34 +58,42 @@ final class CryptoTokenScript extends BotScript
         $reward = new ItemId(self::REWARD);
 
         yield from $this->join(new MapName('boxes'));
-        if (!yield from $this->accept($quest)) {
-            return new Failed('the server did not accept the Crypto Token quest');
+        $accepting = $this->accept($quest);
+        yield from $accepting;
+        if (!$accepting->getReturn()) {
+            return new Failed("the game would not give the quest Odd's 'n' Ends");
         }
 
-        $found = yield from $this->hunt(
+        $hunting = $this->hunt(
             $closet,
             $this->attackIn($closet->cell),
             new ItemId(self::METAL_ORE),
             new Quantity(1),
             Duration::minutes(self::HUNTING_MINUTES),
         );
-        if (!$found) {
-            return new Failed(
-                'no Metal Ore after ' . self::HUNTING_MINUTES . ' minutes; the daily may be done for today',
-            );
+        yield from $hunting;
+        if (!$hunting->getReturn()) {
+            return new Failed('no Metal Ore dropped after ' . self::HUNTING_MINUTES . ' minutes of hunting Sneevils');
         }
 
-        if (!yield from $this->turnIn($quest)) {
-            return new Failed('the server did not take the Metal Ore');
+        $turningIn = $this->turnIn($quest);
+        yield from $turningIn;
+        $refusal = $turningIn->getReturn();
+        if ($refusal !== null) {
+            return new Failed(self::refused($refusal));
         }
 
-        if (!yield from $this->pickUp($reward)) {
-            return new Failed('the quest was turned in but the Crypto Token was never picked up');
+        $pickingUp = $this->pickUp($reward);
+        yield from $pickingUp;
+        if (!$pickingUp->getReturn()) {
+            return new Failed("Odd's 'n' Ends was completed, but the Crypto Token could not be picked up");
         }
 
-        return new Done('Got a Crypto Token, now holding ' . $this
+        $held = $this
             ->me()
             ->player()
-            ->inventory->quantity($reward));
+            ->inventory->quantity($reward);
+
+        return new Done("got today's Crypto Token, {$held} held now");
     }
 }

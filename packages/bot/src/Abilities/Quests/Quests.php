@@ -14,8 +14,9 @@ use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
+use Lorekeeper\Server\Event\Quest\QuestCompletedEvent;
+use Lorekeeper\Server\Event\Quest\QuestTurnInRefusedEvent;
 use Psl\DateTime\Duration;
 
 trait Quests
@@ -36,15 +37,20 @@ trait Quests
         return $answer instanceof QuestAcceptedEvent && $answer->quest->value === $quest->value;
     }
 
-    /** @return Generator<int, Instruction, null|Event|TimedOut, bool> */
+    /** @return Generator<int, Instruction, null|Event|TimedOut, ?string> */
     protected function turnIn(QuestId $quest): Generator
     {
         /** @var Event|TimedOut $answer */
         $answer = yield $this->send(new TurnInQuestCommand($this->me()->location()->area, $quest))->awaits(
             Duration::seconds(10),
-            ItemsTurnedInEvent::class,
+            QuestCompletedEvent::class,
+            QuestTurnInRefusedEvent::class,
         );
 
-        return $answer instanceof ItemsTurnedInEvent;
+        return match (true) {
+            $answer instanceof QuestCompletedEvent => null,
+            $answer instanceof QuestTurnInRefusedEvent => $answer->reason === '' ? 'no reason given' : $answer->reason,
+            default => 'the game did not answer',
+        };
     }
 }
