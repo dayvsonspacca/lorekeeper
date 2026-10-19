@@ -22,4 +22,12 @@ final class PlayerItemTest extends TestCase
         static::assertSame('Dragonbone Blade', $item->name->value);
         static::assertSame(3, $item->quantity->value);
     }
+
+    #[Test]
+    public function it_has_one_unless_told_otherwise(): void
+    {
+        $item = new PlayerItem(new ItemId(4767), new ItemName('Dragonbone Blade'));
+
+        static::assertSame(1, $item->quantity->value);
+    }
 }

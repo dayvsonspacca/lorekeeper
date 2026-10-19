@@ -14,7 +14,7 @@ final readonly class PlayerItem extends Item
     public function __construct(
         ItemId $id,
         ItemName $name,
-        public Quantity $quantity,
+        public Quantity $quantity = new Quantity(1),
     ) {
         parent::__construct($id, $name);
     }
