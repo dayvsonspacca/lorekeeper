@@ -11,6 +11,7 @@ use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
+use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,27 +19,46 @@ use PHPUnit\Framework\TestCase;
 final class PlayerInventoryTest extends TestCase
 {
     #[Test]
-    public function it_finds_an_item_by_its_id(): void
+    public function it_finds_an_item_whether_it_is_kept_or_temporary(): void
     {
-        $scales = new PlayerItem(new Resource(new ItemId(11_475), new ItemName('Dragon Scale')), new Quantity(5));
-        $inventory = new PlayerInventory([
-            new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer'))),
-            $scales,
-        ]);
+        $healer = new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer')));
+        $ore = new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')));
+        $inventory = new PlayerInventory(new PlayerItems([$healer]), new PlayerItems([$ore]));
 
-        static::assertCount(2, $inventory->items);
-        static::assertSame($scales, $inventory->find(new ItemId(11_475))->unwrap());
+        static::assertSame($healer, $inventory->find(new ItemId(15_651))->unwrap());
+        static::assertSame($ore, $inventory->find(new ItemId(42_658))->unwrap());
         static::assertTrue($inventory->find(new ItemId(1))->isNone());
     }
 
     #[Test]
-    public function it_rejects_the_same_item_twice(): void
+    public function it_tells_how_many_of_an_item_it_holds(): void
     {
+        $inventory = new PlayerInventory(
+            new PlayerItems([new PlayerItem(
+                new Resource(new ItemId(42_657), new ItemName('Crypto Token')),
+                new Quantity(3),
+            )]),
+            new PlayerItems([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
+        );
+
+        static::assertSame(3, $inventory->quantity(new ItemId(42_657)));
+        static::assertSame(1, $inventory->quantity(new ItemId(42_658)));
+        static::assertSame(0, $inventory->quantity(new ItemId(1)));
+    }
+
+    #[Test]
+    public function it_starts_with_nothing_temporary(): void
+    {
+        static::assertCount(0, new PlayerInventory(new PlayerItems([]))->temporary->items);
+    }
+
+    #[Test]
+    public function it_rejects_an_item_both_kept_and_temporary(): void
+    {
+        $ore = new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')));
+
         $this->expectException(InvalidArgumentException::class);
 
-        new PlayerInventory([
-            new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer'))),
-            new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer'))),
-        ]);
+        new PlayerInventory(new PlayerItems([$ore]), new PlayerItems([$ore]));
     }
 }

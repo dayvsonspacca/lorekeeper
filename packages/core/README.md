@@ -31,10 +31,16 @@ $healer = new ClassItem(new ItemId(15_651), new ItemName('Healer'));
 $voucher = new Resource(new ItemId(4861), new ItemName('Voucher of Nulgath'));
 $voucher->tags->add(ItemTag::MemberOnly);
 
-$inventory = new PlayerInventory([new PlayerItem($healer), new PlayerItem($voucher)]);
+$ore = new Resource(new ItemId(42_658), new ItemName('Metal Ore'));
+
+$inventory = new PlayerInventory(
+    new PlayerItems([new PlayerItem($healer), new PlayerItem($voucher)]),
+    new PlayerItems([new PlayerItem($ore)]),
+);
 
 $inventory->find(new ItemId(15_651))->unwrap()->item->slot();                        // EquipmentSlot::CharacterClass
 $inventory->find(new ItemId(4861))->unwrap()->item->tags->has(ItemTag::MemberOnly);   // true
+$inventory->quantity(new ItemId(42_658));                                            // 1
 
 $vitals = new Vitals(
     new Gauge(new Health(189), new Health(390)),
