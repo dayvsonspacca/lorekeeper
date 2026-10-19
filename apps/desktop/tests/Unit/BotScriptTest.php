@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Tests\Unit;
 
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
+use Lorekeeper\Apps\Desktop\Bots\ScriptView;
 use Lorekeeper\Bot\Scripts\LevelUpScript;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,11 +22,12 @@ final class BotScriptTest extends TestCase
     }
 
     #[Test]
-    public function level_up_summarizes_its_target_and_has_a_report(): void
+    public function level_up_summarizes_its_target_and_has_its_own_views(): void
     {
         static::assertSame('to level 40', BotScript::LevelUp->summary(['level' => '40']));
         static::assertSame('to level 100', BotScript::LevelUp->summary([]));
-        static::assertSame('reports.level-up', BotScript::LevelUp->report());
+        static::assertSame('scripts.level-up.report', BotScript::LevelUp->view(ScriptView::Report));
+        static::assertSame('scripts.level-up.plate', BotScript::LevelUp->view(ScriptView::Plate));
         static::assertSame(['level' => null], BotScript::blankParameters());
     }
 }

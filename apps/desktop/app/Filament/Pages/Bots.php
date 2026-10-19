@@ -11,7 +11,7 @@ use Filament\Panel;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
-use Lorekeeper\Apps\Desktop\Bots\Scene\Realm;
+use Lorekeeper\Apps\Desktop\Bots\Realm;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\AccountResource;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
@@ -79,7 +79,7 @@ final class Bots extends Page
         return [
             'accounts' => $accounts,
             'now' => $now,
-            'realm' => Realm::of($accounts->all(), $now),
+            'realm' => Realm::of($accounts->all(), now()),
         ];
     }
 

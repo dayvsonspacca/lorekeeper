@@ -40,9 +40,9 @@
                 </div>
             @endif
         </div>
-        @if ($task->script->report() !== null && $task->started_at !== null)
+        @if ($task->started_at !== null && view()->exists($task->script->view(\Lorekeeper\Apps\Desktop\Bots\ScriptView::Report)))
             <div x-show="open" x-collapse x-cloak style="margin-top: .75rem; padding-top: .75rem; border-top: 1px solid color-mix(in oklab, var(--gray-500) 30%, transparent);">
-                @include($task->script->report(), ['task' => $task, 'stats' => new \Lorekeeper\Apps\Desktop\Bots\TaskStats($task, now())])
+                @include($task->script->view(\Lorekeeper\Apps\Desktop\Bots\ScriptView::Report), ['task' => $task, 'stats' => new \Lorekeeper\Apps\Desktop\Bots\TaskStats($task, now())])
             </div>
         @endif
         </div>

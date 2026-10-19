@@ -22,9 +22,6 @@
                 default => $hero['state'],
             };
             $engaged = array_column($scene->engaged($now), 'cell');
-            $experience = $scene->pulse->experience($now);
-            $kills = $scene->pulse->kills($now);
-            $peak = max(1, ...$experience);
         @endphp
 
         <div class="lk-stage__row">
@@ -114,40 +111,17 @@
             </section>
         </div>
 
-        <div class="lk-stage__row lk-stage__row--low">
-            <section class="lk-panel">
-                <div class="lk-panel__title">
-                    <h3><x-scene.glyph name="activity" /> Pulse · last 30 minutes</h3>
-                </div>
-                <div class="lk-pulse__head">
-                    <div class="lk-pulse__stat">
-                        <strong style="color: var(--lk-xp);">{{ number_format($scene->pulse->experiencePerHour($now)) }}</strong>
-                        <span>XP per hour</span>
-                    </div>
-                    <div class="lk-pulse__stat">
-                        <strong>{{ number_format(array_sum($experience)) }}</strong>
-                        <span>XP earned</span>
-                    </div>
-                    <div class="lk-pulse__stat">
-                        <strong style="color: var(--lk-bad);">{{ number_format(array_sum($kills)) }}</strong>
-                        <span>kills</span>
-                    </div>
-                    <div class="lk-pulse__stat">
-                        <strong>{{ array_sum($kills) === 0 ? '—' : number_format(intdiv(array_sum($experience), array_sum($kills))) }}</strong>
-                        <span>XP per kill</span>
-                    </div>
-                </div>
-                <div class="lk-chart">
-                    @foreach ($experience as $minute => $earned)
-                        <div class="lk-chart__bar" title="{{ \Lorekeeper\Apps\Desktop\Bots\Scene\Pulse::MINUTES - 1 - $minute }} min ago · {{ number_format($earned) }} XP · {{ $kills[$minute] }} kills">
-                            <i style="--v: {{ round(($earned * 100) / $peak, 1) }}%;"></i>
-                        </div>
-                    @endforeach
-                </div>
-                <div class="lk-chart__axis"><span>30 min ago</span><span>now</span></div>
-            </section>
-
-            <section class="lk-panel">
+        @php
+            $panel = $task?->script->view(\Lorekeeper\Apps\Desktop\Bots\ScriptView::Panel);
+            $panel = $panel !== null && view()->exists($panel) ? $panel : null;
+        @endphp
+        <div @class(['lk-stage__row', 'lk-stage__row--low' => $panel !== null])>
+            @if ($panel !== null)
+                <section class="lk-panel">
+                    @include($panel, ['task' => $task, 'stats' => new \Lorekeeper\Apps\Desktop\Bots\TaskStats($task, now()), 'scene' => $scene, 'now' => $now])
+                </section>
+            @endif
+            <section class="lk-panel" @if ($panel === null) style="grid-column: 1 / -1;" @endif>
                 <div class="lk-panel__title">
                     <h3><x-scene.glyph name="scroll" /> Chronicle</h3>
                 </div>

@@ -79,73 +79,19 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
-    public function the_home_and_the_run_show_what_a_bot_in_the_game_sees(): void
+    public function the_home_shows_what_a_bot_in_the_game_sees(): void
     {
-        $account = $this->account();
-        $run = $account->runs()->create();
-        $now = now()->getTimestamp();
-        $run->update([
-            'status' => RunStatus::Running,
-            'scene' => new Scene(
-                [
-                    'name' => 'Hero',
-                    'level' => 34,
-                    'health' => 1840,
-                    'maxHealth' => 2300,
-                    'mana' => 61,
-                    'maxMana' => 100,
-                    'class' => 'Mage',
-                    'category' => 'caster',
-                    'rank' => 7,
-                    'points' => 90_000,
-                    'rankFrom' => 78_400,
-                    'rankTo' => 129_600,
-                    'state' => 'fighting',
-                    'away' => false,
-                    'map' => 'icestormarena',
-                    'items' => 41,
-                    'skills' => [
-                        [
-                            'slot' => 'AutoAttack',
-                            'cost' => 0,
-                            'cooldown' => 2.0,
-                            'targets' => 1,
-                            'target' => 'enemy',
-                            'unlocked' => true,
-                        ],
-                        [
-                            'slot' => 'First',
-                            'cost' => 20,
-                            'cooldown' => 6.0,
-                            'targets' => 3,
-                            'target' => 'enemy',
-                            'unlocked' => true,
-                        ],
-                    ],
-                ],
-                [[
-                    'id' => 3,
-                    'name' => 'Frost Spirit',
-                    'level' => 33,
-                    'race' => 'elemental',
-                    'cell' => 'r3a',
-                    'health' => 900,
-                    'maxHealth' => 3000,
-                    'state' => 'fighting',
-                    'struck' => $now,
-                ]],
-                ['Artix'],
-                new Pulse()
-                    ->rewarded($now - 120, experience: 500)
-                    ->rewarded($now - 60, experience: 700),
-                new Feed()->add($now - 30, FeedKind::Defeated, 'Defeated Frost Spirit', '+700 XP · +40 gold'),
-                $now,
-            )->toArray(),
-        ]);
+        $this->botInTheGame();
 
         Livewire::test(Bots::class)->assertSeeInOrder([
             'Online',
             '1 / 1',
+            'Played',
+            'Tasks',
+            'Gold',
+            '80',
+            'Trouble',
+            'nothing failed in 24 hours',
             'Hero',
             'Mage',
             'icestormarena',
@@ -153,9 +99,18 @@ final class DesktopTest extends TestCase
             '1,840',
             '2,300',
             'Frost Spirit',
+            'Level up · to level 40',
+            '2 kills',
+            '1,200 XP',
             'XP / hour',
             'Watch',
         ]);
+    }
+
+    #[Test]
+    public function the_run_shows_the_scene_of_its_bot(): void
+    {
+        $run = $this->botInTheGame();
 
         Livewire::test(RunScene::class, ['run' => $run])->assertSeeInOrder([
             'Hero',
@@ -171,8 +126,11 @@ final class DesktopTest extends TestCase
             'r3a · fighting here',
             'Frost Spirit',
             'Lv 33',
+            'Pace',
             'XP per hour',
             '1,200',
+            'to level 40',
+            'Chronicle',
             'Defeated Frost Spirit',
             '+700 XP · +40 gold',
         ]);
@@ -401,6 +359,84 @@ final class DesktopTest extends TestCase
         static::assertSame('interrupted', $running->result);
         static::assertSame(TaskStatus::Cancelled, $running->tasks()->sole()->status);
         static::assertSame(RunStatus::Stopped, $done->refresh()->status);
+    }
+
+    private function botInTheGame(): BotRun
+    {
+        $account = $this->account();
+        $run = $account->runs()->create();
+        $now = now()->getTimestamp();
+        $run->update([
+            'status' => RunStatus::Running,
+            'scene' => new Scene(
+                [
+                    'name' => 'Hero',
+                    'level' => 34,
+                    'health' => 1840,
+                    'maxHealth' => 2300,
+                    'mana' => 61,
+                    'maxMana' => 100,
+                    'class' => 'Mage',
+                    'category' => 'caster',
+                    'rank' => 7,
+                    'points' => 90_000,
+                    'rankFrom' => 78_400,
+                    'rankTo' => 129_600,
+                    'state' => 'fighting',
+                    'away' => false,
+                    'map' => 'icestormarena',
+                    'items' => 41,
+                    'skills' => [
+                        [
+                            'slot' => 'AutoAttack',
+                            'cost' => 0,
+                            'cooldown' => 2.0,
+                            'targets' => 1,
+                            'target' => 'enemy',
+                            'unlocked' => true,
+                        ],
+                        [
+                            'slot' => 'First',
+                            'cost' => 20,
+                            'cooldown' => 6.0,
+                            'targets' => 3,
+                            'target' => 'enemy',
+                            'unlocked' => true,
+                        ],
+                    ],
+                ],
+                [[
+                    'id' => 3,
+                    'name' => 'Frost Spirit',
+                    'level' => 33,
+                    'race' => 'elemental',
+                    'cell' => 'r3a',
+                    'health' => 900,
+                    'maxHealth' => 3000,
+                    'state' => 'fighting',
+                    'struck' => $now,
+                ]],
+                ['Artix'],
+                new Pulse()
+                    ->rewarded($now - 120, experience: 500)
+                    ->rewarded($now - 60, experience: 700),
+                new Feed()->add($now - 30, FeedKind::Defeated, 'Defeated Frost Spirit', '+700 XP · +40 gold'),
+                $now,
+            )->toArray(),
+        ]);
+
+        $run->tasks()->create([
+            'script' => BotScript::LevelUp,
+            'parameters' => ['level' => 40],
+            'status' => TaskStatus::Running,
+            'started_at' => now()->subMinutes(3),
+            'level_from' => 34,
+            'kills' => 2,
+            'experience' => 1200,
+            'gold' => 80,
+        ]);
+
+        return $run;
     }
 
     private function account(): Account

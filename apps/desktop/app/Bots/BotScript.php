@@ -12,7 +12,6 @@ use Lorekeeper\Bot\Scripts\LevelUpScript;
 use Lorekeeper\Client\Script\Script;
 use Override;
 
-/** @mago-expect lint:kan-defect */
 enum BotScript: string implements HasLabel, HasDescription
 {
     case LevelUp = 'level-up';
@@ -60,9 +59,9 @@ enum BotScript: string implements HasLabel, HasDescription
         return match ($this) { self::LevelUp => 'to level ' . Parameters::level($parameters)->value };
     }
 
-    public function report(): ?string
+    public function view(ScriptView $view): string
     {
-        return match ($this) { self::LevelUp => 'reports.level-up' };
+        return "scripts.{$this->value}.{$view->value}";
     }
 
     /**

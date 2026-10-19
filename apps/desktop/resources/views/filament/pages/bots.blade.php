@@ -6,10 +6,10 @@
             <div class="lk-realm">
                 @foreach ([
                     ['Online', "{$realm->online} / {$realm->accounts}", 'bots in the game', 'activity', '#4ade80'],
-                    ['Experience', number_format($realm->experiencePerHour), 'per hour, all bots', 'trend', '#c4b5fd'],
-                    ['Kills', number_format($realm->kills), 'in the last 30 minutes', 'swords', '#f87171'],
+                    ['Played', $realm->played(), 'in the game today', 'moon', '#7dd3fc'],
+                    ['Tasks', number_format($realm->tasksDone), $realm->tasksQueued === 0 ? 'done today' : "done today · {$realm->tasksQueued} waiting", 'scroll', '#c4b5fd'],
                     ['Gold', number_format($realm->gold), 'earned today', 'coins', '#fbbf24'],
-                    ['Levels', number_format($realm->levels), 'gained today', 'star', '#fb923c'],
+                    ['Trouble', number_format($realm->troubles), $realm->troubles === 0 ? 'nothing failed in 24 hours' : 'failures in the last 24 hours', 'skull', $realm->troubles === 0 ? '#64748b' : '#f87171'],
                 ] as [$label, $value, $hint, $glyph, $tone])
                     <div class="lk-tile" style="--tone: {{ $tone }};">
                         <div class="lk-tile__label"><x-scene.glyph :name="$glyph" /> {{ $label }}</div>
@@ -97,14 +97,10 @@
                                 @endif
                                 <div class="lk-quest__body">
                                     <div class="lk-quest__title">{{ $task->title() }}</div>
-                                    <div class="lk-quest__meta">
-                                        {{ number_format($task->kills) }} kills · {{ number_format($task->experience) }} XP · {{ $task->duration() ?? '—' }}
-                                        @if ($stats?->minutesToTarget() !== null)
-                                            · ≈ {{ $stats->minutesToTarget() }} min left
-                                        @endif
-                                    </div>
+                                    <div class="lk-quest__meta">Playing for {{ $task->duration() ?? '—' }}</div>
                                 </div>
                             </div>
+                            @includeIf($task->script->view(\Lorekeeper\Apps\Desktop\Bots\ScriptView::Plate), ['task' => $task, 'stats' => $stats, 'scene' => $scene, 'now' => $now])
                         @elseif ($active)
                             <div class="lk-quest">
                                 <x-scene.glyph name="scroll" style="width: 1.5rem; height: 1.5rem; color: var(--lk-faint);" />
@@ -124,20 +120,6 @@
                                             <span class="lk-dim" style="font-weight: 500;">+{{ count($unfinished) - 1 }} more</span>
                                         @endif
                                     </div>
-                                </div>
-                            </div>
-                        @endif
-
-                        @if ($active && $scene !== null && array_sum($scene->pulse->experience($now)) === 0)
-                            <div class="lk-calm"><x-scene.glyph name="moon" /> No fights in the last 30 minutes</div>
-                        @elseif ($active && $scene !== null)
-                            <div class="lk-pace">
-                                <div class="lk-pace__graph">
-                                    <x-scene.spark :values="$scene->pulse->experience($now)" :id="$account->id" />
-                                </div>
-                                <div class="lk-pace__value">
-                                    <strong>{{ number_format($scene->pulse->experiencePerHour($now)) }}</strong>
-                                    <span>XP / hour</span>
                                 </div>
                             </div>
                         @endif
