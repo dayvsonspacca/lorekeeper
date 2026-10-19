@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Moves;
+namespace Lorekeeper\Bot\Abilities\Moves;
 
 use Closure;
 use Generator;
-use Lorekeeper\Bot\Fight\Cooldowns;
-use Lorekeeper\Bot\Fight\Targets;
+use Lorekeeper\Bot\Abilities\Fight\Cooldowns;
+use Lorekeeper\Bot\Abilities\Fight\Targets;
 use Lorekeeper\Client\Command\Combat\Attack;
 use Lorekeeper\Client\Command\Combat\ResurrectCommand;
 use Lorekeeper\Client\Script\Await;

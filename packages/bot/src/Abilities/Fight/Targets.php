@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Fight;
+namespace Lorekeeper\Bot\Abilities\Fight;
 
 use Lorekeeper\Client\Command\Combat\Attack;
 use Lorekeeper\Client\Script\TimedOut;

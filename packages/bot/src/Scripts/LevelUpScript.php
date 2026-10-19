@@ -6,9 +6,9 @@ namespace Lorekeeper\Bot\Scripts;
 
 use Closure;
 use Generator;
+use Lorekeeper\Bot\Abilities\Moves\Joins;
+use Lorekeeper\Bot\Abilities\Moves\Kills;
 use Lorekeeper\Bot\BotScript;
-use Lorekeeper\Bot\Moves\Joins;
-use Lorekeeper\Bot\Moves\Kills;
 use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Client\Script\Done;
 use Lorekeeper\Client\Script\Instruction;

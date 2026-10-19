@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Tests\Fight;
+namespace Lorekeeper\Bot\Tests\Abilities\Fight;
 
-use Lorekeeper\Bot\Fight\Targets;
+use Lorekeeper\Bot\Abilities\Fight\Targets;
 use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;

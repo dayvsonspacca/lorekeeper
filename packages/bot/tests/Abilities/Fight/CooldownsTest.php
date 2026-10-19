@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Tests\Fight;
+namespace Lorekeeper\Bot\Tests\Abilities\Fight;
 
-use Lorekeeper\Bot\Fight\Cooldowns;
+use Lorekeeper\Bot\Abilities\Fight\Cooldowns;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;

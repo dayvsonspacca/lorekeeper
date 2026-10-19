@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Moves;
+namespace Lorekeeper\Bot\Abilities\Moves;
 
 use Generator;
 use Lorekeeper\Client\Character;
