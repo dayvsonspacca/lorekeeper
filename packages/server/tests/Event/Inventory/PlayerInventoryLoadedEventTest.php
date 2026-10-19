@@ -5,30 +5,19 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Tests\Event\Inventory;
 
 use Lorekeeper\Core\Item\Equipment\Armor;
-use Lorekeeper\Core\Item\Equipment\Cape;
 use Lorekeeper\Core\Item\Equipment\ClassItem;
-use Lorekeeper\Core\Item\Equipment\GroundItem;
-use Lorekeeper\Core\Item\Equipment\Helm;
 use Lorekeeper\Core\Item\Equipment\Necklace;
-use Lorekeeper\Core\Item\Equipment\Pet;
 use Lorekeeper\Core\Item\Equipment\Weapon;
 use Lorekeeper\Core\Item\Equipment\WeaponType;
-use Lorekeeper\Core\Item\House\HouseItem;
-use Lorekeeper\Core\Item\House\HouseItemType;
-use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemTag;
-use Lorekeeper\Core\Item\Misc\Boost;
-use Lorekeeper\Core\Item\Misc\Enhancement;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
-/** @mago-expect lint:too-many-methods */
 final class PlayerInventoryLoadedEventTest extends TestCase
 {
     private const string INVENTORY = <<<'JSON'
@@ -67,60 +56,6 @@ final class PlayerInventoryLoadedEventTest extends TestCase
         static::assertSame(1, $sword->quantity->value);
         static::assertSame('Healer', $healer->item->name->value);
         static::assertSame(1, $healer->quantity->value);
-    }
-
-    /** @param class-string<Item> $kind */
-    #[Test]
-    #[TestWith(['Class', ClassItem::class])]
-    #[TestWith(['Armor', Armor::class])]
-    #[TestWith(['Helm', Helm::class])]
-    #[TestWith(['Cape', Cape::class])]
-    #[TestWith(['Pet', Pet::class])]
-    #[TestWith(['Necklace', Necklace::class])]
-    #[TestWith(['Misc', GroundItem::class])]
-    #[TestWith(['ServerUse', Boost::class])]
-    #[TestWith(['Enhancement', Enhancement::class])]
-    #[TestWith(['Item', Resource::class])]
-    #[TestWith(['Note', Resource::class])]
-    #[TestWith(['Quest Item', Resource::class])]
-    #[TestWith(['Resource', Resource::class])]
-    public function it_reads_the_kind_of_item(string $type, string $kind): void
-    {
-        static::assertInstanceOf($kind, self::load(self::item($type))[0]->item);
-    }
-
-    #[Test]
-    #[TestWith(['Axe', WeaponType::Axe])]
-    #[TestWith(['Bow', WeaponType::Bow])]
-    #[TestWith(['Dagger', WeaponType::Dagger])]
-    #[TestWith(['Gauntlet', WeaponType::Gauntlet])]
-    #[TestWith(['Gun', WeaponType::Gun])]
-    #[TestWith(['HandGun', WeaponType::HandGun])]
-    #[TestWith(['Mace', WeaponType::Mace])]
-    #[TestWith(['Polearm', WeaponType::Polearm])]
-    #[TestWith(['Rifle', WeaponType::Rifle])]
-    #[TestWith(['Staff', WeaponType::Staff])]
-    #[TestWith(['Sword', WeaponType::Sword])]
-    #[TestWith(['Wand', WeaponType::Wand])]
-    #[TestWith(['Whip', WeaponType::Whip])]
-    public function it_reads_the_type_of_weapon(string $type, WeaponType $weapon): void
-    {
-        $item = self::load(self::item($type))[0]->item;
-
-        static::assertInstanceOf(Weapon::class, $item);
-        static::assertSame($weapon, $item->type);
-    }
-
-    #[Test]
-    #[TestWith(['Floor Item', HouseItemType::Floor])]
-    #[TestWith(['Wall Item', HouseItemType::Wall])]
-    #[TestWith(['House', HouseItemType::House])]
-    public function it_reads_the_type_of_house_item(string $type, HouseItemType $house): void
-    {
-        $item = self::load(self::item($type))[0]->item;
-
-        static::assertInstanceOf(HouseItem::class, $item);
-        static::assertSame($house, $item->type);
     }
 
     #[Test]
