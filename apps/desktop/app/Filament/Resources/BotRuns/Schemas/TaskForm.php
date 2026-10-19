@@ -28,7 +28,7 @@ final class TaskForm
                 ->helperText(static fn(Get $get): ?string => self::script($get)?->getDescription()),
             Section::make('Parameters')
                 ->schema(static fn(Get $get): array => self::script($get)?->fields() ?? [])
-                ->visible(static fn(Get $get): bool => self::script($get) !== null)
+                ->visible(static fn(Get $get): bool => (self::script($get)?->fields() ?? []) !== [])
                 ->columnSpanFull(),
         ];
     }

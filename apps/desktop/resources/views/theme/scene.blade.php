@@ -234,5 +234,10 @@
     .lk-item__name small { display: block; font-size: .64rem; font-weight: 500; color: var(--lk-faint); }
     .lk-item__qty { flex-shrink: 0; font-size: .72rem; font-weight: 800; color: var(--lk-muted); }
     .lk-item__member { flex-shrink: 0; padding: 0 .3rem; border-radius: .3rem; font-size: .6rem; font-weight: 900; color: #1c1917; background: var(--lk-gold); }
+    .lk-steps { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: .45rem; counter-reset: step; }
+    .lk-steps li { counter-increment: step; display: flex; align-items: center; gap: .6rem; font-size: .82rem; color: var(--lk-muted); }
+    .lk-steps li::before { content: counter(step); width: 1.4rem; height: 1.4rem; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; font-size: .7rem; font-weight: 800; border: 1px solid var(--lk-line-2); }
+    .lk-steps li[data-done] { color: var(--lk-text); }
+    .lk-steps li[data-done]::before { content: '✓'; color: #052e16; background: var(--lk-good); border-color: var(--lk-good); }
     @keyframes lk-spin { to { transform: rotate(360deg); } }
 </style>

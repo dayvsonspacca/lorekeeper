@@ -334,6 +334,21 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
+    public function a_bot_can_be_told_to_play_the_crypto_token_daily(): void
+    {
+        $run = $this->account()->runs()->create();
+        $run->update(['status' => RunStatus::Running]);
+
+        Livewire::test(ViewBotRun::class, ['record' => $run->id])
+            ->callAction('addTask', ['script' => BotScript::CryptoToken->value])
+            ->assertHasNoActionErrors();
+
+        $task = $run->tasks()->sole();
+        static::assertSame(BotScript::CryptoToken, $task->script);
+        static::assertSame('Crypto Token daily · for today', $task->title());
+    }
+
+    #[Test]
     public function a_bot_can_be_told_to_level_up(): void
     {
         $run = $this->account()->runs()->create();
