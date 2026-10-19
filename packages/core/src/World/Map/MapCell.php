@@ -6,4 +6,4 @@ namespace Lorekeeper\Core\World\Map;
 
 use Lorekeeper\Core\Support\NonEmptyString;
 
-final readonly class Cell extends NonEmptyString {}
+final readonly class MapCell extends NonEmptyString {}
