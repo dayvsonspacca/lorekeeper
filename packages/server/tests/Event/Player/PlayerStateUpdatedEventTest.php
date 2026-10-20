@@ -31,6 +31,18 @@ final class PlayerStateUpdatedEventTest extends TestCase
     }
 
     #[Test]
+    public function it_reads_a_dead_player_coming_back_without_being_asked(): void
+    {
+        $event = PlayerStateUpdatedEvent::from(
+            JsonMessage::from(
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intState":1,"intHP":1193,"intMP":100,"intSP":100,"strFrame":"Enter","strPad":"Spawn"}}}}',
+            )->unwrap(),
+        )->unwrap();
+
+        static::assertSame(CombatState::Idle, $event->state);
+    }
+
+    #[Test]
     public function it_ignores_updates_that_say_nothing_about_the_state(): void
     {
         $vitals = JsonMessage::from(
