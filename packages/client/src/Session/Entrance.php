@@ -131,7 +131,7 @@ final class Entrance
         return new Character(
             $socketId,
             $player,
-            new Location($arrival->areaId, $arrival->map, $me->spot),
+            new Location($arrival->areaId, $arrival->roomId, $arrival->map, $me->spot),
             $me->state,
             $me->away,
         );

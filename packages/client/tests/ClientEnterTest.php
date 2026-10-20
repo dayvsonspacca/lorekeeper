@@ -134,6 +134,7 @@ final class ClientEnterTest extends TestCase
         static::assertSame(45_466, $me->socketId()->value);
         static::assertSame(65_897, $me->location()->area->value);
         static::assertSame('battleon', $me->location()->map->name->value);
+        static::assertSame(3, $me->location()->room->value);
         static::assertSame('Enter', $me->location()->spot->cell->value);
         static::assertSame(MapPad::Spawn, $me->location()->spot->pad);
         static::assertSame(CombatState::Idle, $me->state());

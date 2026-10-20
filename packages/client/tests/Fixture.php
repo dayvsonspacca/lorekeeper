@@ -79,6 +79,7 @@ final readonly class Fixture
             ),
             new Location(
                 new AreaId($area),
+                new RoomId(1),
                 new Map(new MapName($map), new Gamefile("{$map}.swf"), []),
                 new MapSpot(new MapCell('Enter'), MapPad::Spawn),
             ),

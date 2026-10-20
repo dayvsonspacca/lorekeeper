@@ -25,6 +25,6 @@ final readonly class LocationTracking
             $spot = $seen->player->spot;
         }
 
-        return new Location($event->areaId, $event->map, $spot);
+        return new Location($event->areaId, $event->roomId, $event->map, $spot);
     }
 }
