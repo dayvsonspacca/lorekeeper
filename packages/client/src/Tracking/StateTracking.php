@@ -10,6 +10,7 @@ use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
+use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 
 final readonly class StateTracking
 {
@@ -18,6 +19,7 @@ final readonly class StateTracking
         return match (true) {
             $event instanceof MovedToMapEvent => self::arrived($state, $event, $me),
             $event instanceof PlayersStateChangedEvent => self::changed($state, $event, $me),
+            $event instanceof PlayerStateUpdatedEvent && $me->is($event->name) => $event->state,
             $event instanceof PlayerDiedEvent => CombatState::Dead,
             $event instanceof ResurrectedEvent => CombatState::Idle,
             default => $state,

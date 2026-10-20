@@ -10,6 +10,7 @@ use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;
+use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,20 @@ final class StateTrackingTest extends TestCase
         $someoneElse = new PlayersStateChangedEvent([new PlayerState(new PlayerName('Someone'), CombatState::Dead)]);
 
         static::assertSame(CombatState::Fighting, StateTracking::follow(CombatState::Idle, $fighting, self::me()));
+        static::assertSame(CombatState::Idle, StateTracking::follow(CombatState::Fighting, $calm, self::me()));
+        static::assertSame(CombatState::Fighting, StateTracking::follow(
+            CombatState::Fighting,
+            $someoneElse,
+            self::me(),
+        ));
+    }
+
+    #[Test]
+    public function it_leaves_combat_when_the_server_says_it_is_idle_again(): void
+    {
+        $calm = new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle);
+        $someoneElse = new PlayerStateUpdatedEvent(new PlayerName('Someone'), CombatState::Idle);
+
         static::assertSame(CombatState::Idle, StateTracking::follow(CombatState::Fighting, $calm, self::me()));
         static::assertSame(CombatState::Fighting, StateTracking::follow(
             CombatState::Fighting,
