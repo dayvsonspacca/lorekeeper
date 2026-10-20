@@ -163,7 +163,6 @@
                 @foreach ([
                     'map' => ['Map', "{$scene->alive()}/" . count($scene->monsters)],
                     'inventory' => ['Inventory', number_format($scene->backpack->count())],
-                    'skills' => ['Skills', count($hero['skills'])],
                 ] as $name => [$title, $count])
                     <button type="button" role="tab" class="lk-run__tab" wire:click="open('{{ $name }}')" aria-selected="{{ $tab === $name ? 'true' : 'false' }}">
                         {{ $title }} <span class="lk-dim">{{ $count }}</span>
@@ -173,16 +172,6 @@
 
             @if ($tab === 'inventory')
                 <x-scene.backpack :backpack="$scene->backpack" />
-            @elseif ($tab === 'skills')
-                @if ($hero['skills'] === [])
-                    <div class="lk-dim">The bot has not seen this class's skills yet.</div>
-                @else
-                    <x-scene.hotbar :skills="$hero['skills']" style="justify-content: flex-start; margin-top: 0;" />
-                @endif
-                <div class="lk-run__facts">
-                    <span>Rank {{ $hero['rank'] }} <span class="lk-dim">· {{ $hero['rankTo'] === null ? 'max rank' : $scene->rankPercent() . '% to rank ' . ($hero['rank'] + 1) }}</span></span>
-                    <span>{{ number_format($hero['points']) }} <span class="lk-dim">class points</span></span>
-                </div>
             @elseif ($scene->monsters === [])
                 <div class="lk-dim">No monsters in {{ $hero['map'] }}.</div>
             @else

@@ -2,10 +2,11 @@
     $slain = collect($scene->backpack->temporary)->firstWhere('id', 5574);
     $blood = collect($scene->backpack->kept)->firstWhere('id', 5586);
     $slainCount = min(50, $slain['quantity'] ?? 0);
+    $done = $task->status === \Lorekeeper\Apps\Desktop\Bots\TaskStatus::Done;
     $steps = [
-        ['Go to arcangrove', $scene->hero['map'] === 'arcangrove' || $slain !== null],
-        ['Slay 50 Gorillaphants in LeftBack', $slainCount >= 50],
-        ["Turn them in and pick up the Elders' Blood", $task->status === \Lorekeeper\Apps\Desktop\Bots\TaskStatus::Done],
+        ['Go to arcangrove', $done || $slain !== null || $scene->hero['map'] === 'arcangrove'],
+        ['Slay 50 Gorillaphants in LeftBack', $done || $slainCount >= 50],
+        ["Turn them in and pick up the Elders' Blood", $done],
     ];
 @endphp
 <div class="lk-panel__title">

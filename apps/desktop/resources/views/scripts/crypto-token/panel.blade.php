@@ -1,11 +1,11 @@
 @php
     $ore = collect($scene->backpack->temporary)->firstWhere('id', 42658);
     $tokens = collect($scene->backpack->kept)->firstWhere('id', 42657);
-    $inBoxes = $scene->hero['map'] === 'boxes';
+    $done = $task->status === \Lorekeeper\Apps\Desktop\Bots\TaskStatus::Done;
     $steps = [
-        ['Go to boxes', $inBoxes || $ore !== null],
-        ['Hunt a Metal Ore from the Sneevils in the Closet', $ore !== null],
-        ['Turn in the Metal Ore and pick up the Crypto Token', $task->status === \Lorekeeper\Apps\Desktop\Bots\TaskStatus::Done],
+        ['Go to boxes', $done || $ore !== null || $scene->hero['map'] === 'boxes'],
+        ['Hunt a Metal Ore from the Sneevils in the Closet', $done || $ore !== null],
+        ['Turn in the Metal Ore and pick up the Crypto Token', $done],
     ];
 @endphp
 <div class="lk-panel__title">

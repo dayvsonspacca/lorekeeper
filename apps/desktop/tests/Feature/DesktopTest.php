@@ -150,7 +150,7 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
-    public function the_inventory_and_skills_wait_behind_their_tabs(): void
+    public function the_inventory_waits_behind_its_tab(): void
     {
         $board = Livewire::test(RunBoard::class, ['run' => $this->botInTheGame()]);
 
@@ -160,11 +160,6 @@ final class DesktopTest extends TestCase
             ->assertSeeInOrder(['Held for now', 'Metal Ore', 'Kept', 'Healer', 'Crypto Token'])
             ->assertDontSee('Frost Spirit');
         static::assertStringContainsString('×4', $board->html());
-        $board
-            ->call('open', 'skills')
-            ->assertSeeInOrder(['+15', 'Rank 7', '23% to rank 8', '90,000', 'class points'])
-            ->assertDontSee('Held for now');
-        static::assertStringContainsString('×3', $board->html());
         $board->call('open', 'anything')->assertSee('Frost Spirit');
     }
 

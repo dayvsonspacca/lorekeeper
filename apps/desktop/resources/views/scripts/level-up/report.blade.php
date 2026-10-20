@@ -17,7 +17,7 @@
         ['Levels gained', $stats->levelsGained(), $stats->minutesPerLevel() === null ? null : $stats->minutesPerLevel() . ' min per level'],
         ['To the target', $stats->levelsLeft() === null ? '—' : $stats->levelsLeft() . ' levels', $task->status->isActive() && $stats->minutesToTarget() !== null ? '≈ ' . $stats->minutesToTarget() . ' min left' : null],
     ] as [$label, $value, $hint])
-        <div style="padding: .75rem .875rem; border-radius: .625rem; border: 1px solid var(--gray-200, #e5e7eb);" class="dark:border-white/10">
+        <div style="padding: .75rem .875rem; border-radius: .625rem; border: 1px solid var(--gray-800);">
             <div style="color: var(--gray-500, #6b7280); font-size: .75rem;">{{ $label }}</div>
             <div style="font-size: 1.25rem; font-weight: 600;">{{ $value }}</div>
             @if ($hint !== null)

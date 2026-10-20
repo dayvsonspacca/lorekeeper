@@ -23,7 +23,7 @@ final class RunBoard extends Component implements HasActions, HasSchemas
     use InteractsWithActions;
     use InteractsWithSchemas;
 
-    public const array TABS = ['map', 'inventory', 'skills'];
+    public const array TABS = ['map', 'inventory'];
 
     private const int LOG_LINES = 300;
 

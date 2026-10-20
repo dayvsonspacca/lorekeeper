@@ -28,6 +28,7 @@
     .lk-row[data-open] { background: color-mix(in oklab, var(--primary-500) 8%, var(--gray-900)); }
     .lk-row--head { padding-block: .625rem; color: var(--lk-muted); font-size: .75rem; background: var(--gray-900); }
     .lk-row__toggle { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: .375rem; color: var(--lk-muted); }
+    .lk-row__toggle:focus:not(:focus-visible) { outline: none; box-shadow: none; }
     .lk-row__toggle:hover { background: var(--gray-800); }
     .lk-row__toggle svg { width: 1rem; height: 1rem; transition: transform .15s; }
     .lk-row[data-open] .lk-row__toggle svg { transform: rotate(90deg); }
@@ -78,7 +79,7 @@
     .lk-run .lk-sum { grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); }
     .lk-run__line { display: flex; align-items: center; gap: .375rem; min-width: 0; white-space: nowrap; margin-top: .25rem; font-size: .875rem; font-weight: 500; }
     .lk-run__meter { display: flex; flex-direction: column; justify-content: center; }
-    .lk-run__main { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+    .lk-run__main { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1rem; }
     .lk-run__col { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
     .lk-run__task { display: flex; align-items: center; gap: .5rem; min-width: 0; }
     .lk-run__progress { display: flex; align-items: center; gap: .625rem; }
@@ -97,8 +98,7 @@
     .lk-run__rowhead .lk-row__toggle svg { width: 1rem; height: 1rem; transition: transform .15s; }
     .lk-run__what { display: flex; flex-direction: column; min-width: 0; }
     .lk-run__report { padding: .5rem 0 .75rem 2.25rem; }
-    .lk-run__logbox { position: sticky; top: 1rem; }
-    .lk-run__log { max-height: 34rem; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--gray-700) transparent; }
+    .lk-run__log { flex: 1; height: 0; min-height: 20rem; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--gray-700) transparent; }
     .lk-run__tabs { display: flex; gap: 1.25rem; margin-bottom: .25rem; border-bottom: 1px solid var(--gray-800); }
     .lk-run__tab { padding: .25rem 0 .625rem; margin-bottom: -1px; border-bottom: 2px solid transparent; color: var(--lk-muted); font-weight: 500; }
     .lk-run__tab:hover { color: var(--gray-200); }
@@ -106,5 +106,5 @@
     .lk-run__facts { display: flex; gap: 1.5rem; flex-wrap: wrap; padding-top: .75rem; }
     .lk-run .lk-cell, .lk-run .lk-mob, .lk-run .lk-item { background: var(--gray-950); }
     .lk-run .lk-cell[data-engaged] { background: color-mix(in oklab, #fbbf24 6%, var(--gray-950)); }
-    @media (max-width: 64rem) { .lk-run__main { grid-template-columns: 1fr; } .lk-run__logbox { position: static; } }
+    @media (max-width: 64rem) { .lk-run__main { grid-template-columns: 1fr; } }
 </style>
