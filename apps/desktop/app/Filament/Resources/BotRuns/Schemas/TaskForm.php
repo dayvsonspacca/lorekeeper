@@ -12,6 +12,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
+use Lorekeeper\Apps\Desktop\Models\Routine;
 
 final class TaskForm
 {
@@ -51,7 +52,29 @@ final class TaskForm
             ->defaultItems(1)
             ->reorderable()
             ->addActionLabel('Add another task')
-            ->itemLabel(static fn(array $state): ?string => self::chosen($state['script'] ?? null)?->getLabel());
+            ->itemLabel(self::label(...));
+    }
+
+    public static function routine(): Select
+    {
+        return Select::make('routine')
+            ->label('Routine')
+            ->options(
+                static fn(): array => Routine::query()
+                    ->orderBy('name')
+                    ->pluck('name', 'id')
+                    ->all(),
+            )
+            ->placeholder('Pick a routine to fill the list')
+            ->helperText('Its tasks fill the list below, where you can still change them.')
+            ->live()
+            ->dehydrated(false)
+            ->afterStateUpdated(static function (mixed $state, Set $set): void {
+                $routine = Routine::query()->find($state);
+                if ($routine instanceof Routine) {
+                    $set('tasks', $routine->steps());
+                }
+            });
     }
 
     /** @return array{tasks: list<array{script: null, parameters: array<string, null>}>} */
@@ -74,6 +97,17 @@ final class TaskForm
         }
 
         return $added;
+    }
+
+    /** @param array<array-key, mixed> $state */
+    private static function label(array $state): ?string
+    {
+        $script = self::chosen($state['script'] ?? null);
+        $parameters = $state['parameters'] ?? [];
+
+        return $script === null
+            ? null
+            : "{$script->getLabel()} · {$script->summary(is_array($parameters) ? $parameters : [])}";
     }
 
     private static function script(Get $get): ?BotScript
