@@ -8,6 +8,7 @@ use Lorekeeper\Apps\Desktop\Bots\BotScript;
 use Lorekeeper\Apps\Desktop\Bots\ScriptView;
 use Lorekeeper\Bot\Scripts\CryptoTokenScript;
 use Lorekeeper\Bot\Scripts\EldersBloodScript;
+use Lorekeeper\Bot\Scripts\EnhanceScript;
 use Lorekeeper\Bot\Scripts\LevelUpScript;
 use Lorekeeper\Bot\Scripts\TokensOfCollectionScript;
 use PHPUnit\Framework\Attributes\Test;
@@ -31,7 +32,7 @@ final class BotScriptTest extends TestCase
         static::assertSame('to level 100', BotScript::LevelUp->summary([]));
         static::assertSame('scripts.level-up.report', BotScript::LevelUp->view(ScriptView::Report));
         static::assertSame('scripts.level-up.plate', BotScript::LevelUp->view(ScriptView::Plate));
-        static::assertSame(['level' => null], BotScript::blankParameters());
+        static::assertSame(['level' => null, 'type' => null], BotScript::blankParameters());
     }
 
     #[Test]
@@ -68,5 +69,15 @@ final class BotScriptTest extends TestCase
                 . '.blade.php',
             );
         }
+    }
+
+    #[Test]
+    public function enhancing_takes_one_of_the_types_a_shop_sells(): void
+    {
+        static::assertInstanceOf(EnhanceScript::class, BotScript::Enhance->script(['type' => 'Wizard']));
+        static::assertSame('with Wizard', BotScript::Enhance->summary(['type' => 'Wizard']));
+        static::assertSame('with Lucky', BotScript::Enhance->summary(['pattern' => 'Lucky']));
+        static::assertSame(['type' => 'Lucky'], BotScript::Enhance->defaults());
+        static::assertSame('Enhance the gear', BotScript::Enhance->getLabel());
     }
 }
