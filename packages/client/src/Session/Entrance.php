@@ -7,6 +7,8 @@ namespace Lorekeeper\Client\Session;
 use LogicException;
 use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Location;
+use Lorekeeper\Client\Tracking\StatsTracking;
+use Lorekeeper\Core\Attribute\Stat\Stats;
 use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\CharacterClass;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
@@ -26,6 +28,7 @@ use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Player\PlayerData;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
+use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use Lorekeeper\Server\SocketId;
 
@@ -46,9 +49,13 @@ final class Entrance
 
     private ?Vitals $vitals = null;
 
+    private Stats $stats;
+
     public function __construct(
         private readonly PlayerName $name,
-    ) {}
+    ) {
+        $this->stats = new Stats();
+    }
 
     /** @mago-expect lint:halstead */
     public function hear(Event $event): void
@@ -60,6 +67,7 @@ final class Entrance
             $event instanceof PlayerDataLoadedEvent => $this->data = $this->mine($event) ?? $this->data,
             $event instanceof ClassChangedEvent => $this->isMine($event->player) ? ($this->class = $event) : null,
             $event instanceof SkillsLoadedEvent => $this->skills = $event,
+            $event instanceof StatsUpdatedEvent => $this->stats = StatsTracking::follow($this->stats, $event),
             $event instanceof PlayerVitalsUpdatedEvent => $this->isMe($event->name)
                 ? ($this->vitals = $event->vitals)
                 : null,
@@ -124,6 +132,7 @@ final class Entrance
             new PlayerInventory($inventory, $data->bagSlots),
             $data->wallet,
             $data->marks,
+            $this->stats,
         );
         if ($data->member) {
             $player->tags->add(PlayerTag::Member);

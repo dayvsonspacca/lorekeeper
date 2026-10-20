@@ -14,6 +14,7 @@ use Lorekeeper\Client\Tracking\MarkTracking;
 use Lorekeeper\Client\Tracking\MemberTracking;
 use Lorekeeper\Client\Tracking\ProgressTracking;
 use Lorekeeper\Client\Tracking\StateTracking;
+use Lorekeeper\Client\Tracking\StatsTracking;
 use Lorekeeper\Client\Tracking\VitalsTracking;
 use Lorekeeper\Client\Tracking\WalletTracking;
 use Lorekeeper\Core\Combat\CombatState;
@@ -79,6 +80,7 @@ final class Character implements SubjectInterface
         $inventory = InventoryTracking::follow($was->inventory, $event, $me, $this->drops);
         $wallet = WalletTracking::follow($was->wallet, $event, $me);
         $marks = MarkTracking::follow($was->marks, $event, $me);
+        $stats = StatsTracking::follow($was->stats, $event);
         $drops = DropTracking::follow($this->drops, $event);
         $location = LocationTracking::follow($this->location, $event, $me);
         $state = StateTracking::follow($this->state, $event, $me);
@@ -92,6 +94,7 @@ final class Character implements SubjectInterface
             && $inventory === $was->inventory
             && $wallet === $was->wallet
             && $marks === $was->marks
+            && $stats === $was->stats
             && $member === $was->tags->has(PlayerTag::Member)
             && $drops === $this->drops
             && $location === $this->location
@@ -102,7 +105,7 @@ final class Character implements SubjectInterface
         }
 
         $this->player = self::tagged(
-            new Player($was->name, $progress, $vitals, $class, $inventory, $wallet, $marks),
+            new Player($was->name, $progress, $vitals, $class, $inventory, $wallet, $marks, $stats),
             $was,
             $member,
         );

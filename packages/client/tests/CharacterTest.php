@@ -6,6 +6,7 @@ namespace Lorekeeper\Client\Tests;
 
 use Lorekeeper\Client\Character;
 use Lorekeeper\Core\Attribute\Health;
+use Lorekeeper\Core\Attribute\Stat\Haste;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\ClassName;
 use Lorekeeper\Core\Combat\CombatState;
@@ -34,6 +35,7 @@ use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Map\RoomPlayer;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
+use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\SocketId;
 use Override;
@@ -63,6 +65,7 @@ final class CharacterTest extends TestCase
             ),
         );
         $me->hear(new PlayerInventoryLoadedEvent(new PlayerItems([$scales])));
+        $me->hear(new StatsUpdatedEvent([new Haste(0.331)]));
 
         $player = $me->player();
         static::assertSame('lorekeeper03', $player->name->value);
@@ -70,6 +73,7 @@ final class CharacterTest extends TestCase
         static::assertSame(189, $player->vitals->health->current->value);
         static::assertSame('Blaze Binder', $player->class->class->name->value);
         static::assertSame($scales, $player->inventory->find(new ItemId(11_475))->unwrap());
+        static::assertSame(0.331, $player->stats->haste->value);
     }
 
     #[Test]

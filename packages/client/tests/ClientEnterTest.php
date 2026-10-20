@@ -57,6 +57,10 @@ final class ClientEnterTest extends TestCase
         {"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"made2903","o":{"intHPMax":2585,"intMPMax":100,"intHP":2585,"intMP":100}}}}
         JSON;
 
+    private const string STATS = <<<'JSON'
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"stu","sta":{"_STR":1,"$STR":3,"_END":4,"$END":7,"_DEX":2,"$DEX":3,"_INT":5,"$INT":6,"_WIS":2,"$WIS":3,"_LCK":2,"$LCK":2,"$dsh":50,"$ap":6,"$sp":13,"$tdo":0.0541,"$tcr":0.0613,"$thi":0.0056,"$tha":0.0226,"$cpo":1,"$cpi":1,"$cao":1,"$cai":1,"$cmo":1.0423,"$cmi":0.9577,"$cdo":1,"$cdi":1,"$cho":1,"$chi":1,"$cmc":1,"$scm":1.5705,"$shb":0,"$smb":0},"wDPS":16}}}
+        JSON;
+
     private const string PLAYER_DATA = <<<'JSON'
         {"t":"xt","b":{"r":-1,"o":{"cmd":"initUserDatas","a":[{"uid":45466,"data":{"strUsername":"made2903","intLevel":81,"intExp":4514754,"intExpToLevel":5280000,"intGold":6800132,"intCoins":2899,"iUpg":0,"iUpgDays":-5772,"iBagSlots":131,"id0":0,"id1":0,"id2":64,"id3":0,"id4":0,"id5":0,"id6":0,"id7":0,"iw0":0,"im0":0}}]}}}
         JSON;
@@ -75,6 +79,7 @@ final class ClientEnterTest extends TestCase
                 self::CLASS_CHANGE,
                 self::SKILLS,
                 self::VITALS,
+                self::STATS,
                 self::PLAYER_DATA,
             ),
             self::login(),
@@ -110,6 +115,9 @@ final class ClientEnterTest extends TestCase
             $player->vitals->mana->current->value,
             $player->vitals->mana->maximum->value,
         ]);
+        static::assertSame(13, $player->stats->powers->spell->value);
+        static::assertEqualsWithDelta(0.0226, $player->stats->haste->value, 1e-9);
+        static::assertEqualsWithDelta(0.0423, $player->stats->resistances->magical->value, 1e-9);
         static::assertSame('Blaze Binder', $player->class->class->name->value);
         static::assertSame(ClassCategory::Caster, $player->class->class->category);
         static::assertSame(302_500, $player->class->points->value);
@@ -162,6 +170,7 @@ final class ClientEnterTest extends TestCase
 
         static::assertInstanceOf(Client::class, $client);
         static::assertSame('Blaze Binder', $client->character()->player()->class->class->name->value);
+        static::assertSame(0.0, $client->character()->player()->stats->haste->value);
     }
 
     #[Test]
