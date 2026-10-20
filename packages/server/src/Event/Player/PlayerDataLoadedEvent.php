@@ -54,6 +54,7 @@ final readonly class PlayerDataLoadedEvent implements Event
                     'intGold' => Type\uint(),
                     'intCoins' => Type\uint(),
                     'iUpg' => Type\int(),
+                    'iUpgDays' => Type\int(),
                     'iBagSlots' => Type\positive_int(),
                 ], allowUnknownFields: true),
             ], allowUnknownFields: true))
@@ -73,7 +74,7 @@ final readonly class PlayerDataLoadedEvent implements Event
                         ),
                     ),
                     new Wallet(new Gold($data['intGold']), new AdventureCoins($data['intCoins'])),
-                    $data['iUpg'] > 0,
+                    $data['iUpg'] > 0 && $data['iUpgDays'] >= 0,
                     new Quantity($data['iBagSlots']),
                     new PlayerQuestMarks(QuestMarks::held($data)),
                 );
