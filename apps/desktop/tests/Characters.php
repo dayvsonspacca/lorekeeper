@@ -52,7 +52,7 @@ final readonly class Characters
                 new PlayerLevelProgress(new PlayerLevel($level), new Gauge(new Experience(0), new Experience(1000))),
                 new Vitals(new Gauge(new Health(390), new Health(390)), new Gauge(new Mana(100), new Mana(100))),
                 new PlayerClass(
-                    new CharacterClass(new ClassName('Mage'), ClassCategory::Caster, Option\none(), []),
+                    new CharacterClass(new ClassName('Mage'), ClassCategory::Caster, Option\none(), [], []),
                     new ClassPoints(0),
                     [],
                 ),

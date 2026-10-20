@@ -11,12 +11,12 @@ use Lorekeeper\Core\Item\Equipment\GroundItem;
 use Lorekeeper\Core\Item\Equipment\Helm;
 use Lorekeeper\Core\Item\Equipment\Necklace;
 use Lorekeeper\Core\Item\Equipment\Pet;
-use Lorekeeper\Core\Item\Equipment\Weapon;
+use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
 use Lorekeeper\Core\Item\House\HouseItem;
 use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Boost;
-use Lorekeeper\Core\Item\Misc\Enhancement;
+use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementItem;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerItems;
@@ -112,7 +112,7 @@ final readonly class Backpack
             $item instanceof GroundItem => 'ground',
             $item instanceof HouseItem => 'house',
             $item instanceof Boost => 'boost',
-            $item instanceof Enhancement => 'enhancement',
+            $item instanceof EnhancementItem => 'enhancement',
             default => 'resource',
         };
     }

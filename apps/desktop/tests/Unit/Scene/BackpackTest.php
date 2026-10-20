@@ -7,9 +7,12 @@ namespace Lorekeeper\Apps\Desktop\Tests\Unit\Scene;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Backpack;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
 use Lorekeeper\Core\Item\Equipment\ClassItem;
-use Lorekeeper\Core\Item\Equipment\Weapon;
-use Lorekeeper\Core\Item\Equipment\WeaponType;
+use Lorekeeper\Core\Item\Equipment\Weapon\DamageVariance;
+use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
+use Lorekeeper\Core\Item\Equipment\Weapon\WeaponDamage;
+use Lorekeeper\Core\Item\Equipment\Weapon\WeaponType;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
@@ -19,23 +22,38 @@ use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psl\Option;
 
 final class BackpackTest extends TestCase
 {
     #[Test]
     public function it_tells_each_held_item_by_its_kind_kept_or_for_now(): void
     {
-        $sword = new Weapon(new ItemId(4767), new ItemName('Unidentified 20'), WeaponType::Sword);
+        $sword = new Weapon(
+            new ItemId(4767),
+            new ItemName('Unidentified 20'),
+            new ItemLevel(1),
+            WeaponType::Sword,
+            new WeaponDamage(new DamageVariance(10)),
+            Option\none(),
+        );
         $sword->tags->add(ItemTag::MemberOnly);
         $backpack = Backpack::of(
             new PlayerInventory(
                 new PlayerItems([
                     new PlayerItem($sword),
-                    new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer'))),
-                    new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token')), new Quantity(4)),
+                    new PlayerItem(
+                        new ClassItem(new ItemId(15_651), new ItemName('Healer'), new ItemLevel(1), Option\none()),
+                    ),
+                    new PlayerItem(
+                        new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)),
+                        new Quantity(4),
+                    ),
                 ]),
                 new Quantity(131),
-                new PlayerItems([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
+                new PlayerItems([new PlayerItem(
+                    new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+                )]),
             ),
         );
 
