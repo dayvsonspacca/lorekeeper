@@ -41,7 +41,7 @@
                 <div class="lk-meters lk-meters--lg">
                     <x-scene.bar :current="$hero['health']" :maximum="$hero['maxHealth']" kind="health" />
                     <x-scene.bar :current="$hero['mana']" :maximum="$hero['maxMana']" kind="mana" />
-                    @if (($hero['maxExperience'] ?? 0) > 0)
+                    @if (($hero['maxExperience'] ?? 0) > 0 && $hero['level'] < 100)
                         <x-scene.bar :current="$hero['experience']" :maximum="$hero['maxExperience']" kind="experience" />
                     @endif
                 </div>
