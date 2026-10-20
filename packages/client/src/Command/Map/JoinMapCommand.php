@@ -16,7 +16,7 @@ final readonly class JoinMapCommand implements Command
     /** @param Option\Option<RoomId> $room */
     public function __construct(
         private PlayerName $playerName,
-        private MapName $mapName,
+        public MapName $mapName,
         private Option\Option $room,
     ) {}
 
