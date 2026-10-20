@@ -55,7 +55,7 @@
                                 </button>
                                 <span>{{ $hero['level'] ?? $account->level ?? '?' }}</span>
                                 <span><span class="lk-tag" data-state="{{ $state }}">{{ $label }}</span></span>
-                                <span class="lk-dim lk-cut">{{ $active ? $hero['map'] ?? $run->map ?? '—' : '—' }}</span>
+                                <span class="lk-dim lk-cut">{{ $active ? ($hero !== null ? $scene->place() : $run->map ?? '—') : '—' }}</span>
                                 <span class="lk-row__doing">
                                     @if ($task !== null)
                                         <span class="lk-cut">{{ $task->title() }}@if ($percent !== null) · {{ $percent }}%@endif</span>

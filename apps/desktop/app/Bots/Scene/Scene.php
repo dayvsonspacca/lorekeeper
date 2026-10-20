@@ -36,6 +36,7 @@ use Psl\Type\Exception\CoercionException;
  *     state: string,
  *     away: bool,
  *     map: string,
+ *     room?: int,
  *     items: int,
  *     skills: list<Skill>,
  * }
@@ -99,6 +100,7 @@ final readonly class Scene
                 'state' => strtolower($me->state()->name),
                 'away' => $me->away(),
                 'map' => $me->location()->map->name->value,
+                'room' => $me->location()->room->value,
                 'items' => count($player->inventory->permanent->items) + count($player->inventory->temporary->items),
                 'skills' => array_map(static fn(PlayerSkill $skill): array => [
                     'slot' => $skill->skill->slot->name,
@@ -202,6 +204,13 @@ final readonly class Scene
         return count(array_filter($this->monsters, static fn(array $monster): bool => $monster['state'] !== 'dead'));
     }
 
+    public function place(): string
+    {
+        $room = $this->hero['room'] ?? null;
+
+        return $room === null ? $this->hero['map'] : "{$this->hero['map']}-{$room}";
+    }
+
     public function rankPercent(): int
     {
         $to = $this->hero['rankTo'];
@@ -251,6 +260,7 @@ final readonly class Scene
                 'state' => Type\string(),
                 'away' => Type\bool(),
                 'map' => Type\string(),
+                'room' => Type\optional(Type\int()),
                 'items' => Type\int(),
                 'skills' => Type\vec(Type\shape([
                     'slot' => Type\string(),

@@ -154,6 +154,7 @@ final class RunBotTest extends TestCase
             $scene->hero['class'],
             $scene->hero['state'],
         ]);
+        static::assertSame('oaklore-1', $scene->place());
         static::assertSame(['Bonemuncher', 260, null], [
             $scene->monsters[0]['name'],
             $scene->monsters[0]['health'],

@@ -32,7 +32,7 @@
             <div class="lk-sum__cell">
                 <div class="lk-sum__label">{{ $active ? 'Map' : 'Last seen ' . \Lorekeeper\Apps\Desktop\Bots\Scene\Clock::ago($scene->at, $now) }}</div>
                 <div class="lk-run__line">
-                    <span class="lk-cut">{{ $hero['map'] }}</span>
+                    <span class="lk-cut">{{ $scene->place() }}</span>
                     @if ($scene->players !== [])
                         <span class="lk-dim" title="{{ implode(', ', $scene->players) }}">· {{ count($scene->players) }} {{ count($scene->players) === 1 ? 'player' : 'players' }}</span>
                     @endif

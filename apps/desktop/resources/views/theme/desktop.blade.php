@@ -76,7 +76,8 @@
     .lk-run .lk-tab { padding: .25rem .625rem; font-size: .75rem; font-weight: 500; letter-spacing: 0; text-transform: none; }
     .lk-run .lk-cell { border: 1px solid var(--gray-800); border-radius: .625rem; }
     .lk-run .lk-cell__name { letter-spacing: 0; text-transform: none; font-weight: 500; font-size: .75rem; }
-    .lk-run .lk-sum { grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); }
+    .lk-run .lk-sum { display: flex; flex-wrap: wrap; }
+    .lk-run .lk-sum__cell { flex: 1 1 9.5rem; min-width: 0; }
     .lk-run__line { display: flex; align-items: center; gap: .375rem; min-width: 0; white-space: nowrap; margin-top: .25rem; font-size: .875rem; font-weight: 500; }
     .lk-run__meter { display: flex; flex-direction: column; justify-content: center; }
     .lk-run__main { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1rem; }

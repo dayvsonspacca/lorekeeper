@@ -36,6 +36,7 @@ use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\AreaId;
+use Lorekeeper\Server\RoomId;
 use Lorekeeper\Server\SocketId;
 use Psl\Option;
 
@@ -61,6 +62,7 @@ final readonly class Characters
             ),
             new Location(
                 new AreaId(1),
+                new RoomId(1),
                 new Map(new MapName($map), new Gamefile("{$map}.swf"), $monsters),
                 new MapSpot(new MapCell('Enter'), MapPad::Spawn),
             ),
