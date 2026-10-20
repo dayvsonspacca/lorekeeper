@@ -31,6 +31,7 @@ use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Psl\DateTime\Duration;
@@ -127,10 +128,14 @@ trait Kills
     private function resurrect(MapSpot $spot): Generator
     {
         yield new Pause(Duration::seconds(10));
-        yield $this->send(new ResurrectCommand($this->me()->location()->area, $this->me()->socketId()))->awaits(
-            Duration::seconds(15),
-            ResurrectedEvent::class,
-        );
+        if (!$this->me()->player()->vitals->alive()) {
+            yield $this->send(new ResurrectCommand($this->me()->location()->area, $this->me()->socketId()))->awaits(
+                Duration::seconds(15),
+                ResurrectedEvent::class,
+                PlayerStateUpdatedEvent::class,
+            );
+        }
+
         yield from $this->jump($spot);
     }
 

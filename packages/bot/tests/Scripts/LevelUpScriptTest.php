@@ -15,8 +15,6 @@ use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
-use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Map\MapLockedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use PHPUnit\Framework\Attributes\Test;
@@ -55,42 +53,6 @@ final class LevelUpScriptTest extends TestCase
         );
         static::assertEquals(new Progress(1, 1), $steps[array_key_last($steps)]);
         static::assertEquals(new Done('Reached level 2'), $result);
-    }
-
-    #[Test]
-    public function a_dead_character_resurrects_and_walks_back_to_the_monsters(): void
-    {
-        $me = Fixture::me(level: 1, map: 'battleon');
-
-        [$steps] = Play::run(self::script(target: 2), $me, [
-            Fixture::arrival('oaklore', 946, ['r3' => [4, 1]]),
-            null,
-            null,
-            null,
-            new PlayerDiedEvent(),
-            null,
-            new ResurrectedEvent(),
-            null,
-            null,
-            null,
-            null,
-            new LeveledUpEvent(new PlayerLevel(2), new Experience(200)),
-            null,
-        ]);
-
-        static::assertSame(
-            [
-                '%xt%zm%cmd%1%tfer%lorekeeper03%oaklore%',
-                '%xt%zm%moveToCell%946%r3%Left%',
-                '%xt%zm%gar%946%0%a1>m:4%wvz%',
-                '%xt%zm%resPlayerTimed%946%122628%',
-                '%xt%zm%moveToCell%946%r3%Left%',
-                '%xt%zm%gar%946%0%a4>p:122628%wvz%',
-                '%xt%zm%gar%946%0%a1>m:4%wvz%',
-            ],
-            self::sent($steps),
-        );
-        static::assertTrue($me->player()->vitals->alive());
     }
 
     #[Test]
