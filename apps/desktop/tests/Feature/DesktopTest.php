@@ -6,6 +6,7 @@ namespace Lorekeeper\Apps\Desktop\Tests\Feature;
 
 use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Repeater;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
@@ -241,23 +242,33 @@ final class DesktopTest extends TestCase
         $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 40]]);
         $run->log('Joined icestormarena');
 
+        Repeater::fake();
         Livewire::test(Bots::class)
             ->assertSet('expanded', $account->id)
             ->assertSee(['Level up · to level 40', 'Joined icestormarena'])
             ->callAction(
                 'addTask',
-                data: [
-                    'script' => BotScript::CryptoToken->value,
-                ],
+                data: ['tasks' => [
+                    ['script' => BotScript::CryptoToken->value],
+                    ['script' => BotScript::EldersBlood->value],
+                ]],
                 arguments: ['run' => $run->id],
             )
             ->assertHasNoActionErrors()
-            ->assertSee('Crypto Token daily · for today')
+            ->assertSeeInOrder(['Level up', 'Crypto Token daily', 'Blood daily'])
             ->call('toggle', $account->id)
             ->assertSet('expanded', null)
             ->assertDontSee('Joined icestormarena');
 
-        static::assertSame(2, $run->tasks()->count());
+        static::assertSame(
+            [BotScript::LevelUp, BotScript::CryptoToken, BotScript::EldersBlood],
+            $run
+                ->tasks()
+                ->orderBy('id')
+                ->get()
+                ->map(static fn(BotTask $task): BotScript => $task->script)
+                ->all(),
+        );
     }
 
     #[Test]
@@ -337,11 +348,12 @@ final class DesktopTest extends TestCase
         $run = $this->account()->runs()->create();
         $run->update(['status' => RunStatus::Running]);
 
+        Repeater::fake();
         Livewire::test(ViewBotRun::class, ['record' => $run->id])
-            ->callAction('addTask', [
+            ->callAction('addTask', ['tasks' => [[
                 'script' => BotScript::LevelUp->value,
                 'parameters' => ['level' => '8'],
-            ])
+            ]]])
             ->assertHasNoActionErrors();
         $task = $run->tasks()->sole();
         $task->update(['status' => TaskStatus::Running, 'progress_done' => 1, 'progress_total' => 4]);
@@ -396,8 +408,9 @@ final class DesktopTest extends TestCase
         $run = $this->account()->runs()->create();
         $run->update(['status' => RunStatus::Running]);
 
+        Repeater::fake();
         Livewire::test(ViewBotRun::class, ['record' => $run->id])
-            ->callAction('addTask', ['script' => BotScript::CryptoToken->value])
+            ->callAction('addTask', ['tasks' => [['script' => BotScript::CryptoToken->value]]])
             ->assertHasNoActionErrors();
 
         $task = $run->tasks()->sole();
@@ -411,11 +424,18 @@ final class DesktopTest extends TestCase
         $run = $this->account()->runs()->create();
         $run->update(['status' => RunStatus::Running]);
 
+        Repeater::fake();
         Livewire::test(ViewBotRun::class, ['record' => $run->id])
-            ->callAction('addTask', ['script' => BotScript::LevelUp->value, 'parameters' => ['level' => '1']])
-            ->assertHasActionErrors(['parameters.level']);
+            ->callAction('addTask', ['tasks' => [[
+                'script' => BotScript::LevelUp->value,
+                'parameters' => ['level' => '1'],
+            ]]])
+            ->assertHasActionErrors(['tasks.0.parameters.level']);
         Livewire::test(ViewBotRun::class, ['record' => $run->id])
-            ->callAction('addTask', ['script' => BotScript::LevelUp->value, 'parameters' => ['level' => '30']])
+            ->callAction('addTask', ['tasks' => [[
+                'script' => BotScript::LevelUp->value,
+                'parameters' => ['level' => '30'],
+            ]]])
             ->assertHasNoActionErrors();
 
         $task = $run->tasks()->sole();

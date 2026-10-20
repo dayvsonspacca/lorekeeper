@@ -95,20 +95,22 @@ final class Bots extends Page
             ->color('gray')
             ->size(Size::ExtraSmall)
             ->modalIcon(Heroicon::OutlinedQueueList)
-            ->modalHeading('Add a task')
-            ->modalDescription('The bot plays its tasks one after the other and waits where it is in between.')
+            ->modalHeading('Add tasks')
+            ->modalDescription(
+                'The bot plays its tasks one after the other, in this order, and waits where it is in between.',
+            )
             ->modalSubmitActionLabel('Add')
-            ->schema(TaskForm::components())
-            ->fillForm(TaskForm::blank())
+            ->schema([TaskForm::queue()])
+            ->fillForm(TaskForm::blankQueue())
             ->action(static function (array $arguments, array $data): void {
                 $run = BotRun::query()->find($arguments['run'] ?? 0);
                 if ($run === null || !$run->status->isActive()) {
                     return;
                 }
 
-                $run->tasks()->create(['script' => $data['script'], 'parameters' => $data['parameters'] ?? []]);
+                TaskForm::addTo($run, $data);
             })
-            ->successNotificationTitle('Task added');
+            ->successNotificationTitle('Tasks added');
     }
 
     /** @return array<string, mixed> */
