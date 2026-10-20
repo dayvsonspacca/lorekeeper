@@ -10,16 +10,21 @@ use Lorekeeper\Client\Script\Failed;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Tests\Fixture;
+use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
+use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
+use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
+use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
 use Lorekeeper\Server\Event\Quest\QuestCompletedEvent;
@@ -64,6 +69,29 @@ final class CryptoTokenScriptTest extends TestCase
         );
         static::assertEquals(new Done("got today's Crypto Token, 1 held now"), $result);
         static::assertSame(0, $me->player()->inventory->quantity(new ItemId(42_658)));
+    }
+
+    #[Test]
+    public function it_leaves_the_fight_a_task_before_left_behind_before_travelling(): void
+    {
+        $me = Fixture::me(level: 4, map: 'arcangrove');
+        $me->hear(new PlayersStateChangedEvent([new PlayerState(
+            new PlayerName('lorekeeper03'),
+            CombatState::Fighting,
+        )]));
+
+        [$steps] = Play::run(new CryptoTokenScript(), $me, [
+            null,
+            null,
+            new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
+            Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
+            null,
+        ]);
+
+        static::assertSame(
+            ['%xt%zm%moveToCell%1%Enter%Spawn%', '%xt%zm%cmd%1%tfer%lorekeeper03%boxes%'],
+            array_slice(self::sent($steps), offset: 0, length: 2),
+        );
     }
 
     #[Test]
