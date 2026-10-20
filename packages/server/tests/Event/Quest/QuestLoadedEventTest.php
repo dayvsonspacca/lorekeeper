@@ -6,8 +6,8 @@ namespace Lorekeeper\Server\Tests\Event\Quest;
 
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Equipment\Pet;
-use Lorekeeper\Core\Item\Equipment\Weapon;
-use Lorekeeper\Core\Item\Equipment\WeaponType;
+use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
+use Lorekeeper\Core\Item\Equipment\Weapon\WeaponType;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
@@ -180,7 +180,7 @@ final class QuestLoadedEventTest extends TestCase
                 'iRep' => 0,
                 'bUpg' => false,
                 'reward' => [['ItemID' => 1, 'iQty' => 1, 'iRate' => 100, 'iType' => $rewardType]],
-                'oItems' => ['1' => ['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type]],
+                'oItems' => ['1' => ['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type, 'iLvl' => 1]],
                 ...$extra,
             ]],
         ]]], flags: JSON_THROW_ON_ERROR);

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Inventory;
 
-use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
@@ -54,15 +52,7 @@ final readonly class TemporaryItemsAddedEvent implements Event
                 continue;
             }
 
-            $added[] = new PlayerItem(
-                ItemKinds::read(
-                    new ItemId($entry['ItemID']),
-                    new ItemName($entry['sName']),
-                    $entry['sType'] ?? '',
-                    static::class,
-                ),
-                new Quantity($entry['iQty']),
-            );
+            $added[] = new PlayerItem(ItemKinds::read($entry, static::class), new Quantity($entry['iQty']));
         }
 
         return $added === [] ? Option\none() : Option\some(new static($added));

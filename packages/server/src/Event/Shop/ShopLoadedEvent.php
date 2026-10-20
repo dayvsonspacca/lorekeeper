@@ -9,7 +9,6 @@ use Lorekeeper\Core\Currency\AdventureCoins;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemPrice;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Support\Quantity;
@@ -153,12 +152,7 @@ final readonly class ShopLoadedEvent implements Event
      */
     private static function item(array $entry): Item
     {
-        $item = ItemKinds::read(
-            new ItemId($entry['ItemID']),
-            new ItemName($entry['sName']),
-            $entry['sType'],
-            static::class,
-        );
+        $item = ItemKinds::read($entry, static::class);
 
         if ($entry['bUpg'] ?? false) {
             $item->tags->add(ItemTag::MemberOnly);

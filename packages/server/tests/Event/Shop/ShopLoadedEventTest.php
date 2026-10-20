@@ -7,8 +7,8 @@ namespace Lorekeeper\Server\Tests\Event\Shop;
 use Lorekeeper\Core\Currency\AdventureCoins;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Equipment\Armor;
-use Lorekeeper\Core\Item\Equipment\Weapon;
-use Lorekeeper\Core\Item\Equipment\WeaponType;
+use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
+use Lorekeeper\Core\Item\Equipment\Weapon\WeaponType;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Boost;
 use Lorekeeper\Core\Item\Misc\Resource;
@@ -136,7 +136,7 @@ final class ShopLoadedEventTest extends TestCase
                 'ShopID' => 1,
                 'sName' => 'Hero Shop',
                 ...$flags,
-                'items' => [['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type, 'iCost' => 0]],
+                'items' => [['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type, 'iLvl' => 1, 'iCost' => 0]],
             ],
         ]]], flags: JSON_THROW_ON_ERROR);
     }

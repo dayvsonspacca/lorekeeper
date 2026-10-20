@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Inventory;
 
-use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
@@ -51,12 +49,7 @@ final readonly class ItemDroppedEvent implements Event
 
         $dropped = [];
         foreach ($items as $entry) {
-            $item = ItemKinds::read(
-                new ItemId($entry['ItemID']),
-                new ItemName($entry['sName']),
-                $entry['sType'],
-                static::class,
-            );
+            $item = ItemKinds::read($entry, static::class);
             if ($entry['bUpg'] ?? false) {
                 $item->tags->add(ItemTag::MemberOnly);
             }

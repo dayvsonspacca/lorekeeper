@@ -6,9 +6,15 @@ namespace Lorekeeper\Server\Tests\Event\Combat;
 
 use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\CharacterClass\Passive\ClassPassive;
+use Lorekeeper\Core\CharacterClass\Passive\PassiveDescription;
+use Lorekeeper\Core\CharacterClass\Passive\PassiveName;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\SkillCost;
+use Lorekeeper\Core\CharacterClass\Skill\Damage\DamageMultiplier;
+use Lorekeeper\Core\CharacterClass\Skill\Damage\DamageSource;
+use Lorekeeper\Core\CharacterClass\Skill\Damage\SkillDamage;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Combat\CombatState;
@@ -47,7 +53,7 @@ final class CombatEventsTest extends TestCase
     public function it_reads_the_skills_of_the_class_and_which_are_unlocked(): void
     {
         $event = SkillsLoadedEvent::from(JsonMessage::from(<<<'JSON'
-            {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":89,"nam":"Auto Attack","typ":"aa","ref":"aa","tgt":"h","fx":"m","damage":0.9,"range":301,"mp":0,"cd":2000,"auto":true,"isOK":true},{"id":115,"nam":"Fireball","typ":"m","ref":"a1","tgt":"h","tgtMax":1,"mp":20,"cd":6000,"isOK":true},{"id":116,"nam":"Ice Shard","typ":"m","ref":"a2","tgt":"h","mp":15,"cd":6000,"isOK":false},{"id":118,"nam":"Arcane Shield","typ":"m","ref":"a4","tgt":"s","mp":0,"cd":20000,"isOK":false},{"nam":"Potions","typ":"i","ref":"i1","tgt":"f","mp":0,"cd":60000,"isOK":true}],"passive":[{"nam":"Hot Headed","ref":"p1"}]}}}}
+            {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":89,"nam":"Auto Attack","typ":"aa","ref":"aa","tgt":"h","fx":"m","damage":0.9,"range":301,"mp":0,"cd":2000,"auto":true,"isOK":true},{"id":115,"nam":"Fireball","typ":"m","ref":"a1","tgt":"h","tgtMax":1,"mp":20,"cd":6000,"isOK":true},{"id":116,"nam":"Ice Shard","typ":"m","ref":"a2","tgt":"h","mp":15,"cd":6000,"isOK":false},{"id":118,"nam":"Arcane Shield","typ":"m","ref":"a4","tgt":"s","mp":0,"cd":20000,"isOK":false},{"nam":"Potions","typ":"i","ref":"i1","tgt":"f","mp":0,"cd":60000,"isOK":true}]}}}}
             JSON)->unwrap())->unwrap();
 
         static::assertEquals(
@@ -76,7 +82,7 @@ final class CombatEventsTest extends TestCase
     public function a_skill_that_gives_mana_back_restores_it_instead_of_costing_it(): void
     {
         $event = SkillsLoadedEvent::from(JsonMessage::from(<<<'JSON'
-            {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":638,"nam":"Arcane Strike","typ":"aa","ref":"aa","tgt":"h","mp":-10,"cd":2000,"isOK":true},{"id":642,"nam":"Arcane Devastation","typ":"m","ref":"a1","tgt":"h","tgtMax":3,"mp":50,"cd":10000,"isOK":true},{"id":639,"nam":"Arcane Fire","typ":"m","ref":"a2","tgt":"h","tgtMax":3,"mp":-15,"cd":7000,"isOK":true},{"id":641,"nam":"Explosive Shield","typ":"m","ref":"a3","tgt":"h","tgtMax":3,"mp":20,"cd":23000,"isOK":true},{"id":640,"nam":"Enchanted Blade","typ":"m","ref":"a4","tgt":"s","mp":40,"cd":4000,"isOK":true},{"nam":"Potions","typ":"i","ref":"i1","tgt":"f","mp":0,"cd":60000,"isOK":true}],"passive":[{"nam":"Heavy Armor Expertise","ref":"p1"},{"nam":"Battle Hardened Mage","ref":"p2"},{"nam":"Mana Rush","ref":"p3"}]}}}}
+            {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":638,"nam":"Arcane Strike","typ":"aa","ref":"aa","tgt":"h","mp":-10,"cd":2000,"isOK":true},{"id":642,"nam":"Arcane Devastation","typ":"m","ref":"a1","tgt":"h","tgtMax":3,"mp":50,"cd":10000,"isOK":true},{"id":639,"nam":"Arcane Fire","typ":"m","ref":"a2","tgt":"h","tgtMax":3,"mp":-15,"cd":7000,"isOK":true},{"id":641,"nam":"Explosive Shield","typ":"m","ref":"a3","tgt":"h","tgtMax":3,"mp":20,"cd":23000,"isOK":true},{"id":640,"nam":"Enchanted Blade","typ":"m","ref":"a4","tgt":"s","mp":40,"cd":4000,"isOK":true},{"nam":"Potions","typ":"i","ref":"i1","tgt":"f","mp":0,"cd":60000,"isOK":true}]}}}}
             JSON)->unwrap())->unwrap();
 
         static::assertEquals(
@@ -202,6 +208,35 @@ final class CombatEventsTest extends TestCase
         static::assertSame(
             [true, true, true, true, true, true],
             array_map(static fn(PlayerSkill $held): bool => $held->unlocked, $event->skills),
+        );
+    }
+
+    #[Test]
+    public function it_reads_what_each_skill_is_called_how_hard_it_hits_and_the_class_passives(): void
+    {
+        $event = SkillsLoadedEvent::from(JsonMessage::from(<<<'JSON'
+            {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":1558,"nam":"Malevolent Burst","typ":"aa","ref":"aa","desc":"A sinister spell of powerful dark energy. Recovers 15 mana on hit.","tgt":"h","tgtMax":3,"damage":0.57,"dsrc":"SP1","mp":-15,"cd":1500,"isOK":true},{"id":1561,"nam":"Depraved Empowerment","typ":"m","ref":"a3","desc":"Touch the darkness within yourself and your allies by drawing out their twisted inclinations. Applies Depravity, increasing you and your allies' Dodge, Crit Chance, and Outgoing Damage by 30%. Immorality strengthens your magic, increasing your Haste by 20%, Crit Damage by 30%, and healing you over time. Also applies Arcane Shield, reducing non True Damage taken by 30% of your Spell Power and draining 8 mana when hit. Effects last 12 seconds.","tgt":"f","tgtMax":7,"mp":15,"cd":6000,"isOK":true}],"passive":[{"id":1564,"nam":"Dark Scholar","typ":"passive","ref":"p2","desc":"Increases outgoing magic damage by 40%"}]}}}}
+            JSON)->unwrap())->unwrap();
+
+        $burst = $event->skills[0]->skill;
+        $empowerment = $event->skills[1]->skill;
+        static::assertSame('Malevolent Burst', $burst->name->value);
+        static::assertSame(
+            'A sinister spell of powerful dark energy. Recovers 15 mana on hit.',
+            $burst->description->unwrap()->value,
+        );
+        static::assertEquals(
+            new SkillDamage(new DamageMultiplier(0.57), DamageSource::Magical),
+            $burst->damage->unwrap(),
+        );
+        static::assertSame('Depraved Empowerment', $empowerment->name->value);
+        static::assertTrue($empowerment->damage->isNone());
+        static::assertEquals(
+            [new ClassPassive(
+                new PassiveName('Dark Scholar'),
+                new PassiveDescription('Increases outgoing magic damage by 40%'),
+            )],
+            $event->passives,
         );
     }
 

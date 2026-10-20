@@ -6,8 +6,6 @@ namespace Lorekeeper\Server\Event\Inventory;
 
 use InvalidArgumentException;
 use Lorekeeper\Core\Item\Equipment\ClassItem;
-use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerItems;
@@ -46,20 +44,17 @@ final readonly class PlayerInventoryLoadedEvent implements Event
                 'sType' => Type\string(),
                 'iQty' => Type\optional(Type\positive_int()),
                 'bUpg' => Type\optional(Type\bool()),
+                'bEquip' => Type\optional(Type\bool()),
             ], allowUnknownFields: true))
                 ->coerce($message->data['items'] ?? null);
+            $procs = Type\optional(Type\dict(Type\array_key(), Type\mixed()))->coerce($message->data['procs'] ?? []);
         } catch (CoercionException $exception) {
             throw new MalformedEventException(static::class, 'items are missing or invalid', $exception);
         }
 
         $held = [];
         foreach ($items as $entry) {
-            $item = ItemKinds::read(
-                new ItemId($entry['ItemID']),
-                new ItemName($entry['sName']),
-                $entry['sType'],
-                static::class,
-            );
+            $item = ItemKinds::read($entry, static::class, $procs);
             if ($entry['bUpg'] ?? false) {
                 $item->tags->add(ItemTag::MemberOnly);
             }
@@ -67,6 +62,7 @@ final readonly class PlayerInventoryLoadedEvent implements Event
             $held[] = new PlayerItem(
                 $item,
                 $item instanceof ClassItem ? new Quantity(1) : new Quantity($entry['iQty'] ?? 1),
+                $entry['bEquip'] ?? false,
             );
         }
 

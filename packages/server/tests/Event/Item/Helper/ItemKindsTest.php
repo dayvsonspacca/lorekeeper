@@ -11,22 +11,30 @@ use Lorekeeper\Core\Item\Equipment\GroundItem;
 use Lorekeeper\Core\Item\Equipment\Helm;
 use Lorekeeper\Core\Item\Equipment\Necklace;
 use Lorekeeper\Core\Item\Equipment\Pet;
-use Lorekeeper\Core\Item\Equipment\Weapon;
-use Lorekeeper\Core\Item\Equipment\WeaponType;
+use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
+use Lorekeeper\Core\Item\Equipment\Weapon\WeaponType;
+use Lorekeeper\Core\Item\EquipmentSlot;
 use Lorekeeper\Core\Item\House\HouseItem;
 use Lorekeeper\Core\Item\House\HouseItemType;
 use Lorekeeper\Core\Item\Item;
-use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\Misc\Boost;
-use Lorekeeper\Core\Item\Misc\Enhancement;
+use Lorekeeper\Core\Item\Misc\Enhancement\EffectDescription;
+use Lorekeeper\Core\Item\Misc\Enhancement\EffectName;
+use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
+use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementEffect;
+use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementItem;
+use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementRarity;
+use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementType;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
+use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use Psl\Option;
 
 final class ItemKindsTest extends TestCase
 {
@@ -40,7 +48,6 @@ final class ItemKindsTest extends TestCase
     #[TestWith(['Necklace', Necklace::class])]
     #[TestWith(['Misc', GroundItem::class])]
     #[TestWith(['ServerUse', Boost::class])]
-    #[TestWith(['Enhancement', Enhancement::class])]
     #[TestWith(['Item', Resource::class])]
     #[TestWith(['Note', Resource::class])]
     #[TestWith(['Quest Item', Resource::class])]
@@ -85,6 +92,108 @@ final class ItemKindsTest extends TestCase
     }
 
     #[Test]
+    public function it_reads_what_an_enhancement_sold_in_a_shop_applies_and_where_it_fits(): void
+    {
+        $item = ItemKinds::read([
+            'ItemID' => 3628,
+            'sName' => 'Lucky Weapon Enhancement',
+            'sType' => 'Enhancement',
+            'sES' => 'Weapon',
+            'iLvl' => 21,
+            'iRty' => 1,
+            'iRng' => 10,
+            'PatternID' => 9,
+        ], ShopLoadedEvent::class);
+
+        static::assertInstanceOf(EnhancementItem::class, $item);
+        static::assertEquals(
+            new Enhancement(EnhancementType::Lucky, EnhancementRarity::PlusZero, new ItemLevel(21), Option\none()),
+            $item->enhancement,
+        );
+        static::assertSame(EquipmentSlot::Weapon, $item->slot);
+        static::assertSame(21, $item->level->value);
+    }
+
+    #[Test]
+    public function a_weapon_carries_how_much_its_damage_varies_and_its_enhancement_with_the_effect(): void
+    {
+        $item = ItemKinds::read(
+            [
+                'ItemID' => 30_629,
+                'sName' => 'Necrotic Sword of Doom',
+                'sType' => 'Sword',
+                'sES' => 'Weapon',
+                'iLvl' => 1,
+                'iRty' => 36,
+                'iRng' => 10,
+                'EnhLvl' => 100,
+                'EnhRty' => 7,
+                'EnhPatternID' => 9,
+                'ProcID' => 4,
+            ],
+            PlayerInventoryLoadedEvent::class,
+            [4 => [
+                'nam' => 'Health Vampire',
+                'desc' => 'Deals 80% damage and lifesteals for 125% base damage (before stats).',
+                'typ' => 'ma',
+                'cd' => 0,
+                'range' => 3000,
+                'damage' => 0.8,
+                'tgt' => 'h',
+                'pct' => 50,
+                'ref' => 'aa',
+            ]],
+        );
+
+        static::assertInstanceOf(Weapon::class, $item);
+        static::assertSame(10, $item->damage->variance->percent);
+        static::assertEquals(
+            new Enhancement(
+                EnhancementType::Lucky,
+                EnhancementRarity::PlusSix,
+                new ItemLevel(100),
+                Option\some(
+                    new EnhancementEffect(
+                        new EffectName('Health Vampire'),
+                        new EffectDescription('Deals 80% damage and lifesteals for 125% base damage (before stats).'),
+                    ),
+                ),
+            ),
+            $item->enhancement->unwrap(),
+        );
+    }
+
+    #[Test]
+    public function an_enhancement_of_a_type_it_does_not_know_is_left_out(): void
+    {
+        $item = ItemKinds::read([
+            'ItemID' => 37_207,
+            'sName' => 'Dual Blinding Light of Destiny',
+            'sType' => 'Dagger',
+            'sES' => 'Weapon',
+            'iLvl' => 1,
+            'iRty' => 35,
+            'iRng' => 0,
+            'EnhLvl' => 80,
+            'EnhRty' => 5,
+            'EnhPatternID' => 10,
+            'ProcID' => 7,
+        ], PlayerInventoryLoadedEvent::class);
+
+        static::assertInstanceOf(Weapon::class, $item);
+        static::assertSame(0, $item->damage->variance->percent);
+        static::assertTrue($item->enhancement->isNone());
+    }
+
+    #[Test]
+    public function an_enhancement_without_its_type_rarity_or_slot_cannot_be_read(): void
+    {
+        $this->expectException(MalformedEventException::class);
+
+        self::read('Enhancement');
+    }
+
+    #[Test]
     public function it_keeps_the_id_and_name_of_the_item(): void
     {
         $item = self::read('Sword');
@@ -104,6 +213,11 @@ final class ItemKindsTest extends TestCase
 
     private static function read(string $type): Item
     {
-        return ItemKinds::read(new ItemId(1), new ItemName('Hero Item'), $type, PlayerInventoryLoadedEvent::class);
+        return ItemKinds::read([
+            'ItemID' => 1,
+            'sName' => 'Hero Item',
+            'sType' => $type,
+            'iLvl' => 1,
+        ], PlayerInventoryLoadedEvent::class);
     }
 }

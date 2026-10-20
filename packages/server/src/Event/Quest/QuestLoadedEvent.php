@@ -7,8 +7,6 @@ namespace Lorekeeper\Server\Event\Quest;
 use Lorekeeper\Core\CharacterClass\ClassId;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Item;
-use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Progression\ClassPoints;
@@ -270,12 +268,7 @@ final readonly class QuestLoadedEvent implements Event
                 continue;
             }
 
-            $item = ItemKinds::read(
-                new ItemId($described['ItemID']),
-                new ItemName($described['sName']),
-                $described['sType'],
-                static::class,
-            );
+            $item = ItemKinds::read($described, static::class);
             if ($described['bUpg'] ?? false) {
                 $item->tags->add(ItemTag::MemberOnly);
             }

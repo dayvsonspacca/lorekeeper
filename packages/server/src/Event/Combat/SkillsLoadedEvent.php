@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Combat;
 
 use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\CharacterClass\Passive\ClassPassive;
+use Lorekeeper\Core\CharacterClass\Passive\PassiveDescription;
+use Lorekeeper\Core\CharacterClass\Passive\PassiveName;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\CharacterClass\Skill\SkillName;
 use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\Support\Quantity;
+use Lorekeeper\Server\Event\Combat\Helper\SkillDetails;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -27,9 +30,13 @@ final readonly class SkillsLoadedEvent implements Event
 {
     use NamedAfterClass;
 
-    /** @param list<PlayerSkill> $skills */
+    /**
+     * @param list<PlayerSkill> $skills
+     * @param list<ClassPassive> $passives
+     */
     public function __construct(
         public array $skills,
+        public array $passives,
     ) {}
 
     /** @return Option\Option<static> */
@@ -41,18 +48,26 @@ final readonly class SkillsLoadedEvent implements Event
         }
 
         try {
-            $active = Type\shape([
+            $actions = Type\shape([
                 'actions' => Type\shape([
                     'active' => Type\vec(Type\shape([
                         'ref' => Type\non_empty_string(),
+                        'nam' => Type\non_empty_string(),
+                        'desc' => Type\optional(Type\string()),
                         'tgt' => Type\string(),
                         'mp' => Type\int(),
                         'cd' => Type\uint(),
                         'tgtMax' => Type\optional(Type\positive_int()),
+                        'damage' => Type\optional(Type\num()),
+                        'dsrc' => Type\optional(Type\string()),
                         'isOK' => Type\optional(Type\bool()),
                     ], allowUnknownFields: true)),
+                    'passive' => Type\optional(Type\vec(Type\shape([
+                        'nam' => Type\non_empty_string(),
+                        'desc' => Type\non_empty_string(),
+                    ], allowUnknownFields: true))),
                 ], allowUnknownFields: true),
-            ], allowUnknownFields: true)->coerce($message->data)['actions']['active'];
+            ], allowUnknownFields: true)->coerce($message->data)['actions'];
         } catch (CoercionException $exception) {
             throw new MalformedEventException(
                 static::class,
@@ -62,8 +77,8 @@ final readonly class SkillsLoadedEvent implements Event
         }
 
         $skills = [];
-        foreach ($active as $skill) {
-            $slot = self::slot($skill['ref']);
+        foreach ($actions['active'] as $skill) {
+            $slot = SkillDetails::slot($skill['ref']);
             if ($slot === null) {
                 continue;
             }
@@ -71,40 +86,27 @@ final readonly class SkillsLoadedEvent implements Event
             $skills[] = new PlayerSkill(
                 new Skill(
                     $slot,
-                    self::target($skill['tgt']),
+                    new SkillName($skill['nam']),
+                    SkillDetails::description($skill['desc'] ?? ''),
+                    SkillDetails::target($skill['tgt']),
                     $skill['mp'] < 0 ? new ManaRestore(new Mana(-$skill['mp'])) : new ManaCost(new Mana($skill['mp'])),
                     Duration::milliseconds($skill['cd']),
                     new Quantity($skill['tgtMax'] ?? 1),
+                    SkillDetails::damage($skill['damage'] ?? 0, $skill['dsrc'] ?? ''),
                 ),
                 $skill['isOK'] ?? false,
             );
         }
 
-        return Option\some(new static($skills));
-    }
+        $passives = array_map(
+            static fn(array $passive): ClassPassive => new ClassPassive(
+                new PassiveName($passive['nam']),
+                new PassiveDescription($passive['desc']),
+            ),
+            $actions['passive'] ?? [],
+        );
 
-    private static function slot(string $ref): ?SkillSlot
-    {
-        return match ($ref) {
-            'aa' => SkillSlot::AutoAttack,
-            'a1' => SkillSlot::First,
-            'a2' => SkillSlot::Second,
-            'a3' => SkillSlot::Third,
-            'a4' => SkillSlot::Fourth,
-            'i1' => SkillSlot::Potion,
-            default => null,
-        };
-    }
-
-    /** @throws MalformedEventException */
-    private static function target(string $target): SkillTarget
-    {
-        return match ($target) {
-            'h' => SkillTarget::Enemy,
-            's' => SkillTarget::Self,
-            'f' => SkillTarget::Ally,
-            default => throw new MalformedEventException(static::class, "unknown skill target '{$target}'"),
-        };
+        return Option\some(new static($skills, $passives));
     }
 
     #[Override]
