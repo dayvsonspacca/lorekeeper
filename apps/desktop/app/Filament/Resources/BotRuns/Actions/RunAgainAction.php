@@ -19,7 +19,7 @@ final class RunAgainAction
             ->color('gray')
             ->visible(static fn(BotRun $record): bool => !$record->status->isActive())
             ->action(static function (BotRun $record, Action $action): void {
-                $action->redirect(BotRunResource::getUrl('view', ['record' => $record->account->runs()->create()]));
+                $action->redirect(BotRunResource::getUrl('view', ['record' => $record->account->start()]));
             });
     }
 }

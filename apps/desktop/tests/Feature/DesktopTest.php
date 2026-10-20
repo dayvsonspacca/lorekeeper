@@ -19,6 +19,7 @@ use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Filament\Pages\Bots;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Pages\ManageAccounts;
+use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\BotRunResource;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
 use Lorekeeper\Apps\Desktop\Livewire\KeepAlive;
 use Lorekeeper\Apps\Desktop\Livewire\RunBoard;
@@ -469,6 +470,25 @@ final class DesktopTest extends TestCase
         Livewire::test(ViewBotRun::class, ['record' => $gone->id])->callAction('stop');
         static::assertSame(RunStatus::Stopped, $gone->refresh()->status);
         static::assertSame(TaskStatus::Cancelled, $gone->tasks()->sole()->status);
+    }
+
+    #[Test]
+    public function starting_an_ended_run_again_keeps_one_run_per_account(): void
+    {
+        $account = $this->account();
+        $ended = $account->runs()->create();
+        $ended->update(['status' => RunStatus::Stopped]);
+
+        Livewire::test(ViewBotRun::class, ['record' => $ended->id])->callAction('runAgain');
+        $active = $account->activeRun();
+        static::assertNotNull($active);
+
+        Livewire::test(ViewBotRun::class, ['record' => $ended->id])
+            ->callAction('runAgain')
+            ->assertRedirect(BotRunResource::getUrl('view', ['record' => $active]));
+
+        static::assertSame(2, $account->runs()->count());
+        static::assertSame($active->id, $account->activeRun()?->id);
     }
 
     #[Test]

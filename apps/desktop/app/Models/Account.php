@@ -59,13 +59,9 @@ final class Account extends Model
         return $run instanceof BotRun ? $run->scene() : null;
     }
 
-    public function start(): void
+    public function start(): BotRun
     {
-        if ($this->activeRun() !== null) {
-            return;
-        }
-
-        $this->runs()->create();
+        return $this->activeRun() ?? $this->runs()->create();
     }
 
     public function resume(): void
