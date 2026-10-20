@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Tests\Attribute\Stat;
 
 use InvalidArgumentException;
+use Lorekeeper\Core\Attribute\Stat\Boost\MagicalBoost;
 use Lorekeeper\Core\Attribute\Stat\Haste;
 use Lorekeeper\Core\Attribute\Stat\Resistance\DamageResistance;
 use Lorekeeper\Core\Attribute\Stat\Resistance\DotResistance;
@@ -47,10 +48,17 @@ final class StatsTest extends TestCase
     }
 
     #[Test]
-    public function a_stat_below_zero_is_refused(): void
+    public function a_chance_or_haste_below_zero_is_refused(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
         new Haste(-0.1);
+    }
+
+    #[Test]
+    public function a_resistance_or_boost_can_fall_below_normal(): void
+    {
+        static::assertSame(-0.6, new DamageResistance(-0.6)->effective());
+        static::assertSame(-0.4389, new MagicalBoost(-0.4389)->value);
     }
 }
