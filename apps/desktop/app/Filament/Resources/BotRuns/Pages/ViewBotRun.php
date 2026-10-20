@@ -25,6 +25,12 @@ final class ViewBotRun extends ViewRecord
     #[Override]
     public function getTitle(): string
     {
+        return $this->getRecord()->account->name;
+    }
+
+    #[Override]
+    public function getSubheading(): string
+    {
         return "Run #{$this->getRecord()->getKey()}";
     }
 

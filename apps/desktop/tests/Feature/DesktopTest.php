@@ -20,8 +20,7 @@ use Lorekeeper\Apps\Desktop\Filament\Pages\Bots;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Pages\ManageAccounts;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
 use Lorekeeper\Apps\Desktop\Livewire\KeepAlive;
-use Lorekeeper\Apps\Desktop\Livewire\RunScene;
-use Lorekeeper\Apps\Desktop\Livewire\RunTasks;
+use Lorekeeper\Apps\Desktop\Livewire\RunBoard;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
@@ -112,54 +111,67 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
-    public function the_run_shows_the_scene_of_its_bot(): void
+    public function the_run_shows_its_bot_task_log_and_map_on_one_board(): void
     {
         $run = $this->botInTheGame();
+        $run->log('Joined icestormarena');
 
-        Livewire::test(RunScene::class, ['run' => $run])->assertSeeInOrder([
-            'Hero',
-            'Mage',
-            'Rank 7',
-            'Member',
-            'Fighting',
-            '1,840',
-            '21,000',
-            '60,000',
-            '×3',
-            '+15',
-            '23%',
-            '123,456',
-            'icestormarena',
-            '2 of 2 monsters standing',
-            'Artix',
-            'r3a',
-            '1/1',
-            'r4',
-            '1/1',
-            'r3a · fighting here',
-            'Frost Spirit',
-            'Lv 33',
-            'Inventory · 3 items',
-            'Held for now',
-            'Metal Ore',
-            'Kept',
-            'Healer',
-            'Crypto Token',
-            '×4',
-            'Pace',
-            'XP per hour',
-            '1,200',
-            'to level 40',
-            'Chronicle',
-            'Defeated Frost Spirit',
-            '+700 XP · +40 gold',
-        ]);
+        Livewire::test(RunBoard::class, ['run' => $run])
+            ->assertSeeInOrder([
+                'Fighting',
+                'Level 34 · rank 7',
+                'Mage',
+                'icestormarena',
+                '1 player',
+                '1,840',
+                '2,300',
+                '21,000',
+                '60,000',
+                '123,456',
+                'Now',
+                'Level up · to level 40',
+                'Pace',
+                'XP per hour',
+                '1,200',
+                'to level 40',
+                'Tasks',
+                'Log',
+                'Joined icestormarena',
+                'Map',
+                'r3a',
+                '1/1',
+                'r4',
+                '1/1',
+                'r3a · fighting here',
+                'Frost Spirit',
+                'Lv 33',
+            ])
+            ->assertDontSee('Chronicle');
+    }
+
+    #[Test]
+    public function the_inventory_and_skills_wait_behind_their_tabs(): void
+    {
+        $board = Livewire::test(RunBoard::class, ['run' => $this->botInTheGame()]);
+
+        $board->assertDontSee('Held for now');
+        $board
+            ->call('open', 'inventory')
+            ->assertSeeInOrder(['Held for now', 'Metal Ore', 'Kept', 'Healer', 'Crypto Token'])
+            ->assertDontSee('Frost Spirit');
+        static::assertStringContainsString('×4', $board->html());
+        $board
+            ->call('open', 'skills')
+            ->assertSeeInOrder(['+15', 'Rank 7', '23% to rank 8', '90,000', 'class points'])
+            ->assertDontSee('Held for now');
+        static::assertStringContainsString('×3', $board->html());
+        $board->call('open', 'anything')->assertSee('Frost Spirit');
     }
 
     #[Test]
     public function the_map_shows_one_cell_at_a_time_and_goes_back_to_the_fight(): void
     {
-        $scene = Livewire::test(RunScene::class, ['run' => $this->botInTheGame()]);
+        $scene = Livewire::test(RunBoard::class, ['run' => $this->botInTheGame()]);
 
         $scene->assertSee('Frost Spirit')->assertDontSee('Snow Golem');
 
@@ -217,7 +229,7 @@ final class DesktopTest extends TestCase
         $run->update(['status' => RunStatus::Running]);
         $pending = $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 10]]);
 
-        Livewire::test(RunTasks::class, ['run' => $run])
+        Livewire::test(RunBoard::class, ['run' => $run])
             ->mountAction('cancel', ['task' => $pending->id])
             ->assertActionMounted('cancel')
             ->callMountedAction();
@@ -340,7 +352,7 @@ final class DesktopTest extends TestCase
         $task->update(['status' => TaskStatus::Running, 'progress_done' => 1, 'progress_total' => 4]);
 
         static::assertSame(25, $task->refresh()->percent());
-        Livewire::test(RunTasks::class, ['run' => $run])->assertSee('1/4 · 25%');
+        Livewire::test(RunBoard::class, ['run' => $run])->assertSee('1/4 · 25%');
         $this->get('/bot-runs')->assertSee('Level up')->assertSee('25%');
     }
 
@@ -368,7 +380,7 @@ final class DesktopTest extends TestCase
 
         $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 20]]);
 
-        Livewire::test(RunTasks::class, ['run' => $run])
+        Livewire::test(RunBoard::class, ['run' => $run])
             ->assertSee('Report')
             ->assertSeeInOrder(['to level 10', 'Monsters killed', 'to level 20'])
             ->assertSee('3 per minute')
@@ -376,7 +388,7 @@ final class DesktopTest extends TestCase
             ->assertSee('4 levels')
             ->assertSee('33%');
         static::assertSame(1, substr_count(
-            Livewire::test(RunTasks::class, ['run' => $run])->html(),
+            Livewire::test(RunBoard::class, ['run' => $run])->html(),
             needle: 'Monsters killed',
         ));
         $this->get("/bot-runs/{$run->id}")->assertDontSee('Progress shows up');

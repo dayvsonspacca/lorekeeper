@@ -61,4 +61,50 @@
     .lk-log [data-level="warning"] { color: #fbbf24; }
     .lk-log [data-level="error"] { color: #f87171; }
     .lk-log__more { display: inline-block; margin-top: .25rem; color: #a5b4fc; }
+    .lk-tag[data-state="running"] { color: #c7d2fe; background: #1e2048; }
+    .lk-tag[data-state="done"] { color: #86efac; background: #14301f; }
+    .lk-tag[data-state="cancelled"], .lk-tag[data-state="cancelling"] { color: var(--gray-400); background: var(--gray-800); }
+
+    .lk-box { display: flex; flex-direction: column; gap: .625rem; min-width: 0; padding: .875rem 1rem; border: 1px solid var(--gray-800); border-radius: .75rem; background: var(--gray-900); }
+    .lk-box__head { display: flex; justify-content: space-between; gap: .75rem; color: var(--lk-muted); font-size: .75rem; }
+    .lk-box__head > span:first-child { color: var(--gray-200); font-weight: 600; }
+
+    .fi-header-subheading { font-size: .8125rem; margin-top: .125rem; }
+    .lk-run__rowhead .lk-tag, .lk-run__task .lk-tag { justify-self: start; flex-shrink: 0; }
+    .lk-run__panel .lk-panel__title > span { display: none; }
+    .lk-run .lk-tab { padding: .25rem .625rem; font-size: .75rem; font-weight: 500; letter-spacing: 0; text-transform: none; }
+    .lk-run .lk-cell { border: 1px solid var(--gray-800); border-radius: .625rem; }
+    .lk-run .lk-cell__name { letter-spacing: 0; text-transform: none; font-weight: 500; font-size: .75rem; }
+    .lk-run .lk-sum { grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); }
+    .lk-run__line { display: flex; align-items: center; gap: .375rem; min-width: 0; white-space: nowrap; margin-top: .25rem; font-size: .875rem; font-weight: 500; }
+    .lk-run__meter { display: flex; flex-direction: column; justify-content: center; }
+    .lk-run__main { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+    .lk-run__col { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+    .lk-run__task { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+    .lk-run__progress { display: flex; align-items: center; gap: .625rem; }
+    .lk-run__progress .lk-track { flex: 1; }
+    .lk-run__panel { padding-top: .75rem; border-top: 1px solid var(--gray-800); }
+    .lk-run__panel .lk-panel__title { margin-bottom: .5rem; }
+    .lk-run__panel .lk-panel__title h3 { font-size: .75rem; letter-spacing: 0; text-transform: none; font-weight: 500; }
+    .lk-run__panel .lk-pulse__head { gap: 1.75rem; }
+    .lk-run__panel .lk-pulse__stat strong { font-size: 1.125rem; font-weight: 600; letter-spacing: 0; }
+    .lk-run__panel .lk-pulse__stat span { font-size: .75rem; text-transform: none; letter-spacing: 0; color: var(--lk-muted); }
+    .lk-run__panel .lk-steps { margin-top: .75rem; }
+    .lk-run__panel .lk-chart { height: 4.5rem; }
+    .lk-run__row { border-top: 1px solid var(--gray-800); }
+    .lk-run__row:first-of-type { border-top: 0; }
+    .lk-run__rowhead { display: grid; grid-template-columns: 1.75rem 2.25rem 5.5rem minmax(0, 1fr) 4.5rem 2rem; gap: .5rem; align-items: center; padding-block: .375rem; }
+    .lk-run__rowhead .lk-row__toggle svg { width: 1rem; height: 1rem; transition: transform .15s; }
+    .lk-run__what { display: flex; flex-direction: column; min-width: 0; }
+    .lk-run__report { padding: .5rem 0 .75rem 2.25rem; }
+    .lk-run__logbox { position: sticky; top: 1rem; }
+    .lk-run__log { max-height: 34rem; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--gray-700) transparent; }
+    .lk-run__tabs { display: flex; gap: 1.25rem; margin-bottom: .25rem; border-bottom: 1px solid var(--gray-800); }
+    .lk-run__tab { padding: .25rem 0 .625rem; margin-bottom: -1px; border-bottom: 2px solid transparent; color: var(--lk-muted); font-weight: 500; }
+    .lk-run__tab:hover { color: var(--gray-200); }
+    .lk-run__tab[aria-selected="true"] { color: var(--gray-100); border-bottom-color: var(--primary-400); }
+    .lk-run__facts { display: flex; gap: 1.5rem; flex-wrap: wrap; padding-top: .75rem; }
+    .lk-run .lk-cell, .lk-run .lk-mob, .lk-run .lk-item { background: var(--gray-950); }
+    .lk-run .lk-cell[data-engaged] { background: color-mix(in oklab, #fbbf24 6%, var(--gray-950)); }
+    @media (max-width: 64rem) { .lk-run__main { grid-template-columns: 1fr; } .lk-run__logbox { position: static; } }
 </style>

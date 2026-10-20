@@ -10,10 +10,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Livewire;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -26,9 +24,7 @@ use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Actions\StopRunAction;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\CreateBotRun;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ListBotRuns;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
-use Lorekeeper\Apps\Desktop\Livewire\RunLog;
-use Lorekeeper\Apps\Desktop\Livewire\RunScene;
-use Lorekeeper\Apps\Desktop\Livewire\RunTasks;
+use Lorekeeper\Apps\Desktop\Livewire\RunBoard;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Override;
 
@@ -77,30 +73,7 @@ final class BotRunResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Livewire::make(RunScene::class, static fn(BotRun $record): array => ['run' => $record])->columnSpanFull(),
-            Section::make('Tasks')
-                ->icon(Heroicon::OutlinedQueueList)
-                ->schema([Livewire::make(RunTasks::class, static fn(BotRun $record): array => ['run' => $record])])
-                ->columnSpanFull(),
-            Section::make('Log')
-                ->icon(Heroicon::OutlinedCommandLine)
-                ->schema([Livewire::make(RunLog::class, static fn(BotRun $record): array => ['run' => $record])])
-                ->columnSpanFull(),
-            Section::make('Details')
-                ->icon(Heroicon::OutlinedPlay)
-                ->schema([
-                    TextEntry::make('account.name')->label('Character')->icon(Heroicon::OutlinedUser),
-                    TextEntry::make('map')->icon(Heroicon::OutlinedMap)->placeholder('Not in the game yet'),
-                    TextEntry::make('started_at')->dateTime()->placeholder('Not started'),
-                    TextEntry::make('finished_at')->dateTime()->placeholder('—'),
-                    TextEntry::make('result')
-                        ->visible(static fn(BotRun $record): bool => $record->result !== null)
-                        ->columnSpanFull(),
-                ])
-                ->columns(4)
-                ->collapsible()
-                ->collapsed()
-                ->columnSpanFull(),
+            Livewire::make(RunBoard::class, static fn(BotRun $record): array => ['run' => $record])->columnSpanFull(),
         ]);
     }
 
