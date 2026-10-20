@@ -13,6 +13,7 @@ use Lorekeeper\Client\Command\Session\LoginCommand;
 use Lorekeeper\Client\Command\Session\PolicyFileRequestCommand;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;
+use Lorekeeper\Client\Script\Failed;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Script;
@@ -34,6 +35,7 @@ use Psl\Async\Exception\CancelledException;
 use Psl\Async\NullCancellationToken;
 use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
+use RuntimeException;
 
 /**
  * @mago-expect lint:cyclomatic-complexity
@@ -164,6 +166,8 @@ final class Client
             }
 
             return new Stopped();
+        } catch (RuntimeException $broke) {
+            return new Failed($broke->getMessage());
         }
 
         return $steps->getReturn();

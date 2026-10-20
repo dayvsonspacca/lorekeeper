@@ -12,6 +12,7 @@ use Lorekeeper\Client\Command\Session\PolicyFileRequestCommand;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Disconnected;
+use Lorekeeper\Client\Script\Failed;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Script;
@@ -29,7 +30,9 @@ use Psl\Async\NullCancellationToken;
 use Psl\Async\SignalCancellationToken;
 use Psl\DateTime\Duration;
 use Psl\TCP;
+use RuntimeException;
 
+/** @mago-expect lint:too-many-methods */
 final class ClientTest extends TestCase
 {
     #[Test]
@@ -128,6 +131,18 @@ final class ClientTest extends TestCase
         }));
 
         static::assertEquals(new Disconnected('The server closed the connection.'), $result);
+    }
+
+    #[Test]
+    public function a_script_that_breaks_fails_instead_of_taking_the_client_down(): void
+    {
+        $result = new Client(self::connection(), self::me())->run(self::script(static function (): Generator {
+            yield new Pause(Duration::milliseconds(1));
+
+            throw new RuntimeException('Could not join boxes: no answer');
+        }));
+
+        static::assertEquals(new Failed('Could not join boxes: no answer'), $result);
     }
 
     #[Test]
