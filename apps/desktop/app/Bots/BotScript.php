@@ -11,6 +11,7 @@ use Filament\Support\Contracts\HasLabel;
 use Lorekeeper\Bot\Scripts\CryptoTokenScript;
 use Lorekeeper\Bot\Scripts\EldersBloodScript;
 use Lorekeeper\Bot\Scripts\LevelUpScript;
+use Lorekeeper\Bot\Scripts\TokensOfCollectionScript;
 use Lorekeeper\Client\Script\Script;
 use Override;
 
@@ -19,6 +20,7 @@ enum BotScript: string implements HasLabel, HasDescription
     case LevelUp = 'level-up';
     case CryptoToken = 'crypto-token';
     case EldersBlood = 'elders-blood';
+    case TokensOfCollection = 'tokens-of-collection';
 
     /** @return array<string, null> */
     public static function blankParameters(): array
@@ -37,6 +39,7 @@ enum BotScript: string implements HasLabel, HasDescription
             self::LevelUp => 'Level up',
             self::CryptoToken => 'Crypto Token daily',
             self::EldersBlood => "Elders' Blood daily",
+            self::TokensOfCollection => 'Tokens of Collection daily',
         };
     }
 
@@ -50,6 +53,8 @@ enum BotScript: string implements HasLabel, HasDescription
                 => "Odd's 'n' Ends in boxes: hunts a Sneevil's Metal Ore, turns it in and picks up a Crypto Token, once a day.",
             self::EldersBlood
                 => "Experiment 107 in arcangrove: slays 50 Gorillaphants, turns them in and picks up an Elders' Blood, once a day.",
+            self::TokensOfCollection
+                => 'Tokens of Collection in terrarium: hunts two tokens from the Carnivorous Crickets, turns them in and picks up a Token of Collection, once a day.',
         };
     }
 
@@ -58,7 +63,7 @@ enum BotScript: string implements HasLabel, HasDescription
     {
         return match ($this) {
             self::LevelUp => ['level' => 100],
-            self::CryptoToken, self::EldersBlood => [],
+            self::CryptoToken, self::EldersBlood, self::TokensOfCollection => [],
         };
     }
 
@@ -67,7 +72,7 @@ enum BotScript: string implements HasLabel, HasDescription
     {
         return match ($this) {
             self::LevelUp => [Parameters::levelField()],
-            self::CryptoToken, self::EldersBlood => [],
+            self::CryptoToken, self::EldersBlood, self::TokensOfCollection => [],
         };
     }
 
@@ -76,7 +81,7 @@ enum BotScript: string implements HasLabel, HasDescription
     {
         return match ($this) {
             self::LevelUp => 'to level ' . Parameters::level($parameters)->value,
-            self::CryptoToken, self::EldersBlood => 'for today',
+            self::CryptoToken, self::EldersBlood, self::TokensOfCollection => 'for today',
         };
     }
 
@@ -96,6 +101,7 @@ enum BotScript: string implements HasLabel, HasDescription
             self::LevelUp => new LevelUpScript(Parameters::level($parameters)),
             self::CryptoToken => new CryptoTokenScript(),
             self::EldersBlood => new EldersBloodScript(),
+            self::TokensOfCollection => new TokensOfCollectionScript(),
         };
     }
 }
