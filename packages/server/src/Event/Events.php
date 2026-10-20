@@ -35,6 +35,7 @@ use Lorekeeper\Server\Event\Player\PlayerAwayUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
 use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
+use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
@@ -94,6 +95,7 @@ final readonly class Events
         PlayerUpdatedEvent::class,
         PlayerAwayUpdatedEvent::class,
         PlayerVitalsUpdatedEvent::class,
+        PlayerStateUpdatedEvent::class,
         PlayerDataLoadedEvent::class,
         QuestLoadedEvent::class,
         ItemsTurnedInEvent::class,
