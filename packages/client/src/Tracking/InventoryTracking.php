@@ -12,6 +12,7 @@ use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\AddedItem;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
@@ -20,6 +21,10 @@ use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\TurnedInItem;
 
+/**
+ * @mago-expect lint:cyclomatic-complexity
+ * @mago-expect lint:kan-defect
+ */
 final readonly class InventoryTracking
 {
     public static function follow(
@@ -46,6 +51,11 @@ final readonly class InventoryTracking
                 $inventory->slots,
                 self::grown($inventory->temporary, $event->items),
             ),
+            $event instanceof ItemsEnhancedEvent => new PlayerInventory(
+                self::enhanced($inventory->permanent, $event),
+                $inventory->slots,
+                $inventory->temporary,
+            ),
             $event instanceof ItemsTurnedInEvent => new PlayerInventory(
                 self::taken($inventory->permanent, $event->items),
                 $inventory->slots,
@@ -69,13 +79,14 @@ final readonly class InventoryTracking
         DropPickedUpEvent $event,
         Drops $drops,
     ): PlayerInventory {
-        $item = $drops->find($event->item)->item ?? $inventory->permanent->find($event->item)->unwrapOr(null)?->item;
+        $before = $inventory->permanent->find($event->item)->unwrapOr(null);
+        $item = $drops->find($event->item)->item ?? $before?->item;
         if ($item === null) {
             return $inventory;
         }
 
         $held = $inventory->permanent->items->toArray();
-        $held[$event->item->value] = new PlayerItem($item, $event->held);
+        $held[$event->item->value] = new PlayerItem($item, $event->held, $before->equipped ?? false);
 
         return new PlayerInventory(new PlayerItems(array_values($held)), $inventory->slots, $inventory->temporary);
     }
@@ -88,7 +99,11 @@ final readonly class InventoryTracking
             $before = $held[$item->item->id->value] ?? null;
             $held[$item->item->id->value] = $before === null
                 ? $item
-                : new PlayerItem($before->item, new Quantity($before->quantity->value + $item->quantity->value));
+                : new PlayerItem(
+                    $before->item,
+                    new Quantity($before->quantity->value + $item->quantity->value),
+                    $before->equipped,
+                );
         }
 
         return new PlayerItems(array_values($held));
@@ -107,6 +122,7 @@ final readonly class InventoryTracking
             $held[$added->item->value] = new PlayerItem(
                 $before->item,
                 $added->held ?? new Quantity($before->quantity->value + $added->quantity->value),
+                $before->equipped,
             );
         }
 
@@ -130,7 +146,26 @@ final readonly class InventoryTracking
                 continue;
             }
 
-            $held[$item->item->value] = new PlayerItem($before->item, new Quantity($left));
+            $held[$item->item->value] = new PlayerItem($before->item, new Quantity($left), $before->equipped);
+        }
+
+        return new PlayerItems(array_values($held));
+    }
+
+    private static function enhanced(PlayerItems $items, ItemsEnhancedEvent $event): PlayerItems
+    {
+        $held = $items->items->toArray();
+        foreach ($event->items as $id) {
+            $before = $held[$id->value] ?? null;
+            if ($before === null) {
+                continue;
+            }
+
+            $held[$id->value] = new PlayerItem(
+                EnchantedItem::from($before->item, $event->enhancement),
+                $before->quantity,
+                $before->equipped,
+            );
         }
 
         return new PlayerItems(array_values($held));

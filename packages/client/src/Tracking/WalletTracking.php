@@ -7,6 +7,7 @@ namespace Lorekeeper\Client\Tracking;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Player\Wallet;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Reward\RewardedEvent;
 
@@ -17,6 +18,10 @@ final readonly class WalletTracking
         return match (true) {
             $event instanceof PlayerDataLoadedEvent => PlayerDataTracking::mine($event, $me)->wallet ?? $wallet,
             $event instanceof RewardedEvent => self::earned($wallet, $event->gold),
+            $event instanceof ItemsEnhancedEvent => new Wallet(
+                new Gold(max(0, $wallet->gold->value - $event->paid->value)),
+                $wallet->coins,
+            ),
             default => $wallet,
         };
     }

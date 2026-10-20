@@ -7,9 +7,17 @@ namespace Lorekeeper\Client\Tests\Tracking;
 use Lorekeeper\Client\Drops;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Client\Tracking\InventoryTracking;
+use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\Item\Equipment\Weapon\DamageVariance;
+use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
+use Lorekeeper\Core\Item\Equipment\Weapon\WeaponDamage;
+use Lorekeeper\Core\Item\Equipment\Weapon\WeaponType;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
+use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementRarity;
+use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementType;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
@@ -18,6 +26,7 @@ use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
@@ -25,7 +34,9 @@ use Lorekeeper\Server\Event\Quest\TurnedInItem;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psl\Option;
 
+/** @mago-expect lint:too-many-methods */
 final class InventoryTrackingTest extends TestCase
 {
     #[Test]
@@ -117,6 +128,36 @@ final class InventoryTrackingTest extends TestCase
         $inventory = new PlayerInventory(new PlayerItems([self::token(3)]), new Quantity(30));
 
         static::assertSame($inventory, InventoryTracking::follow($inventory, new PlayerDiedEvent(), self::me()));
+    }
+
+    #[Test]
+    public function an_enhanced_item_stays_equipped_and_takes_the_new_enhancement(): void
+    {
+        $staff = new PlayerItem(
+            new Weapon(
+                new ItemId(3),
+                new ItemName('Default Staff'),
+                new ItemLevel(1),
+                WeaponType::Staff,
+                new WeaponDamage(new DamageVariance(10)),
+                Option\none(),
+            ),
+            new Quantity(1),
+            equipped: true,
+        );
+        $lucky = new Enhancement(EnhancementType::Lucky, EnhancementRarity::PlusZero, new ItemLevel(21), Option\none());
+
+        $enhanced = InventoryTracking::follow(
+            new PlayerInventory(new PlayerItems([$staff, self::token(2)]), new Quantity(30)),
+            new ItemsEnhancedEvent([new ItemId(3)], $lucky, new Gold(1010)),
+            self::me(),
+        );
+
+        $after = $enhanced->permanent->find(new ItemId(3))->unwrap();
+        static::assertTrue($after->equipped);
+        static::assertInstanceOf(Weapon::class, $after->item);
+        static::assertSame($lucky, $after->item->enhancement->unwrap());
+        static::assertSame(2, $enhanced->quantity(new ItemId(42_657)));
     }
 
     private static function me(): Identity
