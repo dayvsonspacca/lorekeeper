@@ -9,6 +9,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
@@ -31,7 +32,11 @@ final class ManagePreferences extends Page
 
     public function mount(): void
     {
-        $this->form->fill(Preferences::current()->only(['private_rooms', ...array_keys(Preferences::BLOCKS)]));
+        $this->form->fill(Preferences::current()->only([
+            'private_rooms',
+            'play_together',
+            ...array_keys(Preferences::BLOCKS),
+        ]));
     }
 
     public function form(Schema $schema): Schema
@@ -46,6 +51,11 @@ final class ManagePreferences extends Page
                             ->helperText(
                                 'Every map is joined in a room with a random number, so other players rarely share it.',
                             ),
+                        self::toggle('play_together', 'Play together')
+                            ->helperText(
+                                'Bots of this app that join the same map share one private room, so they fight side by side.',
+                            )
+                            ->disabled(static fn(Get $get): bool => !$get('private_rooms')),
                     ]),
                 Section::make('Hide from other players')
                     ->description('Applied each time a bot enters the game.')

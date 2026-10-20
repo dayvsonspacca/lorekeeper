@@ -22,6 +22,7 @@ final class PreferencesTest extends TestCase
         $preferences = Preferences::current();
 
         static::assertTrue($preferences->private_rooms);
+        static::assertTrue($preferences->play_together);
         foreach (GameSetting::cases() as $setting) {
             static::assertTrue($preferences->blocks($setting));
         }
@@ -35,7 +36,7 @@ final class PreferencesTest extends TestCase
         $this
             ->get('/preferences')
             ->assertOk()
-            ->assertSee(['Play in private rooms', 'Block goto', 'Ignore duel invites']);
+            ->assertSee(['Play in private rooms', 'Play together', 'Block goto', 'Ignore duel invites']);
 
         Livewire::test(ManagePreferences::class)
             ->assertSet('data.private_rooms', true)

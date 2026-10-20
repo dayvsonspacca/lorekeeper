@@ -10,6 +10,7 @@ use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Command\Map\JoinMapCommand;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
+use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Server\RoomId;
 use Override;
 
@@ -24,18 +25,18 @@ final readonly class PrivateRooms implements Script
 
     public const int HIGHEST = 99_999;
 
-    /** @var Closure(): RoomId */
+    /** @var Closure(MapName): RoomId */
     private Closure $rooms;
 
     /**
      * @param Script<TResult> $script
-     * @param null|Closure(): RoomId $rooms
+     * @param null|Closure(MapName): RoomId $rooms
      */
     public function __construct(
         private Script $script,
         ?Closure $rooms = null,
     ) {
-        $this->rooms = $rooms ?? static fn(): RoomId => new RoomId(random_int(self::LOWEST, self::HIGHEST));
+        $this->rooms = $rooms ?? static fn(MapName $map): RoomId => new RoomId(random_int(self::LOWEST, self::HIGHEST));
     }
 
     #[Override]
@@ -51,7 +52,10 @@ final readonly class PrivateRooms implements Script
         while ($steps->valid()) {
             $instruction = $steps->current();
             if ($instruction instanceof Send && $instruction->command instanceof JoinMapCommand) {
-                $instruction = new Send($instruction->command->inRoom(($this->rooms)()), $instruction->await);
+                $instruction = new Send(
+                    $instruction->command->inRoom(($this->rooms)($instruction->command->mapName)),
+                    $instruction->await,
+                );
             }
 
             $steps->send(yield $instruction);

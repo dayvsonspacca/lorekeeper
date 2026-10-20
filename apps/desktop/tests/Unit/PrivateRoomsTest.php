@@ -32,7 +32,10 @@ final class PrivateRoomsTest extends TestCase
     public function every_map_the_script_joins_is_joined_in_a_room_of_its_own(): void
     {
         $rooms = [24_357, 84_881];
-        $script = new PrivateRooms(self::script(), static function () use (&$rooms): RoomId {
+        $asked = [];
+        $script = new PrivateRooms(self::script(), static function (MapName $map) use (&$rooms, &$asked): RoomId {
+            $asked[] = $map->value;
+
             return new RoomId((int) array_shift($rooms));
         });
         $steps = $script->run(Characters::me('lorekeeper03', 23, 'battleon'));
@@ -46,6 +49,7 @@ final class PrivateRoomsTest extends TestCase
         }
 
         static::assertSame('Two maps', $script->title());
+        static::assertSame(['boxes', 'arcangrove'], $asked);
         static::assertEquals(new Done('joined both'), $steps->getReturn());
         static::assertSame(
             [

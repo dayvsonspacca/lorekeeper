@@ -13,6 +13,7 @@ use Lorekeeper\Apps\Desktop\Bots\Notifier\TaskNotice;
 use Lorekeeper\Apps\Desktop\Bots\PrivateRooms;
 use Lorekeeper\Apps\Desktop\Bots\RunRecorder;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
+use Lorekeeper\Apps\Desktop\Bots\SharedRooms;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
@@ -149,8 +150,9 @@ final class RunBot extends Command
     ): ?Outcome {
         try {
             $script = $task->script->script($task->parameters);
-            if (Preferences::current()->private_rooms) {
-                $script = new PrivateRooms($script);
+            $preferences = Preferences::current();
+            if ($preferences->private_rooms) {
+                $script = new PrivateRooms($script, $preferences->play_together ? SharedRooms::of(...) : null);
             }
         } catch (InvalidArgumentException $invalid) {
             $task->finish(TaskStatus::Failed, $invalid->getMessage());
