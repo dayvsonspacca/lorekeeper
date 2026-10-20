@@ -19,6 +19,7 @@ use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Filament\Pages\Bots;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Pages\ManageAccounts;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
+use Lorekeeper\Apps\Desktop\Livewire\KeepAlive;
 use Lorekeeper\Apps\Desktop\Livewire\RunScene;
 use Lorekeeper\Apps\Desktop\Livewire\RunTasks;
 use Lorekeeper\Apps\Desktop\Models\Account;
@@ -38,7 +39,7 @@ final class DesktopTest extends TestCase
         $run = $this->account()->runs()->create();
 
         foreach (['/', '/accounts', '/bot-runs', '/bot-runs/create', "/bot-runs/{$run->id}"] as $page) {
-            $this->get($page)->assertOk();
+            $this->get($page)->assertOk()->assertSeeLivewire(KeepAlive::class);
         }
     }
 

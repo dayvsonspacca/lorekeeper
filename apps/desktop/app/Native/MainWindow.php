@@ -8,14 +8,26 @@ use Native\Desktop\Facades\Window;
 
 final readonly class MainWindow
 {
+    public const string ID = 'main';
+
     public static function open(): void
     {
-        Window::open()
+        Window::open(self::ID)
             ->title('Lorekeeper')
             ->width(1280)
             ->height(820)
             ->minWidth(900)
             ->minHeight(600)
             ->rememberState();
+    }
+
+    public static function reviveIfSilent(): void
+    {
+        if (!Heartbeat::silent()) {
+            return;
+        }
+
+        Heartbeat::beat();
+        Window::reload(self::ID);
     }
 }

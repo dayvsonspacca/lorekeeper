@@ -19,7 +19,7 @@ final class NativeAppServiceProvider implements ProvidesPhpIni
 
         MainWindow::open();
         Tray::create();
-        ChildProcess::artisan(['tray:watch'], 'tray', persistent: true);
+        ChildProcess::artisan(['desktop:watch'], 'watch', persistent: true);
     }
 
     /** @return array<string, string> */

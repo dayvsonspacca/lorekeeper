@@ -19,8 +19,10 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Lorekeeper\Apps\Desktop\Filament\Pages\Bots;
+use Lorekeeper\Apps\Desktop\Livewire\KeepAlive;
 
 final class DesktopPanelProvider extends PanelProvider
 {
@@ -40,6 +42,9 @@ final class DesktopPanelProvider extends PanelProvider
             ->spa()
             ->renderHook(PanelsRenderHook::HEAD_END, static fn(): View => view('theme.scene'))
             ->renderHook(PanelsRenderHook::HEAD_END, static fn(): View => view('theme.desktop'))
+            ->renderHook(PanelsRenderHook::BODY_END, static fn(): string => Blade::render('@livewire($component)', [
+                'component' => KeepAlive::class,
+            ]))
             ->pages([Bots::class])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'Lorekeeper\Apps\Desktop\Filament\Resources')
             ->middleware([
