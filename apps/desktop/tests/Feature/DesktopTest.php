@@ -43,7 +43,7 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
-    public function the_home_shows_a_card_per_character_to_start_stop_and_open_its_bot(): void
+    public function the_home_shows_a_row_per_character_to_start_stop_and_open_its_bot(): void
     {
         $idle = $this->account();
         $busy = Account::query()->create(['name' => 'Busy', 'password' => bin2hex(random_bytes(8)), 'level' => 6]);
@@ -62,14 +62,17 @@ final class DesktopTest extends TestCase
         Livewire::test(Bots::class)
             ->assertSeeInOrder([
                 'Busy',
-                'Lv 6 · icestormarena',
                 'Entering',
+                'icestormarena',
+                'Level up · to level 10',
                 '25%',
-                'Level up',
-                '12 kills',
                 'Stop',
+                'Entering the game',
+                '12 kills',
+                'Queue',
+                'Watch the run',
                 'Hero',
-                'Offline',
+                'Never ran',
                 'Start',
             ])
             ->call('start', $idle->id)
@@ -86,25 +89,24 @@ final class DesktopTest extends TestCase
 
         Livewire::test(Bots::class)->assertSeeInOrder([
             'Online',
-            '1 / 1',
-            'Played',
-            'Tasks',
-            'Gold',
+            '1 of 1',
+            'Played today',
+            'Tasks done today',
+            'Gold today',
             '80',
-            'Trouble',
-            'nothing failed in 24 hours',
+            'Failed in 24h',
             'Hero',
             'Mage',
-            'icestormarena',
             'Fighting',
+            'icestormarena',
+            'Level up · to level 40',
             '1,840',
             '2,300',
             'Frost Spirit',
-            'Level up · to level 40',
             '2 kills',
             '1,200 XP',
             'XP / hour',
-            'Watch',
+            'Watch the run',
         ]);
     }
 
@@ -220,6 +222,48 @@ final class DesktopTest extends TestCase
             ->callMountedAction();
 
         static::assertSame(TaskStatus::Cancelled, $pending->refresh()->status);
+    }
+
+    #[Test]
+    public function a_row_opens_to_show_its_queue_and_takes_new_tasks(): void
+    {
+        $account = $this->account();
+        $run = $account->runs()->create();
+        $run->update(['status' => RunStatus::Running]);
+        $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 40]]);
+        $run->log('Joined icestormarena');
+
+        Livewire::test(Bots::class)
+            ->assertSet('expanded', $account->id)
+            ->assertSee(['Level up · to level 40', 'Joined icestormarena'])
+            ->callAction(
+                'addTask',
+                data: [
+                    'script' => BotScript::CryptoToken->value,
+                ],
+                arguments: ['run' => $run->id],
+            )
+            ->assertHasNoActionErrors()
+            ->assertSee('Crypto Token daily · for today')
+            ->call('toggle', $account->id)
+            ->assertSet('expanded', null)
+            ->assertDontSee('Joined icestormarena');
+
+        static::assertSame(2, $run->tasks()->count());
+    }
+
+    #[Test]
+    public function every_idle_bot_starts_at_once(): void
+    {
+        $idle = $this->account();
+        $busy = Account::query()->create(['name' => 'Busy', 'password' => bin2hex(random_bytes(8))]);
+        $run = $busy->runs()->create();
+
+        Livewire::test(Bots::class)->callAction('startIdle');
+
+        static::assertNotNull($idle->activeRun());
+        static::assertSame($run->id, $busy->activeRun()?->id);
+        static::assertSame(1, $busy->runs()->count());
     }
 
     #[Test]

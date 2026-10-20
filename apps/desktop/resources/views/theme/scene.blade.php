@@ -1,13 +1,13 @@
 <style>
     :root {
-        --lk-ink: #070a12;
-        --lk-panel: #0e1322;
-        --lk-panel-2: #131a2c;
+        --lk-ink: #0b0d11;
+        --lk-panel: #111318;
+        --lk-panel-2: #171a21;
         --lk-line: rgba(148, 163, 184, .13);
         --lk-line-2: rgba(148, 163, 184, .24);
         --lk-text: #e6ebf5;
-        --lk-muted: #8b96ab;
-        --lk-faint: #5b6579;
+        --lk-muted: #8a90a0;
+        --lk-faint: #6b7180;
         --lk-hp-a: #b91c1c;
         --lk-hp-b: #f87171;
         --lk-mp-a: #1d4ed8;
