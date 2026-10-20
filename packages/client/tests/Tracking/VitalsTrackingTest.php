@@ -10,6 +10,7 @@ use Lorekeeper\Client\Tracking\VitalsTracking;
 use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Attribute\Vitals;
+use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerHealth;
@@ -17,6 +18,7 @@ use Lorekeeper\Server\Event\Combat\PlayerMana;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
+use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
@@ -99,6 +101,44 @@ final class VitalsTrackingTest extends TestCase
         static::assertFalse($dead->alive());
         static::assertSame([0, 390, 100, 100], self::values($dead));
         static::assertSame([390, 390, 100, 100], self::values($back));
+    }
+
+    #[Test]
+    public function standing_again_without_a_resurrection_fills_the_health(): void
+    {
+        $dead = VitalsTracking::follow(Fixture::vitals(health: 189), new PlayerDiedEvent(), self::me());
+
+        $someoneElse = VitalsTracking::follow(
+            $dead,
+            new PlayerStateUpdatedEvent(new PlayerName('Someone'), CombatState::Idle),
+            self::me(),
+        );
+        $stillDead = VitalsTracking::follow(
+            $dead,
+            new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Dead),
+            self::me(),
+        );
+        $back = VitalsTracking::follow(
+            $dead,
+            new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
+            self::me(),
+        );
+
+        static::assertFalse($someoneElse->alive());
+        static::assertFalse($stillDead->alive());
+        static::assertSame([390, 390, 100, 100], self::values($back));
+    }
+
+    #[Test]
+    public function leaving_combat_alive_keeps_the_health_it_has(): void
+    {
+        $hurt = Fixture::vitals(health: 189);
+
+        static::assertSame($hurt, VitalsTracking::follow(
+            $hurt,
+            new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
+            self::me(),
+        ));
     }
 
     private static function me(): Identity
