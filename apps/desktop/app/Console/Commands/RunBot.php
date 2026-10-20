@@ -6,14 +6,17 @@ namespace Lorekeeper\Apps\Desktop\Console\Commands;
 
 use Illuminate\Console\Command;
 use InvalidArgumentException;
+use Lorekeeper\Apps\Desktop\Bots\HideFromPlayers;
 use Lorekeeper\Apps\Desktop\Bots\LogLevel;
 use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
 use Lorekeeper\Apps\Desktop\Bots\Notifier\TaskNotice;
+use Lorekeeper\Apps\Desktop\Bots\PrivateRooms;
 use Lorekeeper\Apps\Desktop\Bots\RunRecorder;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
+use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Lorekeeper\Client\Api\Login\LoginClient;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Script\Disconnected;
@@ -102,6 +105,10 @@ final class RunBot extends Command
         $client->character()->subscribe($recorder);
         $recorder->update($client->character());
         $run->log("Entered the game in {$client->character()->location()->map->name->value}", LogLevel::Success);
+        $hiding = HideFromPlayers::apply(Preferences::current(), $run, $client, $stop);
+        if ($hiding instanceof Disconnected) {
+            return new Ending(EndingStatus::Disconnected, $hiding->reason);
+        }
 
         $waiting = false;
         while (!$stop->isCancelled()) {
@@ -142,6 +149,9 @@ final class RunBot extends Command
     ): ?Outcome {
         try {
             $script = $task->script->script($task->parameters);
+            if (Preferences::current()->private_rooms) {
+                $script = new PrivateRooms($script);
+            }
         } catch (InvalidArgumentException $invalid) {
             $task->finish(TaskStatus::Failed, $invalid->getMessage());
             $run->log("Task #{$task->id} failed: {$invalid->getMessage()}", LogLevel::Error, $task);
