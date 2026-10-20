@@ -97,7 +97,7 @@ final readonly class Enhancements
         );
     }
 
-    private static function type(int $type): ?EnhancementType
+    public static function type(int $type): ?EnhancementType
     {
         return match ($type) {
             1 => EnhancementType::Adventurer,
@@ -112,7 +112,7 @@ final readonly class Enhancements
         };
     }
 
-    private static function rarity(int $rarity): ?EnhancementRarity
+    public static function rarity(int $rarity): ?EnhancementRarity
     {
         return match ($rarity) {
             1 => EnhancementRarity::PlusZero,
