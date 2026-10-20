@@ -94,6 +94,7 @@
 
             <section class="lk-box">
                 <div class="lk-box__head"><span>Tasks</span><span class="lk-dim">{{ $tasks->count() }}</span></div>
+                <div class="lk-run__tasks">
                 @forelse ($tasks as $queued)
                     <div class="lk-run__row" wire:key="task-{{ $queued->id }}" x-data="{ open: false }">
                         @php
@@ -134,6 +135,7 @@
                 @empty
                     <div class="lk-dim">{{ $active ? 'No tasks yet.' : 'This run had no tasks.' }}</div>
                 @endforelse
+                </div>
             </section>
         </div>
 

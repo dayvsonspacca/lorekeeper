@@ -34,7 +34,10 @@ use Psl\Async\LinkedCancellationToken;
 use Psl\DateTime\Duration;
 use Symfony\Component\Console\Attribute\AsCommand;
 
-/** @mago-expect lint:kan-defect */
+/**
+ * @mago-expect lint:kan-defect
+ * @mago-expect lint:cyclomatic-complexity
+ */
 #[AsCommand(name: 'bots:run', description: 'Keep one bot in the game and play its tasks until it is stopped')]
 final class RunBot extends Command
 {
@@ -158,6 +161,14 @@ final class RunBot extends Command
             $task->finish(TaskStatus::Failed, $invalid->getMessage());
             $run->log("Task #{$task->id} failed: {$invalid->getMessage()}", LogLevel::Error, $task);
             $this->announce($task);
+
+            return null;
+        }
+
+        $settled = $task->script->settledAt($task->parameters, $client->character()->player()->progress->level->value);
+        if ($settled !== null) {
+            $task->finish(TaskStatus::Done, $settled);
+            $run->log("{$script->title()}: {$settled}", LogLevel::Success, $task);
 
             return null;
         }

@@ -16,6 +16,7 @@ use Lorekeeper\Bot\Scripts\TokensOfCollectionScript;
 use Lorekeeper\Client\Script\Script;
 use Override;
 
+/** @mago-expect lint:kan-defect */
 enum BotScript: string implements HasLabel, HasDescription
 {
     case LevelUp = 'level-up';
@@ -80,6 +81,15 @@ enum BotScript: string implements HasLabel, HasDescription
             self::LevelUp => [Parameters::levelField()],
             self::Enhance => [Parameters::enhancementTypeField()],
             self::CryptoToken, self::EldersBlood, self::TokensOfCollection => [],
+        };
+    }
+
+    /** @param array<string, mixed> $parameters */
+    public function settledAt(array $parameters, int $level): ?string
+    {
+        return match ($this) {
+            self::LevelUp => Parameters::level($parameters)->value <= $level ? "already at level {$level}" : null,
+            default => null,
         };
     }
 

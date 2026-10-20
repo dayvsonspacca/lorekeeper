@@ -93,8 +93,9 @@
     .lk-run__panel .lk-pulse__stat span { font-size: .75rem; text-transform: none; letter-spacing: 0; color: var(--lk-muted); }
     .lk-run__panel .lk-steps { margin-top: .75rem; }
     .lk-run__panel .lk-chart { height: 4.5rem; }
+    .lk-run__tasks { max-height: 28rem; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--gray-700) transparent; }
     .lk-run__row { border-top: 1px solid var(--gray-800); }
-    .lk-run__row:first-of-type { border-top: 0; }
+    .lk-run__tasks > .lk-run__row:first-child { border-top: 0; }
     .lk-run__rowhead { display: grid; grid-template-columns: 1.75rem 2.25rem 5.5rem minmax(0, 1fr) 4.5rem 2rem; gap: .5rem; align-items: center; padding-block: .375rem; }
     .lk-run__rowhead .lk-row__toggle svg { width: 1rem; height: 1rem; transition: transform .15s; }
     .lk-run__what { display: flex; flex-direction: column; min-width: 0; }

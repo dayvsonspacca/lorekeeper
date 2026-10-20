@@ -11,6 +11,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
+use Lorekeeper\Apps\Desktop\Bots\TaskPlan;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\Routine;
 
@@ -86,17 +87,12 @@ final class TaskForm
     /** @param array<string, mixed> $data */
     public static function addTo(BotRun $run, array $data): int
     {
-        $added = 0;
-        foreach ((array) ($data['tasks'] ?? []) as $task) {
-            if (!is_array($task) || ($task['script'] ?? null) === null) {
-                continue;
-            }
-
-            $run->tasks()->create(['script' => $task['script'], 'parameters' => $task['parameters'] ?? []]);
-            $added++;
+        $planned = TaskPlan::trimmed(TaskPlan::listed((array) ($data['tasks'] ?? [])), $run->account->level);
+        foreach ($planned as $task) {
+            $run->tasks()->create(['script' => $task['script'], 'parameters' => $task['parameters']]);
         }
 
-        return $added;
+        return count($planned);
     }
 
     /** @param array<array-key, mixed> $state */

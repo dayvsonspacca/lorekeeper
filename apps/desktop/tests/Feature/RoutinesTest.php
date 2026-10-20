@@ -49,6 +49,42 @@ final class RoutinesTest extends TestCase
     }
 
     #[Test]
+    public function queuing_a_routine_leaves_out_what_the_character_has_already_done(): void
+    {
+        $routine = Routine::query()->create([
+            'name' => 'Go to level 100',
+            'tasks' => RoutineSteps::levelUp(5, 30, 5, 'Lucky'),
+        ]);
+        $account = Account::query()->create(['name' => 'lorekeeper03', 'password' => bin2hex(random_bytes(8))]);
+        $account->update(['level' => 24]);
+        $run = $account->runs()->create();
+        $run->update(['status' => RunStatus::Running]);
+        Repeater::fake();
+
+        Livewire::test(ViewBotRun::class, ['record' => $run->id])
+            ->mountAction('addTask')
+            ->fillForm(['routine' => $routine->id])
+            ->callMountedAction()
+            ->assertHasNoActionErrors();
+
+        static::assertSame(
+            [
+                'Enhance the gear · with Lucky',
+                'Level up · to level 25',
+                'Enhance the gear · with Lucky',
+                'Level up · to level 30',
+                'Enhance the gear · with Lucky',
+            ],
+            $run
+                ->tasks()
+                ->orderBy('id')
+                ->get()
+                ->map(static fn(BotTask $task): string => $task->title())
+                ->all(),
+        );
+    }
+
+    #[Test]
     public function picking_a_routine_fills_the_list_and_queues_its_tasks_in_order(): void
     {
         $routine = Routine::query()->create([

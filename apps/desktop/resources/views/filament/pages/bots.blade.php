@@ -119,7 +119,7 @@
                                                 @includeIf($task->script->view(\Lorekeeper\Apps\Desktop\Bots\ScriptView::Plate), ['task' => $task, 'stats' => new \Lorekeeper\Apps\Desktop\Bots\TaskStats($task, now()), 'scene' => $scene, 'now' => $now])
                                             @endif
                                             <div class="lk-detail__label">Queue</div>
-                                            @forelse ($detail['queue'] as $queued)
+                                            @forelse ($detail['queue']->take(6) as $queued)
                                                 <div class="lk-queue">
                                                     @if ($queued->status === \Lorekeeper\Apps\Desktop\Bots\TaskStatus::Pending)
                                                         <span class="lk-queue__waiting"></span>
@@ -131,6 +131,9 @@
                                             @empty
                                                 <div class="lk-dim">Nothing queued.</div>
                                             @endforelse
+                                            @if ($detail['queue']->count() > 6)
+                                                <div class="lk-dim">+{{ $detail['queue']->count() - 6 }} more</div>
+                                            @endif
                                             @if ($active)
                                                 <div>{{ ($this->addTaskAction)(['run' => $run->id]) }}</div>
                                             @endif
