@@ -12,13 +12,17 @@ use Lorekeeper\Core\Item\Equipment\GroundItem;
 use Lorekeeper\Core\Item\Equipment\Helm;
 use Lorekeeper\Core\Item\Equipment\Necklace;
 use Lorekeeper\Core\Item\Equipment\Pet;
-use Lorekeeper\Core\Item\Equipment\Weapon;
-use Lorekeeper\Core\Item\Equipment\WeaponType;
+use Lorekeeper\Core\Item\Equipment\Weapon\DamageVariance;
+use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
+use Lorekeeper\Core\Item\Equipment\Weapon\WeaponDamage;
+use Lorekeeper\Core\Item\Equipment\Weapon\WeaponType;
 use Lorekeeper\Core\Item\EquipmentSlot;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psl\Option;
 
 final class EquipmentTest extends TestCase
 {
@@ -40,14 +44,21 @@ final class EquipmentTest extends TestCase
                 EquipmentSlot::Necklace,
             ],
             array_map(static fn(Equipment $equipment): EquipmentSlot => $equipment->slot(), [
-                new ClassItem($id, $name),
-                new Armor($id, $name),
-                new Weapon($id, $name, WeaponType::Sword),
-                new Helm($id, $name),
-                new Cape($id, $name),
-                new Pet($id, $name),
-                new GroundItem($id, $name),
-                new Necklace($id, $name),
+                new ClassItem($id, $name, new ItemLevel(1), Option\none()),
+                new Armor($id, $name, new ItemLevel(1)),
+                new Weapon(
+                    $id,
+                    $name,
+                    new ItemLevel(1),
+                    WeaponType::Sword,
+                    new WeaponDamage(new DamageVariance(10)),
+                    Option\none(),
+                ),
+                new Helm($id, $name, new ItemLevel(1), Option\none()),
+                new Cape($id, $name, new ItemLevel(1), Option\none()),
+                new Pet($id, $name, new ItemLevel(1)),
+                new GroundItem($id, $name, new ItemLevel(1)),
+                new Necklace($id, $name, new ItemLevel(1)),
             ]),
         );
     }

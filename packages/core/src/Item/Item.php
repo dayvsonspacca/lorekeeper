@@ -15,6 +15,7 @@ abstract readonly class Item
     public function __construct(
         public ItemId $id,
         public ItemName $name,
+        public ItemLevel $level,
     ) {
         $this->tags = new Tags();
     }

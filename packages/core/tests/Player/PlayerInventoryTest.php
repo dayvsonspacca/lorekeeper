@@ -7,6 +7,7 @@ namespace Lorekeeper\Core\Tests\Player;
 use InvalidArgumentException;
 use Lorekeeper\Core\Item\Equipment\ClassItem;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerInventory;
@@ -15,14 +16,17 @@ use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psl\Option;
 
 final class PlayerInventoryTest extends TestCase
 {
     #[Test]
     public function it_finds_an_item_whether_it_is_kept_or_temporary(): void
     {
-        $healer = new PlayerItem(new ClassItem(new ItemId(15_651), new ItemName('Healer')));
-        $ore = new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')));
+        $healer = new PlayerItem(
+            new ClassItem(new ItemId(15_651), new ItemName('Healer'), new ItemLevel(1), Option\none()),
+        );
+        $ore = new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)));
         $inventory = new PlayerInventory(new PlayerItems([$healer]), new Quantity(131), new PlayerItems([$ore]));
 
         static::assertSame($healer, $inventory->find(new ItemId(15_651))->unwrap());
@@ -35,11 +39,13 @@ final class PlayerInventoryTest extends TestCase
     {
         $inventory = new PlayerInventory(
             new PlayerItems([new PlayerItem(
-                new Resource(new ItemId(42_657), new ItemName('Crypto Token')),
+                new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)),
                 new Quantity(3),
             )]),
             new Quantity(131),
-            new PlayerItems([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
+            new PlayerItems([new PlayerItem(
+                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+            )]),
         );
 
         static::assertSame(3, $inventory->quantity(new ItemId(42_657)));
@@ -62,7 +68,7 @@ final class PlayerInventoryTest extends TestCase
     #[Test]
     public function it_rejects_an_item_both_kept_and_temporary(): void
     {
-        $ore = new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')));
+        $ore = new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)));
 
         $this->expectException(InvalidArgumentException::class);
 

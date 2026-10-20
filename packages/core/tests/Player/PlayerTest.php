@@ -67,7 +67,7 @@ final class PlayerTest extends TestCase
             ),
             new Vitals(new Gauge(new Health(2585), new Health(2585)), new Gauge(new Mana(100), new Mana(100))),
             new PlayerClass(
-                new CharacterClass(new ClassName('Blaze Binder'), ClassCategory::Caster, Option\none(), []),
+                new CharacterClass(new ClassName('Blaze Binder'), ClassCategory::Caster, Option\none(), [], []),
                 new ClassPoints(302_500),
                 [],
             ),

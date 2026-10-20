@@ -22,7 +22,7 @@ final class PlayerClassTest extends TestCase
     #[TestWith([302_500, 10])]
     public function it_ranks_the_player_by_the_points_they_have_in_the_class(int $points, int $rank): void
     {
-        $mage = new CharacterClass(new ClassName('Mage'), ClassCategory::Caster, Option\none(), []);
+        $mage = new CharacterClass(new ClassName('Mage'), ClassCategory::Caster, Option\none(), [], []);
 
         static::assertSame($rank, new PlayerClass($mage, new ClassPoints($points), [])->rank()->value);
     }

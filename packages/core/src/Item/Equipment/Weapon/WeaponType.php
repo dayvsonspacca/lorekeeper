@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Item\Equipment;
+namespace Lorekeeper\Core\Item\Equipment\Weapon;
 
 enum WeaponType
 {

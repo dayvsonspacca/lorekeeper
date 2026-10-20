@@ -13,5 +13,6 @@ final readonly class PlayerItem implements HoldsItem
     public function __construct(
         public Item $item,
         public Quantity $quantity = new Quantity(1),
+        public bool $equipped = false,
     ) {}
 }
