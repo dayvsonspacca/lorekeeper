@@ -7,6 +7,7 @@ namespace Lorekeeper\Bot\Tests\Abilities\Fight;
 use Lorekeeper\Bot\Abilities\Fight\GlobalCooldown;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\Attribute\Stat\Haste;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
@@ -21,7 +22,7 @@ final class GlobalCooldownTest extends TestCase
     #[Test]
     public function skills_wait_a_second_and_a_half_between_them_while_the_auto_attack_fills_the_gap(): void
     {
-        $cooldown = new GlobalCooldown()->used(self::skill(SkillSlot::First), self::at(0));
+        $cooldown = new GlobalCooldown()->used(self::skill(SkillSlot::First), self::at(0), self::still());
 
         static::assertTrue($cooldown->holds(self::skill(SkillSlot::AutoAttack), self::at(100)));
         static::assertFalse($cooldown->holds(self::skill(SkillSlot::AutoAttack), self::at(200)));
@@ -35,8 +36,8 @@ final class GlobalCooldownTest extends TestCase
     public function the_auto_attack_leaves_the_skills_waiting_as_they_were(): void
     {
         $cooldown = new GlobalCooldown()
-            ->used(self::skill(SkillSlot::First), self::at(0))
-            ->used(self::skill(SkillSlot::AutoAttack), self::at(1000));
+            ->used(self::skill(SkillSlot::First), self::at(0), self::still())
+            ->used(self::skill(SkillSlot::AutoAttack), self::at(1000), self::still());
 
         static::assertTrue($cooldown->holds(self::skill(SkillSlot::Second), self::at(1300)));
         static::assertFalse($cooldown->holds(self::skill(SkillSlot::Second), self::at(1500)));
@@ -47,12 +48,17 @@ final class GlobalCooldownTest extends TestCase
     public function a_refusal_lets_the_skills_try_again_shortly_after_it(): void
     {
         $cooldown = new GlobalCooldown()
-            ->used(self::skill(SkillSlot::First), self::at(0))
+            ->used(self::skill(SkillSlot::First), self::at(0), self::still())
             ->refused(self::at(300));
 
         static::assertTrue($cooldown->holds(self::skill(SkillSlot::Second), self::at(500)));
         static::assertFalse($cooldown->holds(self::skill(SkillSlot::Second), self::at(550)));
         static::assertNull($cooldown->last);
+    }
+
+    private static function still(): Haste
+    {
+        return new Haste(0.0);
     }
 
     private static function at(int $milliseconds): Timestamp

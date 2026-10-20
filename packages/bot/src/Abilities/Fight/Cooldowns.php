@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Bot\Abilities\Fight;
 
+use Lorekeeper\Core\Attribute\Stat\Haste;
 use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
@@ -38,11 +39,13 @@ final readonly class Cooldowns
         return $usable[0] ?? null;
     }
 
-    public function used(Skill $skill, Timestamp $now): self
+    public function used(Skill $skill, Timestamp $now, Haste $haste): self
     {
+        $cooldown = (int) round($skill->cooldown->getTotalMilliseconds() * (1 - $haste->effective()));
+
         return new self(
-            [...$this->ready, $skill->slot->name => $now->plus($skill->cooldown)],
-            $this->global->used($skill, $now),
+            [...$this->ready, $skill->slot->name => $now->plus(Duration::milliseconds($cooldown))],
+            $this->global->used($skill, $now, $haste),
         );
     }
 

@@ -78,7 +78,7 @@ trait Kills
                 );
             if ($target !== null && $skill !== null) {
                 yield $this->send($this->cast($skill, $attack->at($target)));
-                $cooldowns = $cooldowns->used($skill, $now);
+                $cooldowns = $cooldowns->used($skill, $now, $this->me()->player()->stats->haste);
             }
 
             $heard = yield new Await([

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Bot\Abilities\Fight;
 
+use Lorekeeper\Core\Attribute\Stat\Haste;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Psl\DateTime\Duration;
@@ -28,12 +29,13 @@ final readonly class GlobalCooldown
         return self::pending($this->actions, $now) || self::shares($skill) && self::pending($this->skills, $now);
     }
 
-    public function used(Skill $skill, Timestamp $now): self
+    public function used(Skill $skill, Timestamp $now, Haste $haste): self
     {
         $actions = $now->plus(Duration::milliseconds(self::SPACING_MS));
+        $skills = (int) round(self::SKILLS_MS * (1 - $haste->effective()));
 
         return self::shares($skill)
-            ? new self($now->plus(Duration::milliseconds(self::SKILLS_MS)), $actions, $skill->slot)
+            ? new self($now->plus(Duration::milliseconds($skills)), $actions, $skill->slot)
             : new self($this->skills, $actions, $this->last);
     }
 

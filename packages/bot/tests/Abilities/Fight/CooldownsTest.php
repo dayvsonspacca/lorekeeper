@@ -9,6 +9,7 @@ use Lorekeeper\Bot\Abilities\Fight\Cooldowns;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\Attribute\Stat\Haste;
 use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
@@ -72,13 +73,13 @@ final class CooldownsTest extends TestCase
             $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(0))?->slot,
         );
 
-        $cooldowns = $cooldowns->used(self::bolt(cost: 20), self::at(0));
+        $cooldowns = $cooldowns->used(self::bolt(cost: 20), self::at(0), new Haste(0.0));
         static::assertSame(
             SkillSlot::Third,
             $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(1500))?->slot,
         );
 
-        $cooldowns = $cooldowns->used(self::shield(), self::at(1500));
+        $cooldowns = $cooldowns->used(self::shield(), self::at(1500), new Haste(0.0));
         static::assertSame(
             SkillSlot::Fourth,
             $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(3000))?->slot,
@@ -90,7 +91,7 @@ final class CooldownsTest extends TestCase
     {
         $skills = [self::bolt(cost: 20)];
         $cooldowns = new Cooldowns()
-            ->used(self::bolt(cost: 20), self::at(0))
+            ->used(self::bolt(cost: 20), self::at(0), new Haste(0.0))
             ->refused(self::at(300));
 
         static::assertNull($cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(400)));
@@ -103,7 +104,7 @@ final class CooldownsTest extends TestCase
     #[Test]
     public function it_waits_until_the_next_skill_is_ready_but_never_too_little_or_too_long(): void
     {
-        $cooldowns = new Cooldowns()->used(self::bolt(cost: 20), self::at(0));
+        $cooldowns = new Cooldowns()->used(self::bolt(cost: 20), self::at(0), new Haste(0.0));
 
         static::assertSame(200, (int) $cooldowns->wait(self::at(0))->getTotalMilliseconds());
         static::assertSame(1000, (int) $cooldowns->wait(self::at(500))->getTotalMilliseconds());
