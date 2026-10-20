@@ -10,6 +10,7 @@ use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\ClassName;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
@@ -47,7 +48,7 @@ final class CharacterTest extends TestCase
     public function it_keeps_up_with_what_the_server_says_about_the_player(): void
     {
         $me = Fixture::me(level: 4);
-        $scales = new PlayerItem(new Resource(new ItemId(11_475), new ItemName('Dragon Scale')));
+        $scales = new PlayerItem(new Resource(new ItemId(11_475), new ItemName('Dragon Scale'), new ItemLevel(1)));
 
         $me->hear(new LeveledUpEvent(new PlayerLevel(5), new Experience(500)));
         $me->hear(new PlayersHealthChangedEvent([new PlayerHealth(new PlayerName('lorekeeper03'), new Health(189))]));
@@ -74,7 +75,7 @@ final class CharacterTest extends TestCase
     public function a_reward_left_in_the_drops_joins_the_inventory_once_picked_up(): void
     {
         $me = Fixture::me(level: 4);
-        $token = new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token')));
+        $token = new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)));
 
         $me->hear(new ItemDroppedEvent([$token]));
         static::assertSame($token, $me->drops()->find(new ItemId(42_657)));

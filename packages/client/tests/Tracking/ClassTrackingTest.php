@@ -11,7 +11,6 @@ use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\ClassName;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
-use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Currency\Gold;
@@ -49,13 +48,13 @@ final class ClassTrackingTest extends TestCase
     #[Test]
     public function it_learns_the_skills_of_the_class_it_plays(): void
     {
-        $fireBolt = new Skill(
+        $fireBolt = Fixture::skill(
             SkillSlot::AutoAttack,
             SkillTarget::Enemy,
             new ManaCost(new Mana(0)),
             Duration::seconds(2),
         );
-        $burn = new Skill(SkillSlot::First, SkillTarget::Enemy, new ManaCost(new Mana(10)), Duration::seconds(3));
+        $burn = Fixture::skill(SkillSlot::First, SkillTarget::Enemy, new ManaCost(new Mana(10)), Duration::seconds(3));
         $skills = [new PlayerSkill($fireBolt, true), new PlayerSkill($burn, false)];
         $changed = ClassTracking::follow(
             self::mage(),
@@ -63,7 +62,7 @@ final class ClassTrackingTest extends TestCase
             self::me(),
         );
 
-        $learned = ClassTracking::follow($changed, new SkillsLoadedEvent($skills), self::me());
+        $learned = ClassTracking::follow($changed, new SkillsLoadedEvent($skills, []), self::me());
 
         static::assertSame('Blaze Binder', $learned->class->name->value);
         static::assertSame([$fireBolt, $burn], $learned->class->skills);

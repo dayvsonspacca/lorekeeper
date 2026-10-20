@@ -32,7 +32,7 @@ final class LoginTest extends TestCase
 
     private const string CLASS_CHANGE = "{\"b\":{\"o\":{\"cmd\":\"updateClass\",\"uid\":59878,\"sClassName\":\"Mage\",\"sClassCat\":\"C1\",\"iCP\":0}}}\0";
 
-    private const string SKILLS = "{\"b\":{\"o\":{\"cmd\":\"sAct\",\"actions\":{\"active\":[{\"ref\":\"aa\",\"tgt\":\"h\",\"mp\":0,\"cd\":2000,\"isOK\":true}]}}}}\0";
+    private const string SKILLS = "{\"b\":{\"o\":{\"cmd\":\"sAct\",\"actions\":{\"active\":[{\"ref\":\"aa\",\"nam\":\"Auto Attack\",\"tgt\":\"h\",\"mp\":0,\"cd\":2000,\"isOK\":true}]}}}}\0";
 
     private const string VITALS = "{\"b\":{\"o\":{\"cmd\":\"uotls\",\"unm\":\"Hero\",\"o\":{\"intHP\":390,\"intHPMax\":390,\"intMP\":100,\"intMPMax\":100}}}}\0";
 

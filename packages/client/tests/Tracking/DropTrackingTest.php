@@ -7,6 +7,7 @@ namespace Lorekeeper\Client\Tests\Tracking;
 use Lorekeeper\Client\Drops;
 use Lorekeeper\Client\Tracking\DropTracking;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
@@ -51,11 +52,14 @@ final class DropTrackingTest extends TestCase
 
     private static function cubes(int $quantity): PlayerItem
     {
-        return new PlayerItem(new Resource(new ItemId(4708), new ItemName('Cubes')), new Quantity($quantity));
+        return new PlayerItem(
+            new Resource(new ItemId(4708), new ItemName('Cubes'), new ItemLevel(1)),
+            new Quantity($quantity),
+        );
     }
 
     private static function token(): PlayerItem
     {
-        return new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token')));
+        return new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)));
     }
 }

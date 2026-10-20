@@ -116,6 +116,7 @@ final class Entrance
                     $class->category,
                     $class->description,
                     array_map(static fn(PlayerSkill $skill): Skill => $skill->skill, $skills->skills),
+                    $skills->passives,
                 ),
                 $class->points,
                 $skills->skills,

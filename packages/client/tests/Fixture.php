@@ -15,7 +15,9 @@ use Lorekeeper\Core\CharacterClass\CharacterClass;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\ClassName;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\CharacterClass\Skill\Cost\SkillCost;
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\CharacterClass\Skill\SkillName;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Combat\CombatState;
@@ -96,13 +98,38 @@ final readonly class Fixture
         );
     }
 
+    public static function skill(
+        SkillSlot $slot,
+        SkillTarget $target,
+        SkillCost $cost,
+        Duration $cooldown,
+        int $targets = 1,
+    ): Skill {
+        return new Skill(
+            $slot,
+            new SkillName($slot->name),
+            Option\none(),
+            $target,
+            $cost,
+            $cooldown,
+            new Quantity($targets),
+            Option\none(),
+        );
+    }
+
     public static function mage(): CharacterClass
     {
-        return new CharacterClass(new ClassName('Mage'), ClassCategory::Caster, Option\none(), [
-            new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new ManaCost(new Mana(0)), Duration::seconds(2)),
-            new Skill(SkillSlot::First, SkillTarget::Enemy, new ManaCost(new Mana(20)), Duration::seconds(6)),
-            new Skill(SkillSlot::Fourth, SkillTarget::Self, new ManaCost(new Mana(0)), Duration::seconds(20)),
-        ]);
+        return new CharacterClass(
+            new ClassName('Mage'),
+            ClassCategory::Caster,
+            Option\none(),
+            [
+                self::skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new ManaCost(new Mana(0)), Duration::seconds(2)),
+                self::skill(SkillSlot::First, SkillTarget::Enemy, new ManaCost(new Mana(20)), Duration::seconds(6)),
+                self::skill(SkillSlot::Fourth, SkillTarget::Self, new ManaCost(new Mana(0)), Duration::seconds(20)),
+            ],
+            [],
+        );
     }
 
     /** @param array<string, array{int, int}> $cells */

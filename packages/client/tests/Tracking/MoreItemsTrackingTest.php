@@ -7,6 +7,7 @@ namespace Lorekeeper\Client\Tests\Tracking;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Client\Tracking\InventoryTracking;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerInventory;
@@ -27,11 +28,13 @@ final class MoreItemsTrackingTest extends TestCase
     {
         $inventory = new PlayerInventory(
             new PlayerItems([new PlayerItem(
-                new Resource(new ItemId(42_657), new ItemName('Crypto Token')),
+                new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)),
                 new Quantity(3),
             )]),
             new Quantity(30),
-            new PlayerItems([new PlayerItem(new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant')))]),
+            new PlayerItems([new PlayerItem(
+                new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant'), new ItemLevel(1)),
+            )]),
         );
 
         $inventory = InventoryTracking::follow(

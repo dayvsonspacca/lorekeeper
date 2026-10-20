@@ -8,6 +8,7 @@ use Lorekeeper\Client\Drops;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Client\Tracking\InventoryTracking;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerInventory;
@@ -125,12 +126,18 @@ final class InventoryTrackingTest extends TestCase
 
     private static function ore(int $quantity): PlayerItem
     {
-        return new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')), new Quantity($quantity));
+        return new PlayerItem(
+            new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+            new Quantity($quantity),
+        );
     }
 
     private static function token(int $quantity): PlayerItem
     {
-        return new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token')), new Quantity($quantity));
+        return new PlayerItem(
+            new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)),
+            new Quantity($quantity),
+        );
     }
 
     private static function turnedIn(int $item, int $quantity): ItemsTurnedInEvent

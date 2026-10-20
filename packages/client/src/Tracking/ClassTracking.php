@@ -29,7 +29,7 @@ final readonly class ClassTracking
     private static function changed(ClassChangedEvent $event): PlayerClass
     {
         return new PlayerClass(
-            new CharacterClass($event->className, $event->category, $event->description, []),
+            new CharacterClass($event->className, $event->category, $event->description, [], []),
             $event->points,
             [],
         );
@@ -43,6 +43,7 @@ final readonly class ClassTracking
                 $class->class->category,
                 $class->class->description,
                 array_map(static fn(PlayerSkill $skill): Skill => $skill->skill, $event->skills),
+                $event->passives,
             ),
             $class->points,
             $event->skills,

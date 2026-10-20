@@ -42,7 +42,7 @@ final class ClientEnterTest extends TestCase
         JSON;
 
     private const string INVENTORY = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"loadInventoryBig","items":[{"ItemID":15651,"sName":"Healer","iStk":1,"bUpg":false,"sType":"Class","iQty":177790,"bTemp":false},{"ItemID":4723,"sName":"Unidentified 10","iStk":1000,"bUpg":false,"sType":"Item","iQty":212,"bTemp":false}]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"loadInventoryBig","items":[{"ItemID":15651,"sName":"Healer","iLvl":1,"iStk":1,"bUpg":false,"sType":"Class","iQty":177790,"bTemp":false},{"ItemID":4723,"sName":"Unidentified 10","iLvl":1,"iStk":1000,"bUpg":false,"sType":"Item","iQty":212,"bTemp":false}]}}}
         JSON;
 
     private const string CLASS_CHANGE = <<<'JSON'
@@ -50,7 +50,7 @@ final class ClientEnterTest extends TestCase
         JSON;
 
     private const string SKILLS = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":1354,"nam":"Fire Bolt","typ":"aa","ref":"aa","tgt":"h","tgtMax":3,"mp":0,"cd":2000,"isOK":true},{"id":848,"nam":"Combustion Blaze","typ":"m","ref":"a1","tgt":"h","tgtMax":3,"mp":10,"cd":4000,"isOK":true},{"id":849,"nam":"Choking Shadow Smoke","typ":"m","ref":"a2","tgt":"h","tgtMax":3,"mp":25,"cd":8000,"isOK":true},{"id":850,"nam":"Fire in Your Skin","typ":"m","ref":"a3","tgt":"s","tgtMax":1,"mp":30,"cd":16000,"isOK":true},{"id":851,"nam":"Dark Fire","typ":"m","ref":"a4","tgt":"h","tgtMax":3,"mp":25,"cd":12000,"isOK":true},{"nam":"Potions","typ":"i","ref":"i1","tgt":"f","mp":0,"cd":60000,"isOK":true}],"passive":[{"nam":"Sear Flesh","ref":"p1"},{"nam":"Sear Bone","ref":"p2"},{"nam":"Burn At Both Ends","ref":"p3"}]}}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"sAct","actions":{"active":[{"id":1354,"nam":"Fire Bolt","typ":"aa","ref":"aa","tgt":"h","tgtMax":3,"mp":0,"cd":2000,"isOK":true},{"id":848,"nam":"Combustion Blaze","typ":"m","ref":"a1","tgt":"h","tgtMax":3,"mp":10,"cd":4000,"isOK":true},{"id":849,"nam":"Choking Shadow Smoke","typ":"m","ref":"a2","tgt":"h","tgtMax":3,"mp":25,"cd":8000,"isOK":true},{"id":850,"nam":"Fire in Your Skin","typ":"m","ref":"a3","tgt":"s","tgtMax":1,"mp":30,"cd":16000,"isOK":true},{"id":851,"nam":"Dark Fire","typ":"m","ref":"a4","tgt":"h","tgtMax":3,"mp":25,"cd":12000,"isOK":true},{"nam":"Potions","typ":"i","ref":"i1","tgt":"f","mp":0,"cd":60000,"isOK":true}]}}}}
         JSON;
 
     private const string VITALS = <<<'JSON'
