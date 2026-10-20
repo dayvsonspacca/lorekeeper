@@ -25,6 +25,7 @@ use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapSpot;
+use Lorekeeper\Core\World\Monster\MonsterName;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
@@ -101,15 +102,25 @@ trait Kills
     }
 
     /** @throws RuntimeException */
-    protected function attackIn(MapCell $cell): AttackMonsterCommand
+    protected function attackIn(MapCell $cell, ?MonsterName $name = null): AttackMonsterCommand
     {
         foreach ($this->me()->location()->map->monsters as $monster) {
-            if ($monster->cell->value === $cell->value) {
-                return new AttackMonsterCommand($this->me()->location()->area, SkillSlot::AutoAttack, $monster->id);
+            if ($monster->cell->value !== $cell->value) {
+                continue;
             }
+
+            if ($name !== null && $monster->monster->name->value !== $name->value) {
+                continue;
+            }
+
+            return new AttackMonsterCommand($this->me()->location()->area, SkillSlot::AutoAttack, $monster->id);
         }
 
-        throw new RuntimeException("There are no monsters in {$cell->value}.");
+        throw new RuntimeException(
+            $name === null
+                ? "There are no monsters in {$cell->value}."
+                : "There is no {$name->value} in {$cell->value}.",
+        );
     }
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, void> */
