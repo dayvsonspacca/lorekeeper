@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Player;
 
+use Lorekeeper\Core\Attribute\Stat\Stats;
 use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\Support\Tag\Taggable;
 use Lorekeeper\Core\Support\Tag\Tags;
@@ -22,6 +23,7 @@ final readonly class Player
         public PlayerInventory $inventory,
         public Wallet $wallet,
         public PlayerQuestMarks $marks,
+        public Stats $stats = new Stats(),
     ) {
         $this->tags = new Tags();
     }
