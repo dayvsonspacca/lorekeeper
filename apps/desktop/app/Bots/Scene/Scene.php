@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Bots\Scene;
 
 use Lorekeeper\Client\Character;
+use Lorekeeper\Core\CharacterClass\Passive\ClassPassive;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
+use Lorekeeper\Core\CharacterClass\Skill\Damage\SkillDamage;
+use Lorekeeper\Core\CharacterClass\Skill\SkillDescription;
 use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\Player\PlayerTag;
 use Lorekeeper\Core\Progression\Rank;
@@ -15,7 +18,8 @@ use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
 /**
- * @psalm-type Skill = array{slot: string, cost: int, restores?: int, cooldown: float, targets: int, target: string, unlocked: bool}
+ * @psalm-type Skill = array{slot: string, cost: int, restores?: int, cooldown: float, targets: int, target: string, unlocked: bool, name?: string, description?: ?string, damage?: ?float, source?: ?string}
+ * @psalm-type Passive = array{name: string, description: string}
  * @psalm-type Hero = array{
  *     name: string,
  *     level: int,
@@ -39,6 +43,7 @@ use Psl\Type\Exception\CoercionException;
  *     room?: int,
  *     items: int,
  *     skills: list<Skill>,
+ *     passives?: list<Passive>,
  * }
  * @psalm-type Monster = array{
  *     id: int,
@@ -110,7 +115,27 @@ final readonly class Scene
                     'targets' => $skill->skill->targets->value,
                     'target' => strtolower($skill->skill->target->name),
                     'unlocked' => $skill->unlocked,
+                    'name' => $skill->skill->name->value,
+                    'description' => $skill
+                        ->skill
+                        ->description
+                        ->map(static fn(SkillDescription $description): string => $description->value)
+                        ->unwrapOr(null),
+                    'damage' => $skill
+                        ->skill
+                        ->damage
+                        ->map(static fn(SkillDamage $damage): float => $damage->multiplier->value)
+                        ->unwrapOr(null),
+                    'source' => $skill
+                        ->skill
+                        ->damage
+                        ->map(static fn(SkillDamage $damage): string => strtolower($damage->source->name))
+                        ->unwrapOr(null),
                 ], $class->skills),
+                'passives' => array_map(static fn(ClassPassive $passive): array => [
+                    'name' => $passive->name->value,
+                    'description' => $passive->description->value,
+                ], $class->class->passives),
             ],
             array_values(array_map(static fn(MapMonster $monster): array => [
                 'id' => $monster->id->value,
@@ -270,7 +295,15 @@ final readonly class Scene
                     'targets' => Type\int(),
                     'target' => Type\string(),
                     'unlocked' => Type\bool(),
+                    'name' => Type\optional(Type\string()),
+                    'description' => Type\optional(Type\nullable(Type\string())),
+                    'damage' => Type\optional(Type\nullable(Type\float())),
+                    'source' => Type\optional(Type\nullable(Type\string())),
                 ])),
+                'passives' => Type\optional(Type\vec(Type\shape([
+                    'name' => Type\string(),
+                    'description' => Type\string(),
+                ]))),
             ]),
             'monsters' => Type\vec(Type\shape([
                 'id' => Type\int(),

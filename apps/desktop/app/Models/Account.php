@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
+use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 
 /**
@@ -45,6 +46,17 @@ final class Account extends Model
             ->first();
 
         return $run instanceof BotRun ? $run : null;
+    }
+
+    public function scene(): ?Scene
+    {
+        $run = $this
+            ->runs()
+            ->whereNotNull('scene')
+            ->latest('id')
+            ->first();
+
+        return $run instanceof BotRun ? $run->scene() : null;
     }
 
     public function start(): void

@@ -38,7 +38,15 @@ final class DesktopTest extends TestCase
     {
         $run = $this->account()->runs()->create();
 
-        foreach (['/', '/accounts', '/bot-runs', '/bot-runs/create', "/bot-runs/{$run->id}", '/preferences'] as $page) {
+        foreach ([
+            '/',
+            '/accounts',
+            "/accounts/{$run->account_id}",
+            '/bot-runs',
+            '/bot-runs/create',
+            "/bot-runs/{$run->id}",
+            '/preferences',
+        ] as $page) {
             $this->get($page)->assertOk()->assertSeeLivewire(KeepAlive::class);
         }
     }

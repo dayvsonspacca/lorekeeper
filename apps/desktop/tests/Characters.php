@@ -42,21 +42,31 @@ use Psl\Option;
 
 final readonly class Characters
 {
-    /** @param list<MapMonster> $monsters */
-    public static function me(string $name, int $level, string $map, array $monsters = []): Character
-    {
+    /**
+     * @param list<MapMonster> $monsters
+     *
+     * @mago-expect lint:excessive-parameter-list
+     */
+    public static function me(
+        string $name,
+        int $level,
+        string $map,
+        array $monsters = [],
+        ?PlayerClass $class = null,
+        ?PlayerInventory $inventory = null,
+    ): Character {
         return new Character(
             new SocketId(1),
             new Player(
                 new PlayerName($name),
                 new PlayerLevelProgress(new PlayerLevel($level), new Gauge(new Experience(0), new Experience(1000))),
                 new Vitals(new Gauge(new Health(390), new Health(390)), new Gauge(new Mana(100), new Mana(100))),
-                new PlayerClass(
+                $class ?? new PlayerClass(
                     new CharacterClass(new ClassName('Mage'), ClassCategory::Caster, Option\none(), [], []),
                     new ClassPoints(0),
                     [],
                 ),
-                new PlayerInventory(new PlayerItems([]), new Quantity(30)),
+                $inventory ?? new PlayerInventory(new PlayerItems([]), new Quantity(30)),
                 new Wallet(new Gold(0), new AdventureCoins(0)),
                 new PlayerQuestMarks(),
             ),

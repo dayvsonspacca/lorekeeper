@@ -110,5 +110,25 @@
     .lk-run__facts { display: flex; gap: 1.5rem; flex-wrap: wrap; padding-top: .75rem; }
     .lk-run .lk-cell, .lk-run .lk-mob, .lk-run .lk-item { background: var(--gray-950); }
     .lk-run .lk-cell[data-engaged] { background: color-mix(in oklab, #fbbf24 6%, var(--gray-950)); }
+    .lk-gear { display: flex; align-items: center; gap: .625rem; min-width: 0; padding: .5rem .625rem; border-radius: .625rem; border: 1px solid var(--gray-800); background: var(--gray-950); }
+    .lk-gear__what { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+    .lk-gear__name { font-weight: 600; }
+    .lk-gear__enh { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; color: #f0abfc; font-weight: 600; font-size: .75rem; }
+    .lk-gear__enh small { color: var(--lk-muted); font-weight: 400; }
+    .lk-gear__bare { flex-shrink: 0; font-size: .75rem; }
+    .lk-sheet__rank { max-width: none; }
+    .lk-sheet__class { align-self: start; }
+    .lk-sheet .lk-backpack__tools .lk-tabs { flex: 1 1 100%; flex-wrap: wrap; overflow: visible; padding-bottom: 0; }
+    .lk-sheet__label { margin-top: .375rem; color: var(--lk-muted); font-size: .75rem; }
+    .lk-skill { display: flex; gap: .625rem; padding: .5rem 0; border-top: 1px solid var(--gray-800); }
+    .lk-skill[data-locked] { opacity: .45; }
+    .lk-skill__key { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; flex-shrink: 0; border-radius: .5rem; font-size: .75rem; font-weight: 700; color: #fca5a5; background: color-mix(in oklab, #fca5a5 14%, transparent); }
+    .lk-skill__key[data-target="self"] { color: #86efac; background: color-mix(in oklab, #86efac 14%, transparent); }
+    .lk-skill__key[data-target="ally"] { color: #93c5fd; background: color-mix(in oklab, #93c5fd 14%, transparent); }
+    .lk-skill__body { display: flex; flex-direction: column; gap: .125rem; min-width: 0; }
+    .lk-skill__head { display: flex; align-items: center; gap: .5rem; }
+    .lk-skill__name { font-weight: 600; }
+    .lk-skill__text { color: var(--gray-400); line-height: 1.5; }
+    .lk-passive { display: flex; flex-direction: column; gap: .125rem; padding: .5rem 0; border-top: 1px solid var(--gray-800); }
     @media (max-width: 64rem) { .lk-run__main { grid-template-columns: 1fr; } }
 </style>

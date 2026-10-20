@@ -11,6 +11,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -19,7 +20,9 @@ use Filament\Tables\Table;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Actions\OpenRunAction;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Actions\StartRunAction;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Pages\ManageAccounts;
+use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Pages\ViewAccount;
 use Lorekeeper\Apps\Desktop\Game\GameCatalog;
+use Lorekeeper\Apps\Desktop\Livewire\CharacterSheet;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Override;
@@ -64,6 +67,16 @@ final class AccountResource extends Resource
     }
 
     #[Override]
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            Livewire::make(CharacterSheet::class, static fn(Account $record): array => [
+                'account' => $record,
+            ])->columnSpanFull(),
+        ]);
+    }
+
+    #[Override]
     public static function table(Table $table): Table
     {
         return $table
@@ -99,6 +112,7 @@ final class AccountResource extends Resource
                     ->since()
                     ->placeholder('—'),
             ])
+            ->recordUrl(static fn(Account $record): string => self::getUrl('view', ['record' => $record]))
             ->recordActions([
                 StartRunAction::make(),
                 OpenRunAction::make(),
@@ -116,6 +130,9 @@ final class AccountResource extends Resource
     #[Override]
     public static function getPages(): array
     {
-        return ['index' => ManageAccounts::route('/')];
+        return [
+            'index' => ManageAccounts::route('/'),
+            'view' => ViewAccount::route('/{record}'),
+        ];
     }
 }
