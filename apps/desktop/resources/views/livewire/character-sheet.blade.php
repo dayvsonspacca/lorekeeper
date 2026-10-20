@@ -82,6 +82,25 @@
                     @endforelse
                 </section>
 
+                @if (($hero['stats'] ?? []) !== [])
+                    <section class="lk-box">
+                        <div class="lk-box__head"><span>Stats</span><span class="lk-dim">hover a stat to see what it does</span></div>
+                        <div class="lk-stats">
+                            @foreach (collect($hero['stats'])->groupBy('group') as $group => $rows)
+                                <div class="lk-stats__group" wire:key="stats-{{ $group }}">
+                                    <div class="lk-sheet__label">{{ $group }}</div>
+                                    @foreach ($rows as $row)
+                                        <div class="lk-stats__row" title="{{ $row['about'] }}">
+                                            <span class="lk-stats__name">{{ $row['name'] }}</span>
+                                            <span class="lk-num">{{ $row['shown'] }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
                 <section class="lk-box">
                     <div class="lk-box__head"><span>Inventory</span><span class="lk-dim">{{ number_format($scene->backpack->count()) }}</span></div>
                     <x-scene.backpack :backpack="$scene->backpack" />

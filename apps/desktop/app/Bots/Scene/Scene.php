@@ -44,6 +44,7 @@ use Psl\Type\Exception\CoercionException;
  *     items: int,
  *     skills: list<Skill>,
  *     passives?: list<Passive>,
+ *     stats?: list<array{group: string, name: string, shown: string, about: string}>,
  * }
  * @psalm-type Monster = array{
  *     id: int,
@@ -136,6 +137,7 @@ final readonly class Scene
                     'name' => $passive->name->value,
                     'description' => $passive->description->value,
                 ], $class->class->passives),
+                'stats' => StatSheet::of($player->stats),
             ],
             array_values(array_map(static fn(MapMonster $monster): array => [
                 'id' => $monster->id->value,
@@ -303,6 +305,12 @@ final readonly class Scene
                 'passives' => Type\optional(Type\vec(Type\shape([
                     'name' => Type\string(),
                     'description' => Type\string(),
+                ]))),
+                'stats' => Type\optional(Type\vec(Type\shape([
+                    'group' => Type\string(),
+                    'name' => Type\string(),
+                    'shown' => Type\string(),
+                    'about' => Type\string(),
                 ]))),
             ]),
             'monsters' => Type\vec(Type\shape([

@@ -130,5 +130,9 @@
     .lk-skill__name { font-weight: 600; }
     .lk-skill__text { color: var(--gray-400); line-height: 1.5; }
     .lk-passive { display: flex; flex-direction: column; gap: .125rem; padding: .5rem 0; border-top: 1px solid var(--gray-800); }
+    .lk-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .25rem 1.25rem; }
+    .lk-stats__group { display: flex; flex-direction: column; min-width: 0; }
+    .lk-stats__row { display: flex; justify-content: space-between; gap: .75rem; padding: .25rem 0; border-top: 1px solid var(--gray-800); cursor: help; }
+    .lk-stats__name { color: var(--gray-300); text-decoration: underline dotted var(--gray-600); text-underline-offset: 3px; }
     @media (max-width: 64rem) { .lk-run__main { grid-template-columns: 1fr; } }
 </style>

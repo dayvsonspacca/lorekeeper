@@ -43,6 +43,19 @@ final class CharacterSheetTest extends TestCase
             ->assertSeeInOrder(['Heal', 'restores 10 mana', 'up to 3 targets'])
             ->assertSeeInOrder(['Purify', 'Locked'])
             ->assertSeeInOrder(['Passives', 'Healing Hands', 'Heals 20% more.'])
+            ->assertSeeInOrder([
+                'Stats',
+                'Attributes',
+                'Strength',
+                '245',
+                'Combat',
+                'Haste',
+                '21.9%',
+                'Modifiers',
+                'Damage Resistance',
+                '80% (capped)',
+            ])
+            ->assertSee('Haste reduces the cooldown.')
             ->assertSeeInOrder(['Inventory', 'Crypto Token']);
     }
 
@@ -128,6 +141,26 @@ final class CharacterSheetTest extends TestCase
                     ],
                 ],
                 'passives' => [['name' => 'Healing Hands', 'description' => 'Heals 20% more.']],
+                'stats' => [
+                    [
+                        'group' => 'Attributes',
+                        'name' => 'Strength',
+                        'shown' => '245',
+                        'about' => 'Strength increases Attack Power.',
+                    ],
+                    [
+                        'group' => 'Combat',
+                        'name' => 'Haste',
+                        'shown' => '21.9%',
+                        'about' => 'Haste reduces the cooldown.',
+                    ],
+                    [
+                        'group' => 'Modifiers',
+                        'name' => 'Damage Resistance',
+                        'shown' => '80% (capped)',
+                        'about' => 'Reduces all incoming damage.',
+                    ],
+                ],
             ],
             [],
             [],
