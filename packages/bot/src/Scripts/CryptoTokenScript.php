@@ -58,6 +58,12 @@ final class CryptoTokenScript extends BotScript
         $reward = new ItemId(self::REWARD);
 
         yield from $this->join(new MapName('boxes'));
+        $checking = $this->alreadyDone($quest);
+        yield from $checking;
+        if ($checking->getReturn()) {
+            return new Done('Crypto Token was already taken today');
+        }
+
         $accepting = $this->accept($quest);
         yield from $accepting;
         if (!$accepting->getReturn()) {
