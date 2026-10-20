@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Bots\Scene;
 
 use Lorekeeper\Client\Character;
+use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
-use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
@@ -29,6 +28,8 @@ final class Witness
     private ?int $rank = null;
 
     private ?string $seen = null;
+
+    private ?bool $fallen = null;
 
     public function __construct()
     {
@@ -64,6 +65,15 @@ final class Witness
             );
         }
 
+        $fallen = $me->state() === CombatState::Dead;
+        if ($this->fallen !== null && $this->fallen !== $fallen) {
+            $this->feed = $fallen
+                ? $this->feed->add($now, FeedKind::Died, 'Fell in battle')
+                : $this->feed->add($now, FeedKind::Revived, 'Back on their feet');
+        }
+
+        $this->fallen = $fallen;
+
         $seen = implode('|', [
             $me->state()->name,
             $me->location()->map->name->value,
@@ -98,8 +108,6 @@ final class Witness
     private function remembered(Event $event, int $now): Feed
     {
         return match (true) {
-            $event instanceof PlayerDiedEvent => $this->feed->add($now, FeedKind::Died, 'Fell in battle'),
-            $event instanceof ResurrectedEvent => $this->feed->add($now, FeedKind::Revived, 'Back on their feet'),
             $event instanceof LeveledUpEvent => $this->feed->add(
                 $now,
                 FeedKind::LeveledUp,

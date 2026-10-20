@@ -24,7 +24,7 @@ use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Support\Quantity;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
@@ -127,7 +127,7 @@ final class InventoryTrackingTest extends TestCase
     {
         $inventory = new PlayerInventory(new PlayerItems([self::token(3)]), new Quantity(30));
 
-        static::assertSame($inventory, InventoryTracking::follow($inventory, new PlayerDiedEvent(), self::me()));
+        static::assertSame($inventory, InventoryTracking::follow($inventory, new ResurrectedEvent(), self::me()));
     }
 
     #[Test]

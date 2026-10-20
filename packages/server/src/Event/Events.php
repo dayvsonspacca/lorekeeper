@@ -9,7 +9,6 @@ use Lorekeeper\Server\Event\Combat\AttackRejectedEvent;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
@@ -69,7 +68,6 @@ final readonly class Events
         PlayersHealthChangedEvent::class,
         PlayersManaChangedEvent::class,
         PlayersStateChangedEvent::class,
-        PlayerDiedEvent::class,
         ResurrectedEvent::class,
         SkillsLoadedEvent::class,
         ConnectionEstablishedEvent::class,

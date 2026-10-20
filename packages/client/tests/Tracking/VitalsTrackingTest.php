@@ -12,11 +12,12 @@ use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerHealth;
 use Lorekeeper\Server\Event\Combat\PlayerMana;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
@@ -95,7 +96,11 @@ final class VitalsTrackingTest extends TestCase
     #[Test]
     public function dying_leaves_no_health_and_coming_back_fills_it(): void
     {
-        $dead = VitalsTracking::follow(Fixture::vitals(health: 189), new PlayerDiedEvent(), self::me());
+        $dead = VitalsTracking::follow(
+            Fixture::vitals(health: 189),
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
+            self::me(),
+        );
         $back = VitalsTracking::follow($dead, new ResurrectedEvent(), self::me());
 
         static::assertFalse($dead->alive());
@@ -106,7 +111,11 @@ final class VitalsTrackingTest extends TestCase
     #[Test]
     public function standing_again_without_a_resurrection_fills_the_health(): void
     {
-        $dead = VitalsTracking::follow(Fixture::vitals(health: 189), new PlayerDiedEvent(), self::me());
+        $dead = VitalsTracking::follow(
+            Fixture::vitals(health: 189),
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
+            self::me(),
+        );
 
         $someoneElse = VitalsTracking::follow(
             $dead,
@@ -137,6 +146,18 @@ final class VitalsTrackingTest extends TestCase
         static::assertSame($hurt, VitalsTracking::follow(
             $hurt,
             new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
+            self::me(),
+        ));
+    }
+
+    #[Test]
+    public function someone_else_falling_leaves_my_health_alone(): void
+    {
+        $vitals = Fixture::vitals(health: 189);
+
+        static::assertSame($vitals, VitalsTracking::follow(
+            $vitals,
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('Partner'), CombatState::Dead)]),
             self::me(),
         ));
     }

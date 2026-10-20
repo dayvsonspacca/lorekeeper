@@ -20,7 +20,7 @@ use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestPeriod;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Player\PlayerData;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
@@ -69,7 +69,7 @@ final class PlayerProgressTrackingTest extends TestCase
 
         $me->hear(self::memberData());
         $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 0, 3)));
-        $me->hear(new PlayerDiedEvent());
+        $me->hear(new ResurrectedEvent());
 
         $player = $me->player();
         static::assertSame([81, 4_514_754, 6_800_132, 131], [

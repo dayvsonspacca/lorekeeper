@@ -28,7 +28,7 @@ use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Core\World\Monster\MonsterName;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
@@ -85,7 +85,7 @@ trait Kills
                     MonstersDiedEvent::class,
                     MonsterRewardedEvent::class,
                     MonsterRespawnedEvent::class,
-                    PlayerDiedEvent::class,
+                    PlayersStateChangedEvent::class,
                     LeveledUpEvent::class,
                 ], $cooldowns->wait($now)),
             );

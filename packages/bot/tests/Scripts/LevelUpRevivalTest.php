@@ -12,7 +12,8 @@ use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Progression\Experience;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
@@ -33,7 +34,7 @@ final class LevelUpRevivalTest extends TestCase
             null,
             null,
             null,
-            new PlayerDiedEvent(),
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
             null,
             new ResurrectedEvent(),
             null,
@@ -69,7 +70,7 @@ final class LevelUpRevivalTest extends TestCase
             null,
             null,
             null,
-            new PlayerDiedEvent(),
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
             null,
             new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
             null,
@@ -94,11 +95,31 @@ final class LevelUpRevivalTest extends TestCase
             null,
             null,
             null,
-            new PlayerDiedEvent(),
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
             new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
             null,
             null,
             null,
+            null,
+            new LeveledUpEvent(new PlayerLevel(2), new Experience(200)),
+            null,
+        ]);
+
+        static::assertNotContains('%xt%zm%resPlayerTimed%946%122628%', self::sent($steps));
+        static::assertTrue($me->player()->vitals->alive());
+    }
+
+    #[Test]
+    public function a_partner_falling_in_the_same_room_does_not_stop_the_fight(): void
+    {
+        $me = Fixture::me(level: 1, map: 'battleon');
+
+        [$steps] = Play::run(self::script(target: 2), $me, [
+            Fixture::arrival('oaklore', 946, ['r3' => [4, 1]]),
+            null,
+            null,
+            null,
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('Partner'), CombatState::Dead)]),
             null,
             new LeveledUpEvent(new PlayerLevel(2), new Experience(200)),
             null,

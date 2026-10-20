@@ -7,7 +7,7 @@ namespace Lorekeeper\Client\Tests\Tracking;
 use Lorekeeper\Client\Tracking\AwayTracking;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Player\PlayerAwayUpdatedEvent;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,7 +25,7 @@ final class AwayTrackingTest extends TestCase
         static::assertTrue(AwayTracking::follow(false, $away, self::me()));
         static::assertFalse(AwayTracking::follow(true, $back, self::me()));
         static::assertFalse(AwayTracking::follow(false, $someoneElse, self::me()));
-        static::assertFalse(AwayTracking::follow(false, new PlayerDiedEvent(), self::me()));
+        static::assertFalse(AwayTracking::follow(false, new ResurrectedEvent(), self::me()));
     }
 
     private static function me(): Identity

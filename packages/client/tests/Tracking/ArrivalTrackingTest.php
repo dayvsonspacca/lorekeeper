@@ -17,7 +17,8 @@ use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapPlayer;
 use Lorekeeper\Core\World\Map\MapSpot;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Map\RoomPlayer;
@@ -64,7 +65,12 @@ final class ArrivalTrackingTest extends TestCase
     {
         static::assertSame(CombatState::Dead, StateTracking::follow(
             CombatState::Fighting,
-            new PlayerDiedEvent(),
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
+            self::me(),
+        ));
+        static::assertSame(CombatState::Fighting, StateTracking::follow(
+            CombatState::Fighting,
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('Partner'), CombatState::Dead)]),
             self::me(),
         ));
         static::assertSame(CombatState::Idle, StateTracking::follow(

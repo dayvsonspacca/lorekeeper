@@ -12,7 +12,7 @@ use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
+use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use PHPUnit\Framework\Attributes\Test;
@@ -43,7 +43,7 @@ final class DropTrackingTest extends TestCase
     {
         $drops = new Drops([4708 => self::cubes(1)]);
 
-        static::assertSame($drops, DropTracking::follow($drops, new PlayerDiedEvent()));
+        static::assertSame($drops, DropTracking::follow($drops, new ResurrectedEvent()));
         static::assertSame($drops, DropTracking::follow(
             $drops,
             new DropPickedUpEvent(new ItemId(42_657), new Quantity(1), new Quantity(1)),

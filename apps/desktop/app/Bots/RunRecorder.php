@@ -9,8 +9,7 @@ use Lorekeeper\Apps\Desktop\Bots\Scene\Witness;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
 use Lorekeeper\Client\Character;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
-use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
+use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
@@ -23,6 +22,8 @@ use Psl\Observer\SubjectInterface;
 final class RunRecorder implements ObserverInterface
 {
     private ?BotTask $task = null;
+
+    private ?bool $fallen = null;
 
     private readonly Witness $witness;
 
@@ -41,8 +42,6 @@ final class RunRecorder implements ObserverInterface
     {
         match (true) {
             $event instanceof MonsterRewardedEvent => $this->rewarded($event),
-            $event instanceof PlayerDiedEvent => $this->died(),
-            $event instanceof ResurrectedEvent => $this->log('Back on their feet'),
             $event instanceof MovedToMapEvent => $this->log("Arrived in {$event->map->name->value}"),
             $event instanceof LeveledUpEvent => $this->log("Reached level {$event->level->value}", LogLevel::Success),
             default => null,
@@ -70,6 +69,7 @@ final class RunRecorder implements ObserverInterface
         }
 
         $this->reached($level);
+        $this->stood($subject->state());
         $this->keep($this->witness->saw($subject, now()->getTimestamp()));
     }
 
@@ -95,8 +95,21 @@ final class RunRecorder implements ObserverInterface
         ));
     }
 
-    private function died(): void
+    private function stood(CombatState $state): void
     {
+        $fallen = $state === CombatState::Dead;
+        $was = $this->fallen;
+        $this->fallen = $fallen;
+        if ($was === null || $was === $fallen) {
+            return;
+        }
+
+        if (!$fallen) {
+            $this->log('Back on their feet');
+
+            return;
+        }
+
         $this->task?->increment('deaths');
         $this->log('Fell in battle', LogLevel::Warning);
     }

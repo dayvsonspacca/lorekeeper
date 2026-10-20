@@ -25,9 +25,10 @@ use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapPlayer;
 use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerHealth;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
@@ -117,7 +118,7 @@ final class CharacterTest extends TestCase
         static::assertTrue($me->away());
         static::assertSame(4, $me->player()->progress->level->value);
 
-        $me->hear(new PlayerDiedEvent());
+        $me->hear(new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]));
         static::assertSame(CombatState::Dead, $me->state());
         static::assertFalse($me->player()->vitals->alive());
     }

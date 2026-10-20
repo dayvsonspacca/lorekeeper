@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tracking;
 
 use Lorekeeper\Core\Combat\CombatState;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Event;
@@ -20,7 +19,6 @@ final readonly class StateTracking
             $event instanceof MovedToMapEvent => self::arrived($state, $event, $me),
             $event instanceof PlayersStateChangedEvent => self::changed($state, $event, $me),
             $event instanceof PlayerStateUpdatedEvent && $me->is($event->name) => $event->state,
-            $event instanceof PlayerDiedEvent => CombatState::Dead,
             $event instanceof ResurrectedEvent => CombatState::Idle,
             default => $state,
         };

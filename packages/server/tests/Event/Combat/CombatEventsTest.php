@@ -26,7 +26,6 @@ use Lorekeeper\Server\Event\Combat\MonsterHealth;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
@@ -154,13 +153,13 @@ final class CombatEventsTest extends TestCase
     #[Test]
     public function it_reads_deaths_resurrections_respawns_and_rejected_attacks(): void
     {
-        static::assertTrue(
-            PlayerDiedEvent::from(
-                JsonMessage::from(
-                    '{"t":"xt","b":{"r":-1,"o":{"cmd":"playerDeath","userID":74059365,"did":74042869,"monPad":2,"entType":"m"}}}',
-                )->unwrap(),
-            )->isSome(),
-        );
+        $fell = PlayersStateChangedEvent::from(
+            JsonMessage::from(
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"ct","p":{"lorekeeper03":{"intState":0,"intHP":0,"intMP":18}}}}}',
+            )->unwrap(),
+        )->unwrap();
+        static::assertSame('lorekeeper03', $fell->players[0]->player->value);
+        static::assertSame(CombatState::Dead, $fell->players[0]->state);
         static::assertTrue(ResurrectedEvent::from(DelimitedMessage::from('%xt%resTimed%-1%')->unwrap())->isSome());
         static::assertSame(
             4,

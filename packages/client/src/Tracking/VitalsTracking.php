@@ -9,9 +9,9 @@ use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Support\Gauge;
-use Lorekeeper\Server\Event\Combat\PlayerDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
+use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
@@ -19,28 +19,45 @@ use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 
 final readonly class VitalsTracking
 {
+    /** @mago-expect lint:halstead */
     public static function follow(Vitals $vitals, Event $event, Identity $me): Vitals
     {
         $next = match (true) {
             $event instanceof PlayerVitalsUpdatedEvent => $me->is($event->name) ? $event->vitals : $vitals,
             $event instanceof PlayersHealthChangedEvent => self::hit($vitals, $event, $me),
             $event instanceof PlayersManaChangedEvent => self::spent($vitals, $event, $me),
-            $event instanceof PlayerDiedEvent => self::health($vitals, new Health(0)),
+            $event instanceof PlayersStateChangedEvent => self::changed($vitals, $event, $me),
+            $event instanceof PlayerStateUpdatedEvent => self::updated($vitals, $event, $me),
             $event instanceof ResurrectedEvent => self::health($vitals, $vitals->health->maximum),
-            $event instanceof PlayerStateUpdatedEvent => self::revived($vitals, $event, $me),
             default => $vitals,
         };
 
         return self::same($vitals, $next) ? $vitals : $next;
     }
 
-    private static function revived(Vitals $vitals, PlayerStateUpdatedEvent $event, Identity $me): Vitals
+    private static function changed(Vitals $vitals, PlayersStateChangedEvent $event, Identity $me): Vitals
     {
-        if (!$me->is($event->name) || $event->state === CombatState::Dead || $vitals->alive()) {
-            return $vitals;
+        foreach ($event->players as $player) {
+            if ($me->is($player->player)) {
+                return self::stood($vitals, $player->state);
+            }
         }
 
-        return self::health($vitals, $vitals->health->maximum);
+        return $vitals;
+    }
+
+    private static function updated(Vitals $vitals, PlayerStateUpdatedEvent $event, Identity $me): Vitals
+    {
+        return $me->is($event->name) ? self::stood($vitals, $event->state) : $vitals;
+    }
+
+    private static function stood(Vitals $vitals, CombatState $state): Vitals
+    {
+        return match (true) {
+            $state === CombatState::Dead => self::health($vitals, new Health(0)),
+            $vitals->alive() => $vitals,
+            default => self::health($vitals, $vitals->health->maximum),
+        };
     }
 
     private static function hit(Vitals $vitals, PlayersHealthChangedEvent $event, Identity $me): Vitals
