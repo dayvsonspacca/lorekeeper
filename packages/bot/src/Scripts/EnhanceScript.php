@@ -8,6 +8,7 @@ use Closure;
 use Generator;
 use Lorekeeper\Bot\Abilities\Gear\BestEnhancement;
 use Lorekeeper\Bot\Abilities\Gear\EnhancementShops;
+use Lorekeeper\Bot\Abilities\Paces;
 use Lorekeeper\Bot\BotScript;
 use Lorekeeper\Client\Command\Inventory\EnhanceItemCommand;
 use Lorekeeper\Client\Command\Shop\LoadShopCommand;
@@ -28,6 +29,8 @@ use Psl\DateTime\Timestamp;
 
 final class EnhanceScript extends BotScript
 {
+    use Paces;
+
     /** @param null|Closure(): Timestamp $clock */
     public function __construct(
         private readonly EnhancementType $type,
@@ -51,10 +54,12 @@ final class EnhanceScript extends BotScript
         }
 
         $area = $this->me()->location()->area;
-        $loaded = yield $this->send(new LoadShopCommand($area, $shop))->awaits(
+        $loading = $this->paced($this->send(new LoadShopCommand($area, $shop))->awaits(
             Duration::seconds(10),
             ShopLoadedEvent::class,
-        );
+        ));
+        yield from $loading;
+        $loaded = $loading->getReturn();
         if (!$loaded instanceof ShopLoadedEvent || !$loaded->shop instanceof CurrencyShop) {
             return new Failed("the {$this->type->name} enhancement shop did not open");
         }
@@ -67,10 +72,11 @@ final class EnhanceScript extends BotScript
                 continue;
             }
 
-            $answer = yield $this->send(new EnhanceItemCommand($area, $held->item->id, $best->item->id, $shop))->awaits(
-                Duration::seconds(10),
-                ItemsEnhancedEvent::class,
-            );
+            $enhancing = $this->paced($this->send(
+                new EnhanceItemCommand($area, $held->item->id, $best->item->id, $shop),
+            )->awaits(Duration::seconds(10), ItemsEnhancedEvent::class));
+            yield from $enhancing;
+            $answer = $enhancing->getReturn();
             if (!$answer instanceof ItemsEnhancedEvent) {
                 return new Failed("the game would not enhance {$held->item->name->value}");
             }

@@ -19,10 +19,12 @@ use Lorekeeper\Core\Player\PlayerTag;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
+use Lorekeeper\Server\Event\ActionTooSoonEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
+use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -57,6 +59,27 @@ final class EnhanceScriptTest extends TestCase
         static::assertInstanceOf(Weapon::class, $staff->item);
         static::assertSame(EnhancementType::Lucky, $staff->item->enhancement->unwrap()->type);
         static::assertSame(35_178 - 1010, $me->player()->wallet->gold->value);
+    }
+
+    #[Test]
+    public function it_waits_and_asks_again_when_the_game_says_it_was_too_soon(): void
+    {
+        $me = self::lorekeeper03();
+
+        [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Lucky), $me, [
+            self::shop(),
+            ActionTooSoonEvent::from(
+                DelimitedMessage::from('%xt%warning%-1%Please slow down. Last action was too soon!%')->unwrap(),
+            )->unwrap(),
+            null,
+            ItemsEnhancedEvent::from(JsonMessage::from(self::ENHANCED)->unwrap())->unwrap(),
+        ]);
+
+        static::assertSame(
+            ['%xt%zm%loadShop%1%147%', '%xt%zm%enhanceItemShop%1%3%3628%147%', '%xt%zm%enhanceItemShop%1%3%3628%147%'],
+            self::sent($steps),
+        );
+        static::assertEquals(new Done('enhanced with Lucky: Default Staff (level 21)'), $result);
     }
 
     #[Test]
