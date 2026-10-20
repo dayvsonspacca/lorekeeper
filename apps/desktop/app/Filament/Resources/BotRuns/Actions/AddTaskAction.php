@@ -22,7 +22,9 @@ final class AddTaskAction
                 'The bot plays its tasks one after the other, in this order, and waits where it is in between.',
             )
             ->modalSubmitActionLabel('Add')
-            ->schema([TaskForm::routine(), TaskForm::queue()])
+            ->schema([TaskForm::routine(), TaskForm::scrolledQueue()])
+            ->stickyModalHeader()
+            ->stickyModalFooter()
             ->fillForm(TaskForm::blankQueue())
             ->visible(static fn(BotRun $record): bool => $record->status->isActive())
             ->action(static function (BotRun $record, array $data): void {

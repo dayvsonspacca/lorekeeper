@@ -14,6 +14,8 @@
     :is(.dark) .fi-btn.fi-color-primary:not(.fi-outlined) .fi-icon { color: var(--gray-950); }
     :is(.dark) .fi-btn.fi-color-primary:not(.fi-outlined):hover { background: var(--primary-300); }
 
+    .lk-task-list { max-height: 52vh; overflow-y: auto; padding-right: .375rem; scrollbar-width: thin; scrollbar-color: var(--gray-700) transparent; }
+
     .lk-board { display: flex; flex-direction: column; gap: 1rem; font-size: .8125rem; }
     .lk-cut { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

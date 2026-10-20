@@ -100,7 +100,9 @@ final class Bots extends Page
                 'The bot plays its tasks one after the other, in this order, and waits where it is in between.',
             )
             ->modalSubmitActionLabel('Add')
-            ->schema([TaskForm::routine(), TaskForm::queue()])
+            ->schema([TaskForm::routine(), TaskForm::scrolledQueue()])
+            ->stickyModalHeader()
+            ->stickyModalFooter()
             ->fillForm(TaskForm::blankQueue())
             ->action(static function (array $arguments, array $data): void {
                 $run = BotRun::query()->find($arguments['run'] ?? 0);

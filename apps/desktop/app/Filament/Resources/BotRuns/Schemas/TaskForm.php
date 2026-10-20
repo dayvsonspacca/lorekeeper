@@ -56,6 +56,13 @@ final class TaskForm
             ->itemLabel(self::label(...));
     }
 
+    public static function scrolledQueue(): Repeater
+    {
+        return self::queue()
+            ->collapsed(static fn(Get $get): bool => filled($get('routine')))
+            ->extraAttributes(['class' => 'lk-task-list']);
+    }
+
     public static function routine(): Select
     {
         return Select::make('routine')
