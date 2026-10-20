@@ -26,6 +26,7 @@ use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Core\World\Monster\MonsterName;
+use Lorekeeper\Server\Event\ActionTooSoonEvent;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
@@ -80,15 +81,19 @@ trait Kills
                 $cooldowns = $cooldowns->used($skill, $now);
             }
 
-            $targets = $targets->heard(
-                yield new Await([
-                    MonstersDiedEvent::class,
-                    MonsterRewardedEvent::class,
-                    MonsterRespawnedEvent::class,
-                    PlayersStateChangedEvent::class,
-                    LeveledUpEvent::class,
-                ], $cooldowns->wait($now)),
-            );
+            $heard = yield new Await([
+                MonstersDiedEvent::class,
+                MonsterRewardedEvent::class,
+                MonsterRespawnedEvent::class,
+                PlayersStateChangedEvent::class,
+                LeveledUpEvent::class,
+                ActionTooSoonEvent::class,
+            ], $cooldowns->wait($now));
+            if ($heard instanceof ActionTooSoonEvent) {
+                $cooldowns = $cooldowns->refused($this->now());
+            }
+
+            $targets = $targets->heard($heard);
         }
     }
 

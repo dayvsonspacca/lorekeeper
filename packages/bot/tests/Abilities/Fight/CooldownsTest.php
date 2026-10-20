@@ -75,30 +75,28 @@ final class CooldownsTest extends TestCase
         $cooldowns = $cooldowns->used(self::bolt(cost: 20), self::at(0));
         static::assertSame(
             SkillSlot::Third,
-            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(1))?->slot,
+            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(1500))?->slot,
         );
 
-        $cooldowns = $cooldowns->used(self::shield(), self::at(1));
+        $cooldowns = $cooldowns->used(self::shield(), self::at(1500));
         static::assertSame(
             SkillSlot::Fourth,
-            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(2))?->slot,
+            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(3000))?->slot,
         );
     }
 
     #[Test]
-    public function a_used_skill_waits_its_cooldown_and_any_skill_waits_a_second(): void
+    public function a_refused_skill_can_be_cast_again_a_moment_later(): void
     {
-        $skills = [self::auto(), self::bolt(cost: 20)];
-        $cooldowns = new Cooldowns()->used(self::bolt(cost: 20), self::at(0));
+        $skills = [self::bolt(cost: 20)];
+        $cooldowns = new Cooldowns()
+            ->used(self::bolt(cost: 20), self::at(0))
+            ->refused(self::at(300));
 
-        static::assertNull($cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(0)));
-        static::assertSame(
-            SkillSlot::AutoAttack,
-            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(1))?->slot,
-        );
+        static::assertNull($cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(400)));
         static::assertSame(
             SkillSlot::First,
-            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(6))?->slot,
+            $cooldowns->ready($skills, self::vitals(mana: 100), ClassRules::none(), self::at(550))?->slot,
         );
     }
 
@@ -107,11 +105,9 @@ final class CooldownsTest extends TestCase
     {
         $cooldowns = new Cooldowns()->used(self::bolt(cost: 20), self::at(0));
 
-        static::assertSame(1000, (int) $cooldowns->wait(self::at(0))->getTotalMilliseconds());
-        static::assertSame(
-            200,
-            (int) $cooldowns->wait(self::at(0)->plus(Duration::milliseconds(900)))->getTotalMilliseconds(),
-        );
+        static::assertSame(200, (int) $cooldowns->wait(self::at(0))->getTotalMilliseconds());
+        static::assertSame(1000, (int) $cooldowns->wait(self::at(500))->getTotalMilliseconds());
+        static::assertSame(200, (int) $cooldowns->wait(self::at(1400))->getTotalMilliseconds());
         static::assertSame(
             2000,
             (int) new Cooldowns()
@@ -125,9 +121,9 @@ final class CooldownsTest extends TestCase
         return new Vitals(new Gauge(new Health(390), new Health(390)), new Gauge(new Mana($mana), new Mana(100)));
     }
 
-    private static function at(int $seconds): Timestamp
+    private static function at(int $milliseconds): Timestamp
     {
-        return Timestamp::fromParts(2026, 10, 16)->plus(Duration::seconds($seconds));
+        return Timestamp::fromParts(2026, 10, 16)->plus(Duration::milliseconds($milliseconds));
     }
 
     private static function auto(): Skill

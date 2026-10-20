@@ -13,25 +13,21 @@ use Psl\DateTime\Timestamp;
 
 final readonly class Cooldowns
 {
-    private const string ANY = 'any';
-
     /** @param array<string, Timestamp> $ready */
     public function __construct(
         private array $ready = [],
+        private GlobalCooldown $global = new GlobalCooldown(),
     ) {}
 
     /** @param list<Skill> $skills */
     public function ready(array $skills, Vitals $vitals, ClassRules $rules, Timestamp $now): ?Skill
     {
-        if ($this->waiting(self::ANY, $now)) {
-            return null;
-        }
-
         $usable = array_values(array_filter(
             $skills,
             fn(Skill $skill): bool => (
                 $skill->slot !== SkillSlot::Potion
                 && !$this->waiting($skill->slot->name, $now)
+                && !$this->global->holds($skill, $now)
                 && $skill->cost->affordable($vitals)
                 && $rules->allows($skill, $vitals)
             ),
@@ -44,17 +40,24 @@ final readonly class Cooldowns
 
     public function used(Skill $skill, Timestamp $now): self
     {
-        return new self([
-            ...$this->ready,
-            $skill->slot->name => $now->plus($skill->cooldown),
-            self::ANY => $now->plus(Duration::seconds(1)),
-        ]);
+        return new self(
+            [...$this->ready, $skill->slot->name => $now->plus($skill->cooldown)],
+            $this->global->used($skill, $now),
+        );
+    }
+
+    public function refused(Timestamp $now): self
+    {
+        $ready = $this->ready;
+        unset($ready[$this->global->last->name ?? '']);
+
+        return new self($ready, $this->global->refused($now));
     }
 
     public function wait(Timestamp $now): Duration
     {
         $soonest = Duration::seconds(2);
-        foreach ($this->ready as $at) {
+        foreach ([...array_values($this->ready), ...$this->global->ends()] as $at) {
             $left = $at->since($now);
             if ($left->isPositive() && $left->compare($soonest) === Order::Less) {
                 $soonest = $left;
