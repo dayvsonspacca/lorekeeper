@@ -10,6 +10,7 @@ use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
@@ -40,8 +41,10 @@ final class TokensOfCollectionScriptTest extends TestCase
     public function it_hunts_the_crickets_for_two_tokens_turns_them_in_and_picks_up_the_reward(): void
     {
         $me = Fixture::me(level: 82, map: 'battleon');
-        $found = new PlayerItem(new Resource(new ItemId(9392), new ItemName('This Might Be A Token')));
-        $token = new PlayerItem(new Resource(new ItemId(9397), new ItemName('Token of Collection')));
+        $found = new PlayerItem(
+            new Resource(new ItemId(9392), new ItemName('This Might Be A Token'), new ItemLevel(1)),
+        );
+        $token = new PlayerItem(new Resource(new ItemId(9397), new ItemName('Token of Collection'), new ItemLevel(1)));
 
         [$steps, $result] = Play::run(new TokensOfCollectionScript(), $me, [
             self::terrarium(),

@@ -10,6 +10,7 @@ use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
@@ -42,7 +43,7 @@ final class EldersBloodScriptTest extends TestCase
     public function it_slays_fifty_gorillaphants_turns_them_in_and_picks_up_the_blood(): void
     {
         $me = Fixture::me(level: 30, map: 'battleon');
-        $blood = new PlayerItem(new Resource(new ItemId(5586), new ItemName("Elders' Blood")));
+        $blood = new PlayerItem(new Resource(new ItemId(5586), new ItemName("Elders' Blood"), new ItemLevel(1)));
 
         [$steps, $result] = Play::run(new EldersBloodScript(), $me, [
             Fixture::arrival('arcangrove', 7_101, ['LeftBack' => [2, 30]]),
@@ -52,7 +53,10 @@ final class EldersBloodScriptTest extends TestCase
             null,
             null,
             new TemporaryItemsAddedEvent([
-                new PlayerItem(new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant')), new Quantity(50)),
+                new PlayerItem(
+                    new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant'), new ItemLevel(1)),
+                    new Quantity(50),
+                ),
             ]),
             [
                 new QuestCompletedEvent(new QuestId(802), new QuestName("Experiment 107: Elder's Blood Potion")),
@@ -82,7 +86,7 @@ final class EldersBloodScriptTest extends TestCase
     {
         $me = Fixture::me(level: 30);
         $me->hear(new PlayerInventoryLoadedEvent(new PlayerItems([new PlayerItem(
-            new Resource(new ItemId(5586), new ItemName("Elders' Blood")),
+            new Resource(new ItemId(5586), new ItemName("Elders' Blood"), new ItemLevel(1)),
             new Quantity(10),
         )])));
 
@@ -94,7 +98,10 @@ final class EldersBloodScriptTest extends TestCase
             null,
             null,
             new TemporaryItemsAddedEvent([
-                new PlayerItem(new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant')), new Quantity(50)),
+                new PlayerItem(
+                    new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant'), new ItemLevel(1)),
+                    new Quantity(50),
+                ),
             ]),
             [
                 new QuestCompletedEvent(new QuestId(802), new QuestName("Experiment 107: Elder's Blood Potion")),
@@ -127,7 +134,7 @@ final class EldersBloodScriptTest extends TestCase
     {
         $me = Fixture::me(level: 30);
         $me->hear(new PlayerInventoryLoadedEvent(new PlayerItems([new PlayerItem(
-            new Resource(new ItemId(5586), new ItemName("Elders' Blood")),
+            new Resource(new ItemId(5586), new ItemName("Elders' Blood"), new ItemLevel(1)),
             new Quantity(20),
         )])));
 

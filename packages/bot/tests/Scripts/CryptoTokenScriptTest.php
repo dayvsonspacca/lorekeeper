@@ -12,6 +12,7 @@ use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
@@ -39,7 +40,7 @@ final class CryptoTokenScriptTest extends TestCase
     public function it_accepts_hunts_the_ore_turns_it_in_and_picks_up_the_token(): void
     {
         $me = Fixture::me(level: 4, map: 'battleon');
-        $token = new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token')));
+        $token = new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)));
 
         [$steps, $result] = Play::run(new CryptoTokenScript(), $me, [
             Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
@@ -47,7 +48,9 @@ final class CryptoTokenScriptTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsAddedEvent([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
+            new TemporaryItemsAddedEvent([new PlayerItem(
+                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+            )]),
             [
                 new QuestCompletedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends")),
                 new ItemsTurnedInEvent([new TurnedInItem(new ItemId(42_658), new Quantity(1))]),
@@ -117,7 +120,9 @@ final class CryptoTokenScriptTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsAddedEvent([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
+            new TemporaryItemsAddedEvent([new PlayerItem(
+                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+            )]),
             new QuestCompletedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends")),
             null,
         ]);
@@ -137,7 +142,9 @@ final class CryptoTokenScriptTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsAddedEvent([new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore')))]),
+            new TemporaryItemsAddedEvent([new PlayerItem(
+                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+            )]),
             new QuestTurnInRefusedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends"), 'Missing Badge'),
         ]);
 

@@ -6,6 +6,7 @@ namespace Lorekeeper\Bot\Tests\Abilities\Fight;
 
 use Lorekeeper\Bot\Abilities\Fight\ClassRules;
 use Lorekeeper\Bot\Abilities\Fight\Cooldowns;
+use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Attribute\Health;
 use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Attribute\Vitals;
@@ -15,7 +16,6 @@ use Lorekeeper\Core\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Support\Gauge;
-use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;
@@ -56,8 +56,13 @@ final class ClassRulesTest extends TestCase
     {
         return new Cooldowns()->ready(
             [
-                new Skill(SkillSlot::AutoAttack, SkillTarget::Enemy, new ManaCost(new Mana(0)), Duration::seconds(2)),
-                new Skill(SkillSlot::First, SkillTarget::Self, new ManaCost(new Mana(5)), Duration::seconds(8)),
+                Fixture::skill(
+                    SkillSlot::AutoAttack,
+                    SkillTarget::Enemy,
+                    new ManaCost(new Mana(0)),
+                    Duration::seconds(2),
+                ),
+                Fixture::skill(SkillSlot::First, SkillTarget::Self, new ManaCost(new Mana(5)), Duration::seconds(8)),
                 self::heal(),
             ],
             self::vitals($health, $mana),
@@ -68,12 +73,12 @@ final class ClassRulesTest extends TestCase
 
     private static function heal(): Skill
     {
-        return new Skill(
+        return Fixture::skill(
             SkillSlot::Second,
             SkillTarget::Ally,
             new ManaCost(new Mana(30)),
             Duration::seconds(8),
-            new Quantity(7),
+            7,
         );
     }
 
