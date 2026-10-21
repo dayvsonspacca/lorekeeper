@@ -14,4 +14,5 @@ enum EnhancementType
     case Healer;
     case SpellBreaker;
     case Lucky;
+    case Unhandled;
 }

@@ -39,6 +39,10 @@ final class EnhanceScriptTest extends TestCase
         {"t":"xt","b":{"r":-1,"o":{"cmd":"loadInventoryBig","items":[{"ItemID":3,"sName":"Default Staff","sType":"Staff","iLvl":1,"iRng":10,"iQty":1,"bUpg":false,"bEquip":true,"EnhID":1856,"EnhLvl":1,"EnhPatternID":1},{"ItemID":9392,"sName":"This Might Be A Token","iLvl":1,"sType":"Item","iQty":1,"bUpg":false,"bEquip":false,"EnhID":null,"EnhLvl":null,"EnhPatternID":null},{"ItemID":15653,"sName":"Mage","iLvl":1,"sType":"Class","iQty":302500,"bUpg":false,"bEquip":false,"EnhID":1959,"EnhLvl":1,"EnhPatternID":1},{"ItemID":20662,"sName":"Oracle","iLvl":1,"sType":"Class","iQty":302500,"bUpg":false,"bEquip":true,"EnhID":8283,"EnhLvl":1,"EnhPatternID":1},{"ItemID":42657,"sName":"Crypto Token","iLvl":1,"sType":"Item","iQty":2,"bUpg":false,"bEquip":false,"EnhID":null,"EnhLvl":null,"EnhPatternID":null},{"ItemID":45739,"sName":"Gear of Doom","iLvl":1,"sType":"Resource","iQty":3,"bUpg":false,"bEquip":false,"EnhID":null,"EnhLvl":null,"EnhPatternID":null}]}}}
         JSON;
 
+    private const string BLINDING_LIGHT = <<<'JSON'
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"loadInventoryBig","items":[{"ItemID":37207,"sName":"Dual Blinding Light of Destiny","sType":"Dagger","sES":"Weapon","iLvl":1,"iRty":35,"iRng":0,"iQty":1,"bUpg":false,"bEquip":true,"EnhID":0,"EnhLvl":80,"EnhRty":5,"EnhPatternID":10,"ProcID":7}]}}}
+        JSON;
+
     private const string ENHANCED = <<<'JSON'
         {"t":"xt","b":{"r":-1,"o":{"cmd":"enhanceItemShop","ItemIDs":[3],"EnhID":3628,"EnhPID":9,"EnhLvl":21,"EnhRty":1,"EnhDPS":100,"EnhRng":10,"EnhName":"Lucky Weapon Enhancement","iCost":1010,"bSuccess":1}}}
         JSON;
@@ -87,6 +91,18 @@ final class EnhanceScriptTest extends TestCase
     {
         $me = self::lorekeeper03();
         $me->hear(ItemsEnhancedEvent::from(JsonMessage::from(self::ENHANCED)->unwrap())->unwrap());
+
+        [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Lucky), $me, [self::shop()]);
+
+        static::assertSame(['%xt%zm%loadShop%1%147%'], self::sent($steps));
+        static::assertEquals(new Done('the equipped gear already has the best Lucky enhancements it can get'), $result);
+    }
+
+    #[Test]
+    public function gear_with_an_enhancement_of_an_unhandled_type_is_left_alone(): void
+    {
+        $me = self::lorekeeper03();
+        $me->hear(PlayerInventoryLoadedEvent::from(JsonMessage::from(self::BLINDING_LIGHT)->unwrap())->unwrap());
 
         [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Lucky), $me, [self::shop()]);
 

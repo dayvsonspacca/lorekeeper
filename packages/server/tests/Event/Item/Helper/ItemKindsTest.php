@@ -36,6 +36,7 @@ use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Psl\Option;
 
+/** @mago-expect lint:too-many-methods */
 final class ItemKindsTest extends TestCase
 {
     /** @param class-string<Item> $kind */
@@ -164,7 +165,7 @@ final class ItemKindsTest extends TestCase
     }
 
     #[Test]
-    public function an_enhancement_of_a_type_it_does_not_know_is_left_out(): void
+    public function an_enhancement_of_a_type_it_does_not_know_is_read_as_unhandled(): void
     {
         $item = ItemKinds::read([
             'ItemID' => 37_207,
@@ -182,7 +183,47 @@ final class ItemKindsTest extends TestCase
 
         static::assertInstanceOf(Weapon::class, $item);
         static::assertSame(0, $item->damage->variance->percent);
-        static::assertTrue($item->enhancement->isNone());
+        static::assertSame(EnhancementType::Unhandled, $item->enhancement->unwrap()->type);
+        static::assertSame(80, $item->enhancement->unwrap()->level->value);
+    }
+
+    #[Test]
+    public function an_enhancement_of_a_type_it_does_not_know_can_still_be_sold(): void
+    {
+        $item = ItemKinds::read([
+            'ItemID' => 3628,
+            'sName' => 'Lucky Weapon Enhancement',
+            'sType' => 'Enhancement',
+            'sES' => 'Weapon',
+            'iLvl' => 21,
+            'iRty' => 1,
+            'iRng' => 10,
+            'PatternID' => 10,
+        ], ShopLoadedEvent::class);
+
+        static::assertInstanceOf(EnhancementItem::class, $item);
+        static::assertSame(EnhancementType::Unhandled, $item->enhancement->type);
+    }
+
+    #[Test]
+    public function an_enhancement_of_a_rarity_it_does_not_know_cannot_be_read(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('an enhancement has the unknown rarity 10');
+
+        ItemKinds::read([
+            'ItemID' => 37_207,
+            'sName' => 'Dual Blinding Light of Destiny',
+            'sType' => 'Dagger',
+            'sES' => 'Weapon',
+            'iLvl' => 1,
+            'iRty' => 35,
+            'iRng' => 0,
+            'EnhLvl' => 80,
+            'EnhRty' => 10,
+            'EnhPatternID' => 10,
+            'ProcID' => 7,
+        ], PlayerInventoryLoadedEvent::class);
     }
 
     #[Test]

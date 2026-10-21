@@ -46,7 +46,7 @@ final readonly class Enhancements
         }
 
         $type = self::type($data['EnhPatternID'] ?? 0);
-        $rarity = self::rarity($data['EnhRty'] ?? 0);
+        $rarity = self::rarity($data['EnhRty'] ?? 0, $event);
         $level = $data['EnhLvl'] ?? 0;
         if ($type === null || $rarity === null || $level < 1) {
             return Option\none();
@@ -81,7 +81,7 @@ final readonly class Enhancements
         }
 
         $type = self::type($data['PatternID']);
-        $rarity = self::rarity($data['iRty']);
+        $rarity = self::rarity($data['iRty'], $event);
         if ($type === null || $rarity === null) {
             throw new MalformedEventException(
                 $event,
@@ -108,11 +108,16 @@ final readonly class Enhancements
             7 => EnhancementType::Healer,
             8 => EnhancementType::SpellBreaker,
             9 => EnhancementType::Lucky,
-            default => null,
+            default => $type > 0 ? EnhancementType::Unhandled : null,
         };
     }
 
-    public static function rarity(int $rarity): ?EnhancementRarity
+    /**
+     * @param class-string<Event> $event
+     *
+     * @throws MalformedEventException
+     */
+    public static function rarity(int $rarity, string $event): ?EnhancementRarity
     {
         return match ($rarity) {
             1 => EnhancementRarity::PlusZero,
@@ -124,7 +129,8 @@ final readonly class Enhancements
             7 => EnhancementRarity::PlusSix,
             8 => EnhancementRarity::PlusOneHundred,
             9 => EnhancementRarity::PlusTwoHundred,
-            default => null,
+            0 => null,
+            default => throw new MalformedEventException($event, "an enhancement has the unknown rarity {$rarity}"),
         };
     }
 

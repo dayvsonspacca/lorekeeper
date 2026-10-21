@@ -61,6 +61,12 @@ final readonly class BestEnhancement
         }
 
         $current = $item->enhancement->unwrapOr(null);
+        if (
+            $current?->type === EnhancementType::Unhandled
+            || $offered->enhancement->type === EnhancementType::Unhandled
+        ) {
+            return false;
+        }
 
         return (
             $current === null

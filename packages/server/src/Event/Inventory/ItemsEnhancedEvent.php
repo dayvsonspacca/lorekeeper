@@ -56,7 +56,7 @@ final readonly class ItemsEnhancedEvent implements Event
         }
 
         $type = Enhancements::type($answer['EnhPID'] ?? 0);
-        $rarity = Enhancements::rarity($answer['EnhRty'] ?? 0);
+        $rarity = Enhancements::rarity($answer['EnhRty'] ?? 0, static::class);
         $items = $answer['ItemIDs'] ?? null;
         $level = $answer['EnhLvl'] ?? null;
         if ($type === null || $rarity === null || $items === null || $level === null) {

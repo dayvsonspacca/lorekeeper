@@ -22,7 +22,7 @@ final readonly class EnhancementShops
             EnhancementType::Healer => [145, 762],
             EnhancementType::SpellBreaker => [146, 764],
             EnhancementType::Lucky => [147, 763],
-            EnhancementType::Adventurer => null,
+            EnhancementType::Adventurer, EnhancementType::Unhandled => null,
         };
         if ($shops === null) {
             return null;
