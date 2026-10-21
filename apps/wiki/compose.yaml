@@ -1,6 +1,8 @@
+name: lorekeeper
+
 services:
   wiki:
-    build: apps/wiki/docker
+    build: docker
     restart: unless-stopped
     user: "${UID:-1000}:${GID:-1000}"
     working_dir: /app/apps/wiki
@@ -12,10 +14,10 @@ services:
       XDG_CONFIG_HOME: /tmp
       XDG_DATA_HOME: /tmp
     volumes:
-      - .:/app
+      - ../..:/app
 
   bots:
-    build: apps/wiki/docker
+    build: docker
     restart: unless-stopped
     user: "${UID:-1000}:${GID:-1000}"
     working_dir: /app/apps/wiki
@@ -26,4 +28,4 @@ services:
     environment:
       HOME: /tmp
     volumes:
-      - .:/app
+      - ../..:/app
