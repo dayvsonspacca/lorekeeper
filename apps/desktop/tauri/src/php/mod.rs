@@ -1,8 +1,10 @@
 mod data;
 
 use std::fs::{self, File};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
+use std::thread;
 
 use tauri::{AppHandle, Manager};
 
@@ -12,6 +14,7 @@ use data::Data;
 
 const ROUTER: &str = "vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php";
 const WORKERS: &str = "2";
+const LOG_DAYS: &str = "7";
 
 pub struct Php {
     binary: PathBuf,
@@ -61,6 +64,8 @@ impl Php {
             ("DB_DATABASE", data.database().display().to_string()),
             ("PHP_INI_SCAN_DIR", Current::ini_scan_dir(&data.ini())),
             ("PHP_CLI_SERVER_WORKERS", WORKERS.to_string()),
+            ("LOG_CHANNEL", "daily".to_string()),
+            ("LOG_DAILY_DAYS", LOG_DAYS.to_string()),
         ];
 
         Ok(Self {
@@ -99,11 +104,15 @@ impl Php {
         command
             .current_dir(self.code.join("public"))
             .stdout(Stdio::null())
-            .stderr(File::create(self.data.server_log())?);
+            .stderr(Stdio::piped());
         Current::isolate(&mut command);
 
-        let server = command.spawn()?;
+        let mut server = command.spawn()?;
         fs::write(self.data.group(), server.id().to_string())?;
+        if let Some(output) = server.stderr.take() {
+            let log = File::create(self.data.server_log())?;
+            thread::spawn(move || keep_what_matters(output, log));
+        }
 
         Ok(server)
     }
@@ -118,6 +127,46 @@ impl Php {
     }
 }
 
+fn keep_what_matters(output: impl Read, mut log: impl Write) {
+    for line in BufReader::new(output).lines().map_while(Result::ok) {
+        if !chatter(&line) {
+            let _ = writeln!(log, "{line}");
+        }
+    }
+}
+
+fn chatter(line: &str) -> bool {
+    line.ends_with(" Accepted") || line.ends_with(" Closing")
+}
+
 fn overridden(variable: &str) -> Option<PathBuf> {
     std::env::var_os(variable).map(PathBuf::from)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_server_log_keeps_what_matters_and_drops_the_chatter() {
+        let output = "\
+[71] [Wed Oct 21 14:39:21 2026] PHP 8.5.12 Development Server (http://127.0.0.1:39321) started
+[71] [Wed Oct 21 14:39:21 2026] 127.0.0.1:39158 Accepted
+[71] [Wed Oct 21 14:39:21 2026] 127.0.0.1:39158 Closing
+[72] [Wed Oct 21 14:39:22 2026] 127.0.0.1:39160 [200]: GET /css/filament/filament/app.css
+[72] [Wed Oct 21 14:39:23 2026] PHP Fatal error:  Allowed memory size exhausted
+";
+        let mut log = Vec::new();
+
+        keep_what_matters(output.as_bytes(), &mut log);
+
+        assert_eq!(
+            String::from_utf8(log).unwrap(),
+            "\
+[71] [Wed Oct 21 14:39:21 2026] PHP 8.5.12 Development Server (http://127.0.0.1:39321) started
+[72] [Wed Oct 21 14:39:22 2026] 127.0.0.1:39160 [200]: GET /css/filament/filament/app.css
+[72] [Wed Oct 21 14:39:23 2026] PHP Fatal error:  Allowed memory size exhausted
+"
+        );
+    }
 }

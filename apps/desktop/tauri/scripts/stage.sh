@@ -38,7 +38,6 @@ DB_CONNECTION=sqlite
 SESSION_DRIVER=file
 CACHE_STORE=file
 QUEUE_CONNECTION=sync
-LOG_CHANNEL=single
 ENV
 
 mv "$WORK/apps/desktop" "$BUILD/app"
