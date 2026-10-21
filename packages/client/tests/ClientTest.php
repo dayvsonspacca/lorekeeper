@@ -20,6 +20,7 @@ use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use PHPUnit\Framework\Attributes\Test;
@@ -131,6 +132,24 @@ final class ClientTest extends TestCase
         }));
 
         static::assertEquals(new Disconnected('The server closed the connection.'), $result);
+    }
+
+    #[Test]
+    public function a_message_it_cannot_read_fails_the_script_with_the_reason(): void
+    {
+        $arena = '{"t":"xt","b":{"r":-1,"o":{"cmd":"moveToArea","areaId":732692,"areaName":"icestormarena-48213","intType":"1","sExtra":"NoAfk","strMapName":"icestormarena","strMapFileName":"Icewing/town-icestormarena-21Jul23.swf","monmap":[{"MonMapID":1,"MonID":3984,"strFrame":"r4","bRed":false,"intRSS":-1}],"mondef":[{"sRace":"Undead","MonID":3984,"intLevel":300,"strLinkage":"UndeadMage1","strMonName":"Skeletal Ice Mage","strMonFileName":"UndeadMage1.swf","strBehave":"walk"}],"uoBranch":[],"monBranch":[{"MonMapID":1,"MonID":3984,"intState":1,"intHP":730,"intMP":100,"intHPMax":730,"intMPMax":100,"bRed":false,"iLvl":5,"wDPS":5}]}}}';
+
+        $result = new Client(
+            self::connection("{$arena}\0"),
+            self::me(),
+        )->run(self::script(static function (): Generator {
+            yield new Pause(Duration::milliseconds(1));
+
+            return 'never';
+        }));
+
+        static::assertInstanceOf(Failed::class, $result);
+        static::assertStringStartsWith('Malformed ' . MovedToMapEvent::class, $result->reason);
     }
 
     #[Test]

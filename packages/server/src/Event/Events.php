@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event;
 
+use InvalidArgumentException;
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
 use Lorekeeper\Server\Event\Combat\AttackRejectedEvent;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
@@ -53,6 +54,8 @@ use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\Message;
+use Psl\Option;
+use Psl\Type\Exception\Exception as TypeException;
 
 final readonly class Events
 {
@@ -115,8 +118,7 @@ final readonly class Events
 
         foreach (self::ALL as $event) {
             try {
-                /** @mago-expect analysis:possibly-static-access-on-interface */
-                $heard = $event::from($message);
+                $heard = self::read($event, $message);
             } catch (MalformedEventException $malformed) {
                 $recognized[] = $malformed;
 
@@ -129,5 +131,22 @@ final readonly class Events
         }
 
         return $recognized;
+    }
+
+    /**
+     * @param class-string<Event> $event
+     *
+     * @throws MalformedEventException
+     *
+     * @return Option\Option<Event>
+     */
+    public static function read(string $event, Message $message): Option\Option
+    {
+        try {
+            /** @mago-expect analysis:possibly-static-access-on-interface */
+            return $event::from($message);
+        } catch (InvalidArgumentException|TypeException $exception) {
+            throw new MalformedEventException($event, $exception->getMessage(), $exception);
+        }
     }
 }

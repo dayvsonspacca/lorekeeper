@@ -28,6 +28,7 @@ use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Session\LoginFailedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
+use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\Message;
 use Psl\Async;
 use Psl\Async\CancellationTokenInterface;
@@ -60,11 +61,7 @@ final class Client
     ): self|LoginFailedEvent|TimedOut|Disconnected|Stopped {
         $entrance = new Entrance($login->player);
         $hear = static function (Message $message) use ($entrance): void {
-            foreach (Events::recognize($message) as $event) {
-                if (!$event instanceof Event) {
-                    continue;
-                }
-
+            foreach (self::recognize($message) as $event) {
                 $entrance->hear($event);
             }
         };
@@ -263,8 +260,7 @@ final class Client
             $hear($message->unwrap());
 
             foreach ($await->events as $event) {
-                /** @mago-expect analysis:possibly-static-access-on-interface */
-                $heard = $event::from($message->unwrap());
+                $heard = Events::read($event, $message->unwrap());
                 if ($heard->isSome()) {
                     return $heard->unwrap();
                 }
@@ -313,15 +309,29 @@ final class Client
         return new Await([$event, ...array_values($more)], Duration::seconds(15));
     }
 
-    private function hear(Message $message): void
+    /**
+     * @throws MalformedEventException
+     *
+     * @return list<Event>
+     */
+    private static function recognize(Message $message): array
     {
-        $events = Events::recognize($message);
-
-        foreach ($events as $event) {
+        $events = [];
+        foreach (Events::recognize($message) as $event) {
             if (!$event instanceof Event) {
-                continue;
+                throw $event;
             }
 
+            $events[] = $event;
+        }
+
+        return $events;
+    }
+
+    /** @throws MalformedEventException */
+    private function hear(Message $message): void
+    {
+        foreach (self::recognize($message) as $event) {
             $this->me->hear($event);
             foreach ($this->subscribers as $subscriber) {
                 $subscriber($event);
