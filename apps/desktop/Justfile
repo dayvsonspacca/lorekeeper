@@ -6,11 +6,11 @@ dev: deps
 
 # Build the static PHP the bundle ships with
 php:
-    {{ tauri }}/scripts/php.sh
+    {{ tauri }}/scripts/linux/php.sh
 
 # Bundle the desktop into tauri/target/release/bundle
 build: deps
-    test -x {{ tauri }}/.php/php || {{ tauri }}/scripts/php.sh
+    test -x {{ tauri }}/.php/php || {{ tauri }}/scripts/linux/php.sh
     {{ tauri }}/scripts/stage.sh {{ tauri }}/.php/php
     cd {{ tauri }} && npx tauri build --config tauri.bundle.json
 

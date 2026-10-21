@@ -12,6 +12,14 @@ just desktop build  # tauri/target/release/bundle/{deb,appimage}
 `dev` runs with `APP_DEBUG=true` and keeps its data apart from the installed app. `build` stages the app without dev
 dependencies into `build/`, and only `tauri.bundle.json` points the bundle at it.
 
+## Linux only, for now
+
+Everything that depends on the system sits behind the `Platform` trait in `src/platform/`, implemented by
+`src/platform/linux.rs`: the process group, `PR_SET_PDEATHSIG`, `/proc`, the signals and the notifications. Building on
+another system stops with a `compile_error!`; a port adds `src/platform/<os>.rs`, a `tauri.<os>.conf.json` with its
+bundle targets and a `scripts/<os>/php.sh` for its static PHP. The PHP side launches bots with `nohup` and `posix_kill`,
+so `ProcessLauncher` needs its own port too.
+
 ## How the shell talks to the app
 
 - At start it runs `artisan desktop:boot`, then serves `public/` with `php -S` on a free port in its own process group.

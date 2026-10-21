@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TAURI=$(cd "$(dirname "$0")/.." && pwd)
+TAURI=$(cd "$(dirname "$0")/../.." && pwd)
 WORK=$TAURI/.php
 EXTENSIONS=bcmath,ctype,curl,dom,fileinfo,filter,iconv,intl,mbstring,opcache,openssl,pcntl,pdo,pdo_sqlite,phar,posix,session,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zlib
 
