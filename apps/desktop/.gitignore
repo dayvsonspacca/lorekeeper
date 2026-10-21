@@ -1,9 +1,7 @@
 /vendor
 /.phpunit.cache
 .env
-/public/css
 /public/css/filament
-/public/js
 /public/js/filament
 /public/fonts/filament
 /public/storage

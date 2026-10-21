@@ -16,6 +16,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Scripts\Actions\ExportScriptAction;
+use Lorekeeper\Apps\Desktop\Filament\Resources\Scripts\Pages\DrawScript;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Scripts\Pages\ManageScripts;
 use Lorekeeper\Apps\Desktop\Models\Script;
 use Override;
@@ -76,6 +77,7 @@ final class ScriptResource extends Resource
                     ->color('gray'),
             ])
             ->defaultSort('name')
+            ->recordUrl(static fn(Script $record): string => self::getUrl('draw', ['record' => $record]))
             ->recordActions([
                 ExportScriptAction::make(),
                 ActionGroup::make([
@@ -103,7 +105,7 @@ final class ScriptResource extends Resource
     #[Override]
     public static function getPages(): array
     {
-        return ['index' => ManageScripts::route('/')];
+        return ['index' => ManageScripts::route('/'), 'draw' => DrawScript::route('/{record}')];
     }
 
     private static function state(Script $record): string

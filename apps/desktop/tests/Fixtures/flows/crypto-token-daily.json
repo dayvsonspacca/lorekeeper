@@ -5,11 +5,11 @@
     "start": "enter",
     "nodes": [
         {"id": "enter", "do": "join", "map": "boxes", "at": [0, 0]},
-        {"id": "done", "do": "quest-done", "quest": 6187, "at": [260, 0]},
-        {"id": "accept", "do": "accept-quest", "quest": 6187, "at": [520, 80]},
-        {"id": "hunt", "do": "hunt", "cell": "Closet", "pad": "Center", "item": 42658, "quantity": 1, "minutes": 5, "at": [780, 80]},
-        {"id": "turn-in", "do": "turn-in-quest", "quest": 6187, "reward": 42657, "at": [1040, 80]},
-        {"id": "rest", "do": "rest", "at": [1300, 80]}
+        {"id": "done", "do": "quest-done", "quest": 6187, "at": [320, 0]},
+        {"id": "accept", "do": "accept-quest", "quest": 6187, "at": [640, 120]},
+        {"id": "hunt", "do": "hunt", "cell": "Closet", "pad": "Center", "item": 42658, "quantity": 1, "minutes": 5, "at": [960, 120]},
+        {"id": "turn-in", "do": "turn-in-quest", "quest": 6187, "reward": 42657, "at": [1280, 120]},
+        {"id": "rest", "do": "rest", "at": [1600, 120]}
     ],
     "wires": [
         {"from": "enter", "to": "done"},
