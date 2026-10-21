@@ -8,11 +8,12 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
+use Lorekeeper\Apps\Desktop\Bots\BotStatus;
+use Lorekeeper\Apps\Desktop\Bots\Elapsed;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
-use Lorekeeper\Apps\Desktop\Bots\RunStatus;
+use Lorekeeper\Apps\Desktop\Bots\LogLevel;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
-use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 
 /**
  * @property int $id
@@ -20,80 +21,111 @@ use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
  * @property string $password
  * @property null|string $server
  * @property null|int $level
+ * @property BotStatus $status
+ * @property null|int $pid
+ * @property null|string $result
+ * @property null|string $map
+ * @property null|array<string, mixed> $scene
+ * @property null|Carbon $started_at
+ * @property null|Carbon $stopped_at
  */
-#[Fillable(['name', 'password', 'server', 'level'])]
+#[Fillable([
+    'name',
+    'password',
+    'server',
+    'level',
+    'status',
+    'pid',
+    'result',
+    'map',
+    'scene',
+    'started_at',
+    'stopped_at',
+])]
 #[Hidden(['password'])]
 final class Account extends Model
 {
-    /** @return HasMany<BotRun, $this> */
-    public function runs(): HasMany
+    private const array ACTIVE = [BotStatus::Starting, BotStatus::Online, BotStatus::Stopping];
+
+    /** @var array<string, mixed> */
+    protected $attributes = ['status' => 'offline'];
+
+    public static function interrupted(): void
     {
-        return $this->hasMany(BotRun::class);
+        foreach (self::query()->whereIn('status', self::ACTIVE)->get() as $account) {
+            if (!$account->settle(BotStatus::Failed, 'interrupted')) {
+                continue;
+            }
+
+            $account->log('Failed: interrupted', LogLevel::Error);
+        }
     }
 
-    /** @return HasOne<BotRun, $this> */
-    public function latestRun(): HasOne
+    /** @return HasMany<BotLog, $this> */
+    public function logs(): HasMany
     {
-        return $this->hasOne(BotRun::class)->latestOfMany();
+        return $this->hasMany(BotLog::class);
     }
 
-    public function activeRun(): ?BotRun
+    public function playing(): bool
     {
-        $run = $this
-            ->runs()
-            ->whereIn('status', [RunStatus::Pending, RunStatus::Running, RunStatus::Stopping])
-            ->latest('id')
-            ->first();
+        return $this->status->isActive();
+    }
 
-        return $run instanceof BotRun ? $run : null;
+    public function start(): void
+    {
+        $claimed = self::query()
+            ->whereKey($this->id)
+            ->whereNotIn('status', self::ACTIVE)
+            ->update(['status' => BotStatus::Starting, 'result' => null, 'pid' => null]);
+        $this->refresh();
+
+        if ($claimed === 1) {
+            app(Launcher::class)->launch($this);
+        }
+    }
+
+    public function stop(Launcher $launcher): void
+    {
+        if ($this->playing() && !$launcher->alive($this)) {
+            if ($this->settle(BotStatus::Offline, null)) {
+                $this->log('Stopped: the bot process was already gone');
+            }
+
+            return;
+        }
+
+        self::query()
+            ->whereKey($this->id)
+            ->whereIn('status', [BotStatus::Starting, BotStatus::Online])
+            ->update(['status' => BotStatus::Stopping]);
+        $this->refresh();
+    }
+
+    public function settle(BotStatus $status, ?string $result): bool
+    {
+        $settled = self::query()
+            ->whereKey($this->id)
+            ->whereIn('status', self::ACTIVE)
+            ->update(['status' => $status, 'result' => $result, 'pid' => null, 'stopped_at' => now()]);
+        $this->refresh();
+
+        return $settled === 1;
     }
 
     public function scene(): ?Scene
     {
-        $run = $this
-            ->runs()
-            ->whereNotNull('scene')
-            ->latest('id')
-            ->first();
-
-        return $run instanceof BotRun ? $run->scene() : null;
+        return $this->scene === null ? null : Scene::fromArray($this->scene);
     }
 
-    public function start(): BotRun
+    public function duration(): ?string
     {
-        return $this->activeRun() ?? $this->runs()->create();
+        return Elapsed::between($this->started_at, $this->playing() ? null : $this->stopped_at);
     }
 
-    public function resume(): void
+    public function log(string $message, LogLevel $level = LogLevel::Info): void
     {
-        $unfinished = $this->unfinishedTasks();
-        if ($unfinished === [] || $this->activeRun() !== null) {
-            return;
-        }
-
-        $run = BotRun::withoutEvents(fn(): BotRun => $this->runs()->create());
-        foreach ($unfinished as $task) {
-            $run->tasks()->create(['script' => $task->script, 'parameters' => $task->parameters]);
-        }
-
-        app(Launcher::class)->launch($run);
-    }
-
-    /** @return list<BotTask> */
-    public function unfinishedTasks(): array
-    {
-        $run = $this->runs()->latest('id')->first();
-        if (!$run instanceof BotRun || $run->status->isActive()) {
-            return [];
-        }
-
-        return $run
-            ->tasks()
-            ->whereIn('status', [TaskStatus::Failed, TaskStatus::Cancelled])
-            ->where('cancelled_by_user', false)
-            ->orderBy('id')
-            ->get()
-            ->all();
+        $this->logs()->create(['message' => $message, 'level' => $level]);
     }
 
     /**
@@ -103,6 +135,12 @@ final class Account extends Model
      */
     protected function casts(): array
     {
-        return ['password' => 'encrypted'];
+        return [
+            'password' => 'encrypted',
+            'status' => BotStatus::class,
+            'scene' => 'array',
+            'started_at' => 'datetime',
+            'stopped_at' => 'datetime',
+        ];
     }
 }

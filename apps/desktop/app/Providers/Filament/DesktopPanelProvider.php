@@ -21,7 +21,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Lorekeeper\Apps\Desktop\Filament\Pages\Bots;
+use Lorekeeper\Apps\Desktop\Filament\Pages\Accounts;
 use Lorekeeper\Apps\Desktop\Filament\Pages\ManagePreferences;
 use Lorekeeper\Apps\Desktop\Livewire\KeepAlive;
 
@@ -48,7 +48,7 @@ final class DesktopPanelProvider extends PanelProvider
             ->renderHook(PanelsRenderHook::BODY_END, static fn(): string => Blade::render('@livewire($component)', [
                 'component' => KeepAlive::class,
             ]))
-            ->pages([Bots::class, ManagePreferences::class])
+            ->pages([Accounts::class, ManagePreferences::class])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'Lorekeeper\Apps\Desktop\Filament\Resources')
             ->middleware([
                 EncryptCookies::class,

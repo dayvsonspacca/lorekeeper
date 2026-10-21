@@ -12,10 +12,9 @@ final readonly class Tray
     public static function bots(): array
     {
         return Account::query()
-            ->with('latestRun')
             ->orderBy('name')
             ->get()
-            ->map(static fn(Account $account): string => $account->latestRun?->status->isActive() === true
+            ->map(static fn(Account $account): string => $account->playing()
                 ? "● {$account->name} · on"
                 : "○ {$account->name} · off")
             ->values()

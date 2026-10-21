@@ -17,12 +17,10 @@ final class PreferencesTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function a_new_install_plays_in_private_rooms_and_hides_from_everyone(): void
+    public function a_new_install_hides_from_everyone(): void
     {
         $preferences = Preferences::current();
 
-        static::assertTrue($preferences->private_rooms);
-        static::assertTrue($preferences->play_together);
         foreach (GameSetting::cases() as $setting) {
             static::assertTrue($preferences->blocks($setting));
         }
@@ -36,15 +34,15 @@ final class PreferencesTest extends TestCase
         $this
             ->get('/preferences')
             ->assertOk()
-            ->assertSee(['Play in private rooms', 'Play together', 'Block goto', 'Ignore duel invites']);
+            ->assertSee(['Block goto', 'Ignore duel invites'])
+            ->assertDontSee(['Play in private rooms', 'Play together']);
 
-        Livewire::test(ManagePreferences::class)
-            ->assertSet('data.private_rooms', true)
-            ->set('data.private_rooms', false)
-            ->set('data.block_whispers', false);
+        Livewire::test(ManagePreferences::class)->assertSet('data.block_whispers', true)->set(
+            'data.block_whispers',
+            false,
+        );
 
         $preferences = Preferences::current();
-        static::assertFalse($preferences->private_rooms);
         static::assertFalse($preferences->blocks(GameSetting::Whispers));
         static::assertTrue($preferences->blocks(GameSetting::Goto));
     }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Tests;
 
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
-use Lorekeeper\Apps\Desktop\Models\BotRun;
+use Lorekeeper\Apps\Desktop\Models\Account;
 use Override;
 
 final class FakeLauncher implements Launcher
@@ -17,15 +17,15 @@ final class FakeLauncher implements Launcher
     public array $alive = [];
 
     #[Override]
-    public function launch(BotRun $run): void
+    public function launch(Account $account): void
     {
-        $this->launched[] = $run->id;
-        $this->alive[$run->id] = true;
+        $this->launched[] = $account->id;
+        $this->alive[$account->id] = true;
     }
 
     #[Override]
-    public function alive(BotRun $run): bool
+    public function alive(Account $account): bool
     {
-        return array_key_exists($run->id, $this->alive);
+        return array_key_exists($account->id, $this->alive);
     }
 }

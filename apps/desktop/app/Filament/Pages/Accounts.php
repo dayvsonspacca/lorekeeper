@@ -11,27 +11,23 @@ use Filament\Panel;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
-use Lorekeeper\Apps\Desktop\Bots\Realm;
-use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
-use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\AccountResource;
-use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Schemas\TaskForm;
+use Lorekeeper\Apps\Desktop\Filament\Schemas\AccountForm;
 use Lorekeeper\Apps\Desktop\Models\Account;
-use Lorekeeper\Apps\Desktop\Models\BotRun;
-use Lorekeeper\Apps\Desktop\Models\BotRunLog;
+use Lorekeeper\Apps\Desktop\Models\BotLog;
 use Lorekeeper\Apps\Desktop\Native\LocalTime;
 use Override;
 
-final class Bots extends Page
+final class Accounts extends Page
 {
     private const int LOG_LINES = 5;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCpuChip;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
     protected static ?int $navigationSort = -2;
 
-    protected static ?string $title = 'Bots';
+    protected static ?string $title = 'Accounts';
 
-    protected string $view = 'filament.pages.bots';
+    protected string $view = 'filament.pages.accounts';
 
     public ?int $expanded = null;
 
@@ -46,7 +42,7 @@ final class Bots extends Page
         $this->expanded = Account::query()
             ->orderBy('name')
             ->get()
-            ->first(static fn(Account $account): bool => $account->activeRun() !== null)
+            ->first(static fn(Account $account): bool => $account->playing())
             ?->id;
     }
 
@@ -60,11 +56,6 @@ final class Bots extends Page
         Account::query()->find($account)?->start();
     }
 
-    public function resume(int $account): void
-    {
-        Account::query()->find($account)?->resume();
-    }
-
     public function stopAction(): Action
     {
         return Action::make('stop')
@@ -72,63 +63,73 @@ final class Bots extends Page
             ->outlined()
             ->size(Size::Small)
             ->requiresConfirmation()
-            ->modalHeading(static fn(array $arguments): string => 'Stop ' . (BotRun::query()
-                ->find($arguments['run'] ?? 0)
-                ?->account
-                ->name ?? 'this bot') . '?')
-            ->modalDescription('The bot logs out and the run ends as stopped.')
+            ->modalHeading(
+                static fn(array $arguments): string => (
+                    'Stop '
+                    . (Account::query()->find($arguments['account'] ?? 0)->name ?? 'this bot')
+                    . '?'
+                ),
+            )
+            ->modalDescription('The bot logs out of the game.')
             ->modalSubmitActionLabel('Stop')
             ->action(static function (array $arguments, Launcher $launcher): void {
-                $found = BotRun::query()->find($arguments['run'] ?? 0);
-                if ($found === null || !$found->status->isActive()) {
-                    return;
-                }
-
-                $found->stop($launcher);
+                Account::query()
+                    ->find($arguments['account'] ?? 0)
+                    ?->stop($launcher);
             });
     }
 
-    public function addTaskAction(): Action
+    public function editAccountAction(): Action
     {
-        return Action::make('addTask')
-            ->label('Add task')
-            ->icon(Heroicon::OutlinedPlus)
+        return Action::make('editAccount')
+            ->label('Edit')
+            ->icon(Heroicon::OutlinedPencilSquare)
+            ->iconButton()
             ->color('gray')
-            ->size(Size::ExtraSmall)
-            ->modalIcon(Heroicon::OutlinedQueueList)
-            ->modalHeading('Add tasks')
-            ->modalDescription(
-                'The bot plays its tasks one after the other, in this order, and waits where it is in between.',
-            )
-            ->modalSubmitActionLabel('Add')
-            ->schema([TaskForm::routine(), TaskForm::scrolledQueue()])
-            ->stickyModalHeader()
-            ->stickyModalFooter()
-            ->fillForm(TaskForm::blankQueue())
-            ->action(static function (array $arguments, array $data): void {
-                $run = BotRun::query()->find($arguments['run'] ?? 0);
-                if ($run === null || !$run->status->isActive()) {
-                    return;
-                }
+            ->size(Size::Small)
+            ->record(static fn(array $arguments): ?Account => Account::query()->find($arguments['account'] ?? 0))
+            ->modalHeading(static fn(?Account $record): string => 'Edit ' . ($record->name ?? 'account'))
+            ->modalSubmitActionLabel('Save')
+            ->schema(AccountForm::editing(...))
+            ->fillForm(static fn(?Account $record): array => [
+                'name' => $record?->name,
+                'server' => $record?->server,
+            ])
+            ->action(static function (?Account $record, array $data): void {
+                $record?->update($data);
+            });
+    }
 
-                TaskForm::addTo($run, $data);
-            })
-            ->successNotificationTitle('Tasks added');
+    public function deleteAccountAction(): Action
+    {
+        return Action::make('deleteAccount')
+            ->label('Delete')
+            ->icon(Heroicon::OutlinedTrash)
+            ->iconButton()
+            ->color('gray')
+            ->size(Size::Small)
+            ->requiresConfirmation()
+            ->record(static fn(array $arguments): ?Account => Account::query()->find($arguments['account'] ?? 0))
+            ->modalHeading(static fn(?Account $record): string => 'Delete ' . ($record->name ?? 'this account') . '?')
+            ->modalDescription('Its log goes with it.')
+            ->modalSubmitActionLabel('Delete')
+            ->hidden(static fn(?Account $record): bool => $record === null || $record->playing())
+            ->action(static function (?Account $record): void {
+                if ($record !== null && !$record->playing()) {
+                    $record->delete();
+                }
+            });
     }
 
     /** @return array<string, mixed> */
     #[Override]
     protected function getViewData(): array
     {
-        $accounts = Account::query()
-            ->with('latestRun')
-            ->orderBy('name')
-            ->get();
+        $accounts = Account::query()->orderBy('name')->get();
 
         return [
             'accounts' => $accounts,
             'now' => now()->getTimestamp(),
-            'realm' => Realm::of($accounts->all(), now()),
             'detail' => $this->detail($accounts->firstWhere('id', $this->expanded)),
         ];
     }
@@ -136,25 +137,18 @@ final class Bots extends Page
     /** @return null|array<string, mixed> */
     private function detail(?Account $account): ?array
     {
-        $run = $account?->latestRun;
-        if ($run === null) {
+        if ($account === null) {
             return null;
         }
 
         return [
-            'run' => $run,
-            'queue' => $run
-                ->tasks()
-                ->whereIn('status', [TaskStatus::Running, TaskStatus::Cancelling, TaskStatus::Pending])
-                ->orderBy('id')
-                ->get(),
-            'logs' => $run
+            'logs' => $account
                 ->logs()
                 ->latest('id')
                 ->limit(self::LOG_LINES)
                 ->get()
                 ->reverse()
-                ->map(static fn(BotRunLog $log): array => [
+                ->map(static fn(BotLog $log): array => [
                     'at' => LocalTime::clock($log->created_at),
                     'message' => $log->message,
                     'level' => $log->level->value,
@@ -173,10 +167,10 @@ final class Bots extends Page
                 ->color('gray')
                 ->requiresConfirmation()
                 ->modalHeading('Start every idle bot?')
-                ->modalDescription('Each character that is off logs in, enters the game and waits for tasks.')
+                ->modalDescription('Each character that is off logs in and enters the game.')
                 ->modalSubmitActionLabel('Start')
                 ->visible(static fn(): bool => Account::query()->get()->contains(
-                    static fn(Account $account): bool => $account->activeRun() === null,
+                    static fn(Account $account): bool => !$account->playing(),
                 ))
                 ->action(static function (): void {
                     foreach (Account::query()->get() as $account) {
@@ -184,10 +178,11 @@ final class Bots extends Page
                     }
                 }),
             Action::make('addAccount')
-                ->label('Add character')
-                ->modalHeading('Add character')
+                ->label('Add account')
+                ->modalHeading('Add account')
                 ->modalSubmitActionLabel('Add')
-                ->schema(AccountResource::form(...))
+                ->model(Account::class)
+                ->schema(AccountForm::creating(...))
                 ->action(static function (array $data): void {
                     Account::query()->create($data);
                 }),

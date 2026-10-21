@@ -6,8 +6,7 @@ namespace Lorekeeper\Apps\Desktop\Bots;
 
 use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Witness;
-use Lorekeeper\Apps\Desktop\Models\BotRun;
-use Lorekeeper\Apps\Desktop\Models\BotTask;
+use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Client\Character;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Server\Event\Event;
@@ -19,23 +18,16 @@ use Psl\Observer\ObserverInterface;
 use Psl\Observer\SubjectInterface;
 
 /** @implements ObserverInterface<Character> */
-final class RunRecorder implements ObserverInterface
+final class BotRecorder implements ObserverInterface
 {
-    private ?BotTask $task = null;
-
     private ?bool $fallen = null;
 
     private readonly Witness $witness;
 
     public function __construct(
-        private readonly BotRun $run,
+        private readonly Account $account,
     ) {
         $this->witness = new Witness();
-    }
-
-    public function working(?BotTask $task): void
-    {
-        $this->task = $task;
     }
 
     public function heard(Event $event): void
@@ -60,15 +52,10 @@ final class RunRecorder implements ObserverInterface
         $map = $subject->location()->map->name->value;
         $level = $subject->player()->progress->level->value;
 
-        if ($this->run->map !== $map) {
-            $this->run->update(['map' => $map]);
+        if ($this->account->map !== $map || $this->account->level !== $level) {
+            $this->account->update(['map' => $map, 'level' => $level]);
         }
 
-        if ($this->run->account->level !== $level) {
-            $this->run->account->update(['level' => $level]);
-        }
-
-        $this->reached($level);
         $this->stood($subject->state());
         $this->keep($this->witness->saw($subject, now()->getTimestamp()));
     }
@@ -76,17 +63,12 @@ final class RunRecorder implements ObserverInterface
     private function keep(?Scene $scene): void
     {
         if ($scene !== null) {
-            $this->run->update(['scene' => $scene->toArray()]);
+            $this->account->update(['scene' => $scene->toArray()]);
         }
     }
 
     private function rewarded(MonsterRewardedEvent $event): void
     {
-        $this->task?->incrementEach([
-            'kills' => 1,
-            'experience' => $event->experience->value,
-            'gold' => $event->gold->value,
-        ]);
         $this->log(sprintf(
             'Defeated %s: +%s XP, +%s gold',
             $this->witness->monsterName($event->monster) ?? 'a monster',
@@ -110,28 +92,11 @@ final class RunRecorder implements ObserverInterface
             return;
         }
 
-        $this->task?->increment('deaths');
         $this->log('Fell in battle', LogLevel::Warning);
-    }
-
-    private function reached(int $level): void
-    {
-        $task = $this->task;
-        if ($task === null || $task->script !== BotScript::LevelUp || $task->level_from === null) {
-            return;
-        }
-
-        $total = max(1, Parameters::level($task->parameters)->value - $task->level_from);
-        $done = max(0, min($total, $level - $task->level_from));
-        if ($task->level_to === $level && $task->progress_done === $done && $task->progress_total === $total) {
-            return;
-        }
-
-        $task->update(['level_to' => $level, 'progress_done' => $done, 'progress_total' => $total]);
     }
 
     private function log(string $message, LogLevel $level = LogLevel::Info): void
     {
-        $this->run->log($message, $level, $this->task);
+        $this->account->log($message, $level);
     }
 }

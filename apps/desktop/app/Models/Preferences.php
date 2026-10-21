@@ -11,8 +11,6 @@ use Override;
 
 /**
  * @property int $id
- * @property bool $private_rooms
- * @property bool $play_together
  * @property bool $block_goto
  * @property bool $block_whispers
  * @property bool $block_friend_requests
@@ -21,8 +19,6 @@ use Override;
  * @property bool $block_duels
  */
 #[Fillable([
-    'private_rooms',
-    'play_together',
     'block_goto',
     'block_whispers',
     'block_friend_requests',
@@ -43,8 +39,6 @@ final class Preferences extends Model
 
     /** @var array<string, mixed> */
     protected $attributes = [
-        'private_rooms' => true,
-        'play_together' => true,
         'block_goto' => true,
         'block_whispers' => true,
         'block_friend_requests' => true,
@@ -71,6 +65,6 @@ final class Preferences extends Model
     #[Override]
     protected function casts(): array
     {
-        return array_fill_keys(['private_rooms', 'play_together', ...array_keys(self::BLOCKS)], value: 'boolean');
+        return array_fill_keys(array_keys(self::BLOCKS), value: 'boolean');
     }
 }

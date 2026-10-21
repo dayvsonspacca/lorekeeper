@@ -4,31 +4,18 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Tests\Feature;
 
-use Filament\Actions\CreateAction;
-use Filament\Actions\EditAction;
-use Filament\Forms\Components\Repeater;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Livewire\Livewire;
-use Lorekeeper\Apps\Desktop\Bots\BotScript;
-use Lorekeeper\Apps\Desktop\Bots\Realm;
-use Lorekeeper\Apps\Desktop\Bots\RunStatus;
+use Lorekeeper\Apps\Desktop\Bots\BotStatus;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Backpack;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Feed;
 use Lorekeeper\Apps\Desktop\Bots\Scene\FeedKind;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Pulse;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
-use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
-use Lorekeeper\Apps\Desktop\Filament\Pages\Bots;
-use Lorekeeper\Apps\Desktop\Filament\Resources\Accounts\Pages\ManageAccounts;
-use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\BotRunResource;
-use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
+use Lorekeeper\Apps\Desktop\Filament\Pages\Accounts;
 use Lorekeeper\Apps\Desktop\Livewire\KeepAlive;
-use Lorekeeper\Apps\Desktop\Livewire\RunBoard;
 use Lorekeeper\Apps\Desktop\Models\Account;
-use Lorekeeper\Apps\Desktop\Models\BotRun;
-use Lorekeeper\Apps\Desktop\Models\BotTask;
-use Lorekeeper\Apps\Desktop\Native\LocalTime;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -40,58 +27,50 @@ final class DesktopTest extends TestCase
     #[Test]
     public function every_page_opens_without_logging_in(): void
     {
-        $run = $this->account()->runs()->create();
+        $this->account();
 
-        foreach ([
-            '/',
-            '/accounts',
-            "/accounts/{$run->account_id}",
-            '/bot-runs',
-            "/bot-runs/{$run->id}",
-            '/preferences',
-        ] as $page) {
+        foreach (['/', '/preferences'] as $page) {
             $this->get($page)->assertOk()->assertSeeLivewire(KeepAlive::class);
         }
     }
 
     #[Test]
-    public function the_home_shows_a_row_per_character_to_start_stop_and_open_its_bot(): void
+    public function accounts_live_on_the_home_with_no_other_page(): void
+    {
+        $account = $this->account();
+
+        foreach (['/accounts', "/accounts/{$account->id}", '/bot-runs', '/bot-runs/1'] as $page) {
+            $this->get($page)->assertNotFound();
+        }
+        $this->get('/')->assertSee('Accounts');
+    }
+
+    #[Test]
+    public function the_home_shows_a_row_per_character_to_start_and_stop_its_bot(): void
     {
         $idle = $this->account();
         $busy = Account::query()->create(['name' => 'Busy', 'password' => bin2hex(random_bytes(8)), 'level' => 6]);
-        $run = $busy->runs()->create();
-        $run->update(['status' => RunStatus::Running, 'map' => 'icestormarena']);
-        $run->tasks()->create([
-            'script' => BotScript::LevelUp,
-            'parameters' => ['level' => 10],
-            'status' => TaskStatus::Running,
-            'started_at' => now()->subMinutes(5),
-            'kills' => 12,
-            'progress_done' => 1,
-            'progress_total' => 4,
-        ]);
+        $busy->update(['status' => BotStatus::Online, 'map' => 'icestormarena', 'started_at' => now()]);
+        $this->launcher->alive[$busy->id] = true;
 
-        Livewire::test(Bots::class)
+        Livewire::test(Accounts::class)
             ->assertSeeInOrder([
                 'Busy',
                 'Entering',
                 'icestormarena',
-                'Level up · to level 10',
-                '25%',
                 'Stop',
                 'Entering the game',
-                '12 kills',
-                'Queue',
-                'Watch the run',
                 'Hero',
-                'Never ran',
+                'Never played',
                 'Start',
             ])
+            ->assertDontSee(['Watch the run', 'Left off', 'Resume', 'Queue', 'Add task'])
             ->call('start', $idle->id)
-            ->callAction('stop', arguments: ['run' => $run->id]);
+            ->callAction('stop', arguments: ['account' => $busy->id]);
 
-        static::assertSame(RunStatus::Pending, $idle->activeRun()?->status);
-        static::assertSame(RunStatus::Stopping, $run->refresh()->status);
+        static::assertSame(BotStatus::Starting, $idle->refresh()->status);
+        static::assertSame([$idle->id], $this->launcher->launched);
+        static::assertSame(BotStatus::Stopping, $busy->refresh()->status);
     }
 
     #[Test]
@@ -100,242 +79,56 @@ final class DesktopTest extends TestCase
         $this->travelTo(Carbon::parse('2026-10-20 15:00:00', 'UTC'));
         $this->botInTheGame();
 
-        Livewire::test(Bots::class)->assertSeeInOrder([
-            'Online',
-            '1 of 1',
-            'Played today',
-            'Tasks done today',
-            'Gold today',
-            '80',
-            'Failed in 24h',
+        Livewire::test(Accounts::class)->assertSeeInOrder([
             'Hero',
             'Mage',
             'Fighting',
             'icestormarena',
-            'Level up · to level 40',
             '1,840',
             '2,300',
             'Frost Spirit',
-            '2 kills',
-            '1,200 XP',
-            'XP / hour',
-            'Watch the run',
         ]);
     }
 
     #[Test]
-    public function times_and_today_follow_the_timezone_of_the_computer(): void
+    public function the_pages_show_no_summary_figures(): void
+    {
+        $this->botInTheGame();
+
+        Livewire::test(Accounts::class)->assertDontSee([
+            'Online',
+            'Played today',
+            'Gold today',
+            'Failed in 24h',
+            'Online now',
+            'Runs today',
+        ]);
+    }
+
+    #[Test]
+    public function times_follow_the_timezone_of_the_computer(): void
     {
         config(['desktop.timezone' => 'America/Recife']);
         $this->travelTo(Carbon::parse('2026-10-21 01:00:00', 'UTC'));
-        $run = $this->account()->runs()->create();
-        $run->log('Joined icestormarena');
-        $run->tasks()->create([
-            'script' => BotScript::LevelUp,
-            'parameters' => ['level' => 10],
-            'status' => TaskStatus::Done,
-            'started_at' => Carbon::parse('2026-10-20 21:00:00', 'UTC'),
-            'finished_at' => Carbon::parse('2026-10-20 22:00:00', 'UTC'),
-            'gold' => 50,
-        ]);
+        $account = $this->account();
+        $account->log('Joined icestormarena');
 
-        Livewire::test(RunBoard::class, ['run' => $run])->assertSee('22:00:00');
-        static::assertSame(1, Realm::of([], now())->tasksDone);
-        static::assertSame(50, Realm::of([], now())->gold);
-        static::assertSame('2026-10-20 03:00:00', LocalTime::startOfToday()->format('Y-m-d H:i:s'));
+        Livewire::test(Accounts::class)->call('toggle', $account->id)->assertSee('22:00:00');
     }
 
     #[Test]
-    public function the_run_shows_its_bot_task_log_and_map_on_one_board(): void
-    {
-        $run = $this->botInTheGame();
-        $run->log('Joined icestormarena');
-
-        Livewire::test(RunBoard::class, ['run' => $run])
-            ->assertSeeInOrder([
-                'Fighting',
-                'Level 34 · rank 7',
-                'Mage',
-                'icestormarena',
-                '1 player',
-                '1,840',
-                '2,300',
-                '21,000',
-                '60,000',
-                '123,456',
-                'Now',
-                'Level up · to level 40',
-                'Pace',
-                'XP per hour',
-                '1,200',
-                'to level 40',
-                'Tasks',
-                'Log',
-                'Joined icestormarena',
-                'Map',
-                'r3a',
-                '1/1',
-                'r4',
-                '1/1',
-                'r3a · fighting here',
-                'Frost Spirit',
-                'Lv 33',
-            ])
-            ->assertDontSee('Chronicle');
-    }
-
-    #[Test]
-    public function the_inventory_waits_behind_its_tab(): void
-    {
-        $board = Livewire::test(RunBoard::class, ['run' => $this->botInTheGame()]);
-
-        $board->assertDontSee('Held for now');
-        $board
-            ->call('open', 'inventory')
-            ->assertSeeInOrder(['Held for now', 'Metal Ore', 'Kept', 'Healer', 'Crypto Token'])
-            ->assertDontSee('Frost Spirit');
-        static::assertStringContainsString('×4', $board->html());
-        $board->call('open', 'anything')->assertSee('Frost Spirit');
-    }
-
-    #[Test]
-    public function the_map_shows_one_cell_at_a_time_and_goes_back_to_the_fight(): void
-    {
-        $scene = Livewire::test(RunBoard::class, ['run' => $this->botInTheGame()]);
-
-        $scene->assertSee('Frost Spirit')->assertDontSee('Snow Golem');
-
-        $scene
-            ->call('show', 'r4')
-            ->assertSee('Snow Golem')
-            ->assertDontSee('Lv 33')
-            ->assertSee('back to the fight in r3a');
-
-        $scene->call('follow')->assertSee('r3a · fighting here')->assertDontSee('Snow Golem');
-    }
-
-    #[Test]
-    public function a_bot_resumes_the_tasks_its_last_run_left_unfinished(): void
+    public function a_row_opens_to_show_the_latest_log(): void
     {
         $account = $this->account();
-        $last = $account->runs()->create();
-        $last->tasks()->create([
-            'script' => BotScript::LevelUp,
-            'parameters' => ['level' => 5],
-            'status' => TaskStatus::Done,
-        ]);
-        $last->tasks()->create([
-            'script' => BotScript::LevelUp,
-            'parameters' => ['level' => 50],
-            'status' => TaskStatus::Running,
-        ]);
-        $last->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 60]]);
-        BotRun::interrupted();
+        $account->update(['status' => BotStatus::Online]);
+        $account->log('Joined icestormarena');
 
-        Livewire::test(Bots::class)
-            ->assertSeeInOrder(['Hero', 'Left off', 'Level up · to level 50', '+1 more', 'Resume', 'Start'])
-            ->call('resume', $account->id)
-            ->call('resume', $account->id);
-
-        $run = $account->activeRun();
-        static::assertNotNull($run);
-        static::assertNotSame($last->id, $run->id);
-        static::assertSame([$last->id, $run->id], $this->launcher->launched);
-        static::assertSame(
-            [[['level' => 50], 'pending'], [['level' => 60], 'pending']],
-            $run
-                ->tasks()
-                ->orderBy('id')
-                ->get()
-                ->map(static fn(BotTask $task): array => [$task->parameters, $task->status->value])
-                ->all(),
-        );
-    }
-
-    #[Test]
-    public function resuming_leaves_out_the_tasks_the_user_cancelled(): void
-    {
-        $account = $this->account();
-        $last = $account->runs()->create();
-        $last->update(['status' => RunStatus::Running]);
-        $running = $last->tasks()->create([
-            'script' => BotScript::LevelUp,
-            'parameters' => ['level' => 20],
-            'status' => TaskStatus::Running,
-        ]);
-        $queued = $last->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 30]]);
-        $last->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 40]]);
-
-        $board = Livewire::test(RunBoard::class, ['run' => $last]);
-        $board->mountAction('cancel', ['task' => $running->id])->callMountedAction();
-        $board->mountAction('cancel', ['task' => $queued->id])->callMountedAction();
-        BotRun::interrupted();
-        $account->resume();
-
-        $run = $account->activeRun();
-        static::assertNotNull($run);
-        static::assertSame(
-            [['level' => 40]],
-            $run
-                ->tasks()
-                ->orderBy('id')
-                ->get()
-                ->map(static fn(BotTask $task): array => $task->parameters)
-                ->all(),
-        );
-    }
-
-    #[Test]
-    public function a_task_is_cancelled_after_confirming(): void
-    {
-        $run = $this->account()->runs()->create();
-        $run->update(['status' => RunStatus::Running]);
-        $pending = $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 10]]);
-
-        Livewire::test(RunBoard::class, ['run' => $run])
-            ->mountAction('cancel', ['task' => $pending->id])
-            ->assertActionMounted('cancel')
-            ->callMountedAction();
-
-        static::assertSame(TaskStatus::Cancelled, $pending->refresh()->status);
-    }
-
-    #[Test]
-    public function a_row_opens_to_show_its_queue_and_takes_new_tasks(): void
-    {
-        $account = $this->account();
-        $run = $account->runs()->create();
-        $run->update(['status' => RunStatus::Running]);
-        $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 40]]);
-        $run->log('Joined icestormarena');
-
-        Repeater::fake();
-        Livewire::test(Bots::class)
+        Livewire::test(Accounts::class)
             ->assertSet('expanded', $account->id)
-            ->assertSee(['Level up · to level 40', 'Joined icestormarena'])
-            ->callAction(
-                'addTask',
-                data: ['tasks' => [
-                    ['script' => BotScript::CryptoToken->value],
-                    ['script' => BotScript::EldersBlood->value],
-                ]],
-                arguments: ['run' => $run->id],
-            )
-            ->assertHasNoActionErrors()
-            ->assertSeeInOrder(['Level up', 'Crypto Token daily', 'Blood daily'])
+            ->assertSee('Joined icestormarena')
             ->call('toggle', $account->id)
             ->assertSet('expanded', null)
             ->assertDontSee('Joined icestormarena');
-
-        static::assertSame(
-            [BotScript::LevelUp, BotScript::CryptoToken, BotScript::EldersBlood],
-            $run
-                ->tasks()
-                ->orderBy('id')
-                ->get()
-                ->map(static fn(BotTask $task): BotScript => $task->script)
-                ->all(),
-        );
     }
 
     #[Test]
@@ -343,19 +136,19 @@ final class DesktopTest extends TestCase
     {
         $idle = $this->account();
         $busy = Account::query()->create(['name' => 'Busy', 'password' => bin2hex(random_bytes(8))]);
-        $run = $busy->runs()->create();
+        $busy->update(['status' => BotStatus::Online]);
 
-        Livewire::test(Bots::class)->callAction('startIdle');
+        Livewire::test(Accounts::class)->callAction('startIdle');
 
-        static::assertNotNull($idle->activeRun());
-        static::assertSame($run->id, $busy->activeRun()?->id);
-        static::assertSame(1, $busy->runs()->count());
+        static::assertSame(BotStatus::Starting, $idle->refresh()->status);
+        static::assertSame(BotStatus::Online, $busy->refresh()->status);
+        static::assertSame([$idle->id], $this->launcher->launched);
     }
 
     #[Test]
-    public function characters_can_be_added_from_the_home(): void
+    public function accounts_can_be_added_from_the_home(): void
     {
-        Livewire::test(Bots::class)
+        Livewire::test(Accounts::class)
             ->callAction('addAccount', [
                 'name' => 'Fresh',
                 'password' => bin2hex(random_bytes(8)),
@@ -373,20 +166,35 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
-    public function accounts_are_added_and_keep_their_password_unless_a_new_one_is_typed(): void
+    public function an_account_needs_a_password_and_a_name_of_its_own(): void
+    {
+        $this->account();
+
+        Livewire::test(Accounts::class)
+            ->callAction('addAccount', ['name' => 'Fresh'])
+            ->assertHasActionErrors(['password']);
+        Livewire::test(Accounts::class)
+            ->callAction('addAccount', ['name' => 'Hero', 'password' => bin2hex(random_bytes(8))])
+            ->assertHasActionErrors(['name' => 'unique']);
+
+        static::assertSame(1, Account::query()->count());
+    }
+
+    #[Test]
+    public function accounts_keep_their_password_unless_a_new_one_is_typed(): void
     {
         $first = bin2hex(random_bytes(8));
-
-        Livewire::test(ManageAccounts::class)
-            ->callAction(CreateAction::class, ['name' => 'Hero', 'password' => $first, 'server' => 'Twilly'])
+        Livewire::test(Accounts::class)
+            ->callAction('addAccount', ['name' => 'Hero', 'password' => $first, 'server' => 'Twilly'])
             ->assertHasNoActionErrors();
         $account = Account::query()->sole();
 
-        Livewire::test(ManageAccounts::class)->callTableAction(EditAction::class, $account, [
-            'name' => 'Hero',
-            'password' => '',
-            'server' => 'Espada',
-        ])->assertHasNoTableActionErrors();
+        Livewire::test(Accounts::class)
+            ->mountAction('editAccount', ['account' => $account->id])
+            ->assertSchemaStateSet(['name' => 'Hero', 'server' => 'Twilly', 'password' => null])
+            ->fillForm(['name' => 'Hero', 'password' => '', 'server' => 'Espada'])
+            ->callMountedAction()
+            ->assertHasNoActionErrors();
 
         $account->refresh();
         static::assertSame($first, $account->password);
@@ -395,211 +203,85 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
+    public function an_account_is_deleted_only_while_its_bot_is_off(): void
+    {
+        $off = $this->account();
+        $playing = Account::query()->create(['name' => 'Busy', 'password' => bin2hex(random_bytes(8))]);
+        $playing->update(['status' => BotStatus::Online]);
+
+        $home = Livewire::test(Accounts::class);
+        static::assertSame(1, substr_count($home->html(), needle: 'wire:click="mountAction(\'deleteAccount\''));
+        $home->assertActionHidden('deleteAccount', [
+            'account' => $playing->id,
+        ])->callAction('deleteAccount', arguments: ['account' => $off->id]);
+
+        static::assertSame([$playing->id], Account::query()->pluck('id')->all());
+    }
+
+    #[Test]
     public function starting_a_bot_launches_its_process_once_at_a_time(): void
     {
         $account = $this->account();
 
-        Livewire::test(ManageAccounts::class)->callTableAction('startRun', $account)->assertHasNoTableActionErrors();
-        $run = $account->runs()->sole();
+        Livewire::test(Accounts::class)->call('start', $account->id)->call('start', $account->id);
+        $account->refresh()->start();
 
-        static::assertSame([$run->id], $this->launcher->launched);
-        static::assertSame(RunStatus::Pending, $run->status);
-        Livewire::test(ManageAccounts::class)
-            ->assertTableActionHidden('startRun', $account)
-            ->assertTableActionVisible('openRun', $account);
+        static::assertSame([$account->id], $this->launcher->launched);
+        static::assertSame(BotStatus::Starting, $account->refresh()->status);
     }
 
     #[Test]
-    public function tasks_are_queued_and_show_how_far_along_they_are(): void
+    public function stopping_asks_the_bot_to_log_out_or_settles_a_bot_that_is_gone(): void
     {
-        $run = $this->account()->runs()->create();
-        $run->update(['status' => RunStatus::Running]);
+        $alive = $this->account();
+        $alive->update(['status' => BotStatus::Online]);
+        $this->launcher->alive[$alive->id] = true;
 
-        Repeater::fake();
-        Livewire::test(ViewBotRun::class, ['record' => $run->id])
-            ->callAction('addTask', ['tasks' => [[
-                'script' => BotScript::LevelUp->value,
-                'parameters' => ['level' => '8'],
-            ]]])
-            ->assertHasNoActionErrors();
-        $task = $run->tasks()->sole();
-        $task->update(['status' => TaskStatus::Running, 'progress_done' => 1, 'progress_total' => 4]);
+        Livewire::test(Accounts::class)->callAction('stop', arguments: ['account' => $alive->id]);
+        static::assertSame(BotStatus::Stopping, $alive->refresh()->status);
 
-        static::assertSame(25, $task->refresh()->percent());
-        Livewire::test(RunBoard::class, ['run' => $run])->assertSee('1/4 · 25%');
-        $this->get('/bot-runs')->assertSee('Level up')->assertSee('25%');
+        $gone = Account::query()->create(['name' => 'Gone', 'password' => bin2hex(random_bytes(8))]);
+        $gone->update(['status' => BotStatus::Online]);
+
+        Livewire::test(Accounts::class)->callAction('stop', arguments: ['account' => $gone->id]);
+        static::assertSame(BotStatus::Offline, $gone->refresh()->status);
     }
 
     #[Test]
-    public function a_level_up_task_carries_its_own_report(): void
+    public function stopping_a_bot_that_already_ended_leaves_it_ended(): void
     {
         $account = $this->account();
-        $account->update(['level' => 6]);
-        $run = $account->runs()->create();
-        $run->update(['status' => RunStatus::Running]);
-        $run->tasks()->create([
-            'script' => BotScript::LevelUp,
-            'parameters' => ['level' => 10],
-            'status' => TaskStatus::Running,
-            'started_at' => now()->subMinutes(20),
-            'level_from' => 4,
-            'level_to' => 6,
-            'kills' => 60,
-            'experience' => 600,
-            'gold' => 180,
-            'deaths' => 1,
-            'progress_done' => 2,
-            'progress_total' => 6,
-        ]);
+        $account->update(['status' => BotStatus::Failed, 'result' => 'Disconnected by the server']);
+        $stale = Account::query()->findOrFail($account->id);
+        $stale->status = BotStatus::Online;
 
-        $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 20]]);
+        $stale->stop($this->launcher);
 
-        Livewire::test(RunBoard::class, ['run' => $run])
-            ->assertSee('Report')
-            ->assertSeeInOrder(['to level 10', 'Monsters killed', 'to level 20'])
-            ->assertSee('3 per minute')
-            ->assertSee('10 min per level')
-            ->assertSee('4 levels')
-            ->assertSee('33%');
-        static::assertSame(1, substr_count(
-            Livewire::test(RunBoard::class, ['run' => $run])->html(),
-            needle: 'Monsters killed',
-        ));
-        $this->get("/bot-runs/{$run->id}")->assertDontSee('Progress shows up');
-        $this->get('/accounts')->assertSee('Level');
+        static::assertSame(BotStatus::Failed, $account->refresh()->status);
     }
 
     #[Test]
-    public function a_bot_can_be_told_to_play_the_crypto_token_daily(): void
+    public function bots_left_playing_by_a_closed_app_end_as_interrupted(): void
     {
-        $run = $this->account()->runs()->create();
-        $run->update(['status' => RunStatus::Running]);
+        $playing = $this->account();
+        $playing->update(['status' => BotStatus::Online, 'pid' => 4242]);
+        $off = Account::query()->create(['name' => 'Off', 'password' => bin2hex(random_bytes(8))]);
 
-        Repeater::fake();
-        Livewire::test(ViewBotRun::class, ['record' => $run->id])
-            ->callAction('addTask', ['tasks' => [['script' => BotScript::CryptoToken->value]]])
-            ->assertHasNoActionErrors();
+        Account::interrupted();
 
-        $task = $run->tasks()->sole();
-        static::assertSame(BotScript::CryptoToken, $task->script);
-        static::assertSame('Crypto Token daily · for today', $task->title());
+        static::assertSame(BotStatus::Failed, $playing->refresh()->status);
+        static::assertSame('interrupted', $playing->result);
+        static::assertNull($playing->pid);
+        static::assertSame(BotStatus::Offline, $off->refresh()->status);
     }
 
-    #[Test]
-    public function a_bot_can_be_told_to_level_up(): void
-    {
-        $run = $this->account()->runs()->create();
-        $run->update(['status' => RunStatus::Running]);
-
-        Repeater::fake();
-        Livewire::test(ViewBotRun::class, ['record' => $run->id])
-            ->callAction('addTask', ['tasks' => [[
-                'script' => BotScript::LevelUp->value,
-                'parameters' => ['level' => '1'],
-            ]]])
-            ->assertHasActionErrors(['tasks.0.parameters.level']);
-        Livewire::test(ViewBotRun::class, ['record' => $run->id])
-            ->callAction('addTask', ['tasks' => [[
-                'script' => BotScript::LevelUp->value,
-                'parameters' => ['level' => '30'],
-            ]]])
-            ->assertHasNoActionErrors();
-
-        $task = $run->tasks()->sole();
-        static::assertSame(BotScript::LevelUp, $task->script);
-        static::assertSame('Level up · to level 30', $task->title());
-    }
-
-    #[Test]
-    public function stopping_asks_the_bot_to_log_out_or_ends_a_run_whose_bot_is_gone(): void
+    private function botInTheGame(): Account
     {
         $account = $this->account();
-        $alive = $account->runs()->create();
-        $alive->update(['status' => RunStatus::Running]);
-
-        Livewire::test(ViewBotRun::class, ['record' => $alive->id])->callAction('stop');
-        static::assertSame(RunStatus::Stopping, $alive->refresh()->status);
-
-        $gone = $account->runs()->create();
-        $gone->update(['status' => RunStatus::Running]);
-        $gone->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 10]]);
-        unset($this->launcher->alive[$gone->id]);
-
-        Livewire::test(ViewBotRun::class, ['record' => $gone->id])->callAction('stop');
-        static::assertSame(RunStatus::Stopped, $gone->refresh()->status);
-        static::assertSame(TaskStatus::Cancelled, $gone->tasks()->sole()->status);
-    }
-
-    #[Test]
-    public function runs_are_not_started_from_the_runs_page(): void
-    {
-        $this->get('/bot-runs')->assertOk()->assertDontSee('Start run');
-        $this->get('/bot-runs/create')->assertNotFound();
-    }
-
-    #[Test]
-    public function starting_an_ended_run_again_keeps_one_run_per_account(): void
-    {
-        $account = $this->account();
-        $ended = $account->runs()->create();
-        $ended->update(['status' => RunStatus::Stopped]);
-
-        Livewire::test(ViewBotRun::class, ['record' => $ended->id])->callAction('runAgain');
-        $active = $account->activeRun();
-        static::assertNotNull($active);
-
-        Livewire::test(ViewBotRun::class, ['record' => $ended->id])
-            ->callAction('runAgain')
-            ->assertRedirect(BotRunResource::getUrl('view', ['record' => $active]));
-
-        static::assertSame(2, $account->runs()->count());
-        static::assertSame($active->id, $account->activeRun()?->id);
-    }
-
-    #[Test]
-    public function stopping_ends_a_run_whose_bot_is_gone_before_it_started_or_while_it_stopped(): void
-    {
-        $account = $this->account();
-        $pending = $account->runs()->create();
-        unset($this->launcher->alive[$pending->id]);
-
-        Livewire::test(ViewBotRun::class, ['record' => $pending->id])->callAction('stop');
-        static::assertSame(RunStatus::Stopped, $pending->refresh()->status);
-
-        $stopping = $account->runs()->create();
-        $stopping->update(['status' => RunStatus::Stopping]);
-        unset($this->launcher->alive[$stopping->id]);
-
-        Livewire::test(ViewBotRun::class, ['record' => $stopping->id])->callAction('stop');
-        static::assertSame(RunStatus::Stopped, $stopping->refresh()->status);
-        static::assertNull($account->activeRun());
-    }
-
-    #[Test]
-    public function runs_left_active_by_a_closed_app_end_as_interrupted(): void
-    {
-        $account = $this->account();
-        $running = $account->runs()->create();
-        $running->update(['status' => RunStatus::Running]);
-        $running->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 10]]);
-        $done = $account->runs()->create();
-        $done->update(['status' => RunStatus::Stopped]);
-
-        BotRun::interrupted();
-
-        static::assertSame(RunStatus::Failed, $running->refresh()->status);
-        static::assertSame('interrupted', $running->result);
-        static::assertSame(TaskStatus::Cancelled, $running->tasks()->sole()->status);
-        static::assertSame(RunStatus::Stopped, $done->refresh()->status);
-    }
-
-    private function botInTheGame(): BotRun
-    {
-        $account = $this->account();
-        $run = $account->runs()->create();
         $now = now()->getTimestamp();
-        $run->update([
-            'status' => RunStatus::Running,
+        $account->update([
+            'status' => BotStatus::Online,
+            'started_at' => now()->subMinutes(10),
             'scene' => new Scene(
                 self::hero(),
                 [
@@ -636,18 +318,7 @@ final class DesktopTest extends TestCase
             )->toArray(),
         ]);
 
-        $run->tasks()->create([
-            'script' => BotScript::LevelUp,
-            'parameters' => ['level' => 40],
-            'status' => TaskStatus::Running,
-            'started_at' => now()->subMinutes(3),
-            'level_from' => 34,
-            'kills' => 2,
-            'experience' => 1200,
-            'gold' => 80,
-        ]);
-
-        return $run;
+        return $account;
     }
 
     /** @return array<string, mixed> */

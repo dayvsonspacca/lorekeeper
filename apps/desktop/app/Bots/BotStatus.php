@@ -10,20 +10,20 @@ use Filament\Support\Contracts\HasLabel;
 use Filament\Support\Icons\Heroicon;
 use Override;
 
-enum RunStatus: string implements HasLabel, HasColor, HasIcon
+enum BotStatus: string implements HasLabel, HasColor, HasIcon
 {
-    case Pending = 'pending';
-    case Running = 'running';
+    case Offline = 'offline';
+    case Starting = 'starting';
+    case Online = 'online';
     case Stopping = 'stopping';
-    case Stopped = 'stopped';
     case Disconnected = 'disconnected';
     case Failed = 'failed';
 
     public function isActive(): bool
     {
         return match ($this) {
-            self::Pending, self::Running, self::Stopping => true,
-            self::Stopped, self::Disconnected, self::Failed => false,
+            self::Starting, self::Online, self::Stopping => true,
+            self::Offline, self::Disconnected, self::Failed => false,
         };
     }
 
@@ -37,11 +37,11 @@ enum RunStatus: string implements HasLabel, HasColor, HasIcon
     public function getColor(): string
     {
         return match ($this) {
-            self::Running => 'success',
-            self::Pending, self::Stopping => 'info',
+            self::Online => 'success',
+            self::Starting, self::Stopping => 'info',
             self::Disconnected => 'warning',
             self::Failed => 'danger',
-            self::Stopped => 'gray',
+            self::Offline => 'gray',
         };
     }
 
@@ -49,10 +49,10 @@ enum RunStatus: string implements HasLabel, HasColor, HasIcon
     public function getIcon(): Heroicon
     {
         return match ($this) {
-            self::Pending => Heroicon::OutlinedClock,
-            self::Running => Heroicon::OutlinedPlayCircle,
+            self::Starting => Heroicon::OutlinedClock,
+            self::Online => Heroicon::OutlinedPlayCircle,
             self::Stopping => Heroicon::OutlinedPauseCircle,
-            self::Stopped => Heroicon::OutlinedStopCircle,
+            self::Offline => Heroicon::OutlinedStopCircle,
             self::Disconnected => Heroicon::OutlinedSignalSlash,
             self::Failed => Heroicon::OutlinedExclamationTriangle,
         };

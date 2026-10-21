@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Bots;
 
-use Lorekeeper\Apps\Desktop\Models\BotRun;
+use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Command\Settings\ChangeGameSettingCommand;
@@ -19,7 +19,7 @@ final readonly class HideFromPlayers
 {
     public static function apply(
         Preferences $preferences,
-        BotRun $run,
+        Account $account,
         Client $client,
         CancellationTokenInterface $stop,
     ): null|Disconnected|Stopped {
@@ -43,7 +43,7 @@ final readonly class HideFromPlayers
         }
 
         if ($blocked !== []) {
-            $run->log('Hidden from other players: ' . implode(', ', $blocked));
+            $account->log('Hidden from other players: ' . implode(', ', $blocked));
         }
 
         return null;

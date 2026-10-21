@@ -19,7 +19,6 @@ final readonly class Poll
 
         return response()->json([
             'bots' => Tray::bots(),
-            'notices' => TauriNotifier::drain(),
             'reload' => Heartbeat::revive(),
         ]);
     }

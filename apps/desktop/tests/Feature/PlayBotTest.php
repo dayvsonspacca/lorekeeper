@@ -7,13 +7,10 @@ namespace Lorekeeper\Apps\Desktop\Tests\Feature;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Lorekeeper\Apps\Desktop\Bots\BotScript;
-use Lorekeeper\Apps\Desktop\Bots\RunRecorder;
-use Lorekeeper\Apps\Desktop\Bots\RunStatus;
-use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
+use Lorekeeper\Apps\Desktop\Bots\BotRecorder;
+use Lorekeeper\Apps\Desktop\Bots\BotStatus;
 use Lorekeeper\Apps\Desktop\Models\Account;
-use Lorekeeper\Apps\Desktop\Models\BotRun;
-use Lorekeeper\Apps\Desktop\Models\BotRunLog;
+use Lorekeeper\Apps\Desktop\Models\BotLog;
 use Lorekeeper\Apps\Desktop\Tests\Characters;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use Lorekeeper\Core\Asset\Gamefile;
@@ -45,52 +42,32 @@ use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use PHPUnit\Framework\Attributes\Test;
 
-final class RunBotTest extends TestCase
+final class PlayBotTest extends TestCase
 {
     use RefreshDatabase;
 
     #[Test]
-    public function the_recorder_follows_the_character_map_level_and_level_up_progress(): void
+    public function the_recorder_follows_the_character_map_and_level(): void
     {
-        $run = $this->botRun();
-        $run->account->update(['name' => 'lorekeeper03']);
-        $task = $run->tasks()->create([
-            'script' => BotScript::LevelUp,
-            'parameters' => ['level' => 10],
-            'status' => TaskStatus::Running,
-            'level_from' => 4,
-        ]);
-        $recorder = new RunRecorder($run);
+        $account = $this->account();
+        $account->update(['name' => 'lorekeeper03']);
+        $recorder = new BotRecorder($account);
         $me = Characters::me('lorekeeper03', level: 4, map: 'battleon');
 
-        $recorder->working($task);
         $me->subscribe($recorder);
         $recorder->update($me);
-        static::assertSame('battleon', $run->refresh()->map);
-        static::assertSame(4, $run->account->refresh()->level);
-        static::assertSame(0, $task->refresh()->percent());
+        static::assertSame(['battleon', 4], [$account->refresh()->map, $account->level]);
 
         $me->hear(new LeveledUpEvent(new PlayerLevel(6), new Experience(600)));
 
-        static::assertSame(6, $run->account->refresh()->level);
-        static::assertSame([6, 2, 6, 33], [
-            $task->refresh()->level_to,
-            $task->progress_done,
-            $task->progress_total,
-            $task->percent(),
-        ]);
+        static::assertSame(6, $account->refresh()->level);
     }
 
     #[Test]
-    public function the_recorder_counts_kills_and_deaths_and_logs_what_matters(): void
+    public function the_recorder_logs_what_matters(): void
     {
-        $run = $this->botRun();
-        $task = $run->tasks()->create([
-            'script' => BotScript::LevelUp,
-            'parameters' => ['level' => 6],
-            'status' => TaskStatus::Running,
-        ]);
-        $recorder = new RunRecorder($run);
+        $account = $this->account();
+        $recorder = new BotRecorder($account);
         $reward = new MonsterRewardedEvent(
             new Gold(3),
             new Experience(10),
@@ -98,7 +75,6 @@ final class RunBotTest extends TestCase
             new MonsterSpawnId(4),
         );
 
-        $recorder->working($task);
         $recorder->heard($reward);
         $recorder->heard(new MonstersHealthChangedEvent([new MonsterHealth(new MonsterSpawnId(4), new Health(10))]));
         $recorder->heard($reward);
@@ -111,26 +87,20 @@ final class RunBotTest extends TestCase
         $me->hear(new ResurrectedEvent());
         $recorder->update($me);
         $recorder->heard(new LeveledUpEvent(new PlayerLevel(5), new Experience(500)));
-        $recorder->working(null);
-        $me->hear(new PlayersStateChangedEvent([new PlayerState(new PlayerName('Hero'), CombatState::Dead)]));
-        $recorder->update($me);
 
-        $task->refresh();
-        static::assertSame([2, 1, 20, 6], [$task->kills, $task->deaths, $task->experience, $task->gold]);
         static::assertSame(
             [
-                ['Defeated a monster: +10 XP, +3 gold', 'info', $task->id],
-                ['Defeated a monster: +10 XP, +3 gold', 'info', $task->id],
-                ['Fell in battle', 'warning', $task->id],
-                ['Back on their feet', 'info', $task->id],
-                ['Reached level 5', 'success', $task->id],
-                ['Fell in battle', 'warning', null],
+                ['Defeated a monster: +10 XP, +3 gold', 'info'],
+                ['Defeated a monster: +10 XP, +3 gold', 'info'],
+                ['Fell in battle',                      'warning'],
+                ['Back on their feet',                  'info'],
+                ['Reached level 5',                     'success'],
             ],
-            $run
+            $account
                 ->logs()
                 ->orderBy('id')
                 ->get()
-                ->map(static fn(BotRunLog $log): array => [$log->message, $log->level->value, $log->bot_task_id])
+                ->map(static fn(BotLog $log): array => [$log->message, $log->level->value])
                 ->all(),
         );
     }
@@ -139,8 +109,8 @@ final class RunBotTest extends TestCase
     public function the_recorder_keeps_what_the_bot_sees_for_the_screen(): void
     {
         $this->travelTo(now()->setTimestamp(1_800_000_000));
-        $run = $this->botRun();
-        $recorder = new RunRecorder($run);
+        $account = $this->account();
+        $recorder = new BotRecorder($account);
         $me = Characters::me('lorekeeper03', level: 12, map: 'oaklore', monsters: [new MapMonster(
             new MonsterSpawnId(1),
             new Monster(
@@ -156,7 +126,7 @@ final class RunBotTest extends TestCase
 
         $me->subscribe($recorder);
         $recorder->update($me);
-        $scene = $run->refresh()->scene();
+        $scene = $account->refresh()->scene();
         static::assertNotNull($scene);
         static::assertSame(['lorekeeper03', 12, 390, 'Mage', 'idle'], [
             $scene->hero['name'],
@@ -173,7 +143,7 @@ final class RunBotTest extends TestCase
         ]);
 
         $recorder->heard(new MonstersHealthChangedEvent([new MonsterHealth(new MonsterSpawnId(1), new Health(90))]));
-        static::assertSame(260, $run->refresh()->scene()?->monsters[0]['health']);
+        static::assertSame(260, $account->refresh()->scene()?->monsters[0]['health']);
 
         $this->travel(1)->seconds();
         $recorder->heard(new MonstersHealthChangedEvent([new MonsterHealth(new MonsterSpawnId(1), new Health(40))]));
@@ -181,7 +151,7 @@ final class RunBotTest extends TestCase
             new MonsterRewardedEvent(new Gold(15), new Experience(120), new ClassPoints(5), new MonsterSpawnId(1)),
         );
 
-        $scene = $run->refresh()->scene();
+        $scene = $account->refresh()->scene();
         static::assertNotNull($scene);
         static::assertSame([40, 1_800_000_001], [$scene->monsters[0]['health'], $scene->monsters[0]['struck']]);
         static::assertSame(['Defeated Bonemuncher', '+120 XP · +15 gold'], [
@@ -189,46 +159,45 @@ final class RunBotTest extends TestCase
             $scene->feed->lines[0]['detail'],
         ]);
         static::assertSame(120, array_sum($scene->pulse->experience(now()->getTimestamp())));
-        static::assertSame('Defeated Bonemuncher: +120 XP, +15 gold', $run->logs()->latest('id')->first()?->message);
+        static::assertSame(
+            'Defeated Bonemuncher: +120 XP, +15 gold',
+            $account->logs()->latest('id')->first()?->message,
+        );
     }
 
     #[Test]
-    public function a_run_stopped_before_its_bot_started_never_logs_in(): void
+    public function a_bot_stopped_before_it_entered_never_logs_in(): void
     {
-        $run = $this->botRun();
-        $run->update(['status' => RunStatus::Stopping]);
+        $account = $this->account();
+        $account->update(['status' => BotStatus::Stopping]);
 
-        $this->artisan('bots:run', ['run' => $run->id])->assertSuccessful();
+        $this->artisan('bots:play', ['account' => $account->id])->assertSuccessful();
 
-        static::assertSame(RunStatus::Stopped, $run->refresh()->status);
-        static::assertNull($run->started_at);
+        static::assertSame(BotStatus::Offline, $account->refresh()->status);
+        static::assertNull($account->started_at);
     }
 
     #[Test]
-    public function a_bot_that_crashes_ends_its_run_as_failed_with_the_reason(): void
+    public function a_bot_that_crashes_goes_offline_as_failed(): void
     {
-        $run = $this->botRun();
-        $task = $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 10]]);
+        $account = $this->account();
+        $account->update(['status' => BotStatus::Starting]);
         DB::table('accounts')->update([
             'password' => new Encrypter(random_bytes(32), 'aes-256-cbc')->encryptString('secret'),
         ]);
 
-        $this->artisan('bots:run', ['run' => $run->id])->assertSuccessful();
+        $this->artisan('bots:play', ['account' => $account->id])->assertSuccessful();
 
-        $run->refresh();
-        static::assertSame(RunStatus::Failed, $run->status);
-        static::assertSame('The MAC is invalid.', $run->result);
-        static::assertNull($run->pid);
-        static::assertNotNull($run->finished_at);
-        static::assertNotSame(TaskStatus::Running, $task->refresh()->status);
-        static::assertSame('Failed: The MAC is invalid.', $run->logs()->latest('id')->first()?->message);
+        $account->refresh();
+        static::assertSame(BotStatus::Failed, $account->status);
+        static::assertSame('The MAC is invalid.', $account->result);
+        static::assertNull($account->pid);
+        static::assertNotNull($account->stopped_at);
+        static::assertSame('Failed: The MAC is invalid.', $account->logs()->latest('id')->first()?->message);
     }
 
-    private function botRun(): BotRun
+    private function account(): Account
     {
-        return Account::query()
-            ->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))])
-            ->runs()
-            ->create();
+        return Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
     }
 }

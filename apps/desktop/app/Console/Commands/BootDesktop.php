@@ -7,14 +7,14 @@ namespace Lorekeeper\Apps\Desktop\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Facades\DB;
-use Lorekeeper\Apps\Desktop\Models\BotRun;
+use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Native\Backups;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Throwable;
 
 #[AsCommand(
     name: 'desktop:boot',
-    description: 'Bring the database up to date and close the runs the last session left open',
+    description: 'Bring the database up to date and mark the bots the last session left playing as interrupted',
 )]
 final class BootDesktop extends Command
 {
@@ -39,7 +39,7 @@ final class BootDesktop extends Command
             return self::FAILURE;
         }
 
-        BotRun::interrupted();
+        Account::interrupted();
 
         return self::SUCCESS;
     }

@@ -5,15 +5,10 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
-use Lorekeeper\Apps\Desktop\Bots\Notifier\SilentNotifier;
-use Lorekeeper\Apps\Desktop\Bots\Notifier\TaskNotice;
-use Lorekeeper\Apps\Desktop\Bots\RunStatus;
+use Lorekeeper\Apps\Desktop\Bots\BotStatus;
 use Lorekeeper\Apps\Desktop\Models\Account;
-use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Native\Heartbeat;
 use Lorekeeper\Apps\Desktop\Tauri\Poll;
-use Lorekeeper\Apps\Desktop\Tauri\TauriNotifier;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use Override;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,9 +33,7 @@ final class TauriShellTest extends TestCase
     {
         Account::query()
             ->create(['name' => 'made2903', 'password' => bin2hex(random_bytes(8))])
-            ->runs()
-            ->create()
-            ->update(['status' => RunStatus::Running]);
+            ->update(['status' => BotStatus::Online]);
         Account::query()->create(['name' => 'lorekeeper03', 'password' => bin2hex(random_bytes(8))]);
 
         $this
@@ -48,25 +41,8 @@ final class TauriShellTest extends TestCase
             ->assertOk()
             ->assertExactJson([
                 'bots' => ['○ lorekeeper03 · off', '● made2903 · on'],
-                'notices' => [],
                 'reload' => false,
             ]);
-    }
-
-    #[Test]
-    public function the_shell_shows_each_notice_once(): void
-    {
-        $notifier = app(Notifier::class);
-        static::assertInstanceOf(TauriNotifier::class, $notifier);
-
-        $notifier->show(new TaskNotice('Hero · Level up', 'Reached level 6'));
-        $notifier->show(new TaskNotice('Hero · Level up', 'Failed: Could not join icestormarena'));
-
-        $this->getJson('/shell', [Poll::SECRET_HEADER => $this->secret])->assertJsonPath('notices', [
-            ['title' => 'Hero · Level up', 'message' => 'Reached level 6'],
-            ['title' => 'Hero · Level up', 'message' => 'Failed: Could not join icestormarena'],
-        ]);
-        $this->getJson('/shell', [Poll::SECRET_HEADER => $this->secret])->assertJsonPath('notices', []);
     }
 
     #[Test]
@@ -90,22 +66,19 @@ final class TauriShellTest extends TestCase
 
         config(['desktop.shell' => null, 'desktop.shell_secret' => $this->secret]);
         $this->getJson('/shell', [Poll::SECRET_HEADER => $this->secret])->assertForbidden();
-        static::assertInstanceOf(SilentNotifier::class, app(Notifier::class));
     }
 
     #[Test]
-    public function booting_closes_the_runs_the_last_session_left_open(): void
+    public function booting_marks_the_bots_the_last_session_left_playing_as_interrupted(): void
     {
-        $run = Account::query()
-            ->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))])
-            ->runs()
-            ->create();
-        $run->update(['status' => RunStatus::Running, 'pid' => 4242]);
+        $account = Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
+        $account->update(['status' => BotStatus::Online, 'pid' => 4242]);
 
         $this->artisan('desktop:boot')->assertSuccessful();
 
-        $run = BotRun::query()->findOrFail($run->id);
-        static::assertSame(RunStatus::Failed, $run->status);
-        static::assertSame('interrupted', $run->result);
+        $account->refresh();
+        static::assertSame(BotStatus::Failed, $account->status);
+        static::assertSame('interrupted', $account->result);
+        static::assertNull($account->pid);
     }
 }
