@@ -14,9 +14,6 @@ jobs:
   tests:
     name: Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/${{ inputs.app }}
     steps:
       - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
@@ -24,9 +21,10 @@ jobs:
           php-version: '8.5'
           extensions: intl, pdo_sqlite, pcntl, curl, xmlreader
           coverage: none
+      - uses: extractions/setup-just@v4
       - uses: actions/cache@v6
         with:
           path: ~/.cache/composer
           key: composer-${{ inputs.app }}-${{ hashFiles(format('apps/{0}/composer.json', inputs.app), 'packages/*/composer.json') }}
-      - run: composer install --no-interaction --no-progress
-      - run: vendor/bin/phpunit --no-progress
+      - run: just install ${{ inputs.app }}
+      - run: just test ${{ inputs.app }} --no-progress

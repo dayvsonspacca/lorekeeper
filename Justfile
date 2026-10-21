@@ -1,15 +1,14 @@
 list:
     @just --list
 
-install:
-    composer install
+install target='packages':
+    cd {{ if target == 'packages' { '.' } else { 'apps/' + target } }} && composer install
 
-test *args:
-    php -dmemory_limit=-1 ./vendor/bin/phpunit -c config/phpunit.xml.dist {{ args }}
+test target='packages' *args:
+    {{ if target == 'packages' { 'php -dmemory_limit=-1 ./vendor/bin/phpunit -c config/phpunit.xml.dist' } else { 'cd apps/' + target + ' && vendor/bin/phpunit' } }} {{ args }}
 
-# Run the tests with code coverage (needs pcov or Xdebug); the HTML report goes to var/coverage
-coverage *args:
-    php -dmemory_limit=-1 ./vendor/bin/phpunit -c config/phpunit.xml.dist --coverage-html var/coverage --coverage-text --only-summary-for-coverage-text {{ args }}
+coverage target='packages' *args:
+    {{ if target == 'packages' { 'php -dmemory_limit=-1 ./vendor/bin/phpunit -c config/phpunit.xml.dist --coverage-html var/coverage' } else { 'cd apps/' + target + ' && vendor/bin/phpunit --coverage-html ../../var/coverage/' + target } }} --coverage-text --only-summary-for-coverage-text {{ args }}
 
 lint *args:
     ./vendor/bin/mago --config config/mago.toml lint {{ args }}

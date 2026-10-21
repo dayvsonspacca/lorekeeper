@@ -41,9 +41,9 @@ jobs:
           key: composer-${{ matrix.php }}-${{ hashFiles('composer.json', 'packages/*/composer.json') }}
       - run: just install
       - if: matrix.php != '8.5'
-        run: just test --no-progress
+        run: just test packages --no-progress
       - if: matrix.php == '8.5'
-        run: just coverage --no-progress
+        run: just coverage packages --no-progress
       - if: matrix.php == '8.5'
         uses: actions/upload-pages-artifact@v5
         with:

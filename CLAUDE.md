@@ -28,17 +28,19 @@ A toolbox for AdventureQuest Worlds: framework-free PHP packages (`packages/`) a
 ## Tests
 
 - Event tests use real messages captured from the game, trimmed but never made up.
-- Each app has its own PHPUnit suite; run it from the app's directory with `vendor/bin/phpunit`.
+- Each app has its own PHPUnit suite; run it with `just test <app>`.
 
 ## Commands
 
 ```sh
-just install   # dependencies
-just test      # package tests
-just fmt       # format
+just install           # dependencies of the packages
+just test              # tests of the packages
+just install desktop   # dependencies of an app
+just test desktop      # tests of an app
+just fmt               # format
 just lint
 just analyze
-just guard     # layer boundaries
+just guard             # layer boundaries
 ```
 
 Run `just fmt`, `just lint`, `just analyze` and the tests before committing.
