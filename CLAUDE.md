@@ -47,8 +47,8 @@ Run `just fmt`, `just lint`, `just analyze` and the tests before committing.
 
 - Work on a branch and commit each finished part.
 - Subject: `type(scope): what it does`, lowercase, imperative, no period. The scope is the package or app (`core`,
-  `server`, `client`, `bot`, `wiki`, `desktop`); leave it out when a change spans several. Mark breaking changes with
-  `!`, as in `refactor(core)!: ...`.
+  `server`, `client`, `bot`, `desktop`, `recorder`); leave it out when a change spans several. Mark breaking changes
+  with `!`, as in `refactor(core)!: ...`.
 - Body: `- ` bullets wrapped at about 76 columns, or a short paragraph; a paragraph of context may come before the
   bullets. Describe what changed and why, in plain words.
 - End with the `Co-Authored-By` trailer.
