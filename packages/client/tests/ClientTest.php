@@ -223,6 +223,49 @@ final class ClientTest extends TestCase
         }));
     }
 
+    #[Test]
+    public function waiting_returns_a_disconnection_when_the_server_hangs_up(): void
+    {
+        $stream = static::createStub(TCP\StreamInterface::class);
+        $stream->method('read')->willReturn('');
+        $stream->method('reachedEndOfDataSource')->willReturn(true);
+
+        static::assertEquals(
+            new Disconnected('The server closed the connection.'),
+            new Client(new Connection($stream), self::me())->wait(Duration::seconds(5)),
+        );
+    }
+
+    #[Test]
+    public function waiting_stops_when_asked_to(): void
+    {
+        $stop = new SignalCancellationToken();
+        $stop->cancel();
+
+        static::assertEquals(
+            new Stopped(),
+            new Client(self::connection(), self::me())->wait(Duration::seconds(5), $stop),
+        );
+    }
+
+    #[Test]
+    public function waiting_lets_other_cancellations_through(): void
+    {
+        $client = new Client(
+            self::connection(
+                "{\"t\":\"xt\",\"b\":{\"r\":-1,\"o\":{\"cmd\":\"uotls\",\"unm\":\"lorekeeper03\",\"o\":{\"intState\":0}}}}\0",
+            ),
+            self::me(),
+        );
+        $client->subscribe(static function (): never {
+            throw new CancelledException(new NullCancellationToken());
+        });
+
+        $this->expectException(CancelledException::class);
+
+        $client->wait(Duration::seconds(5));
+    }
+
     /**
      * @param callable(): Generator $steps
      *

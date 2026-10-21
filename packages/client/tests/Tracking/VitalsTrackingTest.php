@@ -182,6 +182,23 @@ final class VitalsTrackingTest extends TestCase
         ));
     }
 
+    #[Test]
+    public function a_fight_between_others_leaves_my_health_and_mana_alone(): void
+    {
+        $vitals = Fixture::vitals(health: 189, mana: 20);
+
+        static::assertSame($vitals, VitalsTracking::follow(
+            $vitals,
+            new PlayersHealthChangedEvent([new PlayerHealth(new PlayerName('Someone'), new Health(1))]),
+            self::me(),
+        ));
+        static::assertSame($vitals, VitalsTracking::follow(
+            $vitals,
+            new PlayersManaChangedEvent([new PlayerMana(new PlayerName('Someone'), new Mana(1))]),
+            self::me(),
+        ));
+    }
+
     private static function me(): Identity
     {
         return new Identity(new SocketId(122_628), new PlayerName('lorekeeper03'));

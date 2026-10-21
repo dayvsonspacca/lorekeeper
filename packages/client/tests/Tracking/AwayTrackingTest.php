@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Tracking;
 
+use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Client\Tracking\AwayTracking;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Core\Player\PlayerName;
@@ -26,6 +27,12 @@ final class AwayTrackingTest extends TestCase
         static::assertFalse(AwayTracking::follow(true, $back, self::me()));
         static::assertFalse(AwayTracking::follow(false, $someoneElse, self::me()));
         static::assertFalse(AwayTracking::follow(false, new ResurrectedEvent(), self::me()));
+    }
+
+    #[Test]
+    public function arriving_on_a_map_without_me_in_it_keeps_how_away_i_was(): void
+    {
+        static::assertTrue(AwayTracking::follow(true, Fixture::arrival('battleon', 1), self::me()));
     }
 
     private static function me(): Identity

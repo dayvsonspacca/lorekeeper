@@ -7,6 +7,7 @@ namespace Lorekeeper\Client\Tests\Tracking;
 use Lorekeeper\Client\Drops;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Client\Tracking\InventoryTracking;
+use Lorekeeper\Core\Currency\AdventureCoins;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Equipment\Weapon\DamageVariance;
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
@@ -22,13 +23,21 @@ use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerItems;
+use Lorekeeper\Core\Player\PlayerLevel;
+use Lorekeeper\Core\Player\PlayerLevelProgress;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerQuestMarks;
+use Lorekeeper\Core\Player\Wallet;
+use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
+use Lorekeeper\Server\Event\Player\PlayerData;
+use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\TurnedInItem;
 use Lorekeeper\Server\SocketId;
@@ -158,6 +167,52 @@ final class InventoryTrackingTest extends TestCase
         static::assertInstanceOf(Weapon::class, $after->item);
         static::assertSame($lucky, $after->item->enhancement->unwrap());
         static::assertSame(2, $enhanced->quantity(new ItemId(42_657)));
+    }
+
+    #[Test]
+    public function the_bag_only_changes_size_when_my_data_says_a_different_size(): void
+    {
+        $inventory = new PlayerInventory(new PlayerItems([self::token(3)]), new Quantity(30));
+
+        $theirs = InventoryTracking::follow($inventory, new PlayerDataLoadedEvent([self::data(1, 131)]), self::me());
+        $same = InventoryTracking::follow($inventory, new PlayerDataLoadedEvent([self::data(122_628, 30)]), self::me());
+        $bigger = InventoryTracking::follow(
+            $inventory,
+            new PlayerDataLoadedEvent([self::data(1, 131), self::data(122_628, 131)]),
+            self::me(),
+        );
+
+        static::assertSame($inventory, $theirs);
+        static::assertSame($inventory, $same);
+        static::assertSame(131, $bigger->slots->value);
+    }
+
+    #[Test]
+    public function enhancing_an_item_it_does_not_hold_changes_nothing(): void
+    {
+        $lucky = new Enhancement(EnhancementType::Lucky, EnhancementRarity::PlusZero, new ItemLevel(21), Option\none());
+
+        $enhanced = InventoryTracking::follow(
+            new PlayerInventory(new PlayerItems([self::token(2)]), new Quantity(30)),
+            new ItemsEnhancedEvent([new ItemId(3)], $lucky, new Gold(1010)),
+            self::me(),
+        );
+
+        static::assertTrue($enhanced->find(new ItemId(3))->isNone());
+        static::assertSame(2, $enhanced->quantity(new ItemId(42_657)));
+    }
+
+    private static function data(int $socketId, int $bagSlots): PlayerData
+    {
+        return new PlayerData(
+            new SocketId($socketId),
+            new PlayerName('lorekeeper03'),
+            new PlayerLevelProgress(new PlayerLevel(1), new Gauge(new Experience(0), new Experience(1000))),
+            new Wallet(new Gold(0), new AdventureCoins(0)),
+            false,
+            new Quantity($bagSlots),
+            new PlayerQuestMarks(),
+        );
     }
 
     private static function me(): Identity

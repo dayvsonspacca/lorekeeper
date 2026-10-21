@@ -6,7 +6,9 @@ namespace Lorekeeper\Client\Tests;
 
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Connection;
+use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Outcome;
+use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Client\Session\ClientVersion;
 use Lorekeeper\Client\Session\GameLogin;
@@ -27,8 +29,10 @@ use PHPUnit\Framework\TestCase;
 use Psl\Async\CancellationTokenInterface;
 use Psl\Async\Exception\CancelledException;
 use Psl\Async\NullCancellationToken;
+use Psl\Async\SignalCancellationToken;
 use Psl\TCP;
 
+/** @mago-expect lint:too-many-methods */
 final class ClientEnterTest extends TestCase
 {
     private const string POLICY = "<cross-domain-policy><allow-access-from domain='*' to-ports='*' /></cross-domain-policy>";
@@ -198,6 +202,60 @@ final class ClientEnterTest extends TestCase
             'no answer while waiting for PlayerDataLoadedEvent, ClassChangedEvent, SkillsLoadedEvent, PlayerVitalsUpdatedEvent',
             Outcome::of($result)->summary,
         );
+    }
+
+    #[Test]
+    public function it_says_when_the_server_never_answers_the_policy_request(): void
+    {
+        $sent = [];
+        $result = Client::enter(self::connection($sent), self::login());
+
+        static::assertInstanceOf(TimedOut::class, $result);
+        static::assertSame('no answer while waiting for ConnectionEstablishedEvent', Outcome::of($result)->summary);
+    }
+
+    #[Test]
+    public function it_says_when_it_never_arrives_on_a_map(): void
+    {
+        $sent = [];
+        $result = Client::enter(self::connection($sent, self::POLICY, self::LOGIN), self::login());
+
+        static::assertInstanceOf(TimedOut::class, $result);
+        static::assertSame('no answer while waiting for MovedToMapEvent', Outcome::of($result)->summary);
+    }
+
+    #[Test]
+    public function it_returns_a_disconnection_when_the_server_hangs_up_while_entering(): void
+    {
+        $stream = static::createStub(TCP\StreamInterface::class);
+        $stream->method('read')->willReturn('');
+        $stream->method('reachedEndOfDataSource')->willReturn(true);
+
+        static::assertEquals(
+            new Disconnected('The server closed the connection.'),
+            Client::enter(new Connection($stream), self::login()),
+        );
+    }
+
+    #[Test]
+    public function it_stops_entering_when_asked_to(): void
+    {
+        $sent = [];
+        $stop = new SignalCancellationToken();
+        $stop->cancel();
+
+        static::assertEquals(new Stopped(), Client::enter(self::connection($sent, self::POLICY), self::login(), $stop));
+    }
+
+    #[Test]
+    public function it_lets_other_cancellations_through_while_entering(): void
+    {
+        $stream = static::createStub(TCP\StreamInterface::class);
+        $stream->method('writeAll')->willThrowException(new CancelledException(new NullCancellationToken()));
+
+        $this->expectException(CancelledException::class);
+
+        Client::enter(new Connection($stream), self::login());
     }
 
     private static function login(): GameLogin

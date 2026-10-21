@@ -4,24 +4,30 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Session;
 
+use Lorekeeper\Client\Api\Login\LoginClient;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Script\Outcome;
 use Lorekeeper\Client\Script\OutcomeStatus;
+use Lorekeeper\Client\Session\Credentials;
 use Lorekeeper\Client\Session\Ending;
 use Lorekeeper\Client\Session\EndingStatus;
 use Lorekeeper\Client\Session\Login;
+use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Event;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psl\Async;
 use Psl\Async\CancellationTokenInterface;
 use Psl\Async\Exception\CancelledException;
 use Psl\Async\NullCancellationToken;
 use Psl\Async\SignalCancellationToken;
 use Psl\DateTime\Duration;
+use Psl\IO;
 use Psl\TCP;
 
+/** @mago-expect lint:too-many-methods */
 final class LoginTest extends TestCase
 {
     private const string POLICY = "<cross-domain-policy/>\0";
@@ -104,6 +110,97 @@ final class LoginTest extends TestCase
         $ending = Login::enterOn($connection, new PlayerName('Hero'), 'TOKEN');
 
         static::assertEquals(new Ending(EndingStatus::Failed, 'Login refused'), $ending);
+    }
+
+    #[Test]
+    public function it_ends_as_stopped_when_asked_to_stop_while_entering(): void
+    {
+        $sent = [];
+        $stop = new SignalCancellationToken();
+        $stop->cancel();
+
+        $ending = Login::enterOn(self::connection($sent, []), new PlayerName('Hero'), 'TOKEN', $stop);
+
+        static::assertEquals(new Ending(EndingStatus::Stopped), $ending);
+    }
+
+    #[Test]
+    public function it_logs_in_picks_the_server_and_ends_when_the_server_hangs_up(): void
+    {
+        $listener = TCP\listen('127.0.0.1');
+        $port = $listener->getLocalAddress()->port;
+        $hangUp = Async\run(static function () use ($listener): void {
+            $listener->accept()->close();
+        });
+        $response = self::loginResponse(
+            '{"login":{"sToken":"TOKEN"},"servers":[{"sName":"Twilly","sIP":"127.0.0.1","iPort":'
+            . $port
+            . ',"bOnline":1,"bUpg":0}]}',
+        );
+
+        try {
+            $ending = Login::enter(
+                new Credentials(new PlayerName('Hero'), 'secret', 'Twilly'),
+                logins: new LoginClient("file://{$response}"),
+            );
+        } finally {
+            unlink($response);
+            $hangUp->await();
+            $listener->close();
+        }
+
+        static::assertInstanceOf(Ending::class, $ending);
+        static::assertSame(EndingStatus::Disconnected, $ending->status);
+    }
+
+    #[Test]
+    public function it_does_not_enter_when_the_chosen_server_is_not_open(): void
+    {
+        $response = self::loginResponse(
+            '{"login":{"sToken":"TOKEN"},"servers":[{"sName":"Twilly","sIP":"127.0.0.1","iPort":5588,"bOnline":1,"bUpg":0}]}',
+        );
+
+        try {
+            $ending = Login::enter(
+                new Credentials(new PlayerName('Hero'), 'secret', 'Artix'),
+                logins: new LoginClient("file://{$response}"),
+            );
+        } finally {
+            unlink($response);
+        }
+
+        static::assertEquals(new Ending(EndingStatus::Failed, 'no open server'), $ending);
+    }
+
+    #[Test]
+    public function it_does_not_enter_when_the_login_api_cannot_be_reached(): void
+    {
+        $ending = Login::enter(
+            new Credentials(new PlayerName('Hero'), 'secret'),
+            logins: new LoginClient('http://127.0.0.1:1/'),
+        );
+
+        static::assertInstanceOf(Ending::class, $ending);
+        static::assertSame(EndingStatus::Failed, $ending->status);
+        static::assertStringStartsWith('Could not reach the login API', (string) $ending->reason);
+    }
+
+    #[Test]
+    public function leaving_a_connection_that_is_already_gone_says_so(): void
+    {
+        $stream = static::createStub(TCP\StreamInterface::class);
+        $stream->method('writeAll')->willThrowException(new IO\Exception\RuntimeException('Broken pipe'));
+
+        static::assertFalse(Login::leave(new Client(new Connection($stream), Fixture::me())));
+    }
+
+    /** @return non-empty-string */
+    private static function loginResponse(string $json): string
+    {
+        $response = tempnam(sys_get_temp_dir(), prefix: 'login');
+        file_put_contents($response, data: $json);
+
+        return $response;
     }
 
     /**

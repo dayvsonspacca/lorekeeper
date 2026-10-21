@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tests\Tracking;
 
+use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Client\Tracking\StateTracking;
 use Lorekeeper\Core\Combat\CombatState;
@@ -46,6 +47,16 @@ final class StateTrackingTest extends TestCase
         static::assertSame(CombatState::Fighting, StateTracking::follow(
             CombatState::Fighting,
             $someoneElse,
+            self::me(),
+        ));
+    }
+
+    #[Test]
+    public function arriving_on_a_map_without_me_in_it_keeps_the_state_it_had(): void
+    {
+        static::assertSame(CombatState::Fighting, StateTracking::follow(
+            CombatState::Fighting,
+            Fixture::arrival('battleon', 1),
             self::me(),
         ));
     }

@@ -25,5 +25,9 @@ final class MoveToCellCommandTest extends TestCase
             '%xt%zm%moveToCell%732692%Enter%Center%',
             new MoveToCellCommand(new AreaId(732_692), new MapSpot(new MapCell('Enter'), MapPad::Center))->toMessage(),
         );
+        static::assertSame(
+            '%xt%zm%moveToCell%732692%Enter%Spawn%',
+            new MoveToCellCommand(new AreaId(732_692), new MapSpot(new MapCell('Enter'), MapPad::Spawn))->toMessage(),
+        );
     }
 }

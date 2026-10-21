@@ -42,4 +42,21 @@ final class WatchTest extends TestCase
         static::assertFalse($watch->token()->isCancelled());
         static::assertSame(0, $checks);
     }
+
+    #[Test]
+    public function releasing_it_while_it_sleeps_stops_watching_without_cancelling(): void
+    {
+        $checks = 0;
+        $watch = Watch::until(static function () use (&$checks): bool {
+            $checks++;
+
+            return true;
+        }, Duration::seconds(10));
+
+        Async\sleep(Duration::milliseconds(5));
+        $watch->release();
+
+        static::assertFalse($watch->token()->isCancelled());
+        static::assertSame(0, $checks);
+    }
 }
