@@ -20,6 +20,7 @@ concurrency:
 
 jobs:
   app:
+    name: Desktop
     uses: ./.github/workflows/app.yml
     with:
       app: desktop

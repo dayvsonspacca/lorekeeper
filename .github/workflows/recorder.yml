@@ -20,6 +20,7 @@ concurrency:
 
 jobs:
   app:
+    name: Recorder
     uses: ./.github/workflows/app.yml
     with:
       app: recorder
