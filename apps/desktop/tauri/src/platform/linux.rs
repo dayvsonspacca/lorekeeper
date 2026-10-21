@@ -1,13 +1,14 @@
+use std::env;
 use std::fs;
 use std::io;
 use std::os::unix::process::CommandExt;
 use std::path::Path;
-use std::process::{Child, Command};
+use std::process::{Child, Command, Stdio};
 use std::thread;
 
 use signal_hook::consts::{SIGHUP, SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
-use tauri::AppHandle;
+use tauri::{AppHandle, Url};
 
 use super::Platform;
 
@@ -64,6 +65,56 @@ impl Platform for Linux {
             .image_path(&format!("file://{}", icon.display()))
             .show();
     }
+
+    fn open_in_browser(url: &Url) {
+        let mut command = Command::new("xdg-open");
+        command
+            .arg(url.as_str())
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
+        if let Ok(appdir) = env::var("APPDIR") {
+            outside_the_appimage(&mut command, &appdir);
+        }
+
+        if let Ok(mut opener) = command.spawn() {
+            thread::spawn(move || opener.wait());
+        }
+    }
+}
+
+const APPIMAGE_VARIABLES: [&str; 15] = [
+    "APPDIR",
+    "APPIMAGE",
+    "ARGV0",
+    "OWD",
+    "LD_LIBRARY_PATH",
+    "GTK_DATA_PREFIX",
+    "GTK_THEME",
+    "GTK_EXE_PREFIX",
+    "GTK_PATH",
+    "GTK_IM_MODULE_FILE",
+    "GSETTINGS_SCHEMA_DIR",
+    "GI_TYPELIB_PATH",
+    "GIO_MODULE_DIR",
+    "GDK_PIXBUF_MODULEDIR",
+    "GDK_PIXBUF_MODULE_FILE",
+];
+
+fn outside_the_appimage(command: &mut Command, appdir: &str) {
+    for variable in APPIMAGE_VARIABLES {
+        command.env_remove(variable);
+    }
+    if let Ok(dirs) = env::var("XDG_DATA_DIRS") {
+        command.env("XDG_DATA_DIRS", without_the_appimage(&dirs, appdir));
+    }
+}
+
+fn without_the_appimage(dirs: &str, appdir: &str) -> String {
+    dirs.split(':')
+        .filter(|dir| !dir.is_empty() && !dir.starts_with(appdir))
+        .collect::<Vec<_>>()
+        .join(":")
 }
 
 fn dies_with_parent(command: &mut Command) {
@@ -117,6 +168,17 @@ mod tests {
             );
             thread::sleep(Duration::from_millis(20));
         }
+    }
+
+    #[test]
+    fn the_browser_does_not_see_the_appimage_data() {
+        assert_eq!(
+            without_the_appimage(
+                "/tmp/.mount_Lore/usr/share:/usr/share:/usr/local/share:",
+                "/tmp/.mount_Lore"
+            ),
+            "/usr/share:/usr/local/share"
+        );
     }
 
     #[test]

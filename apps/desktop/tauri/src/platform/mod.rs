@@ -2,7 +2,7 @@ use std::io;
 use std::path::Path;
 use std::process::{Child, Command};
 
-use tauri::AppHandle;
+use tauri::{AppHandle, Url};
 
 pub trait Platform {
     const BUNDLED_PHP: &'static str;
@@ -18,6 +18,8 @@ pub trait Platform {
     fn on_signals(app: &AppHandle) -> io::Result<()>;
 
     fn notify(icon: &Path, title: &str, message: &str);
+
+    fn open_in_browser(url: &Url);
 }
 
 #[cfg(target_os = "linux")]

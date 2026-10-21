@@ -1,5 +1,7 @@
+use tauri::webview::NewWindowResponse;
 use tauri::{App, AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder, Window, WindowEvent};
 
+use crate::platform::{Current, Platform};
 use crate::Failure;
 
 const MAIN: &str = "main";
@@ -10,6 +12,21 @@ pub fn create(app: &App) -> tauri::Result<()> {
         .title("Lorekeeper")
         .inner_size(1280.0, 820.0)
         .min_inner_size(900.0, 600.0)
+        .on_navigation(|target| {
+            if leaves_the_app(target) {
+                Current::open_in_browser(target);
+                return false;
+            }
+
+            true
+        })
+        .on_new_window(|target, _| {
+            if leaves_the_app(&target) {
+                Current::open_in_browser(&target);
+            }
+
+            NewWindowResponse::Deny
+        })
         .build()?;
 
     Ok(())
@@ -68,6 +85,14 @@ fn entry(url: &str, secret: &str) -> Result<Url, Failure> {
     Ok(entry)
 }
 
+fn leaves_the_app(target: &Url) -> bool {
+    matches!(target.scheme(), "http" | "https")
+        && !matches!(
+            target.host_str(),
+            Some("127.0.0.1" | "localhost" | "[::1]" | "tauri.localhost")
+        )
+}
+
 fn on_app(current: &Url, url: &str) -> bool {
     current.as_str().starts_with(&format!("{url}/"))
 }
@@ -82,6 +107,24 @@ mod tests {
             entry("http://127.0.0.1:8123", "c0ffee").unwrap().as_str(),
             "http://127.0.0.1:8123/?lorekeeper_secret=c0ffee"
         );
+    }
+
+    #[test]
+    fn only_pages_off_the_machine_open_in_the_browser() {
+        for outside in [
+            "https://github.com/dayvsonspacca/lorekeeper",
+            "http://aqwwiki.wikidot.com/",
+        ] {
+            assert!(leaves_the_app(&Url::parse(outside).unwrap()), "{outside}");
+        }
+        for inside in [
+            "http://127.0.0.1:8123/routines",
+            "http://localhost:1430/",
+            "tauri://localhost/index.html",
+            "about:blank",
+        ] {
+            assert!(!leaves_the_app(&Url::parse(inside).unwrap()), "{inside}");
+        }
     }
 
     #[test]
