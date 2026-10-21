@@ -2,9 +2,9 @@ php-version = "8.4.0"
 
 [source]
 workspace = "."
-paths = ["packages", "apps/wiki/app", "apps/wiki/bootstrap", "apps/wiki/config", "apps/wiki/database", "apps/wiki/public", "apps/wiki/routes", "apps/wiki/tests", "apps/desktop/app", "apps/desktop/bootstrap", "apps/desktop/database", "apps/desktop/tests", "apps/recorder/src", "apps/recorder/tests"]
-includes = ["vendor", "apps/wiki/vendor", "apps/desktop/vendor"]
-excludes = ["*packages/**/vendor/*", "*apps/wiki/bootstrap/cache/*", "*apps/desktop/bootstrap/cache/*"]
+paths = ["packages", "apps/desktop/app", "apps/desktop/bootstrap", "apps/desktop/database", "apps/desktop/tests", "apps/recorder/src", "apps/recorder/tests"]
+includes = ["vendor", "apps/desktop/vendor"]
+excludes = ["*packages/**/vendor/*", "*apps/desktop/bootstrap/cache/*"]
 
 [formatter]
 preset = "default"
@@ -24,13 +24,13 @@ too-many-enum-cases = { enabled = false }
 
 [analyzer]
 plugins = ["psl"]
-excludes = ["*/packages/**/tests/*", "*/apps/wiki/*", "*/apps/desktop/*", "*/apps/recorder/tests/*"]
+excludes = ["*/packages/**/tests/*", "*/apps/desktop/*", "*/apps/recorder/tests/*"]
 
 # Layer boundaries. Core is pure: no I/O, no protocol knowledge, depends on nothing
 # but PSL types.
 [guard]
 mode = "perimeter"
-excludes = ["*/packages/**/tests/*", "*/apps/wiki/bootstrap/*", "*/apps/wiki/config/*", "*/apps/wiki/database/*", "*/apps/wiki/public/*", "*/apps/wiki/routes/*", "*/apps/wiki/tests/*", "*/apps/desktop/bootstrap/*", "*/apps/desktop/database/*", "*/apps/desktop/tests/*", "*/apps/recorder/tests/*"]
+excludes = ["*/packages/**/tests/*", "*/apps/desktop/bootstrap/*", "*/apps/desktop/database/*", "*/apps/desktop/tests/*", "*/apps/recorder/tests/*"]
 
 [guard.perimeter.layers]
 ext = ["@native", "@global", "Psl\\**"]
@@ -50,10 +50,6 @@ permit = ["@layer:ext", "Lorekeeper\\Client\\**", "Lorekeeper\\Server\\**", "Lor
 [[guard.perimeter.rules]]
 namespace = "Lorekeeper\\Bot"
 permit = ["@layer:ext", "Lorekeeper\\Bot\\**", "Lorekeeper\\Client\\**", "Lorekeeper\\Server\\**", "Lorekeeper\\Core\\**"]
-
-[[guard.perimeter.rules]]
-namespace = "Lorekeeper\\Apps\\Wiki"
-permit = ["@layer:ext", "Lorekeeper\\**", "Illuminate\\**", "Filament\\**", "Livewire\\**", "Symfony\\**"]
 
 [[guard.perimeter.rules]]
 namespace = "Lorekeeper\\Apps\\Desktop"

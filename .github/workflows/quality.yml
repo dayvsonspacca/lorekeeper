@@ -1,0 +1,43 @@
+name: Quality
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - 'packages/**'
+      - 'apps/**'
+      - 'config/mago.toml'
+      - 'composer.json'
+      - 'Justfile'
+      - '.github/workflows/quality.yml'
+  pull_request:
+    paths: *paths
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mago:
+    name: Mago
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, pdo_sqlite, pcntl, curl, xmlreader
+          coverage: none
+      - uses: extractions/setup-just@v4
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/composer
+          key: composer-8.5-${{ hashFiles('composer.json', 'packages/*/composer.json') }}
+      - run: just install
+      - run: just fmt --dry-run
+      - run: just lint
+      - run: just analyze
+      - run: just guard
