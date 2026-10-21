@@ -14,6 +14,7 @@ use Lorekeeper\Server\Event\Inventory\AddedItem;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
+use Lorekeeper\Server\Event\Inventory\MoreTemporaryItemsAddedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
 use Lorekeeper\Server\Event\Player\PlayerData;
@@ -48,6 +49,11 @@ final readonly class InventoryTracking
             ),
             $event instanceof MoreItemsAddedEvent => new PlayerInventory(
                 self::grown($inventory->permanent, $event->items),
+                $inventory->slots,
+                $inventory->temporary,
+            ),
+            $event instanceof MoreTemporaryItemsAddedEvent => new PlayerInventory(
+                $inventory->permanent,
                 $inventory->slots,
                 self::grown($inventory->temporary, $event->items),
             ),

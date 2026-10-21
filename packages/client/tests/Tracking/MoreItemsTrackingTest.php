@@ -17,6 +17,7 @@ use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Inventory\AddedItem;
 use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
+use Lorekeeper\Server\Event\Inventory\MoreTemporaryItemsAddedEvent;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,7 +25,7 @@ use PHPUnit\Framework\TestCase;
 final class MoreItemsTrackingTest extends TestCase
 {
     #[Test]
-    public function more_of_an_item_grows_the_part_that_holds_it(): void
+    public function more_of_a_quest_item_grows_the_temporary_part_and_more_of_a_kept_item_the_kept_one(): void
     {
         $inventory = new PlayerInventory(
             new PlayerItems([new PlayerItem(
@@ -37,14 +38,23 @@ final class MoreItemsTrackingTest extends TestCase
             )]),
         );
 
+        $me = new Identity(new SocketId(122_628), new PlayerName('lorekeeper03'));
+        $inventory = InventoryTracking::follow(
+            $inventory,
+            new MoreTemporaryItemsAddedEvent([
+                new AddedItem(new ItemId(5574), new Quantity(49)),
+                new AddedItem(new ItemId(42_657), new Quantity(5)),
+            ]),
+            $me,
+        );
         $inventory = InventoryTracking::follow(
             $inventory,
             new MoreItemsAddedEvent([
-                new AddedItem(new ItemId(5574), new Quantity(49)),
                 new AddedItem(new ItemId(42_657), new Quantity(1), new Quantity(11)),
-                new AddedItem(new ItemId(1), new Quantity(1)),
+                new AddedItem(new ItemId(5574), new Quantity(1), new Quantity(99)),
+                new AddedItem(new ItemId(1), new Quantity(1), new Quantity(1)),
             ]),
-            new Identity(new SocketId(122_628), new PlayerName('lorekeeper03')),
+            $me,
         );
 
         static::assertSame(50, $inventory->temporary->find(new ItemId(5574))->unwrap()->quantity->value);
