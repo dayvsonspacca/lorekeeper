@@ -1,5 +1,34 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap">
 <script>
+    (() => {
+        const frame = window.requestAnimationFrame.bind(window);
+        const cancel = window.cancelAnimationFrame.bind(window);
+        const waiting = new Map();
+
+        window.requestAnimationFrame = (callback) => {
+            let id;
+            const run = (time) => {
+                if (!waiting.has(id)) return;
+                clearTimeout(waiting.get(id));
+                waiting.delete(id);
+                callback(time);
+            };
+            id = frame(run);
+            waiting.set(id, setTimeout(() => {
+                cancel(id);
+                run(performance.now());
+            }, 1000));
+
+            return id;
+        };
+
+        window.cancelAnimationFrame = (id) => {
+            clearTimeout(waiting.get(id));
+            waiting.delete(id);
+            cancel(id);
+        };
+    })();
+
     if (localStorage.getItem('filament:sidebar:desktop_open') === null) {
         localStorage.setItem('filament:sidebar:open', 'false');
         localStorage.setItem('filament:sidebar:desktop_open', 'false');
