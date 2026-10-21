@@ -1,5 +1,8 @@
 <img src=".github/assets/social-preview.png" alt="Lorekeeper: your heroes keep playing, you keep the lore">
 
+> Lorekeeper is an unofficial fan project. It is not affiliated with, endorsed by or connected to Artix Entertainment.
+> AdventureQuest Worlds and all related names and assets are trademarks of Artix Entertainment, LLC.
+
 [![Quality](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/quality.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/quality.yml)
 [![Packages](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/packages.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/packages.yml)
 [![Desktop](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/desktop.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/desktop.yml)
@@ -16,9 +19,6 @@ play while you do something else.
 ### Wiki <sub>coming soon</sub>
 
 A structured wiki for AdventureQuest Worlds, built from what the game itself says.
-
-> Lorekeeper is an unofficial fan project. It is not affiliated with, endorsed by or connected to Artix Entertainment.
-> AdventureQuest Worlds and all related names and assets are trademarks of Artix Entertainment, LLC.
 
 ## Acknowledgements
 
