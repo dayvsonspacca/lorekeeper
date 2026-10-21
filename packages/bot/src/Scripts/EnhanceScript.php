@@ -8,6 +8,7 @@ use Closure;
 use Generator;
 use Lorekeeper\Bot\Abilities\Gear\BestEnhancement;
 use Lorekeeper\Bot\Abilities\Gear\EnhancementShops;
+use Lorekeeper\Bot\Abilities\Moves\Rests;
 use Lorekeeper\Bot\Abilities\Paces;
 use Lorekeeper\Bot\BotScript;
 use Lorekeeper\Client\Command\Inventory\EnhanceItemCommand;
@@ -30,6 +31,7 @@ use Psl\DateTime\Timestamp;
 final class EnhanceScript extends BotScript
 {
     use Paces;
+    use Rests;
 
     /** @param null|Closure(): Timestamp $clock */
     public function __construct(
@@ -53,6 +55,7 @@ final class EnhanceScript extends BotScript
             return new Failed("no shop sells {$this->type->name} enhancements");
         }
 
+        yield from $this->rest();
         $area = $this->me()->location()->area;
         $loading = $this->paced($this->send(new LoadShopCommand($area, $shop))->awaits(
             Duration::seconds(10),

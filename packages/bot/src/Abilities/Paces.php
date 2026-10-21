@@ -12,11 +12,12 @@ use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Server\Event\ActionTooSoonEvent;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\TooSoonAfterCombatEvent;
 use Psl\DateTime\Duration;
 
 trait Paces
 {
-    private const int TRIES_WHEN_TOO_SOON = 3;
+    private const int TRIES_WHEN_TOO_SOON = 4;
 
     /** @return Generator<int, Instruction, null|Event|TimedOut, null|Event|TimedOut> */
     protected function paced(Send $send): Generator
@@ -29,14 +30,16 @@ trait Paces
         $watching = new Send($send->command, new Await([
             ...$await->events,
             ActionTooSoonEvent::class,
+            TooSoonAfterCombatEvent::class,
         ], $await->timeout));
         for ($try = 1;; $try++) {
             $answer = yield $watching;
-            if (!$answer instanceof ActionTooSoonEvent || $try >= self::TRIES_WHEN_TOO_SOON) {
+            $tooSoon = $answer instanceof ActionTooSoonEvent || $answer instanceof TooSoonAfterCombatEvent;
+            if (!$tooSoon || $try >= self::TRIES_WHEN_TOO_SOON) {
                 return $answer;
             }
 
-            yield new Pause(Duration::seconds(1));
+            yield new Pause(Duration::seconds($answer instanceof TooSoonAfterCombatEvent ? 2 : 1));
         }
     }
 }

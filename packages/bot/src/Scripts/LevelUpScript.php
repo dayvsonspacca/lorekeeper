@@ -8,6 +8,7 @@ use Closure;
 use Generator;
 use Lorekeeper\Bot\Abilities\Moves\Joins;
 use Lorekeeper\Bot\Abilities\Moves\Kills;
+use Lorekeeper\Bot\Abilities\Moves\Rests;
 use Lorekeeper\Bot\BotScript;
 use Lorekeeper\Client\Script\Done;
 use Lorekeeper\Client\Script\Instruction;
@@ -26,6 +27,7 @@ final class LevelUpScript extends BotScript
 {
     use Joins;
     use Kills;
+    use Rests;
 
     private int $from = 1;
 
@@ -73,6 +75,8 @@ final class LevelUpScript extends BotScript
             yield from $this->join(new MapName('icestormunder'));
             yield from $this->levelUpIn(new MapSpot(new MapCell('r2'), MapPad::Top), upTo: 100);
         }
+
+        yield from $this->rest();
 
         return new Done("Reached level {$this->level()}");
     }

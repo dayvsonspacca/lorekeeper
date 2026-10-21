@@ -7,6 +7,7 @@ namespace Lorekeeper\Bot\Scripts;
 use Generator;
 use Lorekeeper\Bot\Abilities\Moves\Hunts;
 use Lorekeeper\Bot\Abilities\Moves\Joins;
+use Lorekeeper\Bot\Abilities\Moves\Rests;
 use Lorekeeper\Bot\Abilities\Quests\Loots;
 use Lorekeeper\Bot\Abilities\Quests\Quests;
 use Lorekeeper\Bot\BotScript;
@@ -29,6 +30,7 @@ final class TokensOfCollectionScript extends BotScript
     use Hunts;
     use Quests;
     use Loots;
+    use Rests;
 
     private const int QUEST = 1316;
 
@@ -105,6 +107,8 @@ final class TokensOfCollectionScript extends BotScript
             ->me()
             ->player()
             ->inventory->quantity($reward);
+
+        yield from $this->rest();
 
         return new Done("got today's Token of Collection, {$held} held now");
     }
