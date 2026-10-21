@@ -17,7 +17,7 @@ mkdir -p "$WORK/apps/desktop" "$WORK/packages" "$BUILD/php"
 
 sources "$DESKTOP" '^(tests|tauri)/|^phpunit\.xml$|^\.env' \
     | rsync -a --from0 --files-from=- --ignore-missing-args "$DESKTOP/" "$WORK/apps/desktop/"
-for package in core server client; do
+for package in core server client bot; do
     mkdir -p "$WORK/packages/$package"
     sources "$ROOT/packages/$package" '^tests/' \
         | rsync -a --from0 --files-from=- --ignore-missing-args "$ROOT/packages/$package/" "$WORK/packages/$package/"

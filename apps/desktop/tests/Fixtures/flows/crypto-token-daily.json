@@ -1,0 +1,22 @@
+{
+    "lorekeeper": 1,
+    "name": "Crypto Token daily",
+    "author": "Hilise",
+    "start": "enter",
+    "nodes": [
+        {"id": "enter", "do": "join", "map": "boxes", "at": [0, 0]},
+        {"id": "done", "do": "quest-done", "quest": 6187, "at": [260, 0]},
+        {"id": "accept", "do": "accept-quest", "quest": 6187, "at": [520, 80]},
+        {"id": "hunt", "do": "hunt", "cell": "Closet", "pad": "Center", "item": 42658, "quantity": 1, "minutes": 5, "at": [780, 80]},
+        {"id": "turn-in", "do": "turn-in-quest", "quest": 6187, "reward": 42657, "at": [1040, 80]},
+        {"id": "rest", "do": "rest", "at": [1300, 80]}
+    ],
+    "wires": [
+        {"from": "enter", "to": "done"},
+        {"from": "done", "exit": "no", "to": "accept"},
+        {"from": "accept", "to": "hunt"},
+        {"from": "hunt", "exit": "failed", "to": "rest"},
+        {"from": "hunt", "to": "turn-in"},
+        {"from": "turn-in", "to": "rest"}
+    ]
+}
