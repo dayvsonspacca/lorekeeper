@@ -2,7 +2,7 @@ use tauri::webview::NewWindowResponse;
 use tauri::{App, AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder, Window, WindowEvent};
 
 use crate::platform::{Current, Platform};
-use crate::Failure;
+use crate::{tray, Failure};
 
 const MAIN: &str = "main";
 const SECRET_QUERY: &str = "lorekeeper_secret";
@@ -14,7 +14,7 @@ pub fn create(app: &App) -> tauri::Result<()> {
         .min_inner_size(900.0, 600.0)
         .on_navigation(|target| {
             if leaves_the_app(target) {
-                Current::open_in_browser(target);
+                Current::open_externally(target);
                 return false;
             }
 
@@ -22,7 +22,7 @@ pub fn create(app: &App) -> tauri::Result<()> {
         })
         .on_new_window(|target, _| {
             if leaves_the_app(&target) {
-                Current::open_in_browser(&target);
+                Current::open_externally(&target);
             }
 
             NewWindowResponse::Deny
@@ -34,8 +34,10 @@ pub fn create(app: &App) -> tauri::Result<()> {
 
 pub fn keep_in_tray(window: &Window, event: &WindowEvent) {
     if let WindowEvent::CloseRequested { api, .. } = event {
-        let _ = window.hide();
-        api.prevent_close();
+        if tray::exists(window.app_handle()) {
+            let _ = window.hide();
+            api.prevent_close();
+        }
     }
 }
 
@@ -68,21 +70,9 @@ pub fn reload(app: &AppHandle) {
     }
 }
 
-pub fn status(app: &AppHandle, status: &str) {
-    write(app, "status", status);
-}
-
-pub fn fail(app: &AppHandle, failure: &str) {
-    status(app, "The lorekeeper could not wake up.");
-    write(app, "failure", failure);
-}
-
-fn write(app: &AppHandle, element: &str, text: &str) {
-    let text = serde_json::to_string(text).unwrap_or_default();
+pub fn eval(app: &AppHandle, script: &str) {
     if let Some(window) = app.get_webview_window(MAIN) {
-        let _ = window.eval(format!(
-            "document.getElementById('{element}')?.replaceChildren({text});"
-        ));
+        let _ = window.eval(script);
     }
 }
 

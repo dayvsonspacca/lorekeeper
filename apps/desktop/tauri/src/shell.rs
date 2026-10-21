@@ -9,7 +9,7 @@ use tauri::{AppHandle, Manager};
 use crate::php::Php;
 use crate::platform::{Current, Platform};
 use crate::timeline::Timeline;
-use crate::{poll, window, Failure};
+use crate::{poll, splash, tray, window, Failure};
 
 const PATIENCE: Duration = Duration::from_secs(30);
 
@@ -19,7 +19,7 @@ pub struct Server(Mutex<Option<Child>>);
 pub fn start(app: AppHandle, timeline: Timeline) {
     thread::spawn(move || {
         if let Err(failure) = run(&app, timeline) {
-            window::fail(&app, &failure.to_string());
+            splash::fail(&app, &failure.to_string());
         }
     });
 }
@@ -38,6 +38,7 @@ fn run(app: &AppHandle, mut timeline: Timeline) -> Result<(), Failure> {
 
     let php = Php::locate(app, &url, &secret)?;
     timeline.mark("data");
+    splash::logs_at(app, php.logs());
     php.reap();
     timeline.mark("reap");
 
@@ -48,16 +49,17 @@ fn run(app: &AppHandle, mut timeline: Timeline) -> Result<(), Failure> {
         thread::spawn(move || wait_until_up(&url))
     };
 
-    window::status(app, "Bringing the database up to date…");
+    splash::step(app, "database");
     php.boot()?;
     timeline.mark("boot");
 
-    window::status(app, "Opening the app…");
+    splash::step(app, "app");
     warming
         .join()
         .map_err(|_| "the server check stopped unexpectedly")??;
     timeline.mark("server");
     window::open(app, &url, &secret)?;
+    tray::show(app);
     timeline.mark("open");
     php.note_startup(&timeline.summary());
 

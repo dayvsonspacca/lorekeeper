@@ -76,6 +76,10 @@ impl Php {
         })
     }
 
+    pub fn logs(&self) -> PathBuf {
+        self.data.storage().join("logs")
+    }
+
     pub fn icon(&self) -> PathBuf {
         self.data.icon()
     }

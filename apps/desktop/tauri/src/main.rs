@@ -2,6 +2,7 @@ mod php;
 mod platform;
 mod poll;
 mod shell;
+mod splash;
 mod timeline;
 mod tray;
 mod window;
@@ -22,12 +23,16 @@ fn main() {
         }))
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .manage(shell::Server::default())
+        .manage(splash::Splash::default())
+        .invoke_handler(tauri::generate_handler![
+            splash::splash,
+            splash::retry,
+            splash::open_logs
+        ])
         .setup(move |app| {
             timeline.mark("shell");
             window::create(app)?;
             timeline.mark("window");
-            tray::update(app.handle(), &[])?;
-            timeline.mark("tray");
             Current::on_signals(app.handle())?;
             shell::start(app.handle().clone(), timeline);
 

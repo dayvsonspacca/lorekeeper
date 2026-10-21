@@ -8,6 +8,17 @@ const TRAY: &str = "main";
 const OPEN: &str = "open";
 const QUIT: &str = "quit";
 
+pub fn show(app: &AppHandle) {
+    let handle = app.clone();
+    let _ = app.run_on_main_thread(move || {
+        let _ = update(&handle, &[]);
+    });
+}
+
+pub fn exists(app: &AppHandle) -> bool {
+    app.tray_by_id(TRAY).is_some()
+}
+
 pub fn update(app: &AppHandle, bots: &[String]) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, OPEN, "Open Lorekeeper", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, QUIT, "Quit and stop the bots", true, None::<&str>)?;

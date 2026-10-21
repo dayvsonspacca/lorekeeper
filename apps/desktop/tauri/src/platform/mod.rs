@@ -19,7 +19,7 @@ pub trait Platform {
 
     fn notify(icon: &Path, title: &str, message: &str);
 
-    fn open_in_browser(url: &Url);
+    fn open_externally(url: &Url);
 }
 
 #[cfg(target_os = "linux")]

@@ -66,7 +66,7 @@ impl Platform for Linux {
             .show();
     }
 
-    fn open_in_browser(url: &Url) {
+    fn open_externally(url: &Url) {
         let mut command = Command::new("xdg-open");
         command
             .arg(url.as_str())

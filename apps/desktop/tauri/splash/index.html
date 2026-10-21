@@ -2,21 +2,176 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <meta name="color-scheme" content="dark">
     <title>Lorekeeper</title>
     <style>
-        :root { color-scheme: light dark; }
-        body { margin: 0; height: 100vh; display: grid; place-items: center; font: 15px system-ui, sans-serif; background: #0f1020; color: #c9cbf5; }
-        @media (prefers-color-scheme: light) { body { background: #f6f6fb; color: #3b3fb0; } }
-        main { display: grid; gap: 16px; justify-items: center; }
-        p { margin: 0; }
-        #failure { color: #e5534b; white-space: pre-wrap; max-width: 640px; font-family: ui-monospace, monospace; font-size: 12px; }
+        :root {
+            --background: #111318;
+            --surface: #151820;
+            --border: #1f232b;
+            --track: #2a2f3a;
+            --muted: #8a90a0;
+            --text: #e2e4ea;
+            --primary: #818cf8;
+            --primary-hover: #a5b4fc;
+            --on-primary: #111318;
+            --done: #86efac;
+            --failed: #fca5a5;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: var(--background);
+            color: var(--text);
+            font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+        }
+
+        main { width: min(30rem, calc(100vw - 3rem)); display: grid; gap: 2rem; }
+
+        .brand { display: grid; justify-items: center; gap: .75rem; }
+        .brand svg { width: 4rem; height: 4rem; }
+        .brand h1 { margin: 0; font-size: 1.25rem; font-weight: 600; letter-spacing: .01em; }
+
+        .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: .625rem; }
+        .step { display: flex; align-items: center; gap: .75rem; color: var(--muted); transition: color .2s; }
+        .step::before {
+            content: "";
+            flex: none;
+            width: .625rem;
+            height: .625rem;
+            border-radius: 50%;
+            border: 1.5px solid var(--track);
+            transition: background .2s, border-color .2s;
+        }
+        .step[data-state="current"] { color: var(--text); }
+        .step[data-state="current"]::before { border-color: var(--primary); background: var(--primary); animation: pulse 1.2s ease-in-out infinite; }
+        .step[data-state="done"]::before { border-color: var(--done); background: var(--done); }
+        .step[data-state="failed"] { color: var(--failed); }
+        .step[data-state="failed"]::before { border-color: var(--failed); background: var(--failed); }
+
+        .track { height: .25rem; border-radius: 999px; background: var(--border); overflow: hidden; }
+        .track > span { display: block; width: 0; height: 100%; background: var(--primary); transition: width .4s ease; }
+        [data-failed] .track > span { background: var(--failed); }
+
+        .failure { display: none; gap: .75rem; }
+        [data-failed] .failure { display: grid; }
+        .failure p { margin: 0; font-weight: 600; }
+        .failure pre {
+            margin: 0;
+            max-height: 12rem;
+            overflow: auto;
+            padding: .75rem .875rem;
+            border: 1px solid var(--border);
+            border-radius: .5rem;
+            background: var(--surface);
+            color: var(--text);
+            font: 12px/1.5 ui-monospace, "SFMono-Regular", "DejaVu Sans Mono", Menlo, monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+            user-select: text;
+            scrollbar-width: thin;
+            scrollbar-color: var(--track) transparent;
+        }
+
+        .actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+        button {
+            padding: .4375rem .875rem;
+            border: 1px solid var(--track);
+            border-radius: .5rem;
+            background: var(--surface);
+            color: var(--text);
+            font: inherit;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        button:hover { background: var(--border); }
+        button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        button.primary { border-color: var(--primary); background: var(--primary); color: var(--on-primary); }
+        button.primary:hover { border-color: var(--primary-hover); background: var(--primary-hover); }
+        button[hidden] { display: none; }
+
+        .version { position: fixed; right: 1rem; bottom: .75rem; color: var(--muted); font-size: 12px; }
+
+        @keyframes pulse { 50% { opacity: .35; } }
+
+        @media (prefers-reduced-motion: reduce) {
+            .step[data-state="current"]::before { animation: none; }
+            .track > span, .step, .step::before { transition: none; }
+        }
     </style>
 </head>
 <body>
 <main>
-    <svg viewBox="0 0 64 64" width="72" height="72"><path d="M16 6h12v34h26l-6 6 6 6H16z" fill="#6b72f0"/><path d="M28 40h26l-6 6 6 6H28z" fill="#3b3fb0"/><path d="M40 16l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#e0a628"/></svg>
-    <p id="status">Waking the lorekeeper…</p>
-    <p id="failure"></p>
+    <div class="brand">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M16 6h12v34h26l-6 6 6 6H16z" fill="#6b72f0"/><path d="M28 40h26l-6 6 6 6H28z" fill="#3b3fb0"/><path d="M40 16l3 6 6 3-6 3-3 6-3-6-6-3 6-3z" fill="#e0a628"/></svg>
+        <h1>Lorekeeper</h1>
+    </div>
+
+    <ol class="steps" aria-live="polite">
+        <li class="step" data-step="data">Preparing your data</li>
+        <li class="step" data-step="database">Bringing the database up to date</li>
+        <li class="step" data-step="app">Opening the app</li>
+    </ol>
+
+    <div class="track" role="progressbar" aria-label="Starting Lorekeeper"><span></span></div>
+
+    <section class="failure" role="alert">
+        <p>The lorekeeper could not wake up.</p>
+        <pre id="details"></pre>
+        <div class="actions">
+            <button class="primary" id="retry">Try again</button>
+            <button id="copy">Copy details</button>
+            <button id="logs" hidden>Open logs</button>
+        </div>
+    </section>
 </main>
+<div class="version" id="version"></div>
+
+<script>
+    (() => {
+        const steps = [...document.querySelectorAll('[data-step]')];
+        const bar = document.querySelector('.track > span');
+        const details = document.getElementById('details');
+        const copy = document.getElementById('copy');
+        const invoke = (command) => window.__TAURI__?.core.invoke(command);
+
+        const render = ({ version, step, failure, logs }) => {
+            const reached = Math.max(0, steps.findIndex((item) => item.dataset.step === step));
+            steps.forEach((item, index) => {
+                item.dataset.state = index < reached ? 'done' : index === reached ? (failure ? 'failed' : 'current') : 'waiting';
+            });
+            bar.style.width = `${Math.round(((reached + (failure ? 1 : 0.5)) / steps.length) * 100)}%`;
+            document.getElementById('version').textContent = version ?? '';
+            document.body.toggleAttribute('data-failed', Boolean(failure));
+            details.textContent = failure ?? '';
+            document.getElementById('logs').hidden = !logs;
+        };
+
+        copy.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(details.textContent);
+            } catch {
+                getSelection().selectAllChildren(details);
+                document.execCommand('copy');
+                getSelection().removeAllRanges();
+            }
+            copy.textContent = 'Copied';
+            setTimeout(() => { copy.textContent = 'Copy details'; }, 1500);
+        });
+        document.getElementById('retry').addEventListener('click', () => invoke('retry'));
+        document.getElementById('logs').addEventListener('click', () => invoke('open_logs'));
+
+        window.lorekeeper = { render };
+        render({ step: 'data' });
+        invoke('splash')?.then(render);
+    })();
+</script>
 </body>
 </html>
