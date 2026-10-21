@@ -68,12 +68,20 @@ pub fn reload(app: &AppHandle) {
     }
 }
 
+pub fn status(app: &AppHandle, status: &str) {
+    write(app, "status", status);
+}
+
 pub fn fail(app: &AppHandle, failure: &str) {
-    let text = serde_json::to_string(failure).unwrap_or_default();
+    status(app, "The lorekeeper could not wake up.");
+    write(app, "failure", failure);
+}
+
+fn write(app: &AppHandle, element: &str, text: &str) {
+    let text = serde_json::to_string(text).unwrap_or_default();
     if let Some(window) = app.get_webview_window(MAIN) {
         let _ = window.eval(format!(
-            "document.getElementById('status').textContent = 'The lorekeeper could not wake up.';\
-             document.getElementById('failure').textContent = {text};"
+            "document.getElementById('{element}')?.replaceChildren({text});"
         ));
     }
 }

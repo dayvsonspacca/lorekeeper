@@ -55,6 +55,10 @@ impl Data {
         self.root.join("icon.png")
     }
 
+    pub fn startup_log(&self) -> PathBuf {
+        self.storage().join("logs/startup.log")
+    }
+
     pub fn server_log(&self) -> PathBuf {
         self.storage().join("logs/server.log")
     }

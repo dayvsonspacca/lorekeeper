@@ -8,6 +8,7 @@ use tauri::{AppHandle, Manager};
 
 use crate::php::Php;
 use crate::platform::{Current, Platform};
+use crate::timeline::Timeline;
 use crate::{poll, window, Failure};
 
 const PATIENCE: Duration = Duration::from_secs(30);
@@ -15,9 +16,9 @@ const PATIENCE: Duration = Duration::from_secs(30);
 #[derive(Default)]
 pub struct Server(Mutex<Option<Child>>);
 
-pub fn start(app: AppHandle) {
+pub fn start(app: AppHandle, timeline: Timeline) {
     thread::spawn(move || {
-        if let Err(failure) = run(&app) {
+        if let Err(failure) = run(&app, timeline) {
             window::fail(&app, &failure.to_string());
         }
     });
@@ -29,19 +30,37 @@ pub fn stop(app: &AppHandle) {
     }
 }
 
-fn run(app: &AppHandle) -> Result<(), Failure> {
+fn run(app: &AppHandle, mut timeline: Timeline) -> Result<(), Failure> {
+    timeline.mark("thread");
     let port = TcpListener::bind("127.0.0.1:0")?.local_addr()?.port();
     let secret = secret()?;
     let url = format!("http://127.0.0.1:{port}");
 
     let php = Php::locate(app, &url, &secret)?;
+    timeline.mark("data");
     php.reap();
-    php.boot()?;
+    timeline.mark("reap");
+
     let server = php.serve(port)?;
     app.state::<Server>().0.lock().unwrap().replace(server);
+    let warming = {
+        let url = url.clone();
+        thread::spawn(move || wait_until_up(&url))
+    };
 
-    wait_until_up(&url)?;
+    window::status(app, "Bringing the database up to date…");
+    php.boot()?;
+    timeline.mark("boot");
+
+    window::status(app, "Opening the app…");
+    warming
+        .join()
+        .map_err(|_| "the server check stopped unexpectedly")??;
+    timeline.mark("server");
     window::open(app, &url, &secret)?;
+    timeline.mark("open");
+    php.note_startup(&timeline.summary());
+
     poll::watch(app, &url, &secret, &php.icon());
 
     Ok(())
