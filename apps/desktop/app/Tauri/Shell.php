@@ -13,6 +13,16 @@ final readonly class Shell
         return config('desktop.shell') === 'tauri';
     }
 
+    public static function alive(): bool
+    {
+        $pid = config('desktop.shell_pid');
+        if (!self::running() || !is_numeric($pid)) {
+            return true;
+        }
+
+        return posix_kill((int) $pid, signal: 0);
+    }
+
     public static function trusts(#[SensitiveParameter] ?string $secret): bool
     {
         $expected = config('desktop.shell_secret');

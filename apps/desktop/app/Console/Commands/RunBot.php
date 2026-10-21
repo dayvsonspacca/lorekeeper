@@ -18,6 +18,7 @@ use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
+use Lorekeeper\Apps\Desktop\Tauri\Shell;
 use Lorekeeper\Client\Api\Login\LoginClient;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Script\Disconnected;
@@ -70,7 +71,7 @@ final class RunBot extends Command
 
         $run->refresh();
         $recorder = new RunRecorder($run);
-        $stop = Watch::until(static fn(): bool => $run->fresh()?->status !== RunStatus::Running);
+        $stop = Watch::until(static fn(): bool => $run->fresh()?->status !== RunStatus::Running || !Shell::alive());
 
         try {
             $run->log("Logging in as {$run->account->name}");
@@ -88,6 +89,10 @@ final class RunBot extends Command
             );
         } finally {
             $stop->release();
+        }
+
+        if ($ending->status === EndingStatus::Stopped && !Shell::alive()) {
+            $ending = new Ending(EndingStatus::Stopped, 'the app closed');
         }
 
         $run->closeTasks('the run ended');
