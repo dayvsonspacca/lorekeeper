@@ -1,6 +1,6 @@
 [package]
 name = "lorekeeper"
-version = "0.0.1-alpha"
+version = "1.0.0"
 description = "Keep several AdventureQuest Worlds bots playing on your machine"
 authors = ["Dayvson Spacca"]
 license = "MIT"

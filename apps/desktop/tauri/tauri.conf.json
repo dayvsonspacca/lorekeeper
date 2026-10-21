@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Lorekeeper",
-  "version": "0.0.1-alpha",
   "identifier": "com.dayvsonspacca.lorekeeper.desktop",
   "build": {
     "frontendDist": "splash"
