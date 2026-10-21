@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Lorekeeper\Apps\Desktop\Application;
 use Lorekeeper\Apps\Desktop\Native\BootstrapCache;
 
 BootstrapCache::redirect();
