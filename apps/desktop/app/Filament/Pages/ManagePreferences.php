@@ -21,6 +21,8 @@ final class ManagePreferences extends Page
 
     protected static ?int $navigationSort = 10;
 
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $navigationLabel = 'Preferences';
 
     protected static ?string $title = 'Preferences';

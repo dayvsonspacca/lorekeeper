@@ -28,12 +28,15 @@
         };
     })();
 
-    if (localStorage.getItem('filament:sidebar:desktop_open') === null) {
-        localStorage.setItem('filament:sidebar:open', 'false');
-        localStorage.setItem('filament:sidebar:desktop_open', 'false');
-    }
+    localStorage.setItem('filament:sidebar:open', 'false');
+    localStorage.setItem('filament:sidebar:desktop_open', 'false');
 </script>
 <style>
+    .fi-sidebar-open-collapse-sidebar-btn, .fi-sidebar-close-collapse-sidebar-btn { display: none !important; }
+    .lk-sidebar-logo { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: .5rem; }
+    .lk-sidebar-logo:hover { background: var(--gray-800); }
+    .lk-sidebar-logo svg { width: 1.75rem; height: 1.75rem; }
+    .lk-sidebar-bottom { flex: none; overflow: visible; padding-block: .75rem; }
     .fi-header-heading { font-size: 1.125rem; font-weight: 600; letter-spacing: 0; }
     .fi-main { padding-top: 1.25rem; }
     .fi-page-content { row-gap: 1rem; }

@@ -43,6 +43,8 @@ final class DesktopPanelProvider extends PanelProvider
             ->spa()
             ->renderHook(PanelsRenderHook::HEAD_END, static fn(): View => view('theme.scene'))
             ->renderHook(PanelsRenderHook::HEAD_END, static fn(): View => view('theme.desktop'))
+            ->renderHook(PanelsRenderHook::SIDEBAR_LOGO_BEFORE, static fn(): View => view('theme.sidebar-logo'))
+            ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, static fn(): View => view('theme.sidebar-footer'))
             ->renderHook(PanelsRenderHook::BODY_END, static fn(): string => Blade::render('@livewire($component)', [
                 'component' => KeepAlive::class,
             ]))
