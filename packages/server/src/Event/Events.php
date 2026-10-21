@@ -62,6 +62,7 @@ final readonly class Events
     /** @var non-empty-list<class-string<Event>> */
     public const array ALL = [
         ActionTooSoonEvent::class,
+        TooSoonAfterCombatEvent::class,
         AttackRejectedEvent::class,
         ClassChangedEvent::class,
         MonsterRespawnedEvent::class,
