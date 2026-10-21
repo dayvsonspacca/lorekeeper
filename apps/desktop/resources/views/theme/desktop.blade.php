@@ -1,4 +1,3 @@
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&display=swap">
 <script>
     (() => {
         const frame = window.requestAnimationFrame.bind(window);

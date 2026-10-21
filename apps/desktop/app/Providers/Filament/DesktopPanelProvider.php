@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Providers\Filament;
 
 use Filament\Enums\ThemeMode;
-use Filament\FontProviders\GoogleFontProvider;
+use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
@@ -35,7 +35,7 @@ final class DesktopPanelProvider extends PanelProvider
             ->path('')
             ->brandName('Lorekeeper')
             ->colors(['primary' => Color::hex('#818cf8'), 'gray' => self::gray()])
-            ->font('IBM Plex Sans', provider: GoogleFontProvider::class)
+            ->font('IBM Plex Sans', url: asset('fonts/ibm-plex/ibm-plex.css'), provider: LocalFontProvider::class)
             ->defaultThemeMode(ThemeMode::Dark)
             ->topbar(false)
             ->sidebarCollapsibleOnDesktop()
