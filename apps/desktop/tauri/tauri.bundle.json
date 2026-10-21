@@ -1,0 +1,8 @@
+{
+  "bundle": {
+    "resources": {
+      "build/app/": "app/",
+      "build/php/": "php/"
+    }
+  }
+}

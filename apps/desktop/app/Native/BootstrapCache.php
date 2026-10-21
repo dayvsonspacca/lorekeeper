@@ -17,16 +17,12 @@ final readonly class BootstrapCache
     /** @param array<string, string> $env */
     public static function folder(array $env): ?string
     {
-        $userData = $env['NATIVEPHP_USER_DATA_PATH'] ?? '';
-        if (
-            ($env['NATIVEPHP_RUNNING'] ?? null) !== 'true'
-            || ($env['APP_DEBUG'] ?? null) !== 'false'
-            || $userData === ''
-        ) {
+        $data = $env['LOREKEEPER_DATA_PATH'] ?? '';
+        if (($env['LOREKEEPER_SHELL'] ?? null) !== 'tauri' || ($env['APP_DEBUG'] ?? null) !== 'false' || $data === '') {
             return null;
         }
 
-        return "{$userData}/bootstrap/cache";
+        return "{$data}/bootstrap/cache";
     }
 
     /**

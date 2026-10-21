@@ -17,6 +17,17 @@ final readonly class Heartbeat
         Cache::forever(self::KEY, now()->getTimestamp());
     }
 
+    public static function revive(): bool
+    {
+        if (!self::silent()) {
+            return false;
+        }
+
+        self::beat();
+
+        return true;
+    }
+
     public static function silent(): bool
     {
         $last = Cache::get(self::KEY);

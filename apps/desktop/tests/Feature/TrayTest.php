@@ -25,9 +25,6 @@ final class TrayTest extends TestCase
             ->update(['status' => RunStatus::Running]);
         Account::query()->create(['name' => 'lorekeeper03', 'password' => bin2hex(random_bytes(8))]);
 
-        static::assertSame(
-            ['Open Lorekeeper', '○ lorekeeper03 · off', '● made2903 · on', 'Quit and stop the bots'],
-            array_values(array_filter(array_column(Tray::menu()->toArray()['submenu'], 'label'))),
-        );
+        static::assertSame(['○ lorekeeper03 · off', '● made2903 · on'], Tray::bots());
     }
 }

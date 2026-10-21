@@ -28,8 +28,7 @@
         "dayvsonspacca/lorekeeper-core": "dev-main",
         "dayvsonspacca/lorekeeper-server": "dev-main",
         "filament/filament": "^5.10",
-        "laravel/framework": "^13.37",
-        "nativephp/desktop": "^2.3"
+        "laravel/framework": "^13.37"
     },
     "require-dev": {
         "mockery/mockery": "^1.6",
