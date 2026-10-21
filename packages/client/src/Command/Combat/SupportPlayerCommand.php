@@ -13,21 +13,15 @@ use Override;
 
 final readonly class SupportPlayerCommand implements Command
 {
+    private string $code;
+
     /** @throws InvalidArgumentException */
     public function __construct(
         private AreaId $area,
-        private SkillSlot $skill,
+        SkillSlot $skill,
         private SocketId $player,
     ) {
-        if ($skill === SkillSlot::AutoAttack || $skill === SkillSlot::Potion) {
-            throw new InvalidArgumentException('Only a class skill can support a player.');
-        }
-    }
-
-    #[Override]
-    public function toMessage(): string
-    {
-        $skill = match ($this->skill) {
+        $this->code = match ($skill) {
             SkillSlot::First => 'a1',
             SkillSlot::Second => 'a2',
             SkillSlot::Third => 'a3',
@@ -36,7 +30,11 @@ final readonly class SupportPlayerCommand implements Command
                 'Only a class skill can support a player.',
             ),
         };
+    }
 
-        return "%xt%zm%gar%{$this->area}%0%{$skill}>p:{$this->player}%wvz%";
+    #[Override]
+    public function toMessage(): string
+    {
+        return "%xt%zm%gar%{$this->area}%0%{$this->code}>p:{$this->player}%wvz%";
     }
 }

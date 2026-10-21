@@ -13,15 +13,22 @@ use Override;
 
 final readonly class AttackMonsterCommand implements Attack
 {
+    private string $code;
+
     /** @throws InvalidArgumentException */
     public function __construct(
         private AreaId $area,
         private SkillSlot $skill,
         private MonsterSpawnId $monster,
     ) {
-        if ($skill === SkillSlot::Potion) {
-            throw new InvalidArgumentException('A potion is not an attack.');
-        }
+        $this->code = match ($skill) {
+            SkillSlot::AutoAttack => 'aa',
+            SkillSlot::First => 'a1',
+            SkillSlot::Second => 'a2',
+            SkillSlot::Third => 'a3',
+            SkillSlot::Fourth => 'a4',
+            SkillSlot::Potion => throw new InvalidArgumentException('A potion is not an attack.'),
+        };
     }
 
     #[Override]
@@ -49,15 +56,6 @@ final readonly class AttackMonsterCommand implements Attack
     #[Override]
     public function toMessage(): string
     {
-        $skill = match ($this->skill) {
-            SkillSlot::AutoAttack => 'aa',
-            SkillSlot::First => 'a1',
-            SkillSlot::Second => 'a2',
-            SkillSlot::Third => 'a3',
-            SkillSlot::Fourth => 'a4',
-            SkillSlot::Potion => 'i1',
-        };
-
-        return "%xt%zm%gar%{$this->area}%0%{$skill}>m:{$this->monster}%wvz%";
+        return "%xt%zm%gar%{$this->area}%0%{$this->code}>m:{$this->monster}%wvz%";
     }
 }

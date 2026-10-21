@@ -47,12 +47,9 @@ final readonly class BestEnhancement
     {
         $offered = $best->item;
         $item = $held->item;
-        if (!$offered instanceof EnhancementItem) {
-            return false;
-        }
-
         if (
-            !$item instanceof Weapon
+            !$offered instanceof EnhancementItem
+            || !$item instanceof Weapon
             && !$item instanceof ClassItem
             && !$item instanceof Helm
             && !$item instanceof Cape
