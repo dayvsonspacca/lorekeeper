@@ -232,6 +232,8 @@ impl Php {
 
         #[cfg(unix)]
         std::os::unix::process::CommandExt::process_group(&mut command, 0);
+        #[cfg(target_os = "linux")]
+        dies_with_parent(&mut command);
 
         let server = command.spawn()?;
         fs::write(self.group_file(), server.id().to_string())?;
@@ -257,6 +259,16 @@ impl Php {
 
     fn group_file(&self) -> PathBuf {
         self.data.join("server.pgid")
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn dies_with_parent(command: &mut Command) {
+    unsafe {
+        std::os::unix::process::CommandExt::pre_exec(command, || {
+            libc::prctl(libc::PR_SET_PDEATHSIG, libc::SIGTERM);
+            Ok(())
+        });
     }
 }
 
@@ -519,6 +531,28 @@ mod tests {
             &Url::parse("http://127.0.0.1:8123/").unwrap(),
             "http://127.0.0.1:812"
         ));
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn the_server_does_not_outlive_the_shell() {
+        let mut server = thread::spawn(|| {
+            let mut command = Command::new("sleep");
+            command.arg("30");
+            dies_with_parent(&mut command);
+            command.spawn().unwrap()
+        })
+        .join()
+        .unwrap();
+
+        let since = Instant::now();
+        while server.try_wait().unwrap().is_none() {
+            assert!(
+                since.elapsed() < Duration::from_secs(5),
+                "the server outlived the shell"
+            );
+            thread::sleep(Duration::from_millis(20));
+        }
     }
 
     #[test]
