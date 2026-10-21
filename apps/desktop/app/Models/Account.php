@@ -7,6 +7,7 @@ namespace Lorekeeper\Apps\Desktop\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Lorekeeper\Apps\Desktop\Bots\BotStatus;
@@ -28,6 +29,11 @@ use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
  * @property null|array<string, mixed> $scene
  * @property null|Carbon $started_at
  * @property null|Carbon $stopped_at
+ * @property null|int $script_id
+ * @property null|string $step
+ * @property null|Script $script
+ *
+ * @mago-expect lint:too-many-methods
  */
 #[Fillable([
     'name',
@@ -41,6 +47,8 @@ use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
     'scene',
     'started_at',
     'stopped_at',
+    'script_id',
+    'step',
 ])]
 #[Hidden(['password'])]
 final class Account extends Model
@@ -65,6 +73,47 @@ final class Account extends Model
     public function logs(): HasMany
     {
         return $this->hasMany(BotLog::class);
+    }
+
+    /** @return BelongsTo<Script, $this> */
+    public function script(): BelongsTo
+    {
+        return $this->belongsTo(Script::class);
+    }
+
+    public function play(Script $script): void
+    {
+        self::query()
+            ->whereKey($this->id)
+            ->where('status', '!=', BotStatus::Stopping)
+            ->update(['script_id' => $script->id, 'step' => null]);
+        $this->refresh();
+
+        if ($this->script_id === $script->id) {
+            $this->start();
+        }
+    }
+
+    public function stopScript(): void
+    {
+        $this->update(['script_id' => null, 'step' => null]);
+    }
+
+    public function stepping(string $step): void
+    {
+        self::query()
+            ->whereKey($this->id)
+            ->whereNotNull('script_id')
+            ->update(['step' => $step]);
+    }
+
+    public function scriptEnded(Script $script): void
+    {
+        self::query()
+            ->whereKey($this->id)
+            ->where('script_id', $script->id)
+            ->update(['script_id' => null, 'step' => null]);
+        $this->refresh();
     }
 
     public function playing(): bool
@@ -107,7 +156,14 @@ final class Account extends Model
         $settled = self::query()
             ->whereKey($this->id)
             ->whereIn('status', self::ACTIVE)
-            ->update(['status' => $status, 'result' => $result, 'pid' => null, 'stopped_at' => now()]);
+            ->update([
+                'status' => $status,
+                'result' => $result,
+                'pid' => null,
+                'stopped_at' => now(),
+                'script_id' => null,
+                'step' => null,
+            ]);
         $this->refresh();
 
         return $settled === 1;

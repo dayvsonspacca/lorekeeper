@@ -32,13 +32,18 @@
                                 </button>
                                 <button type="button" class="lk-row__who" wire:click="toggle({{ $account->id }})">
                                     <span class="lk-row__name">{{ $hero['name'] ?? $account->name }}</span>
-                                    <span class="lk-row__sub">{{ $hero['class'] ?? $account->server ?? 'First open server' }}</span>
+                                    <span class="lk-row__sub">{{ $account->script !== null ? "Playing {$account->script->name}" : $hero['class'] ?? $account->server ?? 'First open server' }}</span>
                                 </button>
                                 <span>{{ $hero['level'] ?? $account->level ?? '?' }}</span>
                                 <span><span class="lk-tag" data-state="{{ $state }}">{{ $label }}</span></span>
                                 <span class="lk-dim lk-cut">{{ $active ? ($hero !== null ? $scene->place() : $account->map ?? '—') : '—' }}</span>
                                 <span class="lk-dim">{{ $active ? $account->duration() ?? '—' : $account->stopped_at?->shortRelativeDiffForHumans() ?? '—' }}</span>
                                 <span class="lk-row__actions">
+                                    @if ($account->script !== null)
+                                        {{ ($this->stopScriptAction)(['account' => $account->id]) }}
+                                    @elseif ($account->status !== \Lorekeeper\Apps\Desktop\Bots\BotStatus::Stopping)
+                                        {{ ($this->playScriptAction)(['account' => $account->id]) }}
+                                    @endif
                                     @if ($active)
                                         {{ ($this->stopAction)(['account' => $account->id]) }}
                                     @else
@@ -54,6 +59,9 @@
                             @if ($open && $detail !== null)
                                 <div class="lk-detail">
                                     <div class="lk-detail__col">
+                                        @if ($account->script !== null)
+                                            <div class="lk-dim">Playing {{ $account->script->name }}{{ $account->step !== null ? " · {$account->step}" : '' }}</div>
+                                        @endif
                                         @if ($hero !== null)
                                             <div class="lk-meters">
                                                 <x-scene.bar :current="$hero['health']" :maximum="$hero['maxHealth']" kind="health" />

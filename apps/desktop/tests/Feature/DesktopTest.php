@@ -16,6 +16,8 @@ use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
 use Lorekeeper\Apps\Desktop\Filament\Pages\Accounts;
 use Lorekeeper\Apps\Desktop\Livewire\KeepAlive;
 use Lorekeeper\Apps\Desktop\Models\Account;
+use Lorekeeper\Apps\Desktop\Models\Script;
+use Lorekeeper\Apps\Desktop\Tests\ScriptFiles;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -402,6 +404,72 @@ final class DesktopTest extends TestCase
             'quantity' => 1,
             'member' => false,
         ]]);
+    }
+
+    #[Test]
+    public function a_script_is_played_from_the_home_starting_a_bot_that_is_off(): void
+    {
+        $off = $this->account();
+        $online = Account::query()->create(['name' => 'Busy', 'password' => bin2hex(random_bytes(8))]);
+        $online->update(['status' => BotStatus::Online, 'started_at' => now()]);
+        $script = ScriptFiles::crypto();
+
+        Livewire::test(Accounts::class)
+            ->callAction('playScript', ['script' => $script->id], arguments: ['account' => $off->id])
+            ->callAction('playScript', ['script' => $script->id], arguments: ['account' => $online->id]);
+
+        static::assertSame([$script->id, BotStatus::Starting], [$off->refresh()->script_id, $off->status]);
+        static::assertSame([$script->id, BotStatus::Online], [$online->refresh()->script_id, $online->status]);
+        static::assertSame([$off->id], $this->launcher->launched);
+    }
+
+    #[Test]
+    public function only_scripts_ready_to_play_are_offered(): void
+    {
+        $account = $this->account();
+        $broken = Script::query()->create(['name' => 'Half drawn']);
+
+        Livewire::test(Accounts::class)
+            ->callAction('playScript', ['script' => $broken->id], arguments: ['account' => $account->id])
+            ->assertHasActionErrors(['script']);
+
+        static::assertNull($account->refresh()->script_id);
+    }
+
+    #[Test]
+    public function the_home_shows_the_script_a_bot_plays_and_stops_it_without_logging_out(): void
+    {
+        $account = $this->account();
+        $account->update([
+            'status' => BotStatus::Online,
+            'started_at' => now(),
+            'script_id' => ScriptFiles::crypto()->id,
+            'step' => 'Join boxes',
+        ]);
+        $this->launcher->alive[$account->id] = true;
+
+        Livewire::test(Accounts::class)
+            ->set('expanded', $account->id)
+            ->assertSee(['Playing Crypto Token daily', 'Playing Crypto Token daily · Join boxes', 'Stop script'])
+            ->callAction('stopScript', arguments: ['account' => $account->id]);
+
+        static::assertSame([null, null, BotStatus::Online], [
+            $account->refresh()->script_id,
+            $account->step,
+            $account->status,
+        ]);
+    }
+
+    #[Test]
+    public function a_bot_that_is_logging_out_takes_no_script(): void
+    {
+        $account = $this->account();
+        $account->update(['status' => BotStatus::Stopping]);
+
+        $account->play(ScriptFiles::crypto());
+
+        static::assertNull($account->refresh()->script_id);
+        static::assertSame([], $this->launcher->launched);
     }
 
     private function account(): Account

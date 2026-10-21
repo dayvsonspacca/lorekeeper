@@ -6,6 +6,7 @@ namespace Lorekeeper\Apps\Desktop\Filament\Pages;
 
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Pages\Page;
 use Filament\Panel;
 use Filament\Support\Enums\Size;
@@ -14,9 +15,14 @@ use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
 use Lorekeeper\Apps\Desktop\Filament\Schemas\AccountForm;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotLog;
+use Lorekeeper\Apps\Desktop\Models\Script;
 use Lorekeeper\Apps\Desktop\Native\LocalTime;
 use Override;
 
+/**
+ * @mago-expect lint:too-many-methods
+ * @mago-expect lint:cyclomatic-complexity
+ */
 final class Accounts extends Page
 {
     private const int LOG_LINES = 5;
@@ -79,6 +85,53 @@ final class Accounts extends Page
             });
     }
 
+    public function playScriptAction(): Action
+    {
+        return Action::make('playScript')
+            ->label('Play')
+            ->icon(Heroicon::OutlinedPlay)
+            ->color('gray')
+            ->outlined()
+            ->size(Size::Small)
+            ->record(static fn(array $arguments): ?Account => Account::query()->find($arguments['account'] ?? 0))
+            ->modalHeading(static fn(?Account $record): string => 'Play a script with ' . ($record->name ?? 'this bot'))
+            ->modalDescription('A bot that is off enters the game first.')
+            ->modalSubmitActionLabel('Play')
+            ->schema([
+                Select::make('script')
+                    ->label('Script')
+                    ->options(
+                        static fn(): array => Script::query()
+                            ->orderBy('name')
+                            ->get()
+                            ->filter(static fn(Script $script): bool => $script->problems() === [])
+                            ->mapWithKeys(static fn(Script $script): array => [$script->id => $script->name])
+                            ->all(),
+                    )
+                    ->required(),
+            ])
+            ->action(static function (?Account $record, array $data): void {
+                $script = Script::query()->find($data['script'] ?? 0);
+                if ($record !== null && $script !== null) {
+                    $record->play($script);
+                }
+            });
+    }
+
+    public function stopScriptAction(): Action
+    {
+        return Action::make('stopScript')
+            ->label('Stop script')
+            ->color('gray')
+            ->outlined()
+            ->size(Size::Small)
+            ->action(static function (array $arguments): void {
+                Account::query()
+                    ->find($arguments['account'] ?? 0)
+                    ?->stopScript();
+            });
+    }
+
     public function editAccountAction(): Action
     {
         return Action::make('editAccount')
@@ -125,7 +178,10 @@ final class Accounts extends Page
     #[Override]
     protected function getViewData(): array
     {
-        $accounts = Account::query()->orderBy('name')->get();
+        $accounts = Account::query()
+            ->with('script')
+            ->orderBy('name')
+            ->get();
 
         return [
             'accounts' => $accounts,

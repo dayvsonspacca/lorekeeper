@@ -9,12 +9,14 @@ use Lorekeeper\Apps\Desktop\Bots\BotRecorder;
 use Lorekeeper\Apps\Desktop\Bots\BotStatus;
 use Lorekeeper\Apps\Desktop\Bots\HideFromPlayers;
 use Lorekeeper\Apps\Desktop\Bots\LogLevel;
+use Lorekeeper\Apps\Desktop\Bots\PlayScript;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Lorekeeper\Apps\Desktop\Tauri\Shell;
 use Lorekeeper\Client\Api\Login\LoginClient;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Script\Disconnected;
+use Lorekeeper\Client\Script\OutcomeStatus;
 use Lorekeeper\Client\Script\Watch;
 use Lorekeeper\Client\Session\Credentials;
 use Lorekeeper\Client\Session\Ending;
@@ -26,7 +28,11 @@ use Psl\DateTime\Duration;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Throwable;
 
-#[AsCommand(name: 'bots:play', description: 'Keep one character in the game until it is stopped')]
+#[AsCommand(
+    name: 'bots:play',
+    description: 'Keep one character in the game, playing the script it is given, until it is stopped',
+)]
+/** @mago-expect lint:cyclomatic-complexity */
 final class PlayBot extends Command
 {
     /** @var string */
@@ -106,6 +112,15 @@ final class PlayBot extends Command
         }
 
         while (!$stop->isCancelled()) {
+            $played = PlayScript::next($account, $client, $stop);
+            if ($played?->status === OutcomeStatus::Disconnected) {
+                return new Ending(EndingStatus::Disconnected, $played->summary);
+            }
+
+            if ($played !== null) {
+                continue;
+            }
+
             $waited = $client->wait(Duration::seconds(2), $stop);
             if ($waited instanceof Disconnected) {
                 return new Ending(EndingStatus::Disconnected, $waited->reason);
