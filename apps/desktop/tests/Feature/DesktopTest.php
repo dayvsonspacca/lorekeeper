@@ -498,6 +498,25 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
+    public function stopping_ends_a_run_whose_bot_is_gone_before_it_started_or_while_it_stopped(): void
+    {
+        $account = $this->account();
+        $pending = $account->runs()->create();
+        unset($this->launcher->alive[$pending->id]);
+
+        Livewire::test(ViewBotRun::class, ['record' => $pending->id])->callAction('stop');
+        static::assertSame(RunStatus::Stopped, $pending->refresh()->status);
+
+        $stopping = $account->runs()->create();
+        $stopping->update(['status' => RunStatus::Stopping]);
+        unset($this->launcher->alive[$stopping->id]);
+
+        Livewire::test(ViewBotRun::class, ['record' => $stopping->id])->callAction('stop');
+        static::assertSame(RunStatus::Stopped, $stopping->refresh()->status);
+        static::assertNull($account->activeRun());
+    }
+
+    #[Test]
     public function runs_left_active_by_a_closed_app_end_as_interrupted(): void
     {
         $account = $this->account();

@@ -7,7 +7,6 @@ namespace Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Actions;
 use Filament\Actions\Action;
 use Filament\Support\Icons\Heroicon;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
-use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 
 final class StopRunAction
@@ -20,11 +19,7 @@ final class StopRunAction
             ->requiresConfirmation()
             ->modalHeading('Stop this run?')
             ->modalDescription('The bot logs out and the run ends as stopped.')
-            ->visible(static fn(BotRun $record): bool => in_array(
-                $record->status,
-                [RunStatus::Pending, RunStatus::Running],
-                strict: true,
-            ))
+            ->visible(static fn(BotRun $record): bool => $record->status->isActive())
             ->action(static function (BotRun $record, Launcher $launcher): void {
                 $record->stop($launcher);
             })

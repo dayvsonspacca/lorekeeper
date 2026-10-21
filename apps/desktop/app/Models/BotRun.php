@@ -55,7 +55,7 @@ final class BotRun extends Model
 
     public function stop(Launcher $launcher): void
     {
-        if ($this->status === RunStatus::Running && !$launcher->alive($this)) {
+        if ($this->status->isActive() && !$launcher->alive($this)) {
             $this->closeTasks('the bot was gone');
             $this->update(['status' => RunStatus::Stopped, 'pid' => null, 'finished_at' => now()]);
             $this->log('Stopped: the bot process was already gone');
