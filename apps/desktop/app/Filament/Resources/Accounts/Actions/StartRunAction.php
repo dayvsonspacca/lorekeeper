@@ -24,7 +24,7 @@ final class StartRunAction
             ->modalSubmitActionLabel('Start')
             ->visible(static fn(Account $record): bool => $record->activeRun() === null)
             ->action(static function (Account $record, Action $action): void {
-                $action->redirect(BotRunResource::getUrl('view', ['record' => $record->runs()->create()]));
+                $action->redirect(BotRunResource::getUrl('view', ['record' => $record->start()]));
             });
     }
 }

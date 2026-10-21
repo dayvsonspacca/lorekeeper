@@ -44,7 +44,6 @@ final class DesktopTest extends TestCase
             '/accounts',
             "/accounts/{$run->account_id}",
             '/bot-runs',
-            '/bot-runs/create',
             "/bot-runs/{$run->id}",
             '/preferences',
         ] as $page) {
@@ -470,6 +469,13 @@ final class DesktopTest extends TestCase
         Livewire::test(ViewBotRun::class, ['record' => $gone->id])->callAction('stop');
         static::assertSame(RunStatus::Stopped, $gone->refresh()->status);
         static::assertSame(TaskStatus::Cancelled, $gone->tasks()->sole()->status);
+    }
+
+    #[Test]
+    public function runs_are_not_started_from_the_runs_page(): void
+    {
+        $this->get('/bot-runs')->assertOk()->assertDontSee('Start run');
+        $this->get('/bot-runs/create')->assertNotFound();
     }
 
     #[Test]

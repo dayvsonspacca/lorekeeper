@@ -9,7 +9,6 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Schema;
@@ -21,7 +20,6 @@ use Filament\Tables\Table;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Actions\RunAgainAction;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Actions\StopRunAction;
-use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\CreateBotRun;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ListBotRuns;
 use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Pages\ViewBotRun;
 use Lorekeeper\Apps\Desktop\Livewire\RunBoard;
@@ -52,21 +50,6 @@ final class BotRunResource extends Resource
     public static function getNavigationBadgeColor(): string
     {
         return 'success';
-    }
-
-    #[Override]
-    public static function form(Schema $schema): Schema
-    {
-        return $schema->components([
-            Select::make('account_id')
-                ->label('Character')
-                ->relationship('account', 'name')
-                ->searchable()
-                ->preload()
-                ->required()
-                ->helperText('The bot logs in, enters the game and waits for tasks.')
-                ->columnSpanFull(),
-        ]);
     }
 
     #[Override]
@@ -132,7 +115,6 @@ final class BotRunResource extends Resource
     {
         return [
             'index' => ListBotRuns::route('/'),
-            'create' => CreateBotRun::route('/create'),
             'view' => ViewBotRun::route('/{record}'),
         ];
     }
