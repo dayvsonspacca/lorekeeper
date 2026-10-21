@@ -2,12 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Tests\Scripts;
+namespace Lorekeeper\Bot\Tests\Steps;
 
-use Lorekeeper\Bot\Scripts\CryptoTokenScript;
 use Lorekeeper\Client\Script\Failed;
-use Lorekeeper\Client\Script\Instruction;
-use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
@@ -25,7 +22,6 @@ use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Option;
-use RuntimeException;
 
 final class CryptoTokenHuntTest extends TestCase
 {
@@ -34,7 +30,7 @@ final class CryptoTokenHuntTest extends TestCase
     {
         $ore = new PlayerItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)));
 
-        [$steps, $result] = Play::run(new CryptoTokenScript(), Fixture::me(level: 4), [
+        [$steps, $result] = Play::run(Dailies::cryptoToken(), Fixture::me(level: 4), [
             Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
             self::loaded(),
             new QuestAcceptedEvent(new QuestId(6187)),
@@ -45,21 +41,26 @@ final class CryptoTokenHuntTest extends TestCase
             null,
         ]);
 
-        static::assertEquals(new Failed('no Metal Ore dropped after 5 minutes of hunting Sneevils'), $result);
-        static::assertSame('%xt%zm%getDrop%122628%42658%', self::sent($steps)[array_key_last(self::sent($steps))]);
+        static::assertEquals(
+            new Failed('step 4 (Hunt in Closet for item 42658 ×1): item 42658 ×1 was not held after 5 minutes'),
+            $result,
+        );
+        static::assertSame('%xt%zm%getDrop%122628%42658%', Play::sent($steps)[array_key_last(Play::sent($steps))]);
     }
 
     #[Test]
     public function it_stops_when_no_monster_stands_in_the_closet(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('There are no monsters in Closet.');
-
-        Play::run(new CryptoTokenScript(), Fixture::me(level: 4), [
+        [, $result] = Play::run(Dailies::cryptoToken(), Fixture::me(level: 4), [
             Fixture::arrival('boxes', 138_097),
             self::loaded(),
             new QuestAcceptedEvent(new QuestId(6187)),
         ]);
+
+        static::assertEquals(
+            new Failed('step 4 (Hunt in Closet for item 42658 ×1): There are no monsters in Closet.'),
+            $result,
+        );
     }
 
     private static function loaded(): QuestLoadedEvent
@@ -73,18 +74,5 @@ final class CryptoTokenHuntTest extends TestCase
             [],
             Option\some(new QuestMark(QuestPeriod::Day, 2, 6)),
         )]);
-    }
-
-    /**
-     * @param list<Instruction> $steps
-     *
-     * @return list<string>
-     */
-    private static function sent(array $steps): array
-    {
-        return array_values(array_map(
-            static fn(Send $send): string => $send->command->toMessage(),
-            array_filter($steps, static fn(Instruction $step): bool => $step instanceof Send),
-        ));
     }
 }

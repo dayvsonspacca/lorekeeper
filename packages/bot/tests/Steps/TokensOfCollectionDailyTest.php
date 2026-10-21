@@ -2,13 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Tests\Scripts;
+namespace Lorekeeper\Bot\Tests\Steps;
 
-use Lorekeeper\Bot\Scripts\TokensOfCollectionScript;
 use Lorekeeper\Client\Script\Done;
 use Lorekeeper\Client\Script\Failed;
-use Lorekeeper\Client\Script\Instruction;
-use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
@@ -21,6 +18,7 @@ use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Quest\QuestPeriod;
+use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemIncrease;
@@ -34,35 +32,18 @@ use Lorekeeper\Server\Event\Quest\QuestMarkedEvent;
 use Lorekeeper\Server\Event\Quest\TurnedInItem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psl\DateTime\Duration;
-use Psl\DateTime\Timestamp;
 use Psl\Option;
-use RuntimeException;
 
-final class TokensOfCollectionScriptTest extends TestCase
+final class TokensOfCollectionDailyTest extends TestCase
 {
     #[Test]
     public function it_hunts_the_crickets_for_two_tokens_turns_them_in_and_picks_up_the_reward(): void
     {
         $me = Fixture::me(level: 82, map: 'battleon');
-        $found = new PlayerItem(
-            new Resource(new ItemId(9392), new ItemName('This Might Be A Token'), new ItemLevel(1)),
-        );
         $token = new PlayerItem(new Resource(new ItemId(9397), new ItemName('Token of Collection'), new ItemLevel(1)));
 
-        [$steps, $result] = Play::run(new TokensOfCollectionScript(), $me, [
-            self::terrarium(),
-            self::loaded(),
-            new QuestAcceptedEvent(new QuestId(1316)),
-            null,
-            null,
-            null,
-            new ItemDroppedEvent([$found]),
-            new DropPickedUpEvent(new ItemId(9392), new Quantity(1), new Quantity(1)),
-            null,
-            null,
-            null,
-            new ItemsIncreasedEvent([new ItemIncrease(new ItemId(9392), new Quantity(1), new Quantity(2))]),
+        [$steps, $result] = Play::run(Dailies::tokensOfCollection(), $me, [
+            ...self::hunted(),
             [
                 new QuestCompletedEvent(new QuestId(1316), new QuestName('Tokens of Collection')),
                 new ItemsTurnedInEvent([new TurnedInItem(new ItemId(9392), new Quantity(2))]),
@@ -84,9 +65,10 @@ final class TokensOfCollectionScriptTest extends TestCase
                 '%xt%zm%tryQuestComplete%189254%1316%-1%false%1%wvz%',
                 '%xt%zm%getDrop%122628%9397%',
             ],
-            self::sent($steps),
+            Play::sent($steps),
         );
-        static::assertEquals(new Done("got today's Token of Collection, 2 held now"), $result);
+        static::assertEquals(new Done('all steps are done'), $result);
+        static::assertSame(2, $me->player()->inventory->quantity(new ItemId(9397)));
         static::assertSame(0, $me->player()->inventory->quantity(new ItemId(9392)));
     }
 
@@ -96,10 +78,17 @@ final class TokensOfCollectionScriptTest extends TestCase
         $me = Fixture::me(level: 82);
         $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 1, 14)));
 
-        [$steps, $result] = Play::run(new TokensOfCollectionScript(), $me, [self::terrarium(), self::loaded()]);
+        [$steps, $result] = Play::run(
+            Dailies::tokensOfCollection(),
+            $me,
+            [
+                self::terrarium(),
+                self::loaded(),
+            ],
+        );
 
-        static::assertEquals(new Done('Tokens of Collection was already taken today'), $result);
-        static::assertCount(2, self::sent($steps));
+        static::assertEquals(new Done('stopped: Quest 1316 was already done'), $result);
+        static::assertCount(2, Play::sent($steps));
     }
 
     #[Test]
@@ -108,7 +97,7 @@ final class TokensOfCollectionScriptTest extends TestCase
         $me = Fixture::me(level: 82);
         $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 0, 25)));
 
-        [$steps, $result] = Play::run(new TokensOfCollectionScript(), $me, [
+        [$steps, $result] = Play::run(Dailies::tokensOfCollection(), $me, [
             self::terrarium(),
             new QuestLoadedEvent([new Quest(
                 new QuestId(802),
@@ -122,38 +111,80 @@ final class TokensOfCollectionScriptTest extends TestCase
             null,
         ]);
 
-        static::assertEquals(new Failed('the game would not give the quest Tokens of Collection'), $result);
-        static::assertCount(3, self::sent($steps));
+        static::assertEquals(new Failed('step 3 (Accept quest 1316): the game would not give the quest'), $result);
+        static::assertCount(3, Play::sent($steps));
     }
 
     #[Test]
     public function it_stops_when_no_carnivorous_cricket_stands_in_r2(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('There is no Carnivorous Cricket in r2.');
-
-        Play::run(new TokensOfCollectionScript(), Fixture::me(level: 82), [
+        [, $result] = Play::run(Dailies::tokensOfCollection(), Fixture::me(level: 82), [
             Fixture::arrivalOf('terrarium', 189_254, [Fixture::spawn(3, 'r2', Fixture::kind(13, 'Death on Wings'))]),
             self::loaded(),
             new QuestAcceptedEvent(new QuestId(1316)),
         ]);
+
+        static::assertEquals(
+            new Failed(
+                'step 4 (Hunt Carnivorous Cricket in r2 for item 9392 ×2): There is no Carnivorous Cricket in r2.',
+            ),
+            $result,
+        );
     }
 
     #[Test]
     public function it_stops_when_the_hunt_runs_out_of_time(): void
     {
-        $now = Timestamp::fromParts(2026, 10, 16);
-        $script = new TokensOfCollectionScript(static function () use (&$now): Timestamp {
-            return $now = $now->plus(Duration::hours(1));
-        });
-
-        [, $result] = Play::run($script, Fixture::me(level: 82), [
+        [, $result] = Play::run(Dailies::tokensOfCollection(Dailies::hourly()), Fixture::me(level: 82), [
             self::terrarium(),
             self::loaded(),
             new QuestAcceptedEvent(new QuestId(1316)),
         ]);
 
-        static::assertEquals(new Failed('fewer than 2 tokens dropped after 10 minutes of hunting crickets'), $result);
+        static::assertEquals(
+            new Failed(
+                'step 4 (Hunt Carnivorous Cricket in r2 for item 9392 ×2): item 9392 ×2 was not held after 10 minutes',
+            ),
+            $result,
+        );
+    }
+
+    #[Test]
+    public function it_stops_when_the_token_never_drops(): void
+    {
+        [, $result] = Play::run(Dailies::tokensOfCollection(), Fixture::me(level: 82), [
+            ...self::hunted(),
+            new QuestCompletedEvent(new QuestId(1316), new QuestName('Tokens of Collection')),
+            null,
+        ]);
+
+        static::assertEquals(
+            new Failed(
+                'step 5 (Turn in quest 1316 for item 9397): the quest was completed, but item 9397 could not be picked up',
+            ),
+            $result,
+        );
+    }
+
+    /** @return list<null|Event> */
+    private static function hunted(): array
+    {
+        return [
+            self::terrarium(),
+            self::loaded(),
+            new QuestAcceptedEvent(new QuestId(1316)),
+            null,
+            null,
+            null,
+            new ItemDroppedEvent([new PlayerItem(
+                new Resource(new ItemId(9392), new ItemName('This Might Be A Token'), new ItemLevel(1)),
+            )]),
+            new DropPickedUpEvent(new ItemId(9392), new Quantity(1), new Quantity(1)),
+            null,
+            null,
+            null,
+            new ItemsIncreasedEvent([new ItemIncrease(new ItemId(9392), new Quantity(1), new Quantity(2))]),
+        ];
     }
 
     private static function terrarium(): MovedToMapEvent
@@ -176,18 +207,5 @@ final class TokensOfCollectionScriptTest extends TestCase
             [],
             Option\some(new QuestMark(QuestPeriod::Day, 1, 14)),
         )]);
-    }
-
-    /**
-     * @param list<Instruction> $steps
-     *
-     * @return list<string>
-     */
-    private static function sent(array $steps): array
-    {
-        return array_values(array_map(
-            static fn(Send $send): string => $send->command->toMessage(),
-            array_filter($steps, static fn(Instruction $step): bool => $step instanceof Send),
-        ));
     }
 }

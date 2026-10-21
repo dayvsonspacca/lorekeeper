@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Tests\Scripts;
+namespace Lorekeeper\Bot\Tests\Steps\Gear;
 
-use Lorekeeper\Bot\Scripts\EnhanceScript;
+use Lorekeeper\Bot\Steps\Gear\Enhance;
+use Lorekeeper\Bot\Tests\Steps\InOrder;
+use Lorekeeper\Bot\Tests\Steps\Play;
 use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Script\Done;
 use Lorekeeper\Client\Script\Failed;
-use Lorekeeper\Client\Script\Instruction;
-use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
@@ -29,7 +29,7 @@ use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class EnhanceScriptTest extends TestCase
+final class EnhanceTest extends TestCase
 {
     private const string LUCKY_SHOP = <<<'JSON'
         {"t":"xt","b":{"r":-1,"o":{"cmd":"loadShop","shopinfo":{"ShopID":147,"sName":"Lucky Enhancement Shop","bStaff":false,"bUpgrd":false,"bMerge":false,"bHouse":false,"sField":"","iIndex":-1,"Location":"Menu","gameFlag":1,"FactionID":1,"iReqRep":0,"items":[{"ShopItemID":3306,"iQty":1,"iQtyRemain":-1,"ItemID":3657,"sName":"Lucky Helm Enhancement","sDesc":"","iRng":10,"iRty":1,"iCost":960,"iLvl":20,"bTemp":false,"iStk":1,"bUpg":false,"bCoins":false,"bStaff":false,"sLink":"","PatternID":9,"iClass":0,"iReqCP":0,"FactionID":1,"sFaction":"None","iReqRep":0,"iQSindex":-1,"iQSvalue":0,"bHouse":false,"sType":"Enhancement","sIcon":"none","sES":"he","sElmt":"None","EnhID":0,"iDPS":100,"TokID":0,"TokQty":0,"bHide":0,"bSilhouette":0,"SortIndex":-1,"bEnhShop":true},{"ShopItemID":3277,"iQty":1,"iQtyRemain":-1,"ItemID":3628,"sName":"Lucky Weapon Enhancement","sDesc":"","iRng":10,"iRty":1,"iCost":1010,"iLvl":21,"bTemp":false,"iStk":1,"bUpg":false,"bCoins":false,"bStaff":false,"sLink":"","PatternID":9,"iClass":0,"iReqCP":0,"FactionID":1,"sFaction":"None","iReqRep":0,"iQSindex":-1,"iQSvalue":0,"bHouse":false,"sType":"Enhancement","sIcon":"none","sES":"Weapon","sElmt":"None","EnhID":0,"iDPS":100,"TokID":0,"TokQty":0,"bHide":0,"bSilhouette":0,"SortIndex":-1,"bEnhShop":true},{"ShopItemID":3281,"iQty":1,"iQtyRemain":-1,"ItemID":3632,"sName":"Lucky Weapon Enhancement","sDesc":"","iRng":10,"iRty":1,"iCost":1210,"iLvl":25,"bTemp":false,"iStk":1,"bUpg":false,"bCoins":false,"bStaff":false,"sLink":"","PatternID":9,"iClass":0,"iReqCP":0,"FactionID":1,"sFaction":"None","iReqRep":0,"iQSindex":-1,"iQSvalue":0,"bHouse":false,"sType":"Enhancement","sIcon":"none","sES":"Weapon","sElmt":"None","EnhID":0,"iDPS":100,"TokID":0,"TokQty":0,"bHide":0,"bSilhouette":0,"SortIndex":-1,"bEnhShop":true},{"ShopItemID":3372,"iQty":1,"iQtyRemain":-1,"ItemID":3723,"sName":"Lucky Armor Enhancement","sDesc":"","iRng":10,"iRty":1,"iCost":1260,"iLvl":26,"bTemp":false,"iStk":1,"bUpg":false,"bCoins":false,"bStaff":false,"sLink":"","PatternID":9,"iClass":0,"iReqCP":0,"FactionID":1,"sFaction":"None","iReqRep":0,"iQSindex":-1,"iQSvalue":0,"bHouse":false,"sType":"Enhancement","sIcon":"none","sES":"ar","sElmt":"None","EnhID":0,"iDPS":100,"TokID":0,"TokQty":0,"bHide":0,"bSilhouette":0,"SortIndex":-1,"bEnhShop":true},{"ShopItemID":4121,"iQty":1,"iQtyRemain":-1,"ItemID":4505,"sName":"Lucky Weapon Enhancement","sDesc":"","iRng":10,"iRty":2,"iCost":2260,"iLvl":23,"bTemp":false,"iStk":1,"bUpg":true,"bCoins":false,"bStaff":false,"sLink":"","PatternID":9,"iClass":0,"iReqCP":0,"FactionID":1,"sFaction":"None","iReqRep":0,"iQSindex":-1,"iQSvalue":0,"bHouse":false,"sType":"Enhancement","sIcon":"none","sES":"Weapon","sElmt":"None","EnhID":0,"iDPS":100,"TokID":0,"TokQty":0,"bHide":0,"bSilhouette":0,"SortIndex":-1}],"filterType":"spiral1","oIndex":3}}}}
@@ -52,13 +52,13 @@ final class EnhanceScriptTest extends TestCase
     {
         $me = self::lorekeeper03();
 
-        [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Lucky), $me, [
+        [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), $me, [
             self::shop(),
             ItemsEnhancedEvent::from(JsonMessage::from(self::ENHANCED)->unwrap())->unwrap(),
         ]);
 
-        static::assertSame(['%xt%zm%loadShop%1%147%', '%xt%zm%enhanceItemShop%1%3%3628%147%'], self::sent($steps));
-        static::assertEquals(new Done('enhanced with Lucky: Default Staff (level 21)'), $result);
+        static::assertSame(['%xt%zm%loadShop%1%147%', '%xt%zm%enhanceItemShop%1%3%3628%147%'], Play::sent($steps));
+        static::assertEquals(new Done('all steps are done'), $result);
         $staff = $me->player()->inventory->permanent->find(new ItemId(3))->unwrap();
         static::assertInstanceOf(Weapon::class, $staff->item);
         static::assertSame(EnhancementType::Lucky, $staff->item->enhancement->unwrap()->type);
@@ -70,7 +70,7 @@ final class EnhanceScriptTest extends TestCase
     {
         $me = self::lorekeeper03();
 
-        [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Lucky), $me, [
+        [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), $me, [
             self::shop(),
             ActionTooSoonEvent::from(
                 DelimitedMessage::from('%xt%warning%-1%Please slow down. Last action was too soon!%')->unwrap(),
@@ -81,9 +81,9 @@ final class EnhanceScriptTest extends TestCase
 
         static::assertSame(
             ['%xt%zm%loadShop%1%147%', '%xt%zm%enhanceItemShop%1%3%3628%147%', '%xt%zm%enhanceItemShop%1%3%3628%147%'],
-            self::sent($steps),
+            Play::sent($steps),
         );
-        static::assertEquals(new Done('enhanced with Lucky: Default Staff (level 21)'), $result);
+        static::assertEquals(new Done('all steps are done'), $result);
     }
 
     #[Test]
@@ -92,10 +92,10 @@ final class EnhanceScriptTest extends TestCase
         $me = self::lorekeeper03();
         $me->hear(ItemsEnhancedEvent::from(JsonMessage::from(self::ENHANCED)->unwrap())->unwrap());
 
-        [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Lucky), $me, [self::shop()]);
+        [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), $me, [self::shop()]);
 
-        static::assertSame(['%xt%zm%loadShop%1%147%'], self::sent($steps));
-        static::assertEquals(new Done('the equipped gear already has the best Lucky enhancements it can get'), $result);
+        static::assertSame(['%xt%zm%loadShop%1%147%'], Play::sent($steps));
+        static::assertEquals(new Done('all steps are done'), $result);
     }
 
     #[Test]
@@ -104,10 +104,10 @@ final class EnhanceScriptTest extends TestCase
         $me = self::lorekeeper03();
         $me->hear(InventoryLoadedEvent::from(JsonMessage::from(self::BLINDING_LIGHT)->unwrap())->unwrap());
 
-        [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Lucky), $me, [self::shop()]);
+        [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), $me, [self::shop()]);
 
-        static::assertSame(['%xt%zm%loadShop%1%147%'], self::sent($steps));
-        static::assertEquals(new Done('the equipped gear already has the best Lucky enhancements it can get'), $result);
+        static::assertSame(['%xt%zm%loadShop%1%147%'], Play::sent($steps));
+        static::assertEquals(new Done('all steps are done'), $result);
     }
 
     #[Test]
@@ -116,27 +116,33 @@ final class EnhanceScriptTest extends TestCase
         $me = self::lorekeeper03();
         $me->player()->tags->add(PlayerTag::Member);
 
-        [$steps] = Play::run(new EnhanceScript(EnhancementType::Lucky), $me, [self::shop(), null]);
+        [$steps] = Play::run(self::enhance(EnhancementType::Lucky), $me, [self::shop(), null]);
 
-        static::assertSame('%xt%zm%enhanceItemShop%1%3%4505%147%', self::sent($steps)[1]);
+        static::assertSame('%xt%zm%enhanceItemShop%1%3%4505%147%', Play::sent($steps)[1]);
     }
 
     #[Test]
     public function types_no_shop_sells_are_refused(): void
     {
-        [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Adventurer), self::lorekeeper03(), []);
+        [$steps, $result] = Play::run(self::enhance(EnhancementType::Adventurer), self::lorekeeper03(), []);
 
-        static::assertEquals(new Failed('no shop sells Adventurer enhancements'), $result);
-        static::assertSame([], self::sent($steps));
+        static::assertEquals(
+            new Failed('step 1 (Enhance the equipped gear with Adventurer): no shop sells Adventurer enhancements'),
+            $result,
+        );
+        static::assertSame([], Play::sent($steps));
     }
 
     #[Test]
     public function it_stops_when_the_shop_does_not_open(): void
     {
-        [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Lucky), self::lorekeeper03(), [null]);
+        [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), self::lorekeeper03(), [null]);
 
-        static::assertEquals(new Failed('the Lucky enhancement shop did not open'), $result);
-        static::assertSame(['%xt%zm%loadShop%1%147%'], self::sent($steps));
+        static::assertEquals(
+            new Failed('step 1 (Enhance the equipped gear with Lucky): the Lucky enhancement shop did not open'),
+            $result,
+        );
+        static::assertSame(['%xt%zm%loadShop%1%147%'], Play::sent($steps));
     }
 
     private static function lorekeeper03(): Character
@@ -155,16 +161,8 @@ final class EnhanceScriptTest extends TestCase
         return ShopLoadedEvent::from(JsonMessage::from(self::LUCKY_SHOP)->unwrap())->unwrap();
     }
 
-    /**
-     * @param list<Instruction> $steps
-     *
-     * @return list<string>
-     */
-    private static function sent(array $steps): array
+    private static function enhance(EnhancementType $type): InOrder
     {
-        return array_values(array_map(
-            static fn(Send $send): string => $send->command->toMessage(),
-            array_filter($steps, static fn(Instruction $step): bool => $step instanceof Send),
-        ));
+        return new InOrder([new Enhance($type)]);
     }
 }

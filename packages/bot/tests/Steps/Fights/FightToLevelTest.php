@@ -2,16 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Tests\Scripts;
+namespace Lorekeeper\Bot\Tests\Steps\Fights;
 
-use Lorekeeper\Bot\Scripts\LevelUpScript;
+use Lorekeeper\Bot\Steps\Fights\FightToLevel;
+use Lorekeeper\Bot\Steps\Moves\JoinMap;
+use Lorekeeper\Bot\Steps\Pauses\Rest;
+use Lorekeeper\Bot\Tests\Steps\InOrder;
+use Lorekeeper\Bot\Tests\Steps\Play;
 use Lorekeeper\Client\Script\Done;
-use Lorekeeper\Client\Script\Instruction;
-use Lorekeeper\Client\Script\Progress;
-use Lorekeeper\Client\Script\Send;
+use Lorekeeper\Client\Script\Failed;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\World\Map\MapCell;
+use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Map\MapPad;
+use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\ActionTooSoonEvent;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
@@ -23,16 +29,15 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
-use RuntimeException;
 
-final class LevelUpScriptTest extends TestCase
+final class FightToLevelTest extends TestCase
 {
     #[Test]
     public function a_new_character_levels_up_in_oaklore_killing_what_stands_in_r3(): void
     {
         $me = Fixture::me(level: 1, map: 'battleon');
 
-        [$steps, $result] = Play::run(self::script(target: 2), $me, [
+        [$steps, $result] = Play::run(self::script('oaklore', 'r3', target: 2), $me, [
             Fixture::arrival('oaklore', 946, ['r3' => [4, 1]]),
             null,
             null,
@@ -41,7 +46,6 @@ final class LevelUpScriptTest extends TestCase
             new MonsterRespawnedEvent(new MonsterSpawnId(4)),
             null,
             new LeveledUpEvent(new PlayerLevel(2), new Experience(200)),
-            null,
         ]);
 
         static::assertSame(
@@ -51,10 +55,9 @@ final class LevelUpScriptTest extends TestCase
                 '%xt%zm%gar%946%0%a1>m:4%wvz%',
                 '%xt%zm%gar%946%0%a1>m:4%wvz%',
             ],
-            self::sent($steps),
+            Play::sent($steps),
         );
-        static::assertEquals(new Progress(1, 1), $steps[array_key_last($steps)]);
-        static::assertEquals(new Done('Reached level 2'), $result);
+        static::assertEquals(new Done('all steps are done'), $result);
     }
 
     #[Test]
@@ -62,13 +65,12 @@ final class LevelUpScriptTest extends TestCase
     {
         $me = Fixture::me(level: 20, map: 'battleon');
 
-        [$steps, $result] = Play::run(self::script(target: 21), $me, [
+        [$steps, $result] = Play::run(self::script('icestormarena', 'r7', target: 21), $me, [
             Fixture::arrival('icestormarena', 732_692, ['r4' => [1, 5], 'r7' => [13, 20], 'r8' => [16, 25]]),
             null,
             null,
             null,
             new LeveledUpEvent(new PlayerLevel(21), new Experience(9000)),
-            null,
         ]);
 
         static::assertSame(
@@ -77,9 +79,9 @@ final class LevelUpScriptTest extends TestCase
                 '%xt%zm%moveToCell%732692%r7%Left%',
                 '%xt%zm%gar%732692%0%a1>m:13%wvz%',
             ],
-            self::sent($steps),
+            Play::sent($steps),
         );
-        static::assertEquals(new Done('Reached level 21'), $result);
+        static::assertEquals(new Done('all steps are done'), $result);
     }
 
     #[Test]
@@ -87,13 +89,12 @@ final class LevelUpScriptTest extends TestCase
     {
         $me = Fixture::me(level: 81, map: 'battleon');
 
-        [$steps, $result] = Play::run(self::script(target: 82), $me, [
+        [$steps, $result] = Play::run(self::script('icestormunder', 'r2', target: 82, pad: 'Top'), $me, [
             Fixture::arrival('icestormunder', 5_120, ['r2' => [1, 255]]),
             null,
             null,
             null,
             new LeveledUpEvent(new PlayerLevel(82), new Experience(9000)),
-            null,
         ]);
 
         static::assertSame(
@@ -102,9 +103,9 @@ final class LevelUpScriptTest extends TestCase
                 '%xt%zm%moveToCell%5120%r2%Top%',
                 '%xt%zm%gar%5120%0%a1>m:1%wvz%',
             ],
-            self::sent($steps),
+            Play::sent($steps),
         );
-        static::assertEquals(new Done('Reached level 82'), $result);
+        static::assertEquals(new Done('all steps are done'), $result);
     }
 
     #[Test]
@@ -118,7 +119,7 @@ final class LevelUpScriptTest extends TestCase
             Fixture::spawn(14, 'r7', $grunt),
         ]);
 
-        [$steps] = Play::run(self::script(target: 21), $me, [
+        [$steps] = Play::run(self::script('icestormarena', 'r7', target: 21), $me, [
             $arrival,
             null,
             null,
@@ -130,7 +131,6 @@ final class LevelUpScriptTest extends TestCase
             new MonsterRespawnedEvent(new MonsterSpawnId(13)),
             null,
             new LeveledUpEvent(new PlayerLevel(21), new Experience(9000)),
-            null,
         ]);
 
         static::assertSame(
@@ -142,7 +142,7 @@ final class LevelUpScriptTest extends TestCase
                 '%xt%zm%gar%732692%0%a1>m:14%wvz%',
                 '%xt%zm%gar%732692%0%aa>m:13%wvz%',
             ],
-            self::sent($steps),
+            Play::sent($steps),
         );
     }
 
@@ -151,10 +151,12 @@ final class LevelUpScriptTest extends TestCase
     {
         $me = Fixture::me(level: 30, map: 'battleon');
 
-        [$steps, $result] = Play::run(self::script(target: 30), $me, []);
+        [$steps, $result] = Play::run(self::script('icestormarena', 'r7', target: 30), $me, [
+            Fixture::arrival('icestormarena', 732_692, ['r7' => [13, 20]]),
+        ]);
 
-        static::assertSame([], $steps);
-        static::assertEquals(new Done('Reached level 30'), $result);
+        static::assertSame(['%xt%zm%cmd%1%tfer%lorekeeper03%icestormarena%'], Play::sent($steps));
+        static::assertEquals(new Done('all steps are done'), $result);
     }
 
     #[Test]
@@ -162,10 +164,9 @@ final class LevelUpScriptTest extends TestCase
     {
         $me = Fixture::me(level: 1, map: 'battleon');
 
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Could not join oaklore: The map is locked');
+        [, $result] = Play::run(self::script('oaklore', 'r3', target: 2), $me, [new MapLockedEvent()]);
 
-        Play::run(self::script(target: 2), $me, [new MapLockedEvent()]);
+        static::assertEquals(new Failed('step 1 (Join oaklore): Could not join oaklore: The map is locked'), $result);
     }
 
     #[Test]
@@ -173,7 +174,7 @@ final class LevelUpScriptTest extends TestCase
     {
         $me = Fixture::me(level: 10, map: 'battleon');
 
-        [$steps, $result] = Play::run(self::script(target: 11), $me, [
+        [$steps, $result] = Play::run(self::script('swordhavenundead', 'Gates', target: 11), $me, [
             Fixture::arrival('swordhavenundead', 2_046, ['Gates' => [1, 12]]),
             null,
             null,
@@ -182,7 +183,6 @@ final class LevelUpScriptTest extends TestCase
                 DelimitedMessage::from('%xt%warning%-1%Please slow down. Last action was too soon!%')->unwrap(),
             )->unwrap(),
             new LeveledUpEvent(new PlayerLevel(11), new Experience(2000)),
-            null,
         ]);
 
         static::assertSame(
@@ -191,30 +191,22 @@ final class LevelUpScriptTest extends TestCase
                 '%xt%zm%moveToCell%2046%Gates%Left%',
                 '%xt%zm%gar%2046%0%a1>m:1%wvz%',
             ],
-            array_slice(self::sent($steps), offset: 0, length: 3),
+            array_slice(Play::sent($steps), offset: 0, length: 3),
         );
-        static::assertEquals(new Done('Reached level 11'), $result);
+        static::assertEquals(new Done('all steps are done'), $result);
     }
 
-    private static function script(int $target): LevelUpScript
+    /** @param 'Left'|'Top' $pad */
+    private static function script(string $map, string $cell, int $target, string $pad = 'Left'): InOrder
     {
         $now = Timestamp::fromParts(2026, 10, 16);
 
-        return new LevelUpScript(new PlayerLevel($target), static function () use (&$now): Timestamp {
+        return new InOrder([
+            new JoinMap(new MapName($map)),
+            new FightToLevel(new MapSpot(new MapCell($cell), MapPad::{$pad}), null, new PlayerLevel($target)),
+            new Rest(),
+        ], static function () use (&$now): Timestamp {
             return $now = $now->plus(Duration::seconds(3));
         });
-    }
-
-    /**
-     * @param list<Instruction> $steps
-     *
-     * @return list<string>
-     */
-    private static function sent(array $steps): array
-    {
-        return array_values(array_map(
-            static fn(Send $send): string => $send->command->toMessage(),
-            array_filter($steps, static fn(Instruction $step): bool => $step instanceof Send),
-        ));
     }
 }

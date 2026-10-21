@@ -2,16 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Tests\Scripts;
+namespace Lorekeeper\Bot\Tests\Steps\Fights;
 
-use Lorekeeper\Bot\Scripts\LevelUpScript;
-use Lorekeeper\Client\Script\Instruction;
-use Lorekeeper\Client\Script\Send;
+use Lorekeeper\Bot\Steps\Fights\FightToLevel;
+use Lorekeeper\Bot\Steps\Moves\JoinMap;
+use Lorekeeper\Bot\Steps\Pauses\Rest;
+use Lorekeeper\Bot\Tests\Steps\InOrder;
+use Lorekeeper\Bot\Tests\Steps\Play;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\World\Map\MapCell;
+use Lorekeeper\Core\World\Map\MapName;
+use Lorekeeper\Core\World\Map\MapPad;
+use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
@@ -22,14 +28,14 @@ use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
 
-final class LevelUpRevivalTest extends TestCase
+final class FightToLevelRevivalTest extends TestCase
 {
     #[Test]
     public function a_dead_character_resurrects_and_walks_back_to_the_monsters(): void
     {
         $me = Fixture::me(level: 1, map: 'battleon');
 
-        [$steps] = Play::run(self::script(target: 2), $me, [
+        [$steps] = Play::run(self::script('oaklore', 'r3', target: 2), $me, [
             Fixture::arrival('oaklore', 946, ['r3' => [4, 1]]),
             null,
             null,
@@ -42,7 +48,6 @@ final class LevelUpRevivalTest extends TestCase
             null,
             null,
             new LeveledUpEvent(new PlayerLevel(2), new Experience(200)),
-            null,
         ]);
 
         static::assertSame(
@@ -55,7 +60,7 @@ final class LevelUpRevivalTest extends TestCase
                 '%xt%zm%gar%946%0%a4>p:122628%wvz%',
                 '%xt%zm%gar%946%0%a1>m:4%wvz%',
             ],
-            self::sent($steps),
+            Play::sent($steps),
         );
         static::assertTrue($me->player()->vitals->alive());
     }
@@ -65,7 +70,7 @@ final class LevelUpRevivalTest extends TestCase
     {
         $me = Fixture::me(level: 1, map: 'battleon');
 
-        [$steps] = Play::run(self::script(target: 2), $me, [
+        [$steps] = Play::run(self::script('oaklore', 'r3', target: 2), $me, [
             Fixture::arrival('oaklore', 946, ['r3' => [4, 1]]),
             null,
             null,
@@ -78,10 +83,9 @@ final class LevelUpRevivalTest extends TestCase
             null,
             null,
             new LeveledUpEvent(new PlayerLevel(2), new Experience(200)),
-            null,
         ]);
 
-        static::assertContains('%xt%zm%resPlayerTimed%946%122628%', self::sent($steps));
+        static::assertContains('%xt%zm%resPlayerTimed%946%122628%', Play::sent($steps));
         static::assertTrue($me->player()->vitals->alive());
     }
 
@@ -90,7 +94,7 @@ final class LevelUpRevivalTest extends TestCase
     {
         $me = Fixture::me(level: 1, map: 'battleon');
 
-        [$steps] = Play::run(self::script(target: 2), $me, [
+        [$steps] = Play::run(self::script('oaklore', 'r3', target: 2), $me, [
             Fixture::arrival('oaklore', 946, ['r3' => [4, 1]]),
             null,
             null,
@@ -102,10 +106,9 @@ final class LevelUpRevivalTest extends TestCase
             null,
             null,
             new LeveledUpEvent(new PlayerLevel(2), new Experience(200)),
-            null,
         ]);
 
-        static::assertNotContains('%xt%zm%resPlayerTimed%946%122628%', self::sent($steps));
+        static::assertNotContains('%xt%zm%resPlayerTimed%946%122628%', Play::sent($steps));
         static::assertTrue($me->player()->vitals->alive());
     }
 
@@ -114,7 +117,7 @@ final class LevelUpRevivalTest extends TestCase
     {
         $me = Fixture::me(level: 1, map: 'battleon');
 
-        [$steps] = Play::run(self::script(target: 2), $me, [
+        [$steps] = Play::run(self::script('oaklore', 'r3', target: 2), $me, [
             Fixture::arrival('oaklore', 946, ['r3' => [4, 1]]),
             null,
             null,
@@ -122,32 +125,23 @@ final class LevelUpRevivalTest extends TestCase
             new PlayersStateChangedEvent([new PlayerState(new PlayerName('Partner'), CombatState::Dead)]),
             null,
             new LeveledUpEvent(new PlayerLevel(2), new Experience(200)),
-            null,
         ]);
 
-        static::assertNotContains('%xt%zm%resPlayerTimed%946%122628%', self::sent($steps));
+        static::assertNotContains('%xt%zm%resPlayerTimed%946%122628%', Play::sent($steps));
         static::assertTrue($me->player()->vitals->alive());
     }
 
-    private static function script(int $target): LevelUpScript
+    /** @param 'Left'|'Top' $pad */
+    private static function script(string $map, string $cell, int $target, string $pad = 'Left'): InOrder
     {
         $now = Timestamp::fromParts(2026, 10, 16);
 
-        return new LevelUpScript(new PlayerLevel($target), static function () use (&$now): Timestamp {
+        return new InOrder([
+            new JoinMap(new MapName($map)),
+            new FightToLevel(new MapSpot(new MapCell($cell), MapPad::{$pad}), null, new PlayerLevel($target)),
+            new Rest(),
+        ], static function () use (&$now): Timestamp {
             return $now = $now->plus(Duration::seconds(3));
         });
-    }
-
-    /**
-     * @param list<Instruction> $steps
-     *
-     * @return list<string>
-     */
-    private static function sent(array $steps): array
-    {
-        return array_values(array_map(
-            static fn(Send $send): string => $send->command->toMessage(),
-            array_filter($steps, static fn(Instruction $step): bool => $step instanceof Send),
-        ));
     }
 }

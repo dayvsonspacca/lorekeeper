@@ -2,14 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Bot\Tests\Scripts;
+namespace Lorekeeper\Bot\Tests\Steps;
 
-use Lorekeeper\Bot\Scripts\CryptoTokenScript;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Done;
 use Lorekeeper\Client\Script\Failed;
-use Lorekeeper\Client\Script\Instruction;
-use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Combat\CombatState;
@@ -27,6 +24,7 @@ use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Quest\QuestPeriod;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;
+use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\QuestItemsReceivedEvent;
@@ -43,9 +41,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;
 use Psl\Option;
-use RuntimeException;
 
-final class CryptoTokenScriptTest extends TestCase
+final class CryptoTokenDailyTest extends TestCase
 {
     #[Test]
     public function it_accepts_hunts_the_ore_turns_it_in_and_picks_up_the_token(): void
@@ -53,7 +50,7 @@ final class CryptoTokenScriptTest extends TestCase
         $me = Fixture::me(level: 4, map: 'battleon');
         $token = new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)));
 
-        [$steps, $result] = Play::run(new CryptoTokenScript(), $me, [
+        [$steps, $result] = Play::run(Dailies::cryptoToken(), $me, [
             Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
             self::loaded(),
             new QuestAcceptedEvent(new QuestId(6187)),
@@ -81,9 +78,10 @@ final class CryptoTokenScriptTest extends TestCase
                 '%xt%zm%tryQuestComplete%138097%6187%-1%false%1%wvz%',
                 '%xt%zm%getDrop%122628%42657%',
             ],
-            self::sent($steps),
+            Play::sent($steps),
         );
-        static::assertEquals(new Done("got today's Crypto Token, 1 held now"), $result);
+        static::assertEquals(new Done('all steps are done'), $result);
+        static::assertSame(1, $me->player()->inventory->quantity(new ItemId(42_657)));
         static::assertSame(0, $me->player()->inventory->quantity(new ItemId(42_658)));
     }
 
@@ -96,7 +94,7 @@ final class CryptoTokenScriptTest extends TestCase
             CombatState::Fighting,
         )]));
 
-        [$steps] = Play::run(new CryptoTokenScript(), $me, [
+        [$steps] = Play::run(Dailies::cryptoToken(), $me, [
             null,
             null,
             new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
@@ -107,7 +105,7 @@ final class CryptoTokenScriptTest extends TestCase
 
         static::assertSame(
             ['%xt%zm%moveToCell%1%Enter%Spawn%', '%xt%zm%cmd%1%tfer%lorekeeper03%boxes%'],
-            array_slice(self::sent($steps), offset: 0, length: 2),
+            array_slice(Play::sent($steps), offset: 0, length: 2),
         );
     }
 
@@ -117,52 +115,44 @@ final class CryptoTokenScriptTest extends TestCase
         $me = Fixture::me(level: 4);
         $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 2, 6)));
 
-        [$steps, $result] = Play::run(new CryptoTokenScript(), $me, [
+        [$steps, $result] = Play::run(Dailies::cryptoToken(), $me, [
             Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
             self::loaded(),
         ]);
 
-        static::assertEquals(new Done('Crypto Token was already taken today'), $result);
+        static::assertEquals(new Done('stopped: Quest 6187 was already done'), $result);
         static::assertSame(
             ['%xt%zm%cmd%1%tfer%lorekeeper03%boxes%', '%xt%zm%getQuests%138097%6187%'],
-            self::sent($steps),
+            Play::sent($steps),
         );
     }
 
     #[Test]
     public function it_stops_when_the_server_does_not_accept_the_quest(): void
     {
-        [$steps, $result] = Play::run(new CryptoTokenScript(), Fixture::me(level: 4), [
+        [$steps, $result] = Play::run(Dailies::cryptoToken(), Fixture::me(level: 4), [
             Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
             self::loaded(),
             null,
         ]);
 
-        static::assertEquals(new Failed("the game would not give the quest Odd's 'n' Ends"), $result);
-        static::assertCount(3, self::sent($steps));
+        static::assertEquals(new Failed('step 3 (Accept quest 6187): the game would not give the quest'), $result);
+        static::assertCount(3, Play::sent($steps));
     }
 
     #[Test]
     public function it_stops_when_the_reward_never_drops(): void
     {
-        $me = Fixture::me(level: 4);
-
-        [, $result] = Play::run(new CryptoTokenScript(), $me, [
-            Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
-            self::loaded(),
-            new QuestAcceptedEvent(new QuestId(6187)),
-            null,
-            null,
-            null,
-            new QuestItemsReceivedEvent([new PlayerItem(
-                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
-            )]),
+        [, $result] = Play::run(Dailies::cryptoToken(), Fixture::me(level: 4), [
+            ...self::hunted(),
             new QuestCompletedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends")),
             null,
         ]);
 
         static::assertEquals(
-            new Failed("Odd's 'n' Ends was completed, but the Crypto Token could not be picked up"),
+            new Failed(
+                'step 5 (Turn in quest 6187 for item 42657): the quest was completed, but item 42657 could not be picked up',
+            ),
             $result,
         );
     }
@@ -170,24 +160,18 @@ final class CryptoTokenScriptTest extends TestCase
     #[Test]
     public function it_stops_with_the_reason_when_the_game_will_not_complete_the_quest(): void
     {
-        [$steps, $result] = Play::run(new CryptoTokenScript(), Fixture::me(level: 4), [
-            Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
-            self::loaded(),
-            new QuestAcceptedEvent(new QuestId(6187)),
-            null,
-            null,
-            null,
-            new QuestItemsReceivedEvent([new PlayerItem(
-                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
-            )]),
+        [$steps, $result] = Play::run(Dailies::cryptoToken(), Fixture::me(level: 4), [
+            ...self::hunted(),
             new QuestTurnInRefusedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends"), 'Missing Badge'),
         ]);
 
         static::assertEquals(
-            new Failed("the game would not complete Odd's 'n' Ends: it was already done today"),
+            new Failed(
+                'step 5 (Turn in quest 6187 for item 42657): the game would not complete the quest (Missing Badge)',
+            ),
             $result,
         );
-        static::assertStringNotContainsString('getDrop', implode(' ', self::sent($steps)));
+        static::assertStringNotContainsString('getDrop', implode(' ', Play::sent($steps)));
     }
 
     #[Test]
@@ -196,21 +180,36 @@ final class CryptoTokenScriptTest extends TestCase
         $me = Fixture::me(level: 4, map: 'boxes');
         $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 2, 6)));
 
-        [$steps, $result] = Play::run(new CryptoTokenScript(), $me, [self::loaded()]);
+        [$steps, $result] = Play::run(Dailies::cryptoToken(), $me, [self::loaded()]);
 
-        static::assertEquals(new Done('Crypto Token was already taken today'), $result);
-        static::assertSame(['%xt%zm%getQuests%1%6187%'], self::sent($steps));
+        static::assertEquals(new Done('stopped: Quest 6187 was already done'), $result);
+        static::assertSame(['%xt%zm%getQuests%1%6187%'], Play::sent($steps));
     }
 
     #[Test]
     public function it_stops_when_the_server_never_answers_the_join(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Could not join boxes: no answer');
-
-        Play::run(new CryptoTokenScript(), Fixture::me(level: 4), [
+        [, $result] = Play::run(Dailies::cryptoToken(), Fixture::me(level: 4), [
             new TimedOut(new Await([MovedToMapEvent::class], Duration::seconds(15))),
         ]);
+
+        static::assertEquals(new Failed('step 1 (Join boxes): Could not join boxes: no answer'), $result);
+    }
+
+    /** @return list<null|Event> */
+    private static function hunted(): array
+    {
+        return [
+            Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
+            self::loaded(),
+            new QuestAcceptedEvent(new QuestId(6187)),
+            null,
+            null,
+            null,
+            new QuestItemsReceivedEvent([new PlayerItem(
+                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+            )]),
+        ];
     }
 
     private static function loaded(): QuestLoadedEvent
@@ -224,18 +223,5 @@ final class CryptoTokenScriptTest extends TestCase
             [],
             Option\some(new QuestMark(QuestPeriod::Day, 2, 6)),
         )]);
-    }
-
-    /**
-     * @param list<Instruction> $steps
-     *
-     * @return list<string>
-     */
-    private static function sent(array $steps): array
-    {
-        return array_values(array_map(
-            static fn(Send $send): string => $send->command->toMessage(),
-            array_filter($steps, static fn(Instruction $step): bool => $step instanceof Send),
-        ));
     }
 }
