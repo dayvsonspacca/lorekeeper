@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Tests\Feature;
 
+use Illuminate\Encryption\Encrypter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
 use Lorekeeper\Apps\Desktop\Bots\RunRecorder;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
@@ -200,6 +202,26 @@ final class RunBotTest extends TestCase
 
         static::assertSame(RunStatus::Stopped, $run->refresh()->status);
         static::assertNull($run->started_at);
+    }
+
+    #[Test]
+    public function a_bot_that_crashes_ends_its_run_as_failed_with_the_reason(): void
+    {
+        $run = $this->botRun();
+        $task = $run->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 10]]);
+        DB::table('accounts')->update([
+            'password' => new Encrypter(random_bytes(32), 'aes-256-cbc')->encryptString('secret'),
+        ]);
+
+        $this->artisan('bots:run', ['run' => $run->id])->assertSuccessful();
+
+        $run->refresh();
+        static::assertSame(RunStatus::Failed, $run->status);
+        static::assertSame('The MAC is invalid.', $run->result);
+        static::assertNull($run->pid);
+        static::assertNotNull($run->finished_at);
+        static::assertNotSame(TaskStatus::Running, $task->refresh()->status);
+        static::assertSame('Failed: The MAC is invalid.', $run->logs()->latest('id')->first()?->message);
     }
 
     private function botRun(): BotRun

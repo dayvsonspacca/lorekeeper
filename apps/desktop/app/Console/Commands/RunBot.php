@@ -33,6 +33,7 @@ use Psl\Async\CancellationTokenInterface;
 use Psl\Async\LinkedCancellationToken;
 use Psl\DateTime\Duration;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Throwable;
 
 /**
  * @mago-expect lint:kan-defect
@@ -79,6 +80,12 @@ final class RunBot extends Command
                 $logins,
             );
             $ending = $client instanceof Client ? $this->playTasks($run, $client, $recorder, $stop->token()) : $client;
+        } catch (Throwable $exception) {
+            report($exception);
+            $ending = new Ending(
+                EndingStatus::Failed,
+                $exception->getMessage() !== '' ? $exception->getMessage() : $exception::class,
+            );
         } finally {
             $stop->release();
         }
