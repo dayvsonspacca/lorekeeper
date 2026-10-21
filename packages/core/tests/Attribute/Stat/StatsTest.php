@@ -5,11 +5,32 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Tests\Attribute\Stat;
 
 use InvalidArgumentException;
+use Lorekeeper\Core\Attribute\Stat\Boost\DamageBoost;
+use Lorekeeper\Core\Attribute\Stat\Boost\DotBoost;
+use Lorekeeper\Core\Attribute\Stat\Boost\HealingBoost;
 use Lorekeeper\Core\Attribute\Stat\Boost\MagicalBoost;
+use Lorekeeper\Core\Attribute\Stat\Boost\PhysicalBoost;
+use Lorekeeper\Core\Attribute\Stat\Chance\CriticalChance;
+use Lorekeeper\Core\Attribute\Stat\Chance\Evasion;
+use Lorekeeper\Core\Attribute\Stat\Chance\HitChance;
+use Lorekeeper\Core\Attribute\Stat\CriticalMultiplier;
 use Lorekeeper\Core\Attribute\Stat\Haste;
+use Lorekeeper\Core\Attribute\Stat\HealingIntake;
+use Lorekeeper\Core\Attribute\Stat\Power\AttackPower;
+use Lorekeeper\Core\Attribute\Stat\Power\SpellPower;
+use Lorekeeper\Core\Attribute\Stat\Primary\Dexterity;
+use Lorekeeper\Core\Attribute\Stat\Primary\Endurance;
+use Lorekeeper\Core\Attribute\Stat\Primary\Intellect;
+use Lorekeeper\Core\Attribute\Stat\Primary\Luck;
+use Lorekeeper\Core\Attribute\Stat\Primary\Strength;
+use Lorekeeper\Core\Attribute\Stat\Primary\Wisdom;
 use Lorekeeper\Core\Attribute\Stat\Resistance\DamageResistance;
 use Lorekeeper\Core\Attribute\Stat\Resistance\DotResistance;
+use Lorekeeper\Core\Attribute\Stat\Resistance\MagicalResistance;
+use Lorekeeper\Core\Attribute\Stat\Resistance\PhysicalResistance;
+use Lorekeeper\Core\Attribute\Stat\Stat;
 use Lorekeeper\Core\Attribute\Stat\Stats;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -48,11 +69,59 @@ final class StatsTest extends TestCase
     }
 
     #[Test]
+    #[DataProvider('described')]
+    public function every_stat_has_a_description(Stat $stat, string $fragment): void
+    {
+        static::assertStringContainsString($fragment, $stat->describe()->value);
+    }
+
+    /** @return iterable<string, array{Stat, string}> */
+    public static function described(): iterable
+    {
+        yield 'damage boost' => [new DamageBoost(0.1), 'outgoing damage, except True Damage'];
+        yield 'dot boost' => [new DotBoost(0.1), 'damage over time'];
+        yield 'healing boost' => [new HealingBoost(0.1), 'healing given to other players'];
+        yield 'magical boost' => [new MagicalBoost(0.1), 'outgoing magical damage'];
+        yield 'physical boost' => [new PhysicalBoost(0.1), 'outgoing physical and hybrid damage'];
+        yield 'critical chance' => [new CriticalChance(0.05), 'Critical Strike chance'];
+        yield 'evasion' => [new Evasion(0.04), 'avoid incoming damage'];
+        yield 'hit chance' => [new HitChance(0.9), 'Hit chance'];
+        yield 'critical multiplier' => [new CriticalMultiplier(1.5), 'critical hit'];
+        yield 'healing intake' => [new HealingIntake(1.0), 'healing received'];
+        yield 'attack power' => [new AttackPower(10), 'physical damage attacks'];
+        yield 'spell power' => [new SpellPower(10), 'magical damage attacks'];
+        yield 'dexterity' => [new Dexterity(10), 'Dexterity is valuable to melee classes'];
+        yield 'endurance' => [new Endurance(10), 'total Hit Points'];
+        yield 'intellect' => [new Intellect(10), 'Intellect increases Spell Power'];
+        yield 'luck' => [new Luck(10), 'Critical Strike modifier'];
+        yield 'strength' => [new Strength(10), 'Strength increases Attack Power'];
+        yield 'wisdom' => [new Wisdom(10), 'Wisdom is valuable to caster classes'];
+        yield 'dot resistance' => [new DotResistance(0.1), 'incoming damage over time'];
+        yield 'magical resistance' => [new MagicalResistance(0.1), 'incoming magical damage'];
+        yield 'physical resistance' => [new PhysicalResistance(0.1), 'incoming physical and hybrid damage'];
+    }
+
+    #[Test]
     public function a_chance_or_haste_below_zero_is_refused(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
         new Haste(-0.1);
+    }
+
+    #[Test]
+    public function a_resistance_or_boost_that_is_not_finite_is_refused(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new DamageBoost(INF);
+    }
+
+    #[Test]
+    public function a_ratio_reads_as_its_value(): void
+    {
+        static::assertSame('0.25', (string) new Haste(0.25));
+        static::assertSame('-0.6', (string) new DamageResistance(-0.6));
     }
 
     #[Test]
