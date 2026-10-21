@@ -19,5 +19,5 @@ dependencies into `build/`, and only `tauri.bundle.json` points the bundle at it
   that went blank.
 - On quit, or on `SIGTERM`/`SIGINT`/`SIGHUP`, it stops the whole group: the server and every bot it launched. A group left
   behind by a crash is stopped on the next start.
-- Data lives in the app data folder (`~/.local/share/com.lorekeeper.desktop` on Linux, `dev/` inside it for `just desktop
-  dev`). Laravel's bootstrap caches there are dropped whenever a different bundle starts.
+- Data lives in the app data folder (`~/.local/share/com.dayvsonspacca.lorekeeper.desktop` on Linux, `dev/` inside it
+  for `just desktop dev`). Laravel's bootstrap caches there are dropped whenever a different bundle starts.
