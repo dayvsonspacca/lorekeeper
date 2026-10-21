@@ -19,12 +19,15 @@ use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
+use Lorekeeper\Server\Event\Events;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
+use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+/** @mago-expect lint:too-many-methods */
 final class VitalsTrackingTest extends TestCase
 {
     #[Test]
@@ -94,25 +97,25 @@ final class VitalsTrackingTest extends TestCase
     }
 
     #[Test]
-    public function dying_leaves_no_health_and_coming_back_fills_it(): void
+    public function dying_leaves_no_health_and_coming_back_fills_health_and_mana(): void
     {
         $dead = VitalsTracking::follow(
-            Fixture::vitals(health: 189),
+            Fixture::vitals(health: 189, mana: 20),
             new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
             self::me(),
         );
         $back = VitalsTracking::follow($dead, new ResurrectedEvent(), self::me());
 
         static::assertFalse($dead->alive());
-        static::assertSame([0, 390, 100, 100], self::values($dead));
+        static::assertSame([0, 390, 20, 100], self::values($dead));
         static::assertSame([390, 390, 100, 100], self::values($back));
     }
 
     #[Test]
-    public function standing_again_without_a_resurrection_fills_the_health(): void
+    public function standing_again_without_a_resurrection_fills_health_and_mana(): void
     {
         $dead = VitalsTracking::follow(
-            Fixture::vitals(health: 189),
+            Fixture::vitals(health: 189, mana: 20),
             new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
             self::me(),
         );
@@ -136,6 +139,23 @@ final class VitalsTrackingTest extends TestCase
         static::assertFalse($someoneElse->alive());
         static::assertFalse($stillDead->alive());
         static::assertSame([390, 390, 100, 100], self::values($back));
+    }
+
+    #[Test]
+    public function the_real_respawn_takes_the_health_and_mana_it_carries(): void
+    {
+        $me = Fixture::me();
+        foreach ([
+            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intHPMax":1193,"intMPMax":100,"intHP":990,"intMP":20}}}}',
+            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intState":0}}}}',
+            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intState":1,"intHP":1193,"intMP":100,"intSP":100,"strFrame":"Enter","strPad":"Spawn"}}}}',
+        ] as $message) {
+            foreach (Events::recognize(JsonMessage::from($message)->unwrap()) as $event) {
+                $me->hear($event);
+            }
+        }
+
+        static::assertSame([1193, 1193, 100, 100], self::values($me->player()->vitals));
     }
 
     #[Test]

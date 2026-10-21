@@ -17,9 +17,9 @@ use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 
+/** @mago-expect lint:cyclomatic-complexity */
 final readonly class VitalsTracking
 {
-    /** @mago-expect lint:halstead */
     public static function follow(Vitals $vitals, Event $event, Identity $me): Vitals
     {
         $next = match (true) {
@@ -28,7 +28,7 @@ final readonly class VitalsTracking
             $event instanceof PlayersManaChangedEvent => self::spent($vitals, $event, $me),
             $event instanceof PlayersStateChangedEvent => self::changed($vitals, $event, $me),
             $event instanceof PlayerStateUpdatedEvent => self::updated($vitals, $event, $me),
-            $event instanceof ResurrectedEvent => self::health($vitals, $vitals->health->maximum),
+            $event instanceof ResurrectedEvent => self::full($vitals),
             default => $vitals,
         };
 
@@ -48,7 +48,14 @@ final readonly class VitalsTracking
 
     private static function updated(Vitals $vitals, PlayerStateUpdatedEvent $event, Identity $me): Vitals
     {
-        return $me->is($event->name) ? self::stood($vitals, $event->state) : $vitals;
+        if (!$me->is($event->name)) {
+            return $vitals;
+        }
+
+        $stood = self::stood($vitals, $event->state);
+        $healed = $event->health === null ? $stood : self::health($stood, $event->health);
+
+        return $event->mana === null ? $healed : self::mana($healed, $event->mana);
     }
 
     private static function stood(Vitals $vitals, CombatState $state): Vitals
@@ -56,8 +63,16 @@ final readonly class VitalsTracking
         return match (true) {
             $state === CombatState::Dead => self::health($vitals, new Health(0)),
             $vitals->alive() => $vitals,
-            default => self::health($vitals, $vitals->health->maximum),
+            default => self::full($vitals),
         };
+    }
+
+    private static function full(Vitals $vitals): Vitals
+    {
+        return new Vitals(
+            new Gauge($vitals->health->maximum, $vitals->health->maximum),
+            new Gauge($vitals->mana->maximum, $vitals->mana->maximum),
+        );
     }
 
     private static function hit(Vitals $vitals, PlayersHealthChangedEvent $event, Identity $me): Vitals

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Player;
 
+use Lorekeeper\Core\Attribute\Health;
+use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Combat\Helper\CombatStates;
@@ -20,6 +22,8 @@ final readonly class PlayerStateUpdatedEvent extends PlayerUpdatedEvent
     public function __construct(
         PlayerName $name,
         public CombatState $state,
+        public ?Health $health = null,
+        public ?Mana $mana = null,
     ) {
         parent::__construct($name);
     }
@@ -37,6 +41,8 @@ final readonly class PlayerStateUpdatedEvent extends PlayerUpdatedEvent
                 'unm' => Type\optional(Type\mixed()),
                 'o' => Type\optional(Type\shape([
                     'intState' => Type\optional(Type\int_range(min: 0, max: 2)),
+                    'intHP' => Type\optional(Type\uint()),
+                    'intMP' => Type\optional(Type\uint()),
                 ], allowUnknownFields: true)),
             ], allowUnknownFields: true)->coerce($message->data);
             $state = $update['o']['intState'] ?? null;
@@ -49,7 +55,17 @@ final readonly class PlayerStateUpdatedEvent extends PlayerUpdatedEvent
             throw new MalformedEventException(static::class, 'player name or state is invalid', $exception);
         }
 
-        return Option\some(new static(new PlayerName($name), CombatStates::read($state)));
+        $health = $update['o']['intHP'] ?? null;
+        $mana = $update['o']['intMP'] ?? null;
+
+        return Option\some(
+            new static(
+                new PlayerName($name),
+                CombatStates::read($state),
+                $health === null ? null : new Health($health),
+                $mana === null ? null : new Mana($mana),
+            ),
+        );
     }
 
     #[Override]

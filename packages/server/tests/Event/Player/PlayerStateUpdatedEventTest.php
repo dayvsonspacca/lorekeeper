@@ -28,6 +28,8 @@ final class PlayerStateUpdatedEventTest extends TestCase
         static::assertSame('lorekeeper03', $event->name->value);
         static::assertSame(CombatState::Idle, $event->state);
         static::assertSame('lorekeeper03 is idle', $event->summary());
+        static::assertNull($event->health);
+        static::assertNull($event->mana);
     }
 
     #[Test]
@@ -40,6 +42,8 @@ final class PlayerStateUpdatedEventTest extends TestCase
         )->unwrap();
 
         static::assertSame(CombatState::Idle, $event->state);
+        static::assertSame(1193, $event->health?->value);
+        static::assertSame(100, $event->mana?->value);
     }
 
     #[Test]
