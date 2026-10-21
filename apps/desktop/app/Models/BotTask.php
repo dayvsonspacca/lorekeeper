@@ -29,6 +29,7 @@ use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
  * @property null|int $level_to
  * @property null|Carbon $started_at
  * @property null|Carbon $finished_at
+ * @property bool $cancelled_by_user
  * @property BotRun $run
  */
 #[Fillable([
@@ -46,6 +47,7 @@ use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
     'level_to',
     'started_at',
     'finished_at',
+    'cancelled_by_user',
 ])]
 final class BotTask extends Model
 {
@@ -89,6 +91,18 @@ final class BotTask extends Model
         return $this->status === TaskStatus::Pending || $this->status === TaskStatus::Running;
     }
 
+    public function cancel(): void
+    {
+        $this->status === TaskStatus::Pending
+            ? $this->update([
+                'status' => TaskStatus::Cancelled,
+                'result' => 'cancelled',
+                'finished_at' => now(),
+                'cancelled_by_user' => true,
+            ])
+            : $this->update(['status' => TaskStatus::Cancelling, 'cancelled_by_user' => true]);
+    }
+
     public function finish(TaskStatus $status, ?string $result = null): void
     {
         $this->update(['status' => $status, 'result' => $result, 'finished_at' => now()]);
@@ -103,6 +117,7 @@ final class BotTask extends Model
             'status' => TaskStatus::class,
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
+            'cancelled_by_user' => 'boolean',
         ];
     }
 }

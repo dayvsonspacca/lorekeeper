@@ -90,6 +90,7 @@ final class Account extends Model
         return $run
             ->tasks()
             ->whereIn('status', [TaskStatus::Failed, TaskStatus::Cancelled])
+            ->where('cancelled_by_user', false)
             ->orderBy('id')
             ->get()
             ->all();

@@ -13,7 +13,6 @@ use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
-use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotRunLog;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
@@ -74,9 +73,7 @@ final class RunBoard extends Component implements HasActions, HasSchemas
                     return;
                 }
 
-                $found->status === TaskStatus::Pending
-                    ? $found->finish(TaskStatus::Cancelled, 'cancelled')
-                    : $found->update(['status' => TaskStatus::Cancelling]);
+                $found->cancel();
             });
     }
 

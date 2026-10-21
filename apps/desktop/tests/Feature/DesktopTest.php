@@ -227,6 +227,39 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
+    public function resuming_leaves_out_the_tasks_the_user_cancelled(): void
+    {
+        $account = $this->account();
+        $last = $account->runs()->create();
+        $last->update(['status' => RunStatus::Running]);
+        $running = $last->tasks()->create([
+            'script' => BotScript::LevelUp,
+            'parameters' => ['level' => 20],
+            'status' => TaskStatus::Running,
+        ]);
+        $queued = $last->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 30]]);
+        $last->tasks()->create(['script' => BotScript::LevelUp, 'parameters' => ['level' => 40]]);
+
+        $board = Livewire::test(RunBoard::class, ['run' => $last]);
+        $board->mountAction('cancel', ['task' => $running->id])->callMountedAction();
+        $board->mountAction('cancel', ['task' => $queued->id])->callMountedAction();
+        BotRun::interrupted();
+        $account->resume();
+
+        $run = $account->activeRun();
+        static::assertNotNull($run);
+        static::assertSame(
+            [['level' => 40]],
+            $run
+                ->tasks()
+                ->orderBy('id')
+                ->get()
+                ->map(static fn(BotTask $task): array => $task->parameters)
+                ->all(),
+        );
+    }
+
+    #[Test]
     public function a_task_is_cancelled_after_confirming(): void
     {
         $run = $this->account()->runs()->create();
