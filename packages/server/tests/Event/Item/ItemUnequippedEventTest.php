@@ -23,6 +23,7 @@ final class ItemUnequippedEventTest extends TestCase
 
         static::assertSame(93_474, $event->player->value);
         static::assertSame(35_397, $event->itemId->value);
+        static::assertSame('Socket 93474 unequipped item 35397', $event->summary());
     }
 
     #[Test]

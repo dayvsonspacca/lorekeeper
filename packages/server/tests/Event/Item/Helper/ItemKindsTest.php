@@ -252,6 +252,30 @@ final class ItemKindsTest extends TestCase
         self::read('Spaceship');
     }
 
+    #[Test]
+    public function an_item_without_its_level_cannot_be_read(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('an item has no id, name or level');
+
+        ItemKinds::read(['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => 'Sword'], PlayerInventoryLoadedEvent::class);
+    }
+
+    #[Test]
+    public function a_weapon_whose_damage_varies_out_of_range_cannot_be_read(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('weapon 1 varies its damage by an invalid amount');
+
+        ItemKinds::read([
+            'ItemID' => 1,
+            'sName' => 'Hero Item',
+            'sType' => 'Sword',
+            'iLvl' => 1,
+            'iRng' => 101,
+        ], PlayerInventoryLoadedEvent::class);
+    }
+
     private static function read(string $type): Item
     {
         return ItemKinds::read([

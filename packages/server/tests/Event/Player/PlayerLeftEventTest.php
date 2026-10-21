@@ -21,6 +21,7 @@ final class PlayerLeftEventTest extends TestCase
 
         static::assertSame(75_536, $event->socketId->value);
         static::assertSame('hero', $event->name->value);
+        static::assertSame('hero (socket 75536) left', $event->summary());
     }
 
     #[Test]

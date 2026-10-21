@@ -32,6 +32,7 @@ final class MapNotAvailableEventTest extends TestCase
                 ->mapName
                 ->value,
         );
+        static::assertSame('battleon is not available', MapNotAvailableEvent::from($message)->unwrap()->summary());
     }
 
     #[Test]

@@ -18,6 +18,10 @@ final class MapRequiresQuestEventTest extends TestCase
         $message = DelimitedMessage::from('%xt%warning%1%That map requires special quest actions.%')->unwrap();
 
         static::assertTrue(MapRequiresQuestEvent::from($message)->isSome());
+        static::assertSame(
+            'That map requires special quest actions',
+            MapRequiresQuestEvent::from($message)->unwrap()->summary(),
+        );
     }
 
     #[Test]

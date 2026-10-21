@@ -20,6 +20,7 @@ final class LoginFailedEventTest extends TestCase
         )->unwrap();
 
         static::assertTrue(LoginFailedEvent::from($message)->isSome());
+        static::assertSame('Login refused', LoginFailedEvent::from($message)->unwrap()->summary());
     }
 
     #[Test]

@@ -26,6 +26,7 @@ final class ClassChangedEventTest extends TestCase
         static::assertSame('Blaze Binder', $event->className->value);
         static::assertSame(ClassCategory::Caster, $event->category);
         static::assertSame(302_500, $event->points->value);
+        static::assertSame('Socket 93426 is Blaze Binder (Caster, 302500 CP)', $event->summary());
         static::assertSame(
             'Blaze Binders control the power of fire and darkness. They are known to burn their enemies to a crisp and bind their souls into service',
             $event->description->unwrap()->value,

@@ -25,6 +25,7 @@ final class LoginSucceededEventTest extends TestCase
         $event = LoginSucceededEvent::from($message)->unwrap();
 
         static::assertSame(59_878, $event->socketId->value);
+        static::assertSame('Logged in as socket 59878', $event->summary());
     }
 
     #[Test]

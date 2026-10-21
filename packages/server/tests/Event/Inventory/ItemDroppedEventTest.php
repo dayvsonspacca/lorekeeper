@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Inventory;
 
+use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -42,6 +43,18 @@ final class ItemDroppedEventTest extends TestCase
         $event = ItemDroppedEvent::from(JsonMessage::from(self::CUBES)->unwrap())->unwrap();
 
         static::assertSame('Cubes', $event->items[0]->item->name->value);
+    }
+
+    #[Test]
+    public function it_tags_a_dropped_item_only_members_can_use(): void
+    {
+        $member = str_replace(search: '"bUpg":false', replace: '"bUpg":true', subject: self::CRYPTO_TOKEN);
+        $event = ItemDroppedEvent::from(JsonMessage::from($member)->unwrap())->unwrap();
+
+        static::assertTrue($event->items[0]->item->tags->has(ItemTag::MemberOnly));
+        static::assertFalse(ItemDroppedEvent::from(
+            JsonMessage::from(self::CRYPTO_TOKEN)->unwrap(),
+        )->unwrap()->items[0]->item->tags->has(ItemTag::MemberOnly));
     }
 
     #[Test]

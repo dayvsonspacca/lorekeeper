@@ -38,6 +38,19 @@ final class DropPickedUpEventTest extends TestCase
     }
 
     #[Test]
+    public function it_rejects_a_pickup_without_the_item(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('picked up drop is invalid');
+
+        DropPickedUpEvent::from(
+            JsonMessage::from(
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"getDrop","bSuccess":1,"iQty":1,"iQtyNow":1}}}',
+            )->unwrap(),
+        );
+    }
+
+    #[Test]
     public function it_rejects_a_pickup_without_its_quantities(): void
     {
         $this->expectException(MalformedEventException::class);

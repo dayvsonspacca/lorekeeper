@@ -8,6 +8,7 @@ use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Equipment\Pet;
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
 use Lorekeeper\Core\Item\Equipment\Weapon\WeaponType;
+use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
@@ -123,6 +124,24 @@ final class QuestLoadedEventTest extends TestCase
 
         $chained = self::load(self::quest('Armor', 0, ['bQuest' => 1, 'strPrevious' => '39']))->quests[0];
         static::assertSame(39, $only(PreviousQuestRequirement::class, $chained)->questId->value);
+    }
+
+    #[Test]
+    public function an_item_listed_twice_is_read_once_and_tagged_when_only_members_can_use_it(): void
+    {
+        $member = ['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => 'Armor', 'iLvl' => 1, 'bUpg' => true];
+        $event = self::load(self::quest('Armor', 0, [
+            'oItems' => ['1' => $member],
+            'oReqd' => ['1' => [...$member, 'bUpg' => false]],
+        ]));
+
+        $rewards = array_values(array_filter(
+            $event->quests[0]->rewards,
+            static fn(object $reward): bool => $reward instanceof ItemReward,
+        ));
+        static::assertCount(1, $rewards);
+        static::assertTrue($rewards[0]->item->tags->has(ItemTag::MemberOnly));
+        static::assertSame('1 quests: Hero Quest', $event->summary());
     }
 
     #[Test]

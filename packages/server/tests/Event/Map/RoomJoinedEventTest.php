@@ -22,6 +22,7 @@ final class RoomJoinedEventTest extends TestCase
         $event = RoomJoinedEvent::from(XmlMessage::from(self::JOINED)->unwrap())->unwrap();
 
         static::assertEquals([new PlayerName('hero'), new PlayerName('hero 2')], $event->players);
+        static::assertSame('Joined a room with 2 players', $event->summary());
     }
 
     #[Test]

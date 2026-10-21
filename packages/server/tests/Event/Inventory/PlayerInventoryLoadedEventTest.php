@@ -42,6 +42,10 @@ final class PlayerInventoryLoadedEventTest extends TestCase
         static::assertInstanceOf(ClassItem::class, $class->item);
         static::assertInstanceOf(Necklace::class, $necklace->item);
         static::assertInstanceOf(Resource::class, $voucher->item);
+        static::assertSame(
+            'Inventory loaded: 5 items',
+            PlayerInventoryLoadedEvent::from(JsonMessage::from(self::INVENTORY)->unwrap())->unwrap()->summary(),
+        );
     }
 
     #[Test]
@@ -86,6 +90,21 @@ final class PlayerInventoryLoadedEventTest extends TestCase
         $this->expectExceptionMessage("unknown item type 'Spaceship'");
 
         self::load(self::item('Spaceship'));
+    }
+
+    #[Test]
+    public function it_rejects_an_item_held_twice(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('an item is in the inventory more than once');
+
+        $sword = ['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => 'Sword', 'iLvl' => 1];
+        PlayerInventoryLoadedEvent::from(
+            JsonMessage::from(json_encode(['b' => ['o' => [
+                'cmd' => 'loadInventoryBig',
+                'items' => [$sword, $sword],
+            ]]], flags: JSON_THROW_ON_ERROR))->unwrap(),
+        );
     }
 
     #[Test]

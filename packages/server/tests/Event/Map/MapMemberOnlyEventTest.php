@@ -32,6 +32,7 @@ final class MapMemberOnlyEventTest extends TestCase
                 ->mapName
                 ->value,
         );
+        static::assertSame('battleon is member-only', MapMemberOnlyEvent::from($message)->unwrap()->summary());
     }
 
     #[Test]

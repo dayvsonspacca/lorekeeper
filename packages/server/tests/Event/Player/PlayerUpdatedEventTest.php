@@ -26,6 +26,7 @@ final class PlayerUpdatedEventTest extends TestCase
                 ->name
                 ->value,
         );
+        static::assertSame('hero updated', PlayerUpdatedEvent::from($message)->unwrap()->summary());
     }
 
     #[Test]

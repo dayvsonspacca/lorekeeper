@@ -18,6 +18,7 @@ final class AlreadyInMapEventTest extends TestCase
         $message = DelimitedMessage::from('%xt%warning%1%Cannot join a room you are already in.%')->unwrap();
 
         static::assertTrue(AlreadyInMapEvent::from($message)->isSome());
+        static::assertSame('Already in that map', AlreadyInMapEvent::from($message)->unwrap()->summary());
     }
 
     #[Test]

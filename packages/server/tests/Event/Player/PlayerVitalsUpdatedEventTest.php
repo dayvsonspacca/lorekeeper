@@ -48,6 +48,19 @@ final class PlayerVitalsUpdatedEventTest extends TestCase
     }
 
     #[Test]
+    public function it_rejects_vitals_that_are_not_counts(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('player name or vitals are invalid');
+
+        PlayerVitalsUpdatedEvent::from(
+            JsonMessage::from(
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"made2903","o":{"intHPMax":2585,"intMPMax":100,"intHP":-1,"intMP":100}}}}',
+            )->unwrap(),
+        );
+    }
+
+    #[Test]
     public function it_rejects_health_above_its_maximum(): void
     {
         $this->expectException(MalformedEventException::class);

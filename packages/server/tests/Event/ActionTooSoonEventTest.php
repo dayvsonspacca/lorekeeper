@@ -18,6 +18,7 @@ final class ActionTooSoonEventTest extends TestCase
         $message = DelimitedMessage::from('%xt%warning%1%Please slow down. Last action was too soon!%')->unwrap();
 
         static::assertTrue(ActionTooSoonEvent::from($message)->isSome());
+        static::assertSame('Action too soon', ActionTooSoonEvent::from($message)->unwrap()->summary());
     }
 
     #[Test]

@@ -37,6 +37,15 @@ final class ItemsTurnedInEventTest extends TestCase
     }
 
     #[Test]
+    public function it_rejects_a_turn_in_without_its_items(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('turned in items are missing');
+
+        ItemsTurnedInEvent::from(JsonMessage::from('{"t":"xt","b":{"r":-1,"o":{"cmd":"turnIn"}}}')->unwrap());
+    }
+
+    #[Test]
     public function it_rejects_a_list_it_cannot_read(): void
     {
         $this->expectException(MalformedEventException::class);

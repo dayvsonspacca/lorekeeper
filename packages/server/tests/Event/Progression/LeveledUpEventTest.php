@@ -23,6 +23,7 @@ final class LeveledUpEventTest extends TestCase
 
         static::assertSame(2, $event->level->value);
         static::assertSame(100, $event->toNextLevel->value);
+        static::assertSame('Reached level 2', $event->summary());
     }
 
     #[Test]

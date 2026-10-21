@@ -36,7 +36,8 @@ final class ShopLoadedEventTest extends TestCase
     #[Test]
     public function it_reads_a_real_shop_that_sells_for_gold_and_adventure_coins(): void
     {
-        $shop = self::load(self::ASSORTED_SHOP)->shop;
+        $event = self::load(self::ASSORTED_SHOP);
+        $shop = $event->shop;
 
         static::assertInstanceOf(CurrencyShop::class, $shop);
         static::assertSame(31, $shop->id->value);
@@ -58,12 +59,14 @@ final class ShopLoadedEventTest extends TestCase
         static::assertSame(450, $armor->price->amount->value);
         static::assertInstanceOf(Resource::class, $map->item);
         static::assertFalse($map->item->tags->has(ItemTag::MemberOnly));
+        static::assertSame('Battleon Assorted shop: 3 items', $event->summary());
     }
 
     #[Test]
     public function it_reads_a_real_merge_shop(): void
     {
-        $shop = self::load(self::MERGE_SHOP)->shop;
+        $event = self::load(self::MERGE_SHOP);
+        $shop = $event->shop;
 
         static::assertInstanceOf(MergeShop::class, $shop);
         static::assertSame('Reward Gem Shop', $shop->name->value);
@@ -77,6 +80,18 @@ final class ShopLoadedEventTest extends TestCase
         );
         static::assertSame(17_109, $items[0]->costs[0]->itemId->value);
         static::assertInstanceOf(Boost::class, $items[3]->item);
+        static::assertSame('Reward Gem Shop: 5 items', $event->summary());
+    }
+
+    #[Test]
+    public function it_tags_the_items_only_members_can_buy(): void
+    {
+        $shop = self::load(self::shop(item: ['bUpg' => true]))->shop;
+
+        static::assertInstanceOf(CurrencyShop::class, $shop);
+        /** @var list<CurrencyShopItem> $items */
+        $items = array_values($shop->inventory->items->toArray());
+        static::assertTrue($items[0]->item->tags->has(ItemTag::MemberOnly));
     }
 
     #[Test]
@@ -127,8 +142,11 @@ final class ShopLoadedEventTest extends TestCase
         return ShopLoadedEvent::from(JsonMessage::from($message)->unwrap())->unwrap();
     }
 
-    /** @param array<string, bool> $flags */
-    private static function shop(array $flags = [], string $type = 'Armor'): string
+    /**
+     * @param array<string, bool> $flags
+     * @param array<string, bool> $item
+     */
+    private static function shop(array $flags = [], string $type = 'Armor', array $item = []): string
     {
         return json_encode(['b' => ['o' => [
             'cmd' => 'loadShop',
@@ -136,7 +154,14 @@ final class ShopLoadedEventTest extends TestCase
                 'ShopID' => 1,
                 'sName' => 'Hero Shop',
                 ...$flags,
-                'items' => [['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => $type, 'iLvl' => 1, 'iCost' => 0]],
+                'items' => [[
+                    'ItemID' => 1,
+                    'sName' => 'Hero Item',
+                    'sType' => $type,
+                    'iLvl' => 1,
+                    'iCost' => 0,
+                    ...$item,
+                ]],
             ],
         ]]], flags: JSON_THROW_ON_ERROR);
     }

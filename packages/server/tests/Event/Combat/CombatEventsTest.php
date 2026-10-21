@@ -160,21 +160,17 @@ final class CombatEventsTest extends TestCase
         )->unwrap();
         static::assertSame('lorekeeper03', $fell->players[0]->player->value);
         static::assertSame(CombatState::Dead, $fell->players[0]->state);
-        static::assertTrue(ResurrectedEvent::from(DelimitedMessage::from('%xt%resTimed%-1%')->unwrap())->isSome());
-        static::assertSame(
-            4,
-            MonsterRespawnedEvent::from(DelimitedMessage::from('%xt%respawnMon%-1%4%')->unwrap())
-                ->unwrap()
-                ->id
-                ->value,
+        $resurrected = ResurrectedEvent::from(DelimitedMessage::from('%xt%resTimed%-1%')->unwrap());
+        static::assertSame('Back to life', $resurrected->unwrap()->summary());
+        $respawned = MonsterRespawnedEvent::from(DelimitedMessage::from('%xt%respawnMon%-1%4%')->unwrap())->unwrap();
+        static::assertSame(4, $respawned->id->value);
+        static::assertSame('Monster 4 came back', $respawned->summary());
+        $rejected = AttackRejectedEvent::from(
+            JsonMessage::from(
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"sars","cInf":"p:122507","a":[],"actID":1,"iRes":0}}}',
+            )->unwrap(),
         );
-        static::assertTrue(
-            AttackRejectedEvent::from(
-                JsonMessage::from(
-                    '{"t":"xt","b":{"r":-1,"o":{"cmd":"sars","cInf":"p:122507","a":[],"actID":1,"iRes":0}}}',
-                )->unwrap(),
-            )->isSome(),
-        );
+        static::assertSame('The attack was not played', $rejected->unwrap()->summary());
         static::assertTrue(
             AttackRejectedEvent::from(
                 JsonMessage::from(

@@ -21,6 +21,7 @@ final class ConnectionEstablishedEventTest extends TestCase
         )->unwrap();
 
         static::assertTrue(ConnectionEstablishedEvent::from($message)->isSome());
+        static::assertSame('Connection established', ConnectionEstablishedEvent::from($message)->unwrap()->summary());
     }
 
     #[Test]

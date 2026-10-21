@@ -23,6 +23,7 @@ final class ItemWornEventTest extends TestCase
 
         static::assertSame(93_474, $event->player->value);
         static::assertSame(91_234, $event->itemId->value);
+        static::assertSame('Socket 93474 wore item 91234', $event->summary());
     }
 
     #[Test]

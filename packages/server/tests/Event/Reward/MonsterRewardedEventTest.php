@@ -25,6 +25,7 @@ final class MonsterRewardedEventTest extends TestCase
         static::assertSame(10, $event->experience->value);
         static::assertSame(510, $event->classPoints->value);
         static::assertSame(4, $event->monster->value);
+        static::assertSame('Earned 10 experience and 3 gold from monster 4', $event->summary());
     }
 
     #[Test]
@@ -41,6 +42,19 @@ final class MonsterRewardedEventTest extends TestCase
             MonsterRewardedEvent::from(
                 JsonMessage::from('{"t":"xt","b":{"r":-1,"o":{"cmd":"levelUp","intLevel":2}}}')->unwrap(),
             )->isNone(),
+        );
+    }
+
+    #[Test]
+    public function it_rejects_a_reward_that_is_not_an_amount(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('reward is invalid');
+
+        MonsterRewardedEvent::from(
+            JsonMessage::from(
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"addGoldExp","intGold":-3,"intExp":10,"iCP":510,"bonusCP":255,"typ":"m","id":4}}}',
+            )->unwrap(),
         );
     }
 

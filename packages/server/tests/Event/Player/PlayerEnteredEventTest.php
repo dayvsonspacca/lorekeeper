@@ -23,6 +23,7 @@ final class PlayerEnteredEventTest extends TestCase
 
         static::assertSame(75_477, $event->socketId->value);
         static::assertSame('hero', $event->name->value);
+        static::assertSame('hero (socket 75477) entered', $event->summary());
     }
 
     #[Test]

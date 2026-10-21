@@ -33,6 +33,10 @@ final class StatsUpdatedEventTest extends TestCase
         $stats = self::read(self::ALL_OF_THEM);
 
         static::assertCount(23, $stats);
+        static::assertSame(
+            '23 stats updated',
+            StatsUpdatedEvent::from(JsonMessage::from(self::ALL_OF_THEM)->unwrap())->unwrap()->summary(),
+        );
         static::assertSame(245, self::of($stats, Strength::class));
         static::assertSame(348, self::of($stats, Luck::class));
         static::assertEqualsWithDelta(1.1185, self::of($stats, HitChance::class), 1e-9);

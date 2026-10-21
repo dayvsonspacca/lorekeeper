@@ -6,6 +6,7 @@ namespace Lorekeeper\Server\Tests\Event\Inventory;
 
 use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
+use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -45,6 +46,19 @@ final class MoreItemsAddedEventTest extends TestCase
             $event->items[0]->held?->value,
         ]);
         static::assertSame('Got 1 more of item 5586, 11 held now', $event->summary());
+    }
+
+    #[Test]
+    public function it_rejects_items_without_a_quantity(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('items are missing or invalid');
+
+        MoreItemsAddedEvent::from(
+            JsonMessage::from(
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"addItems","items":{"5574":{"ItemID":"5574"}}}}}',
+            )->unwrap(),
+        );
     }
 
     #[Test]

@@ -18,6 +18,7 @@ final class MapLockedEventTest extends TestCase
         $message = DelimitedMessage::from('%xt%warning%1%The map is locked.%')->unwrap();
 
         static::assertTrue(MapLockedEvent::from($message)->isSome());
+        static::assertSame('The map is locked', MapLockedEvent::from($message)->unwrap()->summary());
     }
 
     #[Test]

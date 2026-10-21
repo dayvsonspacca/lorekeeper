@@ -10,6 +10,7 @@ use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
 final class PlayerAwayUpdatedEventTest extends TestCase
@@ -67,5 +68,29 @@ final class PlayerAwayUpdatedEventTest extends TestCase
         $this->expectExceptionMessage("away is 'maybe', not true or false");
 
         PlayerAwayUpdatedEvent::from(DelimitedMessage::from('%xt%uotls%-1%hero%afk:maybe%')->unwrap());
+    }
+
+    #[Test]
+    public function it_rejects_a_json_away_that_is_not_a_boolean(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('away is not true or false');
+
+        PlayerAwayUpdatedEvent::from(
+            JsonMessage::from(
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"hilise","o":{"afk":"maybe"}}}}',
+            )->unwrap(),
+        );
+    }
+
+    #[Test]
+    #[TestWith(['{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","o":{"afk":false}}}}'])]
+    #[TestWith(['{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"","o":{"afk":false}}}}'])]
+    public function it_rejects_an_away_update_without_the_player(string $json): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('player name is missing or invalid');
+
+        PlayerAwayUpdatedEvent::from(JsonMessage::from($json)->unwrap());
     }
 }
