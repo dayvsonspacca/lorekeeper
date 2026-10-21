@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
+use Lorekeeper\Apps\Desktop\Native\LocalTime;
 
 final readonly class Realm
 {
@@ -25,7 +26,7 @@ final readonly class Realm
     /** @param list<Account> $accounts */
     public static function of(array $accounts, Carbon $now): self
     {
-        $today = $now->copy()->startOfDay();
+        $today = LocalTime::startOfToday($now);
         $online = count(array_filter(
             $accounts,
             static fn(Account $account): bool => $account->latestRun?->status->isActive() ?? false,

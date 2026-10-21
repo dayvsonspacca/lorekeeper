@@ -8,8 +8,10 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Repeater;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 use Lorekeeper\Apps\Desktop\Bots\BotScript;
+use Lorekeeper\Apps\Desktop\Bots\Realm;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Backpack;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Feed;
@@ -26,6 +28,7 @@ use Lorekeeper\Apps\Desktop\Livewire\RunBoard;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
+use Lorekeeper\Apps\Desktop\Native\LocalTime;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -94,6 +97,7 @@ final class DesktopTest extends TestCase
     #[Test]
     public function the_home_shows_what_a_bot_in_the_game_sees(): void
     {
+        $this->travelTo(Carbon::parse('2026-10-20 15:00:00', 'UTC'));
         $this->botInTheGame();
 
         Livewire::test(Bots::class)->assertSeeInOrder([
@@ -117,6 +121,28 @@ final class DesktopTest extends TestCase
             'XP / hour',
             'Watch the run',
         ]);
+    }
+
+    #[Test]
+    public function times_and_today_follow_the_timezone_of_the_computer(): void
+    {
+        config(['desktop.timezone' => 'America/Recife']);
+        $this->travelTo(Carbon::parse('2026-10-21 01:00:00', 'UTC'));
+        $run = $this->account()->runs()->create();
+        $run->log('Joined icestormarena');
+        $run->tasks()->create([
+            'script' => BotScript::LevelUp,
+            'parameters' => ['level' => 10],
+            'status' => TaskStatus::Done,
+            'started_at' => Carbon::parse('2026-10-20 21:00:00', 'UTC'),
+            'finished_at' => Carbon::parse('2026-10-20 22:00:00', 'UTC'),
+            'gold' => 50,
+        ]);
+
+        Livewire::test(RunBoard::class, ['run' => $run])->assertSee('22:00:00');
+        static::assertSame(1, Realm::of([], now())->tasksDone);
+        static::assertSame(50, Realm::of([], now())->gold);
+        static::assertSame('2026-10-20 03:00:00', LocalTime::startOfToday()->format('Y-m-d H:i:s'));
     }
 
     #[Test]

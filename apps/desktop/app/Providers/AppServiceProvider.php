@@ -18,6 +18,7 @@ use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
 use Lorekeeper\Apps\Desktop\Bots\Notifier\SilentNotifier;
 use Lorekeeper\Apps\Desktop\Native\BootstrapCache;
 use Lorekeeper\Apps\Desktop\Native\InstallationKey;
+use Lorekeeper\Apps\Desktop\Native\LocalTime;
 use Lorekeeper\Apps\Desktop\Native\MainWindow;
 use Lorekeeper\Apps\Desktop\Native\Tray;
 use Native\Desktop\Events\MenuBar\MenuBarCreated;
@@ -29,6 +30,8 @@ final class AppServiceProvider extends ServiceProvider
     #[Override]
     public function register(): void
     {
+        config(['desktop.timezone' => LocalTime::detect()]);
+
         if (config('nativephp-internal.running') && !config('app.debug')) {
             config(['app.key' => new InstallationKey(storage_path('installation.key'))->read(config('app.cipher'))]);
         }

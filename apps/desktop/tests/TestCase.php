@@ -20,6 +20,8 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        config(['desktop.timezone' => 'UTC']);
+
         $this->launcher = new FakeLauncher();
         $this->app?->instance(Launcher::class, $this->launcher);
 

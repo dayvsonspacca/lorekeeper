@@ -16,6 +16,7 @@ use Livewire\Component;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotRunLog;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
+use Lorekeeper\Apps\Desktop\Native\LocalTime;
 
 final class RunBoard extends Component implements HasActions, HasSchemas
 {
@@ -105,7 +106,7 @@ final class RunBoard extends Component implements HasActions, HasSchemas
                 ->get()
                 ->reverse()
                 ->map(static fn(BotRunLog $log): array => [
-                    'at' => $log->created_at->format('H:i:s'),
+                    'at' => LocalTime::clock($log->created_at),
                     'message' => $log->message,
                     'level' => $log->level->value,
                     'task' => $log->bot_task_id,

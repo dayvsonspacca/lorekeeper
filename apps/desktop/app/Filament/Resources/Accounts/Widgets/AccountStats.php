@@ -10,6 +10,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
+use Lorekeeper\Apps\Desktop\Native\LocalTime;
 use Override;
 
 final class AccountStats extends StatsOverviewWidget
@@ -30,7 +31,7 @@ final class AccountStats extends StatsOverviewWidget
             Stat::make('Online now', $online)->icon(Heroicon::OutlinedSignal)->color('success'),
             Stat::make(
                 'Runs today',
-                BotRun::query()->where('created_at', '>=', now()->startOfDay())->count(),
+                BotRun::query()->where('created_at', '>=', LocalTime::startOfToday())->count(),
             )->icon(Heroicon::OutlinedPlay),
         ];
     }

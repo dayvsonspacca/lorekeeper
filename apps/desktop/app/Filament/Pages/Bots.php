@@ -18,6 +18,7 @@ use Lorekeeper\Apps\Desktop\Filament\Resources\BotRuns\Schemas\TaskForm;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotRunLog;
+use Lorekeeper\Apps\Desktop\Native\LocalTime;
 use Override;
 
 final class Bots extends Page
@@ -154,7 +155,7 @@ final class Bots extends Page
                 ->get()
                 ->reverse()
                 ->map(static fn(BotRunLog $log): array => [
-                    'at' => $log->created_at->format('H:i:s'),
+                    'at' => LocalTime::clock($log->created_at),
                     'message' => $log->message,
                     'level' => $log->level->value,
                 ])

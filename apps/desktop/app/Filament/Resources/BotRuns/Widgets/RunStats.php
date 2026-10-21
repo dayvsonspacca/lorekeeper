@@ -11,6 +11,7 @@ use Lorekeeper\Apps\Desktop\Bots\RunStatus;
 use Lorekeeper\Apps\Desktop\Bots\TaskStatus;
 use Lorekeeper\Apps\Desktop\Models\BotRun;
 use Lorekeeper\Apps\Desktop\Models\BotTask;
+use Lorekeeper\Apps\Desktop\Native\LocalTime;
 use Override;
 
 final class RunStats extends StatsOverviewWidget
@@ -36,7 +37,7 @@ final class RunStats extends StatsOverviewWidget
                 'Tasks done today',
                 BotTask::query()
                     ->where('status', TaskStatus::Done)
-                    ->where('finished_at', '>=', now()->startOfDay())
+                    ->where('finished_at', '>=', LocalTime::startOfToday())
                     ->count(),
             )->icon(Heroicon::OutlinedCheckCircle),
             Stat::make('Failed in 24h', BotTask::query()
