@@ -1,9 +1,9 @@
 <x-filament-panels::page>
     @assets
         <link rel="stylesheet" href="{{ asset('drawflow/drawflow.min.css') }}">
-        <link rel="stylesheet" href="{{ asset('css/flow-editor.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/flow-editor.css') }}?v={{ filemtime(public_path('css/flow-editor.css')) }}">
         <script src="{{ asset('drawflow/drawflow.min.js') }}"></script>
-        <script src="{{ asset('js/flow-editor.js') }}"></script>
+        <script src="{{ asset('js/flow-editor.js') }}?v={{ filemtime(public_path('js/flow-editor.js')) }}"></script>
     @endassets
 
     <div class="lk-flow" x-data="flowEditor" wire:ignore>

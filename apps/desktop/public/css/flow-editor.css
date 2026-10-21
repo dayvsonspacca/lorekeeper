@@ -4,7 +4,7 @@
     --lk-flow-start: #4ade80;
     display: grid;
     grid-template-columns: 12.5rem minmax(0, 1fr) 17rem;
-    height: calc(100vh - 8.5rem);
+    height: calc(100dvh - var(--lk-flow-top, 8.5rem) - 2rem);
     min-height: 28rem;
     border: 1px solid var(--gray-800);
     border-radius: .75rem;
@@ -184,7 +184,7 @@
 .lk-flow .drawflow .drawflow-node.lk-node--wrong { border-color: #d97706; box-shadow: 0 0 0 1px #d97706, 0 6px 18px rgba(0, 0, 0, .35); }
 
 .lk-node__head { display: flex; align-items: center; gap: .5rem; font-weight: 600; }
-.lk-node__icon { display: grid; place-items: center; color: var(--lk-flow-action); }
+.lk-node__icon { display: grid; flex: none; place-items: center; width: 1rem; height: 1rem; color: var(--lk-flow-action); }
 .lk-node--check .lk-node__icon { color: var(--lk-flow-check); }
 .lk-node__icon svg { width: 1rem; height: 1rem; }
 .lk-node__summary { margin-top: .25rem; color: var(--gray-400); font-size: .75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

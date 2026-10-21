@@ -1,6 +1,7 @@
 (() => {
     const EXITS = { action: ['next', 'failed'], check: ['yes', 'no'] };
     const SAVE_AFTER = 600;
+    const BEND = 60;
 
     const plain = (value) => JSON.parse(JSON.stringify(value));
 
@@ -18,6 +19,7 @@
         let start = null;
         let timer = null;
         let shortcut = null;
+        let framing = null;
 
         const exits = (kind) => (kinds[kind]?.check ? EXITS.check : EXITS.action);
 
@@ -51,10 +53,22 @@
             },
 
             init() {
+                this.$el.style.setProperty('--lk-flow-top', `${this.$el.getBoundingClientRect().top + window.scrollY}px`);
                 flow = new Drawflow(this.$refs.canvas);
                 flow.curvature = 0.45;
                 flow.zoom_min = 0.4;
                 flow.zoom_max = 1.6;
+                const curve = flow.createCurvature.bind(flow);
+                flow.createCurvature = (fromX, fromY, toX, toY, curvature, type) => {
+                    if (toX >= fromX) {
+                        return curve(fromX, fromY, toX, toY, curvature, type);
+                    }
+
+                    const middle = (fromY + toY) / 2;
+
+                    return ` M ${fromX} ${fromY} C ${fromX + BEND} ${fromY} ${fromX + BEND} ${middle} ${fromX} ${middle}`
+                        + ` L ${toX} ${middle} C ${toX - BEND} ${middle} ${toX - BEND} ${toY} ${toX} ${toY}`;
+                };
                 flow.start();
 
                 const removeNode = flow.removeNodeId.bind(flow);
@@ -75,6 +89,11 @@
                 this.draw(config.drawing ?? {});
                 this.fit();
                 this.listen();
+                framing = new ResizeObserver(() => this.fit());
+                framing.observe(this.$refs.canvas);
+                for (const event of ['translate', 'zoom', 'nodeMoved', 'nodeCreated', 'connectionCreated']) {
+                    flow.on(event, () => framing.disconnect());
+                }
                 this.mark();
 
                 shortcut = (event) => {
@@ -92,6 +111,7 @@
                 }
 
                 window.removeEventListener('keydown', shortcut);
+                framing.disconnect();
                 flow.node_selected = null;
                 flow.connection_selected = null;
             },
@@ -143,11 +163,11 @@
                 const top = Math.min(...all.map((node) => node.pos_y));
                 const right = Math.max(...all.map((node) => node.pos_x)) + 240;
                 const bottom = Math.max(...all.map((node) => node.pos_y)) + 90;
-                const zoom = Math.max(0.75, Math.min(1, (shown.width - 96) / (right - left), (shown.height - 96) / (bottom - top)));
+                const zoom = Math.max(flow.zoom_min, Math.min(1, (shown.width - 96) / (right - left), (shown.height - 128) / (bottom - top)));
                 flow.zoom = zoom;
                 flow.zoom_last_value = zoom;
-                flow.canvas_x = 48 - left * zoom;
-                flow.canvas_y = 64 - top * zoom;
+                flow.canvas_x = Math.max(48, (shown.width - (right - left) * zoom) / 2) - left * zoom;
+                flow.canvas_y = Math.max(64, (shown.height - (bottom - top) * zoom) / 2) - top * zoom;
                 flow.precanvas.style.transform = `translate(${flow.canvas_x}px, ${flow.canvas_y}px) scale(${zoom})`;
             },
 
