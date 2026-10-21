@@ -48,6 +48,18 @@ final class TemporaryItemsAddedEventTest extends TestCase
     }
 
     #[Test]
+    public function more_of_an_item_already_held_is_not_a_temporary_item(): void
+    {
+        static::assertTrue(
+            TemporaryItemsAddedEvent::from(
+                JsonMessage::from(
+                    '{"t":"xt","b":{"r":-1,"o":{"cmd":"addItems","items":{"5586":{"iQty":1,"iQtyNow":11,"CharItemID":695329010,"bBank":0}},"msg":""}}}',
+                )->unwrap(),
+            )->isNone(),
+        );
+    }
+
+    #[Test]
     public function it_rejects_items_it_cannot_read(): void
     {
         $this->expectException(MalformedEventException::class);

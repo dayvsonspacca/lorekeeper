@@ -35,8 +35,8 @@ final readonly class TemporaryItemsAddedEvent implements Event
         }
 
         try {
-            $items = Type\dict(Type\string(), Type\shape([
-                'ItemID' => Type\positive_int(),
+            $items = Type\dict(Type\positive_int(), Type\shape([
+                'ItemID' => Type\optional(Type\positive_int()),
                 'sName' => Type\optional(Type\non_empty_string()),
                 'sType' => Type\optional(Type\string()),
                 'bTemp' => Type\optional(Type\bool()),
@@ -47,12 +47,15 @@ final readonly class TemporaryItemsAddedEvent implements Event
         }
 
         $added = [];
-        foreach ($items as $entry) {
+        foreach ($items as $id => $entry) {
             if (!($entry['bTemp'] ?? false) || !array_key_exists('sName', $entry)) {
                 continue;
             }
 
-            $added[] = new PlayerItem(ItemKinds::read($entry, static::class), new Quantity($entry['iQty']));
+            $added[] = new PlayerItem(ItemKinds::read([
+                'ItemID' => $id,
+                ...$entry,
+            ], static::class), new Quantity($entry['iQty']));
         }
 
         return $added === [] ? Option\none() : Option\some(new static($added));
