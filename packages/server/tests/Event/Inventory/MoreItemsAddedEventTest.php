@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Tests\Event\Inventory;
 
 use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
+use Lorekeeper\Server\Event\Inventory\MoreTemporaryItemsAddedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -20,12 +21,15 @@ final class MoreItemsAddedEventTest extends TestCase
         JSON;
 
     #[Test]
-    public function more_of_an_item_already_held_comes_with_its_id_and_quantity_only(): void
+    public function more_of_a_quest_item_already_held_comes_with_its_id_and_quantity_only(): void
     {
-        $event = MoreItemsAddedEvent::from(JsonMessage::from(self::ANOTHER_GORILLAPHANT)->unwrap())->unwrap();
+        $event = MoreTemporaryItemsAddedEvent::from(JsonMessage::from(self::ANOTHER_GORILLAPHANT)->unwrap())->unwrap();
 
         static::assertSame([5574, 1], [$event->items[0]->item->value, $event->items[0]->quantity->value]);
-        static::assertSame('Got 1 more of item 5574', $event->summary());
+        static::assertSame('Got for now 1 more of item 5574', $event->summary());
+        static::assertTrue(
+            MoreItemsAddedEvent::from(JsonMessage::from(self::ANOTHER_GORILLAPHANT)->unwrap())->isNone(),
+        );
         static::assertTrue(
             TemporaryItemsAddedEvent::from(JsonMessage::from(self::ANOTHER_GORILLAPHANT)->unwrap())->isNone(),
         );
@@ -46,6 +50,37 @@ final class MoreItemsAddedEventTest extends TestCase
             $event->items[0]->held?->value,
         ]);
         static::assertSame('Got 1 more of item 5586, 11 held now', $event->summary());
+        static::assertTrue(
+            MoreTemporaryItemsAddedEvent::from(
+                JsonMessage::from(
+                    '{"t":"xt","b":{"r":-1,"o":{"cmd":"addItems","items":{"5586":{"iQty":1,"iQtyNow":11,"CharItemID":695329010,"bBank":0}},"msg":""}}}',
+                )->unwrap(),
+            )->isNone(),
+        );
+    }
+
+    #[Test]
+    public function a_new_kept_item_straight_into_the_inventory_is_not_read_yet(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('a new kept item came straight into the inventory');
+
+        MoreItemsAddedEvent::from(
+            JsonMessage::from(
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"addItems","items":{"9392":{"ItemID":9392,"sName":"This Might Be A Token","iLvl":1,"bTemp":false,"sType":"Item","iQty":1}}}}}',
+            )->unwrap(),
+        );
+    }
+
+    #[Test]
+    public function an_item_that_matches_no_known_shape_is_refused(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('an added item matches no known shape');
+
+        MoreItemsAddedEvent::from(
+            JsonMessage::from('{"t":"xt","b":{"r":-1,"o":{"cmd":"addItems","items":{"5586":{"iQty":1}}}}}')->unwrap(),
+        );
     }
 
     #[Test]
