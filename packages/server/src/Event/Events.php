@@ -18,10 +18,10 @@ use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
-use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
-use Lorekeeper\Server\Event\Inventory\MoreTemporaryItemsAddedEvent;
+use Lorekeeper\Server\Event\Inventory\PermanentItemsStackedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
-use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
+use Lorekeeper\Server\Event\Inventory\TemporaryItemsGainedEvent;
+use Lorekeeper\Server\Event\Inventory\TemporaryItemsStackedEvent;
 use Lorekeeper\Server\Event\Item\ItemEquippedEvent;
 use Lorekeeper\Server\Event\Item\ItemUnequippedEvent;
 use Lorekeeper\Server\Event\Item\ItemUnwornEvent;
@@ -78,9 +78,9 @@ final readonly class Events
         SkillsLoadedEvent::class,
         ConnectionEstablishedEvent::class,
         PlayerInventoryLoadedEvent::class,
-        TemporaryItemsAddedEvent::class,
-        MoreItemsAddedEvent::class,
-        MoreTemporaryItemsAddedEvent::class,
+        TemporaryItemsGainedEvent::class,
+        PermanentItemsStackedEvent::class,
+        TemporaryItemsStackedEvent::class,
         ItemDroppedEvent::class,
         ItemsEnhancedEvent::class,
         DropPickedUpEvent::class,

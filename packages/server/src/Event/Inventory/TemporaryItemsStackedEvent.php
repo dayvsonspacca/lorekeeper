@@ -7,18 +7,18 @@ namespace Lorekeeper\Server\Event\Inventory;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Inventory\Helper\AddedItemKind;
-use Lorekeeper\Server\Event\Inventory\Helper\AddedItems;
+use Lorekeeper\Server\Event\Inventory\Helper\ItemArrival;
+use Lorekeeper\Server\Event\Inventory\Helper\ItemArrivals;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
-final readonly class MoreTemporaryItemsAddedEvent implements Event
+final readonly class TemporaryItemsStackedEvent implements Event
 {
     use NamedAfterClass;
 
-    /** @param non-empty-list<AddedItem> $items */
+    /** @param non-empty-list<StackedItem> $items */
     public function __construct(
         public array $items,
     ) {}
@@ -28,12 +28,12 @@ final readonly class MoreTemporaryItemsAddedEvent implements Event
     public static function from(Message $message): Option\Option
     {
         $items = [];
-        foreach (AddedItems::of($message, static::class) ?? [] as [$kind, $entry]) {
-            if ($kind !== AddedItemKind::MoreTemporary) {
+        foreach (ItemArrivals::of($message, static::class) ?? [] as [$kind, $entry]) {
+            if ($kind !== ItemArrival::TemporaryStacked) {
                 continue;
             }
 
-            $items[] = new AddedItem(new ItemId($entry['ItemID']), new Quantity($entry['iQty']));
+            $items[] = new StackedItem(new ItemId($entry['ItemID']), new Quantity($entry['iQty']));
         }
 
         return $items === [] ? Option\none() : Option\some(new static($items));
@@ -44,7 +44,7 @@ final readonly class MoreTemporaryItemsAddedEvent implements Event
     {
         return 'Got for now '
         . implode(', ', array_map(
-            static fn(AddedItem $added): string => "{$added->quantity->value} more of item {$added->item->value}",
+            static fn(StackedItem $added): string => "{$added->quantity->value} more of item {$added->item->value}",
             $this->items,
         ));
     }

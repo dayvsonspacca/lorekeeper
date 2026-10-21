@@ -7,18 +7,18 @@ namespace Lorekeeper\Server\Event\Inventory;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Inventory\Helper\AddedItemKind;
-use Lorekeeper\Server\Event\Inventory\Helper\AddedItems;
+use Lorekeeper\Server\Event\Inventory\Helper\ItemArrival;
+use Lorekeeper\Server\Event\Inventory\Helper\ItemArrivals;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
-final readonly class MoreItemsAddedEvent implements Event
+final readonly class PermanentItemsStackedEvent implements Event
 {
     use NamedAfterClass;
 
-    /** @param non-empty-list<AddedItem> $items */
+    /** @param non-empty-list<StackedItem> $items */
     public function __construct(
         public array $items,
     ) {}
@@ -28,13 +28,13 @@ final readonly class MoreItemsAddedEvent implements Event
     public static function from(Message $message): Option\Option
     {
         $items = [];
-        foreach (AddedItems::of($message, static::class) ?? [] as [$kind, $entry]) {
+        foreach (ItemArrivals::of($message, static::class) ?? [] as [$kind, $entry]) {
             $held = $entry['iQtyNow'] ?? null;
-            if ($kind !== AddedItemKind::MoreKept || $held === null) {
+            if ($kind !== ItemArrival::PermanentStacked || $held === null) {
                 continue;
             }
 
-            $items[] = new AddedItem(new ItemId($entry['ItemID']), new Quantity($entry['iQty']), new Quantity($held));
+            $items[] = new StackedItem(new ItemId($entry['ItemID']), new Quantity($entry['iQty']), new Quantity($held));
         }
 
         return $items === [] ? Option\none() : Option\some(new static($items));
@@ -45,7 +45,7 @@ final readonly class MoreItemsAddedEvent implements Event
     {
         return 'Got '
         . implode(', ', array_map(
-            static fn(AddedItem $added): string => (
+            static fn(StackedItem $added): string => (
                 "{$added->quantity->value} more of item {$added->item->value}"
                 . ($added->held === null ? '' : ", {$added->held->value} held now")
             ),

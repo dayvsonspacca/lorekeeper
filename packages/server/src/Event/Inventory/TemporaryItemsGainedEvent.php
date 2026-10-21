@@ -7,15 +7,15 @@ namespace Lorekeeper\Server\Event\Inventory;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Inventory\Helper\AddedItemKind;
-use Lorekeeper\Server\Event\Inventory\Helper\AddedItems;
+use Lorekeeper\Server\Event\Inventory\Helper\ItemArrival;
+use Lorekeeper\Server\Event\Inventory\Helper\ItemArrivals;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
-final readonly class TemporaryItemsAddedEvent implements Event
+final readonly class TemporaryItemsGainedEvent implements Event
 {
     use NamedAfterClass;
 
@@ -29,8 +29,8 @@ final readonly class TemporaryItemsAddedEvent implements Event
     public static function from(Message $message): Option\Option
     {
         $items = [];
-        foreach (AddedItems::of($message, static::class) ?? [] as [$kind, $entry]) {
-            if ($kind !== AddedItemKind::NewTemporary) {
+        foreach (ItemArrivals::of($message, static::class) ?? [] as [$kind, $entry]) {
+            if ($kind !== ItemArrival::TemporaryGained) {
                 continue;
             }
 

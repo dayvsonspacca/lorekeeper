@@ -14,14 +14,14 @@ use Psl\Type\Exception\CoercionException;
 /**
  * @psalm-type Entry = array{ItemID: positive-int, sName?: non-empty-string, bTemp?: bool, iQty: positive-int, iQtyNow?: positive-int, ...}
  */
-final readonly class AddedItems
+final readonly class ItemArrivals
 {
     /**
      * @param class-string<Event> $event
      *
      * @throws MalformedEventException
      *
-     * @return null|list<array{AddedItemKind, Entry}>
+     * @return null|list<array{ItemArrival, Entry}>
      */
     public static function of(Message $message, string $event): ?array
     {
@@ -55,16 +55,16 @@ final readonly class AddedItems
      *
      * @throws MalformedEventException
      */
-    private static function kind(array $entry, string $event): AddedItemKind
+    private static function kind(array $entry, string $event): ItemArrival
     {
         return match (true) {
-            array_key_exists('sName', $entry) && ($entry['bTemp'] ?? false) => AddedItemKind::NewTemporary,
+            array_key_exists('sName', $entry) && ($entry['bTemp'] ?? false) => ItemArrival::TemporaryGained,
             array_key_exists('sName', $entry) => throw new MalformedEventException(
                 $event,
-                'a new kept item came straight into the inventory, which is not read yet',
+                'a new permanent item came straight into the inventory, which is not read yet',
             ),
-            array_key_exists('iQtyNow', $entry) => AddedItemKind::MoreKept,
-            array_key_exists('ItemID', $entry) => AddedItemKind::MoreTemporary,
+            array_key_exists('iQtyNow', $entry) => ItemArrival::PermanentStacked,
+            array_key_exists('ItemID', $entry) => ItemArrival::TemporaryStacked,
             default => throw new MalformedEventException($event, 'an added item matches no known shape'),
         };
     }

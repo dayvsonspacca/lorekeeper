@@ -22,12 +22,12 @@ use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Quest\QuestPeriod;
-use Lorekeeper\Server\Event\Inventory\AddedItem;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
-use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
+use Lorekeeper\Server\Event\Inventory\PermanentItemsStackedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
-use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
+use Lorekeeper\Server\Event\Inventory\StackedItem;
+use Lorekeeper\Server\Event\Inventory\TemporaryItemsGainedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
 use Lorekeeper\Server\Event\Quest\QuestCompletedEvent;
@@ -55,7 +55,7 @@ final class EldersBloodScriptTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsAddedEvent([
+            new TemporaryItemsGainedEvent([
                 new PlayerItem(
                     new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant'), new ItemLevel(1)),
                     new Quantity(50),
@@ -100,7 +100,7 @@ final class EldersBloodScriptTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsAddedEvent([
+            new TemporaryItemsGainedEvent([
                 new PlayerItem(
                     new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant'), new ItemLevel(1)),
                     new Quantity(50),
@@ -109,7 +109,7 @@ final class EldersBloodScriptTest extends TestCase
             [
                 new QuestCompletedEvent(new QuestId(802), new QuestName("Experiment 107: Elder's Blood Potion")),
                 new ItemsTurnedInEvent([new TurnedInItem(new ItemId(5574), new Quantity(50))]),
-                new MoreItemsAddedEvent([new AddedItem(new ItemId(5586), new Quantity(1), new Quantity(11))]),
+                new PermanentItemsStackedEvent([new StackedItem(new ItemId(5586), new Quantity(1), new Quantity(11))]),
             ],
         ]);
 

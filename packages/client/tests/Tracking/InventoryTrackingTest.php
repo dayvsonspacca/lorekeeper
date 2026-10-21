@@ -35,7 +35,7 @@ use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
-use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
+use Lorekeeper\Server\Event\Inventory\TemporaryItemsGainedEvent;
 use Lorekeeper\Server\Event\Player\PlayerData;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
@@ -53,8 +53,8 @@ final class InventoryTrackingTest extends TestCase
     {
         $inventory = new PlayerInventory(new PlayerItems([self::token(3)]), new Quantity(30));
 
-        $inventory = InventoryTracking::follow($inventory, new TemporaryItemsAddedEvent([self::ore(1)]), self::me());
-        $inventory = InventoryTracking::follow($inventory, new TemporaryItemsAddedEvent([self::ore(2)]), self::me());
+        $inventory = InventoryTracking::follow($inventory, new TemporaryItemsGainedEvent([self::ore(1)]), self::me());
+        $inventory = InventoryTracking::follow($inventory, new TemporaryItemsGainedEvent([self::ore(2)]), self::me());
         static::assertSame([3, 3], [
             $inventory->quantity(new ItemId(42_658)),
             $inventory->temporary->find(new ItemId(42_658))->unwrap()->quantity->value,

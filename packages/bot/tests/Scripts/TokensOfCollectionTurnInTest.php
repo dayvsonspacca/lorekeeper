@@ -19,10 +19,10 @@ use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Quest\QuestPeriod;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Inventory\AddedItem;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
-use Lorekeeper\Server\Event\Inventory\MoreItemsAddedEvent;
+use Lorekeeper\Server\Event\Inventory\PermanentItemsStackedEvent;
+use Lorekeeper\Server\Event\Inventory\StackedItem;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
 use Lorekeeper\Server\Event\Quest\QuestCompletedEvent;
@@ -76,7 +76,7 @@ final class TokensOfCollectionTurnInTest extends TestCase
             null,
             null,
             null,
-            new MoreItemsAddedEvent([new AddedItem(new ItemId(9392), new Quantity(1), new Quantity(2))]),
+            new PermanentItemsStackedEvent([new StackedItem(new ItemId(9392), new Quantity(1), new Quantity(2))]),
         ];
     }
 

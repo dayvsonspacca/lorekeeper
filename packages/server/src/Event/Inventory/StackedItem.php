@@ -7,7 +7,7 @@ namespace Lorekeeper\Server\Event\Inventory;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Support\Quantity;
 
-final readonly class AddedItem
+final readonly class StackedItem
 {
     public function __construct(
         public ItemId $item,
