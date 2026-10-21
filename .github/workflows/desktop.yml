@@ -1,0 +1,25 @@
+name: Desktop
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - 'apps/desktop/**'
+      - 'packages/**'
+      - '.github/workflows/app.yml'
+      - '.github/workflows/desktop.yml'
+  pull_request:
+    paths: *paths
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    uses: ./.github/workflows/app.yml
+    with:
+      app: desktop

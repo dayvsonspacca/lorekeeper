@@ -5,7 +5,10 @@
   </picture>
 </h1>
 
-[![CI](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/ci.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/ci.yml)
+[![Quality](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/quality.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/quality.yml)
+[![Packages](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/packages.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/packages.yml)
+[![Desktop](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/desktop.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/desktop.yml)
+[![Recorder](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/recorder.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/recorder.yml)
 [![Coverage](https://img.shields.io/badge/coverage-report-blue)](https://dayvsonspacca.github.io/lorekeeper/)
 
 A toolbox for [AdventureQuest Worlds](https://www.aq.com/): apps that play the game, built on framework-free PHP

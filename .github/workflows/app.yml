@@ -1,0 +1,32 @@
+name: App
+
+on:
+  workflow_call:
+    inputs:
+      app:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/${{ inputs.app }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, pdo_sqlite, pcntl, curl, xmlreader
+          coverage: none
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/composer
+          key: composer-${{ inputs.app }}-${{ hashFiles(format('apps/{0}/composer.json', inputs.app), 'packages/*/composer.json') }}
+      - run: composer install --no-interaction --no-progress
+      - run: vendor/bin/phpunit --no-progress

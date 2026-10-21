@@ -1,0 +1,25 @@
+name: Recorder
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - 'apps/recorder/**'
+      - 'packages/**'
+      - '.github/workflows/app.yml'
+      - '.github/workflows/recorder.yml'
+  pull_request:
+    paths: *paths
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recorder-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    uses: ./.github/workflows/app.yml
+    with:
+      app: recorder

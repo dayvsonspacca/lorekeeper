@@ -1,42 +1,25 @@
-name: CI
+name: Packages
 
 on:
   push:
-  pull_request:
     branches: [main]
+    paths: &paths
+      - 'packages/**'
+      - 'config/phpunit.xml.dist'
+      - 'composer.json'
+      - 'Justfile'
+      - '.github/workflows/packages.yml'
+  pull_request:
+    paths: *paths
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: packages-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  PHP_EXTENSIONS: intl, pdo_sqlite, pcntl, curl, xmlreader
-
 jobs:
-  quality:
-    name: Quality (mago)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: ${{ env.PHP_EXTENSIONS }}
-          coverage: none
-      - uses: extractions/setup-just@v4
-      - uses: actions/cache@v6
-        with:
-          path: ~/.cache/composer
-          key: composer-8.5-${{ hashFiles('composer.json', 'packages/*/composer.json') }}
-      - run: just install
-      - run: just fmt --dry-run
-      - run: just lint
-      - run: just analyze
-      - run: just guard
-
   tests:
     name: Tests (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
@@ -49,7 +32,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: ${{ env.PHP_EXTENSIONS }}
+          extensions: intl, pdo_sqlite, pcntl, curl, xmlreader
           coverage: ${{ matrix.php == '8.5' && 'pcov' || 'none' }}
       - uses: extractions/setup-just@v4
       - uses: actions/cache@v6
@@ -69,7 +52,7 @@ jobs:
   coverage:
     name: Publish coverage
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [quality, tests]
+    needs: tests
     runs-on: ubuntu-latest
     permissions:
       pages: write
