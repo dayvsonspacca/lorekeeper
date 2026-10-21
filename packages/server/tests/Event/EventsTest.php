@@ -48,6 +48,7 @@ final class EventsTest extends TestCase
                     'Event',
                     'NoticeEvent',
                     'CombatRoundEvent',
+                    'InventoryUpdatedEvent',
                     'RewardedEvent',
                     'MapJoinedEvent',
                     'MapRefusedEvent',

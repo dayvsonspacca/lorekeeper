@@ -6,8 +6,6 @@ namespace Lorekeeper\Server\Event\Inventory;
 
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Support\Quantity;
-use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -16,10 +14,8 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
-final readonly class DropPickedUpEvent implements Event
+final readonly class DropPickedUpEvent extends InventoryUpdatedEvent
 {
-    use NamedAfterClass;
-
     public function __construct(
         public ItemId $item,
         public Quantity $picked,

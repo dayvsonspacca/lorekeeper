@@ -13,13 +13,13 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\PlayerItem;
-use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
+use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-final class PlayerInventoryLoadedEventTest extends TestCase
+final class InventoryLoadedEventTest extends TestCase
 {
     private const string HILISE = <<<'JSON'
         {"t":"xt","b":{"r":-1,"o":{"cmd":"loadInventoryBig","items":[{"ItemID":17585,"sName":"Blade of Awe","sType":"Sword","sES":"Weapon","iLvl":1,"iRty":20,"iRng":25,"iQty":1,"bUpg":false,"bEquip":false,"EnhID":0},{"ItemID":30629,"sName":"Necrotic Sword of Doom","sType":"Sword","sES":"Weapon","iLvl":1,"iRty":36,"iRng":10,"iQty":1,"bUpg":false,"bEquip":true,"EnhID":52370,"EnhLvl":100,"EnhRty":7,"EnhPatternID":9,"ProcID":4}],"procs":{"4":{"nam":"Health Vampire","desc":"Deals 80% damage and lifesteals for 125% base damage (before stats).","typ":"ma","cd":0,"range":3000,"damage":0.8,"tgt":"h","pct":50,"ref":"aa"}}}}}
@@ -44,14 +44,14 @@ final class PlayerInventoryLoadedEventTest extends TestCase
         static::assertInstanceOf(Resource::class, $voucher->item);
         static::assertSame(
             'Inventory loaded: 5 items',
-            PlayerInventoryLoadedEvent::from(JsonMessage::from(self::INVENTORY)->unwrap())->unwrap()->summary(),
+            InventoryLoadedEvent::from(JsonMessage::from(self::INVENTORY)->unwrap())->unwrap()->summary(),
         );
     }
 
     #[Test]
     public function it_reads_what_is_equipped_and_the_effect_of_an_enhancement(): void
     {
-        $items = PlayerInventoryLoadedEvent::from(JsonMessage::from(self::HILISE)->unwrap())->unwrap()->items;
+        $items = InventoryLoadedEvent::from(JsonMessage::from(self::HILISE)->unwrap())->unwrap()->items;
         $sword = $items->find(new ItemId(30_629))->unwrap();
         $awe = $items->find(new ItemId(17_585))->unwrap();
 
@@ -99,7 +99,7 @@ final class PlayerInventoryLoadedEventTest extends TestCase
         $this->expectExceptionMessage('an item is in the inventory more than once');
 
         $sword = ['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => 'Sword', 'iLvl' => 1];
-        PlayerInventoryLoadedEvent::from(
+        InventoryLoadedEvent::from(
             JsonMessage::from(json_encode(['b' => ['o' => [
                 'cmd' => 'loadInventoryBig',
                 'items' => [$sword, $sword],
@@ -111,7 +111,7 @@ final class PlayerInventoryLoadedEventTest extends TestCase
     public function it_ignores_other_commands(): void
     {
         static::assertTrue(
-            PlayerInventoryLoadedEvent::from(JsonMessage::from('{"b":{"o":{"cmd":"loadShop"}}}')->unwrap())->isNone(),
+            InventoryLoadedEvent::from(JsonMessage::from('{"b":{"o":{"cmd":"loadShop"}}}')->unwrap())->isNone(),
         );
     }
 
@@ -120,14 +120,14 @@ final class PlayerInventoryLoadedEventTest extends TestCase
     {
         $this->expectException(MalformedEventException::class);
 
-        PlayerInventoryLoadedEvent::from(JsonMessage::from('{"b":{"o":{"cmd":"loadInventoryBig"}}}')->unwrap());
+        InventoryLoadedEvent::from(JsonMessage::from('{"b":{"o":{"cmd":"loadInventoryBig"}}}')->unwrap());
     }
 
     /** @return list<PlayerItem> */
     private static function load(string $message): array
     {
         return array_values(
-            PlayerInventoryLoadedEvent::from(JsonMessage::from($message)->unwrap())
+            InventoryLoadedEvent::from(JsonMessage::from($message)->unwrap())
                 ->unwrap()
                 ->items->items->toArray(),
         );

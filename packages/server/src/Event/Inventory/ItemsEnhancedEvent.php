@@ -8,9 +8,7 @@ use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
-use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Item\Helper\Enhancements;
-use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -19,10 +17,8 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
-final readonly class ItemsEnhancedEvent implements Event
+final readonly class ItemsEnhancedEvent extends InventoryUpdatedEvent
 {
-    use NamedAfterClass;
-
     /** @param non-empty-list<ItemId> $items */
     public function __construct(
         public array $items,

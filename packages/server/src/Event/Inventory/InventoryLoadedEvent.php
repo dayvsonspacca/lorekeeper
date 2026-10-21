@@ -10,9 +10,7 @@ use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Support\Quantity;
-use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
-use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -21,10 +19,8 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
-final readonly class PlayerInventoryLoadedEvent implements Event
+final readonly class InventoryLoadedEvent extends InventoryUpdatedEvent
 {
-    use NamedAfterClass;
-
     public function __construct(
         public PlayerItems $items,
     ) {}

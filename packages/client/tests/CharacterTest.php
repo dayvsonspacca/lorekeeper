@@ -31,8 +31,8 @@ use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
-use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Map\RoomPlayer;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
@@ -64,7 +64,7 @@ final class CharacterTest extends TestCase
                 Option\none(),
             ),
         );
-        $me->hear(new PlayerInventoryLoadedEvent(new PlayerItems([$scales])));
+        $me->hear(new InventoryLoadedEvent(new PlayerItems([$scales])));
         $me->hear(new StatsUpdatedEvent([new Haste(0.331)]));
 
         $player = $me->player();

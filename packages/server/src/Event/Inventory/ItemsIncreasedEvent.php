@@ -4,22 +4,17 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Inventory;
 
-use Lorekeeper\Core\Player\PlayerItem;
+use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Support\Quantity;
-use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\Helper\ItemArrival;
 use Lorekeeper\Server\Event\Inventory\Helper\ItemArrivals;
-use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
-use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
-final readonly class TemporaryItemsGainedEvent implements Event
+final readonly class ItemsIncreasedEvent extends InventoryUpdatedEvent
 {
-    use NamedAfterClass;
-
-    /** @param non-empty-list<PlayerItem> $items */
+    /** @param non-empty-list<ItemIncrease> $items */
     public function __construct(
         public array $items,
     ) {}
@@ -30,11 +25,16 @@ final readonly class TemporaryItemsGainedEvent implements Event
     {
         $items = [];
         foreach (ItemArrivals::of($message, static::class) ?? [] as [$kind, $entry]) {
-            if ($kind !== ItemArrival::TemporaryGained) {
+            $held = $entry['iQtyNow'] ?? null;
+            if ($kind !== ItemArrival::ItemIncreased || $held === null) {
                 continue;
             }
 
-            $items[] = new PlayerItem(ItemKinds::read($entry, static::class), new Quantity($entry['iQty']));
+            $items[] = new ItemIncrease(
+                new ItemId($entry['ItemID']),
+                new Quantity($entry['iQty']),
+                new Quantity($held),
+            );
         }
 
         return $items === [] ? Option\none() : Option\some(new static($items));
@@ -43,9 +43,12 @@ final readonly class TemporaryItemsGainedEvent implements Event
     #[Override]
     public function summary(): string
     {
-        return 'Got for now '
+        return 'Got '
         . implode(', ', array_map(
-            static fn(PlayerItem $held): string => "{$held->quantity->value} {$held->item->name->value}",
+            static fn(ItemIncrease $added): string => (
+                "{$added->quantity->value} more of item {$added->item->value}"
+                . ($added->held === null ? '' : ", {$added->held->value} held now")
+            ),
             $this->items,
         ));
     }

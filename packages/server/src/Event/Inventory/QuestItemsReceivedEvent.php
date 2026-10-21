@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Inventory;
 
-use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
-use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\Helper\ItemArrival;
 use Lorekeeper\Server\Event\Inventory\Helper\ItemArrivals;
-use Lorekeeper\Server\Event\NamedAfterClass;
+use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
-final readonly class TemporaryItemsStackedEvent implements Event
+final readonly class QuestItemsReceivedEvent extends InventoryUpdatedEvent
 {
-    use NamedAfterClass;
-
-    /** @param non-empty-list<StackedItem> $items */
+    /** @param non-empty-list<PlayerItem> $items */
     public function __construct(
         public array $items,
     ) {}
@@ -29,11 +26,11 @@ final readonly class TemporaryItemsStackedEvent implements Event
     {
         $items = [];
         foreach (ItemArrivals::of($message, static::class) ?? [] as [$kind, $entry]) {
-            if ($kind !== ItemArrival::TemporaryStacked) {
+            if ($kind !== ItemArrival::QuestItemReceived) {
                 continue;
             }
 
-            $items[] = new StackedItem(new ItemId($entry['ItemID']), new Quantity($entry['iQty']));
+            $items[] = new PlayerItem(ItemKinds::read($entry, static::class), new Quantity($entry['iQty']));
         }
 
         return $items === [] ? Option\none() : Option\some(new static($items));
@@ -44,7 +41,7 @@ final readonly class TemporaryItemsStackedEvent implements Event
     {
         return 'Got for now '
         . implode(', ', array_map(
-            static fn(StackedItem $added): string => "{$added->quantity->value} more of item {$added->item->value}",
+            static fn(PlayerItem $held): string => "{$held->quantity->value} {$held->item->name->value}",
             $this->items,
         ));
     }

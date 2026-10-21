@@ -11,12 +11,12 @@ use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
+use Lorekeeper\Server\Event\Inventory\ItemIncrease;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
-use Lorekeeper\Server\Event\Inventory\PermanentItemsStackedEvent;
-use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
-use Lorekeeper\Server\Event\Inventory\StackedItem;
-use Lorekeeper\Server\Event\Inventory\TemporaryItemsGainedEvent;
-use Lorekeeper\Server\Event\Inventory\TemporaryItemsStackedEvent;
+use Lorekeeper\Server\Event\Inventory\ItemsIncreasedEvent;
+use Lorekeeper\Server\Event\Inventory\QuestItemsIncreasedEvent;
+use Lorekeeper\Server\Event\Inventory\QuestItemsReceivedEvent;
 use Lorekeeper\Server\Event\Player\PlayerData;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
@@ -36,23 +36,23 @@ final readonly class InventoryTracking
     ): PlayerInventory {
         return match (true) {
             $event instanceof DropPickedUpEvent => self::pickedUp($inventory, $event, $drops),
-            $event instanceof PlayerInventoryLoadedEvent => new PlayerInventory(
+            $event instanceof InventoryLoadedEvent => new PlayerInventory(
                 $event->items,
                 $inventory->slots,
                 $inventory->temporary,
             ),
             $event instanceof PlayerDataLoadedEvent => self::resized($inventory, PlayerDataTracking::mine($event, $me)),
-            $event instanceof TemporaryItemsGainedEvent => new PlayerInventory(
+            $event instanceof QuestItemsReceivedEvent => new PlayerInventory(
                 $inventory->permanent,
                 $inventory->slots,
                 self::added($inventory->temporary, $event->items),
             ),
-            $event instanceof PermanentItemsStackedEvent => new PlayerInventory(
+            $event instanceof ItemsIncreasedEvent => new PlayerInventory(
                 self::grown($inventory->permanent, $event->items),
                 $inventory->slots,
                 $inventory->temporary,
             ),
-            $event instanceof TemporaryItemsStackedEvent => new PlayerInventory(
+            $event instanceof QuestItemsIncreasedEvent => new PlayerInventory(
                 $inventory->permanent,
                 $inventory->slots,
                 self::grown($inventory->temporary, $event->items),
@@ -115,7 +115,7 @@ final readonly class InventoryTracking
         return new PlayerItems(array_values($held));
     }
 
-    /** @param non-empty-list<StackedItem> $more */
+    /** @param non-empty-list<ItemIncrease> $more */
     private static function grown(PlayerItems $items, array $more): PlayerItems
     {
         $held = $items->items->toArray();

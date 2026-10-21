@@ -58,13 +58,13 @@ final readonly class ItemArrivals
     private static function kind(array $entry, string $event): ItemArrival
     {
         return match (true) {
-            array_key_exists('sName', $entry) && ($entry['bTemp'] ?? false) => ItemArrival::TemporaryGained,
+            array_key_exists('sName', $entry) && ($entry['bTemp'] ?? false) => ItemArrival::QuestItemReceived,
             array_key_exists('sName', $entry) => throw new MalformedEventException(
                 $event,
-                'a new permanent item came straight into the inventory, which is not read yet',
+                'a new item came straight into the inventory, which is not read yet',
             ),
-            array_key_exists('iQtyNow', $entry) => ItemArrival::PermanentStacked,
-            array_key_exists('ItemID', $entry) => ItemArrival::TemporaryStacked,
+            array_key_exists('iQtyNow', $entry) => ItemArrival::ItemIncreased,
+            array_key_exists('ItemID', $entry) => ItemArrival::QuestItemIncreased,
             default => throw new MalformedEventException($event, 'an added item matches no known shape'),
         };
     }

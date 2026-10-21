@@ -20,8 +20,8 @@ use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\ActionTooSoonEvent;
+use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
-use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Server\Message\DelimitedMessage;
@@ -102,7 +102,7 @@ final class EnhanceScriptTest extends TestCase
     public function gear_with_an_enhancement_of_an_unhandled_type_is_left_alone(): void
     {
         $me = self::lorekeeper03();
-        $me->hear(PlayerInventoryLoadedEvent::from(JsonMessage::from(self::BLINDING_LIGHT)->unwrap())->unwrap());
+        $me->hear(InventoryLoadedEvent::from(JsonMessage::from(self::BLINDING_LIGHT)->unwrap())->unwrap());
 
         [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Lucky), $me, [self::shop()]);
 
@@ -142,7 +142,7 @@ final class EnhanceScriptTest extends TestCase
     private static function lorekeeper03(): Character
     {
         $me = Fixture::me(level: 23);
-        $me->hear(PlayerInventoryLoadedEvent::from(JsonMessage::from(self::INVENTORY)->unwrap())->unwrap());
+        $me->hear(InventoryLoadedEvent::from(JsonMessage::from(self::INVENTORY)->unwrap())->unwrap());
         $me->hear(
             new MonsterRewardedEvent(new Gold(35_178), new Experience(0), new ClassPoints(0), new MonsterSpawnId(1)),
         );

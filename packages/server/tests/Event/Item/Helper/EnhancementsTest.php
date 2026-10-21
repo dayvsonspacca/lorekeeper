@@ -12,7 +12,7 @@ use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementItem;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementRarity;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementType;
-use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
+use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Item\Helper\Enhancements;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
@@ -50,14 +50,14 @@ final class EnhancementsTest extends TestCase
     #[TestWith([9, EnhancementRarity::PlusTwoHundred])]
     public function it_reads_the_rarity_of_an_enhancement(int $rarity, EnhancementRarity $expected): void
     {
-        static::assertSame($expected, Enhancements::rarity($rarity, PlayerInventoryLoadedEvent::class));
+        static::assertSame($expected, Enhancements::rarity($rarity, InventoryLoadedEvent::class));
     }
 
     #[Test]
     public function an_item_without_an_enhancement_has_no_type_or_rarity(): void
     {
         static::assertNull(Enhancements::type(0));
-        static::assertNull(Enhancements::rarity(0, PlayerInventoryLoadedEvent::class));
+        static::assertNull(Enhancements::rarity(0, InventoryLoadedEvent::class));
     }
 
     #[Test]
@@ -94,11 +94,7 @@ final class EnhancementsTest extends TestCase
         $this->expectException(MalformedEventException::class);
         $this->expectExceptionMessage('an enhancement on an item is invalid');
 
-        Enhancements::applied(
-            ['EnhPatternID' => 9, 'EnhLvl' => 101, 'EnhRty' => 7],
-            [],
-            PlayerInventoryLoadedEvent::class,
-        );
+        Enhancements::applied(['EnhPatternID' => 9, 'EnhLvl' => 101, 'EnhRty' => 7], [], InventoryLoadedEvent::class);
     }
 
     #[Test]
@@ -110,7 +106,7 @@ final class EnhancementsTest extends TestCase
         Enhancements::applied(
             ['EnhPatternID' => 9, 'EnhLvl' => 100, 'EnhRty' => 7, 'ProcID' => 4],
             [4 => ['nam' => 'Health Vampire']],
-            PlayerInventoryLoadedEvent::class,
+            InventoryLoadedEvent::class,
         );
     }
 
@@ -125,7 +121,7 @@ final class EnhancementsTest extends TestCase
             'EnhPatternID' => 2,
             'EnhLvl' => 50,
             'EnhRty' => 3,
-        ], PlayerInventoryLoadedEvent::class);
+        ], InventoryLoadedEvent::class);
 
         static::assertInstanceOf(Cape::class, $cape);
         static::assertSame(EnhancementType::Fighter, $cape->enhancement->unwrap()->type);

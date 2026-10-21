@@ -6,19 +6,15 @@ namespace Lorekeeper\Server\Event\Inventory;
 
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Support\Quantity;
-use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\Helper\ItemArrival;
 use Lorekeeper\Server\Event\Inventory\Helper\ItemArrivals;
-use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
-final readonly class PermanentItemsStackedEvent implements Event
+final readonly class QuestItemsIncreasedEvent extends InventoryUpdatedEvent
 {
-    use NamedAfterClass;
-
-    /** @param non-empty-list<StackedItem> $items */
+    /** @param non-empty-list<ItemIncrease> $items */
     public function __construct(
         public array $items,
     ) {}
@@ -29,12 +25,11 @@ final readonly class PermanentItemsStackedEvent implements Event
     {
         $items = [];
         foreach (ItemArrivals::of($message, static::class) ?? [] as [$kind, $entry]) {
-            $held = $entry['iQtyNow'] ?? null;
-            if ($kind !== ItemArrival::PermanentStacked || $held === null) {
+            if ($kind !== ItemArrival::QuestItemIncreased) {
                 continue;
             }
 
-            $items[] = new StackedItem(new ItemId($entry['ItemID']), new Quantity($entry['iQty']), new Quantity($held));
+            $items[] = new ItemIncrease(new ItemId($entry['ItemID']), new Quantity($entry['iQty']));
         }
 
         return $items === [] ? Option\none() : Option\some(new static($items));
@@ -43,12 +38,9 @@ final readonly class PermanentItemsStackedEvent implements Event
     #[Override]
     public function summary(): string
     {
-        return 'Got '
+        return 'Got for now '
         . implode(', ', array_map(
-            static fn(StackedItem $added): string => (
-                "{$added->quantity->value} more of item {$added->item->value}"
-                . ($added->held === null ? '' : ", {$added->held->value} held now")
-            ),
+            static fn(ItemIncrease $added): string => "{$added->quantity->value} more of item {$added->item->value}",
             $this->items,
         ));
     }

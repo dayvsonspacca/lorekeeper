@@ -27,7 +27,7 @@ use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementItem;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementRarity;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementType;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
+use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -132,7 +132,7 @@ final class ItemKindsTest extends TestCase
                 'EnhPatternID' => 9,
                 'ProcID' => 4,
             ],
-            PlayerInventoryLoadedEvent::class,
+            InventoryLoadedEvent::class,
             [4 => [
                 'nam' => 'Health Vampire',
                 'desc' => 'Deals 80% damage and lifesteals for 125% base damage (before stats).',
@@ -179,7 +179,7 @@ final class ItemKindsTest extends TestCase
             'EnhRty' => 5,
             'EnhPatternID' => 10,
             'ProcID' => 7,
-        ], PlayerInventoryLoadedEvent::class);
+        ], InventoryLoadedEvent::class);
 
         static::assertInstanceOf(Weapon::class, $item);
         static::assertSame(0, $item->damage->variance->percent);
@@ -223,7 +223,7 @@ final class ItemKindsTest extends TestCase
             'EnhRty' => 10,
             'EnhPatternID' => 10,
             'ProcID' => 7,
-        ], PlayerInventoryLoadedEvent::class);
+        ], InventoryLoadedEvent::class);
     }
 
     #[Test]
@@ -247,7 +247,7 @@ final class ItemKindsTest extends TestCase
     public function it_rejects_unknown_item_types_in_the_name_of_the_event(): void
     {
         $this->expectException(MalformedEventException::class);
-        $this->expectExceptionMessage(PlayerInventoryLoadedEvent::class . ": unknown item type 'Spaceship'");
+        $this->expectExceptionMessage(InventoryLoadedEvent::class . ": unknown item type 'Spaceship'");
 
         self::read('Spaceship');
     }
@@ -258,7 +258,7 @@ final class ItemKindsTest extends TestCase
         $this->expectException(MalformedEventException::class);
         $this->expectExceptionMessage('an item has no id, name or level');
 
-        ItemKinds::read(['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => 'Sword'], PlayerInventoryLoadedEvent::class);
+        ItemKinds::read(['ItemID' => 1, 'sName' => 'Hero Item', 'sType' => 'Sword'], InventoryLoadedEvent::class);
     }
 
     #[Test]
@@ -273,7 +273,7 @@ final class ItemKindsTest extends TestCase
             'EnhLvl' => 1,
             'EnhRty' => 1,
             'EnhPatternID' => 1,
-        ], PlayerInventoryLoadedEvent::class);
+        ], InventoryLoadedEvent::class);
 
         static::assertInstanceOf(Helm::class, $item);
         static::assertSame(1, $item->level->value);
@@ -291,7 +291,7 @@ final class ItemKindsTest extends TestCase
             'sType' => 'Sword',
             'iLvl' => 1,
             'iRng' => 101,
-        ], PlayerInventoryLoadedEvent::class);
+        ], InventoryLoadedEvent::class);
     }
 
     private static function read(string $type): Item
@@ -301,6 +301,6 @@ final class ItemKindsTest extends TestCase
             'sName' => 'Hero Item',
             'sType' => $type,
             'iLvl' => 1,
-        ], PlayerInventoryLoadedEvent::class);
+        ], InventoryLoadedEvent::class);
     }
 }

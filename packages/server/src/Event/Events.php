@@ -16,12 +16,12 @@ use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
-use Lorekeeper\Server\Event\Inventory\PermanentItemsStackedEvent;
-use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
-use Lorekeeper\Server\Event\Inventory\TemporaryItemsGainedEvent;
-use Lorekeeper\Server\Event\Inventory\TemporaryItemsStackedEvent;
+use Lorekeeper\Server\Event\Inventory\ItemsIncreasedEvent;
+use Lorekeeper\Server\Event\Inventory\QuestItemsIncreasedEvent;
+use Lorekeeper\Server\Event\Inventory\QuestItemsReceivedEvent;
 use Lorekeeper\Server\Event\Item\ItemEquippedEvent;
 use Lorekeeper\Server\Event\Item\ItemUnequippedEvent;
 use Lorekeeper\Server\Event\Item\ItemUnwornEvent;
@@ -77,10 +77,10 @@ final readonly class Events
         ResurrectedEvent::class,
         SkillsLoadedEvent::class,
         ConnectionEstablishedEvent::class,
-        PlayerInventoryLoadedEvent::class,
-        TemporaryItemsGainedEvent::class,
-        PermanentItemsStackedEvent::class,
-        TemporaryItemsStackedEvent::class,
+        InventoryLoadedEvent::class,
+        QuestItemsReceivedEvent::class,
+        ItemsIncreasedEvent::class,
+        QuestItemsIncreasedEvent::class,
         ItemDroppedEvent::class,
         ItemsEnhancedEvent::class,
         DropPickedUpEvent::class,

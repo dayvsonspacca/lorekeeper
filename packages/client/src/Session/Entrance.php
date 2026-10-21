@@ -23,7 +23,7 @@ use Lorekeeper\Core\World\Map\MapPlayer;
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
+use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Player\PlayerData;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
@@ -63,7 +63,7 @@ final class Entrance
         match (true) {
             $event instanceof LoginSucceededEvent => $this->socketId = $event->socketId,
             $event instanceof MovedToMapEvent => $this->arrival = $event,
-            $event instanceof PlayerInventoryLoadedEvent => $this->inventory = $event->items,
+            $event instanceof InventoryLoadedEvent => $this->inventory = $event->items,
             $event instanceof PlayerDataLoadedEvent => $this->data = $this->mine($event) ?? $this->data,
             $event instanceof ClassChangedEvent => $this->isMine($event->player) ? ($this->class = $event) : null,
             $event instanceof SkillsLoadedEvent => $this->skills = $event,
@@ -81,7 +81,7 @@ final class Entrance
         return array_keys(array_filter([
             LoginSucceededEvent::class => $this->socketId === null,
             MovedToMapEvent::class => $this->me() === null,
-            PlayerInventoryLoadedEvent::class => $this->inventory === null,
+            InventoryLoadedEvent::class => $this->inventory === null,
             PlayerDataLoadedEvent::class => $this->data === null,
             ClassChangedEvent::class => $this->class === null,
             SkillsLoadedEvent::class => $this->skills === null,

@@ -6,8 +6,7 @@ namespace Lorekeeper\Server\Event\Quest;
 
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Support\Quantity;
-use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\NamedAfterClass;
+use Lorekeeper\Server\Event\Inventory\InventoryUpdatedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -16,10 +15,8 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
-final readonly class ItemsTurnedInEvent implements Event
+final readonly class ItemsTurnedInEvent extends InventoryUpdatedEvent
 {
-    use NamedAfterClass;
-
     /** @param non-empty-list<TurnedInItem> $items */
     public function __construct(
         public array $items,

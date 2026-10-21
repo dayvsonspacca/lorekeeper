@@ -23,11 +23,11 @@ use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Quest\QuestPeriod;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
-use Lorekeeper\Server\Event\Inventory\PermanentItemsStackedEvent;
-use Lorekeeper\Server\Event\Inventory\PlayerInventoryLoadedEvent;
-use Lorekeeper\Server\Event\Inventory\StackedItem;
-use Lorekeeper\Server\Event\Inventory\TemporaryItemsGainedEvent;
+use Lorekeeper\Server\Event\Inventory\ItemIncrease;
+use Lorekeeper\Server\Event\Inventory\ItemsIncreasedEvent;
+use Lorekeeper\Server\Event\Inventory\QuestItemsReceivedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
 use Lorekeeper\Server\Event\Quest\QuestCompletedEvent;
@@ -55,7 +55,7 @@ final class EldersBloodScriptTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsGainedEvent([
+            new QuestItemsReceivedEvent([
                 new PlayerItem(
                     new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant'), new ItemLevel(1)),
                     new Quantity(50),
@@ -88,7 +88,7 @@ final class EldersBloodScriptTest extends TestCase
     public function a_reward_that_lands_straight_in_the_inventory_needs_no_pick_up(): void
     {
         $me = Fixture::me(level: 30);
-        $me->hear(new PlayerInventoryLoadedEvent(new PlayerItems([new PlayerItem(
+        $me->hear(new InventoryLoadedEvent(new PlayerItems([new PlayerItem(
             new Resource(new ItemId(5586), new ItemName("Elders' Blood"), new ItemLevel(1)),
             new Quantity(10),
         )])));
@@ -100,7 +100,7 @@ final class EldersBloodScriptTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsGainedEvent([
+            new QuestItemsReceivedEvent([
                 new PlayerItem(
                     new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant'), new ItemLevel(1)),
                     new Quantity(50),
@@ -109,7 +109,7 @@ final class EldersBloodScriptTest extends TestCase
             [
                 new QuestCompletedEvent(new QuestId(802), new QuestName("Experiment 107: Elder's Blood Potion")),
                 new ItemsTurnedInEvent([new TurnedInItem(new ItemId(5574), new Quantity(50))]),
-                new PermanentItemsStackedEvent([new StackedItem(new ItemId(5586), new Quantity(1), new Quantity(11))]),
+                new ItemsIncreasedEvent([new ItemIncrease(new ItemId(5586), new Quantity(1), new Quantity(11))]),
             ],
         ]);
 
@@ -136,7 +136,7 @@ final class EldersBloodScriptTest extends TestCase
     public function it_does_nothing_while_holding_all_the_blood_the_game_allows(): void
     {
         $me = Fixture::me(level: 30);
-        $me->hear(new PlayerInventoryLoadedEvent(new PlayerItems([new PlayerItem(
+        $me->hear(new InventoryLoadedEvent(new PlayerItems([new PlayerItem(
             new Resource(new ItemId(5586), new ItemName("Elders' Blood"), new ItemLevel(1)),
             new Quantity(20),
         )])));

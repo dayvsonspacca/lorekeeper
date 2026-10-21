@@ -19,7 +19,7 @@ use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Core\World\Quest\QuestPeriod;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Inventory\TemporaryItemsGainedEvent;
+use Lorekeeper\Server\Event\Inventory\QuestItemsReceivedEvent;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
 use Lorekeeper\Server\Event\Quest\QuestCompletedEvent;
 use Lorekeeper\Server\Event\Quest\QuestLoadedEvent;
@@ -65,7 +65,7 @@ final class EldersBloodTurnInTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsGainedEvent([
+            new QuestItemsReceivedEvent([
                 new PlayerItem(
                     new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant'), new ItemLevel(1)),
                     new Quantity(50),

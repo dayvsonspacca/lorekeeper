@@ -6,7 +6,7 @@ namespace Lorekeeper\Server\Event\Inventory\Helper;
 
 enum ItemArrival
 {
-    case TemporaryGained;
-    case TemporaryStacked;
-    case PermanentStacked;
+    case QuestItemReceived;
+    case QuestItemIncreased;
+    case ItemIncreased;
 }

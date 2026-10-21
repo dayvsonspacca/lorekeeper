@@ -29,7 +29,7 @@ use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
-use Lorekeeper\Server\Event\Inventory\TemporaryItemsGainedEvent;
+use Lorekeeper\Server\Event\Inventory\QuestItemsReceivedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
@@ -60,7 +60,7 @@ final class CryptoTokenScriptTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsGainedEvent([new PlayerItem(
+            new QuestItemsReceivedEvent([new PlayerItem(
                 new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
             )]),
             [
@@ -154,7 +154,7 @@ final class CryptoTokenScriptTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsGainedEvent([new PlayerItem(
+            new QuestItemsReceivedEvent([new PlayerItem(
                 new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
             )]),
             new QuestCompletedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends")),
@@ -177,7 +177,7 @@ final class CryptoTokenScriptTest extends TestCase
             null,
             null,
             null,
-            new TemporaryItemsGainedEvent([new PlayerItem(
+            new QuestItemsReceivedEvent([new PlayerItem(
                 new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
             )]),
             new QuestTurnInRefusedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends"), 'Missing Badge'),
