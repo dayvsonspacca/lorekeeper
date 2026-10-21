@@ -1,11 +1,9 @@
-use std::path::Path;
 use std::thread;
 use std::time::Duration;
 
 use serde::Deserialize;
 use tauri::AppHandle;
 
-use crate::platform::{Current, Platform};
 use crate::{tray, window, Failure};
 
 const EVERY: Duration = Duration::from_secs(3);
@@ -14,17 +12,10 @@ const SECRET_HEADER: &str = "X-Lorekeeper-Secret";
 #[derive(Deserialize)]
 struct Poll {
     bots: Vec<String>,
-    notices: Vec<Notice>,
     reload: bool,
 }
 
-#[derive(Deserialize)]
-struct Notice {
-    title: String,
-    message: String,
-}
-
-pub fn watch(app: &AppHandle, url: &str, secret: &str, icon: &Path) {
+pub fn watch(app: &AppHandle, url: &str, secret: &str) {
     let mut shown: Vec<String> = Vec::new();
     loop {
         if let Err(failure) = window::open(app, url, secret) {
@@ -39,10 +30,6 @@ pub fn watch(app: &AppHandle, url: &str, secret: &str, icon: &Path) {
                     let _ = tray::update(&handle, &bots);
                 });
                 shown = poll.bots;
-            }
-
-            for notice in poll.notices {
-                Current::notify(icon, &notice.title, &notice.message);
             }
 
             if poll.reload {

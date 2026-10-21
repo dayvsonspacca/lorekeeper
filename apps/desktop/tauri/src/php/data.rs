@@ -3,7 +3,6 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use std::io;
 use std::path::{Path, PathBuf};
 
-const ICON: &[u8] = include_bytes!("../../icons/128x128.png");
 const INI: &str = "memory_limit = 512M\nvariables_order = \"EGPCS\"\nopcache.enable = 1\n";
 const STORAGE: [&str; 5] = [
     "app",
@@ -30,7 +29,6 @@ impl Data {
             .open(data.database())?;
         fs::create_dir_all(data.ini())?;
         fs::write(data.ini().join("lorekeeper.ini"), INI)?;
-        fs::write(data.icon(), ICON)?;
 
         Ok(data)
     }
@@ -49,10 +47,6 @@ impl Data {
 
     pub fn ini(&self) -> PathBuf {
         self.root.join("php")
-    }
-
-    pub fn icon(&self) -> PathBuf {
-        self.root.join("icon.png")
     }
 
     pub fn startup_log(&self) -> PathBuf {
@@ -139,6 +133,5 @@ mod tests {
         }
         assert!(data.database().is_file());
         assert!(data.ini().join("lorekeeper.ini").is_file());
-        assert_eq!(fs::read(data.icon()).unwrap(), ICON);
     }
 }
