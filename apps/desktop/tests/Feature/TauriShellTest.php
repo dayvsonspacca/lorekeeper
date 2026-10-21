@@ -82,14 +82,14 @@ final class TauriShellTest extends TestCase
     #[Test]
     public function only_the_shell_may_poll(): void
     {
-        $this->getJson('/shell')->assertNotFound();
-        $this->getJson('/shell', [Poll::SECRET_HEADER => 'a-guess'])->assertNotFound();
+        $this->getJson('/shell')->assertForbidden();
+        $this->getJson('/shell', [Poll::SECRET_HEADER => 'a-guess'])->assertForbidden();
 
         config(['desktop.shell_secret' => '']);
-        $this->getJson('/shell', [Poll::SECRET_HEADER => ''])->assertNotFound();
+        $this->getJson('/shell', [Poll::SECRET_HEADER => ''])->assertForbidden();
 
         config(['desktop.shell' => null, 'desktop.shell_secret' => $this->secret]);
-        $this->getJson('/shell', [Poll::SECRET_HEADER => $this->secret])->assertNotFound();
+        $this->getJson('/shell', [Poll::SECRET_HEADER => $this->secret])->assertForbidden();
         static::assertInstanceOf(SilentNotifier::class, app(Notifier::class));
     }
 

@@ -27,7 +27,7 @@ struct Notice {
 pub fn watch(app: &AppHandle, url: &str, secret: &str, icon: &Path) {
     let mut shown: Vec<String> = Vec::new();
     loop {
-        if let Err(failure) = window::open(app, url) {
+        if let Err(failure) = window::open(app, url, secret) {
             eprintln!("lorekeeper: could not open the app: {failure}");
         }
 

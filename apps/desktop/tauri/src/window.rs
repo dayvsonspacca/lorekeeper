@@ -3,6 +3,7 @@ use tauri::{App, AppHandle, Manager, Url, WebviewUrl, WebviewWindowBuilder, Wind
 use crate::Failure;
 
 const MAIN: &str = "main";
+const SECRET_QUERY: &str = "lorekeeper_secret";
 
 pub fn create(app: &App) -> tauri::Result<()> {
     WebviewWindowBuilder::new(app, MAIN, WebviewUrl::App("index.html".into()))
@@ -29,7 +30,7 @@ pub fn show(app: &AppHandle) {
     }
 }
 
-pub fn open(app: &AppHandle, url: &str) -> Result<(), Failure> {
+pub fn open(app: &AppHandle, url: &str, secret: &str) -> Result<(), Failure> {
     let Some(window) = app.get_webview_window(MAIN) else {
         return Ok(());
     };
@@ -39,7 +40,7 @@ pub fn open(app: &AppHandle, url: &str) -> Result<(), Failure> {
     }
 
     eprintln!("lorekeeper: the window is on {current}, opening {url}");
-    window.navigate(Url::parse(&format!("{url}/"))?)?;
+    window.navigate(entry(url, secret)?)?;
 
     Ok(())
 }
@@ -60,6 +61,13 @@ pub fn fail(app: &AppHandle, failure: &str) {
     }
 }
 
+fn entry(url: &str, secret: &str) -> Result<Url, Failure> {
+    let mut entry = Url::parse(&format!("{url}/"))?;
+    entry.query_pairs_mut().append_pair(SECRET_QUERY, secret);
+
+    Ok(entry)
+}
+
 fn on_app(current: &Url, url: &str) -> bool {
     current.as_str().starts_with(&format!("{url}/"))
 }
@@ -67,6 +75,14 @@ fn on_app(current: &Url, url: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_window_enters_the_app_with_the_secret() {
+        assert_eq!(
+            entry("http://127.0.0.1:8123", "c0ffee").unwrap().as_str(),
+            "http://127.0.0.1:8123/?lorekeeper_secret=c0ffee"
+        );
+    }
 
     #[test]
     fn only_a_page_of_the_app_counts_as_the_app() {

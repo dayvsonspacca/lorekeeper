@@ -15,7 +15,7 @@ final readonly class Poll
 
     public function __invoke(Request $request): JsonResponse
     {
-        abort_unless(Shell::trusts($request->header(self::SECRET_HEADER)), code: 404);
+        abort_unless(Shell::trusts($request->header(self::SECRET_HEADER)), code: 403);
 
         return response()->json([
             'bots' => Tray::bots(),

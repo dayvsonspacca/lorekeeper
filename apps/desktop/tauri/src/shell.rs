@@ -41,7 +41,7 @@ fn run(app: &AppHandle) -> Result<(), Failure> {
     app.state::<Server>().0.lock().unwrap().replace(server);
 
     wait_until_up(&url)?;
-    window::open(app, &url)?;
+    window::open(app, &url, &secret)?;
     poll::watch(app, &url, &secret, &php.icon());
 
     Ok(())
