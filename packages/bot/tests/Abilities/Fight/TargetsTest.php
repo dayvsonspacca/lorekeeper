@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Lorekeeper\Bot\Tests\Abilities\Fight;
 
 use Lorekeeper\Bot\Abilities\Fight\Targets;
+use Lorekeeper\Client\Command\Combat\Attack;
 use Lorekeeper\Client\Command\Combat\AttackMonsterCommand;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Combat\Targetable;
 use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
@@ -18,6 +20,7 @@ use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
+use Override;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -62,6 +65,46 @@ final class TargetsTest extends TestCase
         $this->expectExceptionMessage('Monster 13 does not stand in r8.');
 
         Targets::in(self::arena(), new MapCell('r8'), self::attack(13));
+    }
+
+    #[Test]
+    public function an_attack_aimed_at_something_other_than_a_monster_keeps_aiming_at_it_alone(): void
+    {
+        $aimed = new class implements Targetable {};
+        $attack = new readonly class($aimed) implements Attack {
+            public function __construct(
+                private Targetable $aimed,
+            ) {}
+
+            #[Override]
+            public function target(): Targetable
+            {
+                return $this->aimed;
+            }
+
+            #[Override]
+            public function with(SkillSlot $skill): static
+            {
+                return $this;
+            }
+
+            #[Override]
+            public function at(Targetable $target): static
+            {
+                return new static($target);
+            }
+
+            #[Override]
+            public function toMessage(): string
+            {
+                return '';
+            }
+        };
+
+        $targets = Targets::in(self::arena(), new MapCell('r9'), $attack);
+
+        static::assertSame($aimed, $targets->next());
+        static::assertSame($aimed, $targets->heard(new MonstersDiedEvent([new MonsterSpawnId(13)]))->next());
     }
 
     private static function arena(): Map

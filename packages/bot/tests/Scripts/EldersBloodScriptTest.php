@@ -6,6 +6,7 @@ namespace Lorekeeper\Bot\Tests\Scripts;
 
 use Lorekeeper\Bot\Scripts\EldersBloodScript;
 use Lorekeeper\Client\Script\Done;
+use Lorekeeper\Client\Script\Failed;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Tests\Fixture;
@@ -35,6 +36,8 @@ use Lorekeeper\Server\Event\Quest\QuestMarkedEvent;
 use Lorekeeper\Server\Event\Quest\TurnedInItem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psl\DateTime\Duration;
+use Psl\DateTime\Timestamp;
 use Psl\Option;
 
 final class EldersBloodScriptTest extends TestCase
@@ -142,6 +145,39 @@ final class EldersBloodScriptTest extends TestCase
 
         static::assertEquals(new Done("already holding the 20 Elders' Blood the game allows"), $result);
         static::assertSame([], self::sent($steps));
+    }
+
+    #[Test]
+    public function it_stops_when_the_server_does_not_accept_the_quest(): void
+    {
+        [$steps, $result] = Play::run(new EldersBloodScript(), Fixture::me(level: 30), [
+            Fixture::arrival('arcangrove', 7_101, ['LeftBack' => [2, 30]]),
+            null,
+            null,
+        ]);
+
+        static::assertEquals(
+            new Failed("the game would not give the quest Experiment 107: Elder's Blood Potion"),
+            $result,
+        );
+        static::assertCount(3, self::sent($steps));
+    }
+
+    #[Test]
+    public function it_stops_when_the_hunt_runs_out_of_time(): void
+    {
+        $now = Timestamp::fromParts(2026, 10, 16);
+        $script = new EldersBloodScript(static function () use (&$now): Timestamp {
+            return $now = $now->plus(Duration::hours(1));
+        });
+
+        [, $result] = Play::run($script, Fixture::me(level: 30), [
+            Fixture::arrival('arcangrove', 7_101, ['LeftBack' => [2, 30]]),
+            self::loaded(),
+            new QuestAcceptedEvent(new QuestId(802)),
+        ]);
+
+        static::assertEquals(new Failed('fewer than 50 Gorillaphants slain after 20 minutes'), $result);
     }
 
     private static function loaded(): QuestLoadedEvent

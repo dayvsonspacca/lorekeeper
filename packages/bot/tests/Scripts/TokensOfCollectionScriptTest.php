@@ -6,6 +6,7 @@ namespace Lorekeeper\Bot\Tests\Scripts;
 
 use Lorekeeper\Bot\Scripts\TokensOfCollectionScript;
 use Lorekeeper\Client\Script\Done;
+use Lorekeeper\Client\Script\Failed;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Tests\Fixture;
@@ -33,7 +34,10 @@ use Lorekeeper\Server\Event\Quest\QuestMarkedEvent;
 use Lorekeeper\Server\Event\Quest\TurnedInItem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psl\DateTime\Duration;
+use Psl\DateTime\Timestamp;
 use Psl\Option;
+use RuntimeException;
 
 final class TokensOfCollectionScriptTest extends TestCase
 {
@@ -96,6 +100,60 @@ final class TokensOfCollectionScriptTest extends TestCase
 
         static::assertEquals(new Done('Tokens of Collection was already taken today'), $result);
         static::assertCount(2, self::sent($steps));
+    }
+
+    #[Test]
+    public function a_loaded_quest_other_than_the_daily_does_not_count_as_done_and_a_refused_quest_stops_it(): void
+    {
+        $me = Fixture::me(level: 82);
+        $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 0, 25)));
+
+        [$steps, $result] = Play::run(new TokensOfCollectionScript(), $me, [
+            self::terrarium(),
+            new QuestLoadedEvent([new Quest(
+                new QuestId(802),
+                new QuestName("Experiment 107: Elder's Blood Potion"),
+                Option\none(),
+                [],
+                [],
+                [],
+                Option\some(new QuestMark(QuestPeriod::Day, 0, 25)),
+            )]),
+            null,
+        ]);
+
+        static::assertEquals(new Failed('the game would not give the quest Tokens of Collection'), $result);
+        static::assertCount(3, self::sent($steps));
+    }
+
+    #[Test]
+    public function it_stops_when_no_carnivorous_cricket_stands_in_r2(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('There is no Carnivorous Cricket in r2.');
+
+        Play::run(new TokensOfCollectionScript(), Fixture::me(level: 82), [
+            Fixture::arrivalOf('terrarium', 189_254, [Fixture::spawn(3, 'r2', Fixture::kind(13, 'Death on Wings'))]),
+            self::loaded(),
+            new QuestAcceptedEvent(new QuestId(1316)),
+        ]);
+    }
+
+    #[Test]
+    public function it_stops_when_the_hunt_runs_out_of_time(): void
+    {
+        $now = Timestamp::fromParts(2026, 10, 16);
+        $script = new TokensOfCollectionScript(static function () use (&$now): Timestamp {
+            return $now = $now->plus(Duration::hours(1));
+        });
+
+        [, $result] = Play::run($script, Fixture::me(level: 82), [
+            self::terrarium(),
+            self::loaded(),
+            new QuestAcceptedEvent(new QuestId(1316)),
+        ]);
+
+        static::assertEquals(new Failed('fewer than 2 tokens dropped after 10 minutes of hunting crickets'), $result);
     }
 
     private static function terrarium(): MovedToMapEvent

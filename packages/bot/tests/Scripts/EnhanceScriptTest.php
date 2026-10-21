@@ -130,6 +130,15 @@ final class EnhanceScriptTest extends TestCase
         static::assertSame([], self::sent($steps));
     }
 
+    #[Test]
+    public function it_stops_when_the_shop_does_not_open(): void
+    {
+        [$steps, $result] = Play::run(new EnhanceScript(EnhancementType::Lucky), self::lorekeeper03(), [null]);
+
+        static::assertEquals(new Failed('the Lucky enhancement shop did not open'), $result);
+        static::assertSame(['%xt%zm%loadShop%1%147%'], self::sent($steps));
+    }
+
     private static function lorekeeper03(): Character
     {
         $me = Fixture::me(level: 23);

@@ -13,10 +13,12 @@ use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
+use Lorekeeper\Server\Event\ActionTooSoonEvent;
 use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
 use Lorekeeper\Server\Event\Map\MapLockedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
+use Lorekeeper\Server\Message\DelimitedMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;
@@ -164,6 +166,34 @@ final class LevelUpScriptTest extends TestCase
         $this->expectExceptionMessage('Could not join oaklore: The map is locked');
 
         Play::run(self::script(target: 2), $me, [new MapLockedEvent()]);
+    }
+
+    #[Test]
+    public function past_level_ten_it_fights_at_the_gates_of_swordhavenundead_and_waits_when_told_it_was_too_soon(): void
+    {
+        $me = Fixture::me(level: 10, map: 'battleon');
+
+        [$steps, $result] = Play::run(self::script(target: 11), $me, [
+            Fixture::arrival('swordhavenundead', 2_046, ['Gates' => [1, 12]]),
+            null,
+            null,
+            null,
+            ActionTooSoonEvent::from(
+                DelimitedMessage::from('%xt%warning%-1%Please slow down. Last action was too soon!%')->unwrap(),
+            )->unwrap(),
+            new LeveledUpEvent(new PlayerLevel(11), new Experience(2000)),
+            null,
+        ]);
+
+        static::assertSame(
+            [
+                '%xt%zm%cmd%1%tfer%lorekeeper03%swordhavenundead%',
+                '%xt%zm%moveToCell%2046%Gates%Left%',
+                '%xt%zm%gar%2046%0%a1>m:1%wvz%',
+            ],
+            array_slice(self::sent($steps), offset: 0, length: 3),
+        );
+        static::assertEquals(new Done('Reached level 11'), $result);
     }
 
     private static function script(int $target): LevelUpScript

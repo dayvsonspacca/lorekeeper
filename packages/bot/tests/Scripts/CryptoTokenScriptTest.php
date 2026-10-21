@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Bot\Tests\Scripts;
 
 use Lorekeeper\Bot\Scripts\CryptoTokenScript;
+use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Done;
 use Lorekeeper\Client\Script\Failed;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Send;
+use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Item\ItemId;
@@ -28,6 +30,7 @@ use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\TemporaryItemsAddedEvent;
+use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
@@ -38,7 +41,9 @@ use Lorekeeper\Server\Event\Quest\QuestTurnInRefusedEvent;
 use Lorekeeper\Server\Event\Quest\TurnedInItem;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psl\DateTime\Duration;
 use Psl\Option;
+use RuntimeException;
 
 final class CryptoTokenScriptTest extends TestCase
 {
@@ -183,6 +188,29 @@ final class CryptoTokenScriptTest extends TestCase
             $result,
         );
         static::assertStringNotContainsString('getDrop', implode(' ', self::sent($steps)));
+    }
+
+    #[Test]
+    public function it_does_not_travel_when_already_in_boxes(): void
+    {
+        $me = Fixture::me(level: 4, map: 'boxes');
+        $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 2, 6)));
+
+        [$steps, $result] = Play::run(new CryptoTokenScript(), $me, [self::loaded()]);
+
+        static::assertEquals(new Done('Crypto Token was already taken today'), $result);
+        static::assertSame(['%xt%zm%getQuests%1%6187%'], self::sent($steps));
+    }
+
+    #[Test]
+    public function it_stops_when_the_server_never_answers_the_join(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Could not join boxes: no answer');
+
+        Play::run(new CryptoTokenScript(), Fixture::me(level: 4), [
+            new TimedOut(new Await([MovedToMapEvent::class], Duration::seconds(15))),
+        ]);
     }
 
     private static function loaded(): QuestLoadedEvent
