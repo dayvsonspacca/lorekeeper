@@ -48,4 +48,28 @@ final class PreferencesTest extends TestCase
         static::assertFalse($preferences->blocks(GameSetting::Whispers));
         static::assertTrue($preferences->blocks(GameSetting::Goto));
     }
+
+    #[Test]
+    public function the_app_settings_wait_for_a_later_version(): void
+    {
+        $page = Livewire::test(ManagePreferences::class)
+            ->assertSee([
+                'Game',
+                'Application',
+                'Update automatically',
+                'Start when the computer starts',
+                'Not available yet.',
+            ])
+            ->assertFormFieldDisabled('update_automatically')
+            ->assertFormFieldDisabled('start_with_computer')
+            ->set('data.update_automatically', true)
+            ->set('data.start_with_computer', true)
+            ->set('data.block_duels', false);
+
+        $page->call('save');
+
+        static::assertFalse(Preferences::current()->blocks(GameSetting::Duels));
+        static::assertArrayNotHasKey('update_automatically', Preferences::current()->getAttributes());
+        static::assertArrayNotHasKey('start_with_computer', Preferences::current()->getAttributes());
+    }
 }

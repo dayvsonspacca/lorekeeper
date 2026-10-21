@@ -36,6 +36,13 @@
     .lk-sidebar-logo { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: .5rem; }
     .lk-sidebar-logo:hover { background: var(--gray-800); }
     .lk-sidebar-logo svg { width: 1.75rem; height: 1.75rem; }
+    .lk-tabs .fi-tabs { gap: .25rem; padding: .375rem; border-bottom: 1px solid var(--gray-800); }
+    .lk-tabs .fi-tabs-item { padding: .5rem .875rem; border-radius: .5rem; color: var(--gray-400); font-weight: 500; }
+    .lk-tabs .fi-tabs-item:hover { color: var(--gray-200); background: var(--gray-800); }
+    .lk-tabs .fi-tabs-item.fi-active { color: var(--gray-950); background: var(--primary-400); }
+    .lk-tabs .fi-tabs-item.fi-active .fi-icon, .lk-tabs .fi-tabs-item.fi-active .fi-tabs-item-label { color: var(--gray-950); }
+    .lk-unavailable .fi-fo-field-label, .lk-unavailable [id$="-helper-text"] { opacity: .4; }
+    .lk-unavailable, .lk-unavailable * { cursor: not-allowed !important; }
     .lk-sidebar-bottom { flex: none; overflow: visible; padding-block: .75rem; }
     .fi-header-heading { font-size: 1.125rem; font-weight: 600; letter-spacing: 0; }
     .fi-main { padding-top: 1.25rem; }
