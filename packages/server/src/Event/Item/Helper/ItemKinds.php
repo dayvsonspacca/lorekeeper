@@ -31,6 +31,7 @@ use Psl\Type\Exception\CoercionException;
 final readonly class ItemKinds
 {
     private const int STEADINESS_THE_GAME_ASSUMES = 10;
+    private const int LEVEL_OF_AN_ITEM_WITHOUT_ONE = 1;
 
     /**
      * @param array<array-key, mixed> $entry
@@ -46,7 +47,7 @@ final readonly class ItemKinds
                 'ItemID' => Type\positive_int(),
                 'sName' => Type\non_empty_string(),
                 'sType' => Type\optional(Type\string()),
-                'iLvl' => Type\int_range(min: 1, max: 100),
+                'iLvl' => Type\int_range(min: 0, max: 100),
             ], allowUnknownFields: true)->coerce($entry);
         } catch (CoercionException $exception) {
             throw new MalformedEventException($event, 'an item has no id, name or level', $exception);
@@ -54,7 +55,7 @@ final readonly class ItemKinds
 
         $id = new ItemId($data['ItemID']);
         $name = new ItemName($data['sName']);
-        $level = new ItemLevel($data['iLvl']);
+        $level = new ItemLevel(max($data['iLvl'], self::LEVEL_OF_AN_ITEM_WITHOUT_ONE));
         $type = $data['sType'] ?? '';
         $weapon = self::weaponType($type);
         if ($weapon !== null) {

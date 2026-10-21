@@ -262,6 +262,24 @@ final class ItemKindsTest extends TestCase
     }
 
     #[Test]
+    public function an_item_of_level_zero_is_read_as_level_one(): void
+    {
+        $item = ItemKinds::read([
+            'ItemID' => 10_550,
+            'sName' => "Holy Fire's Gaze",
+            'sType' => 'Helm',
+            'iLvl' => 0,
+            'sES' => 'he',
+            'EnhLvl' => 1,
+            'EnhRty' => 1,
+            'EnhPatternID' => 1,
+        ], PlayerInventoryLoadedEvent::class);
+
+        static::assertInstanceOf(Helm::class, $item);
+        static::assertSame(1, $item->level->value);
+    }
+
+    #[Test]
     public function a_weapon_whose_damage_varies_out_of_range_cannot_be_read(): void
     {
         $this->expectException(MalformedEventException::class);
