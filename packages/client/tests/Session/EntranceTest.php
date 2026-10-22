@@ -10,10 +10,12 @@ use Lorekeeper\Client\Session\Entrance;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Currency\AdventureCoins;
 use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\Player\GameSetting;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerLevelProgress;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerQuestMarks;
+use Lorekeeper\Core\Player\PlayerSettings;
 use Lorekeeper\Core\Player\PlayerTag;
 use Lorekeeper\Core\Player\Wallet;
 use Lorekeeper\Core\Progression\Experience;
@@ -24,6 +26,8 @@ use Lorekeeper\Server\Event\Events;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Player\PlayerData;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
+use Lorekeeper\Server\Event\Player\PlayerSettingsData;
+use Lorekeeper\Server\Event\Player\PlayerSettingsLoadedEvent;
 use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -88,6 +92,29 @@ final class EntranceTest extends TestCase
 
         static::assertSame([], $entrance->missing());
         static::assertTrue($entrance->character()->player()->tags->has(PlayerTag::Member));
+    }
+
+    #[Test]
+    public function it_keeps_its_own_settings_and_not_those_of_others_in_the_room(): void
+    {
+        $entrance = self::entrance(
+            self::LOGIN,
+            self::ARRIVAL,
+            self::INVENTORY,
+            self::CLASS_CHANGE,
+            self::SKILLS,
+            self::VITALS,
+        );
+        $entrance->hear(new PlayerDataLoadedEvent([self::member(45_466)]));
+        $mine = new PlayerSettings([GameSetting::Goto]);
+        $entrance->hear(new PlayerSettingsLoadedEvent([
+            new PlayerSettingsData(new SocketId(45_466), new PlayerName('Hero'), $mine),
+        ]));
+        $entrance->hear(new PlayerSettingsLoadedEvent([
+            new PlayerSettingsData(new SocketId(1), new PlayerName('Hero2'), new PlayerSettings()),
+        ]));
+
+        static::assertSame($mine, $entrance->character()->player()->settings);
     }
 
     private static function entrance(string ...$messages): Entrance

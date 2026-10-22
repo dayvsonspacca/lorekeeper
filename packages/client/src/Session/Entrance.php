@@ -17,6 +17,7 @@ use Lorekeeper\Core\Player\PlayerClass;
 use Lorekeeper\Core\Player\PlayerInventory;
 use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSettings;
 use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\Player\PlayerTag;
 use Lorekeeper\Core\World\Map\MapPlayer;
@@ -27,6 +28,7 @@ use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Player\PlayerData;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
+use Lorekeeper\Server\Event\Player\PlayerSettingsLoadedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
@@ -49,6 +51,8 @@ final class Entrance
 
     private ?Vitals $vitals = null;
 
+    private ?PlayerSettings $settings = null;
+
     private Stats $stats;
 
     public function __construct(
@@ -65,6 +69,8 @@ final class Entrance
             $event instanceof MovedToMapEvent => $this->arrival = $event,
             $event instanceof InventoryLoadedEvent => $this->inventory = $event->items,
             $event instanceof PlayerDataLoadedEvent => $this->data = $this->mine($event) ?? $this->data,
+            $event instanceof PlayerSettingsLoadedEvent => $this->settings =
+                $this->settingsOf($event) ?? $this->settings,
             $event instanceof ClassChangedEvent => $this->isMine($event->player) ? ($this->class = $event) : null,
             $event instanceof SkillsLoadedEvent => $this->skills = $event,
             $event instanceof StatsUpdatedEvent => $this->stats = StatsTracking::follow($this->stats, $event),
@@ -133,6 +139,7 @@ final class Entrance
             $data->wallet,
             $data->marks,
             $this->stats,
+            $this->settings,
         );
         if ($data->member) {
             $player->tags->add(PlayerTag::Member);
@@ -163,6 +170,17 @@ final class Entrance
         foreach ($event->players as $player) {
             if ($this->isMine($player->socketId)) {
                 return $player;
+            }
+        }
+
+        return null;
+    }
+
+    private function settingsOf(PlayerSettingsLoadedEvent $event): ?PlayerSettings
+    {
+        foreach ($event->players as $player) {
+            if ($this->isMine($player->socketId)) {
+                return $player->settings;
             }
         }
 

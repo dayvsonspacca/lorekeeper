@@ -105,7 +105,7 @@ final class Character implements SubjectInterface
         }
 
         $this->player = self::tagged(
-            new Player($was->name, $progress, $vitals, $class, $inventory, $wallet, $marks, $stats),
+            new Player($was->name, $progress, $vitals, $class, $inventory, $wallet, $marks, $stats, $was->settings),
             $was,
             $member,
         );

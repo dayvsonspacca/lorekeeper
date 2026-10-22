@@ -24,6 +24,7 @@ use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerLevelProgress;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerQuestMarks;
+use Lorekeeper\Core\Player\PlayerSettings;
 use Lorekeeper\Core\Player\Wallet;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
@@ -54,6 +55,7 @@ final readonly class Characters
         array $monsters = [],
         ?PlayerClass $class = null,
         ?PlayerInventory $inventory = null,
+        ?PlayerSettings $settings = null,
     ): Character {
         return new Character(
             new SocketId(1),
@@ -69,6 +71,7 @@ final readonly class Characters
                 $inventory ?? new PlayerInventory(new PlayerItems([]), new Quantity(30)),
                 new Wallet(new Gold(0), new AdventureCoins(0)),
                 new PlayerQuestMarks(),
+                settings: $settings,
             ),
             new Location(
                 new AreaId(1),

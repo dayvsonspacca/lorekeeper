@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Client\Command\Settings;
+namespace Lorekeeper\Core\Player;
 
 enum GameSetting
 {

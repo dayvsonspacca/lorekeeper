@@ -6,7 +6,7 @@ namespace Lorekeeper\Apps\Desktop\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Lorekeeper\Client\Command\Settings\GameSetting;
+use Lorekeeper\Core\Player\GameSetting;
 use Override;
 
 /**

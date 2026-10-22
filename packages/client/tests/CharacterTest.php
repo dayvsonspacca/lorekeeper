@@ -14,10 +14,12 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
+use Lorekeeper\Core\Player\GameSetting;
 use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSettings;
 use Lorekeeper\Core\Progression\ClassPoints;
 use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\Support\Quantity;
@@ -74,6 +76,17 @@ final class CharacterTest extends TestCase
         static::assertSame('Blaze Binder', $player->class->class->name->value);
         static::assertSame($scales, $player->inventory->find(new ItemId(11_475))->unwrap());
         static::assertSame(0.331, $player->stats->haste->value);
+    }
+
+    #[Test]
+    public function it_keeps_the_settings_the_player_came_in_with(): void
+    {
+        $settings = new PlayerSettings([GameSetting::Goto]);
+        $me = Fixture::me(level: 4, settings: $settings);
+
+        $me->hear(new LeveledUpEvent(new PlayerLevel(5), new Experience(500)));
+
+        static::assertSame($settings, $me->player()->settings);
     }
 
     #[Test]

@@ -17,6 +17,7 @@ use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Item\Equipment\ClassItem;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Player\GameSetting;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\Player\PlayerTag;
@@ -66,7 +67,7 @@ final class ClientEnterTest extends TestCase
         JSON;
 
     private const string PLAYER_DATA = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"initUserDatas","a":[{"uid":45466,"data":{"strUsername":"made2903","intLevel":81,"intExp":4514754,"intExpToLevel":5280000,"intGold":6800132,"intCoins":2899,"iUpg":0,"iUpgDays":-5772,"iBagSlots":131,"id0":0,"id1":0,"id2":64,"id3":0,"id4":0,"id5":0,"id6":0,"id7":0,"iw0":0,"im0":0}}]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"initUserDatas","a":[{"uid":45466,"data":{"strUsername":"made2903","intLevel":81,"intExp":4514754,"intExpToLevel":5280000,"intGold":6800132,"intCoins":2899,"iUpg":0,"iUpgDays":-5772,"iBagSlots":131,"ia1":10128,"id0":0,"id1":0,"id2":64,"id3":0,"id4":0,"id5":0,"id6":0,"id7":0,"iw0":0,"im0":0}}]}}}
         JSON;
 
     #[Test]
@@ -113,6 +114,7 @@ final class ClientEnterTest extends TestCase
         static::assertFalse($player->tags->has(PlayerTag::Member));
         static::assertSame(131, $player->inventory->slots->value);
         static::assertTrue($player->marks->has(new QuestMark(QuestPeriod::Day, 2, 6)));
+        static::assertTrue($player->settings?->allows(GameSetting::Goto));
         static::assertSame([2585, 2585, 100, 100], [
             $player->vitals->health->current->value,
             $player->vitals->health->maximum->value,

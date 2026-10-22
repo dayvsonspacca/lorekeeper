@@ -9,7 +9,7 @@ use Livewire\Livewire;
 use Lorekeeper\Apps\Desktop\Filament\Pages\ManagePreferences;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
-use Lorekeeper\Client\Command\Settings\GameSetting;
+use Lorekeeper\Core\Player\GameSetting;
 use PHPUnit\Framework\Attributes\Test;
 
 final class PreferencesTest extends TestCase

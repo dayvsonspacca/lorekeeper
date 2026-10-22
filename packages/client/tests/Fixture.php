@@ -31,6 +31,7 @@ use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerLevelProgress;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerQuestMarks;
+use Lorekeeper\Core\Player\PlayerSettings;
 use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\Player\Wallet;
 use Lorekeeper\Core\Progression\ClassPoints;
@@ -59,8 +60,12 @@ use Psl\Option;
 
 final readonly class Fixture
 {
-    public static function me(int $level = 1, string $map = 'battleon', int $area = 1): Character
-    {
+    public static function me(
+        int $level = 1,
+        string $map = 'battleon',
+        int $area = 1,
+        ?PlayerSettings $settings = null,
+    ): Character {
         return new Character(
             new SocketId(122_628),
             new Player(
@@ -78,6 +83,7 @@ final readonly class Fixture
                 new PlayerInventory(new PlayerItems([]), new Quantity(30)),
                 new Wallet(new Gold(0), new AdventureCoins(0)),
                 new PlayerQuestMarks(),
+                settings: $settings,
             ),
             new Location(
                 new AreaId($area),

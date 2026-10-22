@@ -8,10 +8,10 @@ use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Command\Settings\ChangeGameSettingCommand;
-use Lorekeeper\Client\Command\Settings\GameSetting;
 use Lorekeeper\Client\PeerClosedException;
 use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Stopped;
+use Lorekeeper\Core\Player\GameSetting;
 use Psl\Async\CancellationTokenInterface;
 use Psl\DateTime\Duration;
 
@@ -23,15 +23,17 @@ final readonly class HideFromPlayers
         Client $client,
         CancellationTokenInterface $stop,
     ): null|Disconnected|Stopped {
-        $blocked = array_map(
-            self::named(...),
-            array_values(array_filter(GameSetting::cases(), $preferences->blocks(...))),
-        );
+        $known = $client->character()->player()->settings;
+        $changes = array_values(array_filter(
+            GameSetting::cases(),
+            static fn(GameSetting $setting): bool => $known?->allows($setting) !== !$preferences->blocks($setting),
+        ));
+        $blocked = array_map(self::named(...), array_values(array_filter($changes, $preferences->blocks(...))));
         if ($blocked !== []) {
             $account->log('Hiding from other players: ' . implode(', ', $blocked));
         }
 
-        foreach (GameSetting::cases() as $setting) {
+        foreach ($changes as $setting) {
             try {
                 $client->send(new ChangeGameSettingCommand($setting, allowed: !$preferences->blocks($setting)));
             } catch (PeerClosedException $closed) {
