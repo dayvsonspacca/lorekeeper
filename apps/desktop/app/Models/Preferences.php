@@ -17,6 +17,8 @@ use Override;
  * @property bool $block_party_invites
  * @property bool $block_guild_invites
  * @property bool $block_duels
+ * @property bool $private_rooms
+ * @property bool $play_together
  */
 #[Fillable([
     'block_goto',
@@ -25,6 +27,8 @@ use Override;
     'block_party_invites',
     'block_guild_invites',
     'block_duels',
+    'private_rooms',
+    'play_together',
 ])]
 final class Preferences extends Model
 {
@@ -45,6 +49,8 @@ final class Preferences extends Model
         'block_party_invites' => true,
         'block_guild_invites' => true,
         'block_duels' => true,
+        'private_rooms' => true,
+        'play_together' => true,
     ];
 
     public static function current(): self
@@ -65,6 +71,6 @@ final class Preferences extends Model
     #[Override]
     protected function casts(): array
     {
-        return array_fill_keys(array_keys(self::BLOCKS), value: 'boolean');
+        return array_fill_keys(['private_rooms', 'play_together', ...array_keys(self::BLOCKS)], value: 'boolean');
     }
 }

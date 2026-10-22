@@ -7,6 +7,7 @@ namespace Lorekeeper\Apps\Desktop\Bots;
 use Lorekeeper\Apps\Desktop\Bots\Notifier\Notice;
 use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
 use Lorekeeper\Apps\Desktop\Models\Account;
+use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Lorekeeper\Apps\Desktop\Scripts\FlowNode;
 use Lorekeeper\Apps\Desktop\Scripts\FlowScript;
 use Lorekeeper\Apps\Desktop\Scripts\InvalidFlowFile;
@@ -41,10 +42,12 @@ final readonly class PlayScript
 
         try {
             $outcome = Outcome::of($client->run(
-                new FlowScript($flow, entering: static function (FlowNode $node) use ($account): void {
+                PrivateRooms::asPreferred(new FlowScript($flow, entering: static function (FlowNode $node) use (
+                    $account,
+                ): void {
                     $account->stepping($node->step->describe());
                     $account->log("→ {$node->step->describe()}");
-                }),
+                }), Preferences::current()),
                 new LinkedCancellationToken($stop, $cancel->token()),
             ));
         } finally {

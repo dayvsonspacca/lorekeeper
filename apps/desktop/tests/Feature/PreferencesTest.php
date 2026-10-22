@@ -17,9 +17,12 @@ final class PreferencesTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function a_new_install_hides_from_everyone(): void
+    public function a_new_install_plays_together_in_private_rooms_and_hides_from_everyone(): void
     {
         $preferences = Preferences::current();
+
+        static::assertTrue($preferences->private_rooms);
+        static::assertTrue($preferences->play_together);
 
         foreach (GameSetting::cases() as $setting) {
             static::assertTrue($preferences->blocks($setting));
@@ -34,8 +37,7 @@ final class PreferencesTest extends TestCase
         $this
             ->get('/preferences')
             ->assertOk()
-            ->assertSee(['Block goto', 'Ignore duel invites'])
-            ->assertDontSee(['Play in private rooms', 'Play together']);
+            ->assertSee(['Play in private rooms', 'Play together', 'Block goto', 'Ignore duel invites']);
 
         Livewire::test(ManagePreferences::class)->assertSet('data.block_whispers', true)->set(
             'data.block_whispers',
@@ -45,6 +47,17 @@ final class PreferencesTest extends TestCase
         $preferences = Preferences::current();
         static::assertFalse($preferences->blocks(GameSetting::Whispers));
         static::assertTrue($preferences->blocks(GameSetting::Goto));
+    }
+
+    #[Test]
+    public function playing_together_needs_private_rooms(): void
+    {
+        Livewire::test(ManagePreferences::class)
+            ->assertFormFieldEnabled('play_together')
+            ->set('data.private_rooms', false)
+            ->assertFormFieldDisabled('play_together');
+
+        static::assertFalse(Preferences::current()->private_rooms);
     }
 
     #[Test]
