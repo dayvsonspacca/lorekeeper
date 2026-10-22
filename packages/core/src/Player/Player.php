@@ -24,6 +24,7 @@ final readonly class Player
         public Wallet $wallet,
         public PlayerQuestMarks $marks,
         public Stats $stats = new Stats(),
+        public ?PlayerSettings $settings = null,
     ) {
         $this->tags = new Tags();
     }

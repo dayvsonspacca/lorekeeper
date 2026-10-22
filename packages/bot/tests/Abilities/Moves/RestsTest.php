@@ -36,7 +36,7 @@ final class RestsTest extends TestCase
         $steps = self::rest($me, [
             null,
             null,
-            new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
+            new PlayerStateUpdatedEvent(new PlayerName('Hero'), CombatState::Idle),
         ]);
 
         static::assertCount(4, $steps);

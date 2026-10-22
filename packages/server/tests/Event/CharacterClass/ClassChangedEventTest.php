@@ -58,6 +58,19 @@ final class ClassChangedEventTest extends TestCase
     }
 
     #[Test]
+    public function it_reads_the_hybrid_category(): void
+    {
+        $message = JsonMessage::from(
+            '{"b":{"o":{"cmd":"updateClass","uid":1,"sClassName":"Twin Path","sClassCat":"S1","iCP":0}}}',
+        )->unwrap();
+
+        $event = ClassChangedEvent::from($message)->unwrap();
+
+        static::assertSame(ClassCategory::Hybrid, $event->category);
+        static::assertSame('Socket 1 is Twin Path (Hybrid, 0 CP)', $event->summary());
+    }
+
+    #[Test]
     public function it_rejects_unknown_categories(): void
     {
         $this->expectException(MalformedEventException::class);

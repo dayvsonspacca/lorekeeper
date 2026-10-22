@@ -9,6 +9,8 @@ use Filament\Forms\Components\Toggle;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -20,6 +22,8 @@ final class ManagePreferences extends Page
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAdjustmentsHorizontal;
 
     protected static ?int $navigationSort = 10;
+
+    protected static bool $shouldRegisterNavigation = false;
 
     protected static ?string $navigationLabel = 'Preferences';
 
@@ -35,6 +39,8 @@ final class ManagePreferences extends Page
         $this->form->fill(Preferences::current()->only([
             'private_rooms',
             'play_together',
+            'start_with_computer',
+            'notify_updates',
             ...array_keys(Preferences::BLOCKS),
         ]));
     }
@@ -44,31 +50,67 @@ final class ManagePreferences extends Page
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('Rooms')
-                    ->description('Where the bots play once they join a map.')
-                    ->schema([
-                        self::toggle('private_rooms', 'Play in private rooms')
-                            ->helperText(
-                                'Every map is joined in a room with a random number, so other players rarely share it.',
-                            ),
-                        self::toggle('play_together', 'Play together')
-                            ->helperText(
-                                'Bots of this app that join the same map share one private room, so they fight side by side.',
-                            )
-                            ->disabled(static fn(Get $get): bool => !$get('private_rooms')),
+                Tabs::make('Preferences')
+                    ->extraAttributes(['class' => 'lk-tabs'])
+                    ->tabs([
+                        Tab::make('Game')->icon(Heroicon::OutlinedPuzzlePiece)->schema(self::game()),
+                        Tab::make('Application')->icon(Heroicon::OutlinedComputerDesktop)->schema(self::app()),
                     ]),
-                Section::make('Hide from other players')
-                    ->description('Applied each time a bot enters the game.')
-                    ->schema([
-                        self::toggle('block_goto', 'Block goto')->helperText('Nobody can /goto a bot.'),
-                        self::toggle('block_whispers', 'Ignore whispers'),
-                        self::toggle('block_friend_requests', 'Ignore friend requests'),
-                        self::toggle('block_party_invites', 'Ignore party invites'),
-                        self::toggle('block_guild_invites', 'Ignore guild invites'),
-                        self::toggle('block_duels', 'Ignore duel invites'),
-                    ])
-                    ->columns(2),
             ]);
+    }
+
+    /** @return list<Section> */
+    private static function game(): array
+    {
+        return [
+            Section::make('Rooms')
+                ->contained(false)
+                ->description('Where the bots play once they join a map.')
+                ->schema([
+                    self::toggle('private_rooms', 'Play in private rooms')
+                        ->helperText(
+                            'Every map is joined in a room with a random number, so other players rarely share it.',
+                        ),
+                    self::toggle('play_together', 'Play together')
+                        ->helperText(
+                            'Bots of this app that join the same map share one private room, so they fight side by side.',
+                        )
+                        ->disabled(static fn(Get $get): bool => !$get('private_rooms')),
+                ]),
+            Section::make('Hide from other players')
+                ->contained(false)
+                ->description('Applied each time a bot enters the game.')
+                ->schema([
+                    self::toggle('block_goto', 'Block goto'),
+                    self::toggle('block_whispers', 'Ignore whispers'),
+                    self::toggle('block_friend_requests', 'Ignore friend requests'),
+                    self::toggle('block_party_invites', 'Ignore party invites'),
+                    self::toggle('block_guild_invites', 'Ignore guild invites'),
+                    self::toggle('block_duels', 'Ignore duel invites'),
+                ])
+                ->columns(2),
+        ];
+    }
+
+    /** @return list<Section> */
+    private static function app(): array
+    {
+        return [
+            Section::make('Updates')
+                ->contained(false)
+                ->description('How the app keeps itself up to date.')
+                ->schema([
+                    self::toggle('notify_updates', 'Tell me when a new version is out')
+                        ->helperText('Checks GitHub a few times a day and offers the download in the sidebar.'),
+                ]),
+            Section::make('Startup')
+                ->contained(false)
+                ->description('When the app opens.')
+                ->schema([
+                    self::toggle('start_with_computer', 'Start when the computer starts')
+                        ->helperText('Opens in the tray when you log in, ready to play.'),
+                ]),
+        ];
     }
 
     #[Override]

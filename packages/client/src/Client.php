@@ -30,6 +30,7 @@ use Lorekeeper\Server\Event\Session\LoginFailedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\Message;
+use Lorekeeper\Server\Server;
 use Psl\Async;
 use Psl\Async\CancellationTokenInterface;
 use Psl\Async\Exception\CancelledException;
@@ -298,6 +299,11 @@ final class Client
     public function close(): void
     {
         $this->connection->close();
+    }
+
+    public function server(): ?Server
+    {
+        return $this->connection->server();
     }
 
     /**

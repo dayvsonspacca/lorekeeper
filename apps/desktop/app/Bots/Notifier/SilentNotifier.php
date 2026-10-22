@@ -9,5 +9,5 @@ use Override;
 final readonly class SilentNotifier implements Notifier
 {
     #[Override]
-    public function show(TaskNotice $notice): void {}
+    public function show(Notice $notice): void {}
 }

@@ -41,11 +41,11 @@ use PHPUnit\Framework\TestCase;
 final class CombatEventsTest extends TestCase
 {
     private const string KILL = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"ct","m":{"4":{"intState":0,"intHP":0,"intMP":0,"targets":["lorekeeper03"]},"3":{}},"p":{"lorekeeper03":{"intMP":87,"intState":1}},"sarsa":[{"cInf":"p:122531","a":[{"type":"hit","hp":30,"actRef":"aa","tInf":"m:4"}],"actID":9,"iRes":1}],"anims":[{"strFrame":"r3","cInf":"p:122531","tInf":"m:4","animStr":"Attack1,Attack2","fx":"m"}]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"ct","m":{"4":{"intState":0,"intHP":0,"intMP":0,"targets":["Hero"]},"3":{}},"p":{"Hero":{"intMP":87,"intState":1}},"sarsa":[{"cInf":"p:122531","a":[{"type":"hit","hp":30,"actRef":"aa","tInf":"m:4"}],"actID":9,"iRes":1}],"anims":[{"strFrame":"r3","cInf":"p:122531","tInf":"m:4","animStr":"Attack1,Attack2","fx":"m"}]}}}
         JSON;
 
     private const string HIT = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"ct","m":{"3":{"intHP":677}},"p":{"lorekeeper03":{"intHP":189}},"sara":[{"iRes":1,"actionResult":{"type":"hit","hp":42,"cInf":"m:1","tInf":"p:122628"}}]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"ct","m":{"3":{"intHP":677}},"p":{"Hero":{"intHP":189}},"sara":[{"iRes":1,"actionResult":{"type":"hit","hp":42,"cInf":"m:1","tInf":"p:122628"}}]}}}
         JSON;
 
     #[Test]
@@ -119,7 +119,7 @@ final class CombatEventsTest extends TestCase
         static::assertSame(677, MonstersHealthChangedEvent::from($hit)->unwrap()->monsters[0]->health->value);
 
         $mana = PlayersManaChangedEvent::from($kill)->unwrap()->players[0];
-        static::assertSame('lorekeeper03', $mana->player->value);
+        static::assertSame('Hero', $mana->player->value);
         static::assertSame(87, $mana->mana->value);
         static::assertTrue(PlayersManaChangedEvent::from($hit)->isNone());
 
@@ -128,14 +128,14 @@ final class CombatEventsTest extends TestCase
 
         static::assertSame('Monster 4 died', MonstersDiedEvent::from($kill)->unwrap()->summary());
         static::assertSame('Monster 3 has 677 health', MonstersHealthChangedEvent::from($hit)->unwrap()->summary());
-        static::assertSame('lorekeeper03 has 189 health', PlayersHealthChangedEvent::from($hit)->unwrap()->summary());
-        static::assertSame('lorekeeper03 has 87 mana', PlayersManaChangedEvent::from($kill)->unwrap()->summary());
+        static::assertSame('Hero has 189 health', PlayersHealthChangedEvent::from($hit)->unwrap()->summary());
+        static::assertSame('Hero has 87 mana', PlayersManaChangedEvent::from($kill)->unwrap()->summary());
         static::assertEquals(
-            [new PlayerState(new PlayerName('lorekeeper03'), CombatState::Idle)],
+            [new PlayerState(new PlayerName('Hero'), CombatState::Idle)],
             PlayersStateChangedEvent::from($kill)->unwrap()->players,
         );
         static::assertTrue(PlayersStateChangedEvent::from($hit)->isNone());
-        static::assertSame('lorekeeper03 is idle', PlayersStateChangedEvent::from($kill)->unwrap()->summary());
+        static::assertSame('Hero is idle', PlayersStateChangedEvent::from($kill)->unwrap()->summary());
         static::assertSame('MonstersHealthChanged', MonstersHealthChangedEvent::from($hit)->unwrap()->name());
     }
 
@@ -155,10 +155,10 @@ final class CombatEventsTest extends TestCase
     {
         $fell = PlayersStateChangedEvent::from(
             JsonMessage::from(
-                '{"t":"xt","b":{"r":-1,"o":{"cmd":"ct","p":{"lorekeeper03":{"intState":0,"intHP":0,"intMP":18}}}}}',
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"ct","p":{"Hero":{"intState":0,"intHP":0,"intMP":18}}}}}',
             )->unwrap(),
         )->unwrap();
-        static::assertSame('lorekeeper03', $fell->players[0]->player->value);
+        static::assertSame('Hero', $fell->players[0]->player->value);
         static::assertSame(CombatState::Dead, $fell->players[0]->state);
         $resurrected = ResurrectedEvent::from(DelimitedMessage::from('%xt%resTimed%-1%')->unwrap());
         static::assertSame('Back to life', $resurrected->unwrap()->summary());

@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 final class PlayerVitalsUpdatedEventTest extends TestCase
 {
     private const string AFTER_LOGIN = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"made2903","o":{"intHPMax":2585,"intMPMax":100,"intHP":2585,"intMP":100}}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero","o":{"intHPMax":2585,"intMPMax":100,"intHP":2585,"intMP":100}}}}
         JSON;
 
     #[Test]
@@ -24,14 +24,14 @@ final class PlayerVitalsUpdatedEventTest extends TestCase
         $event = PlayerVitalsUpdatedEvent::from(JsonMessage::from(self::AFTER_LOGIN)->unwrap())->unwrap();
 
         static::assertInstanceOf(PlayerUpdatedEvent::class, $event);
-        static::assertSame('made2903', $event->name->value);
+        static::assertSame('Hero', $event->name->value);
         static::assertSame([2585, 2585, 100, 100], [
             $event->vitals->health->current->value,
             $event->vitals->health->maximum->value,
             $event->vitals->mana->current->value,
             $event->vitals->mana->maximum->value,
         ]);
-        static::assertSame('made2903 has 2585/2585 health and 100/100 mana', $event->summary());
+        static::assertSame('Hero has 2585/2585 health and 100/100 mana', $event->summary());
     }
 
     #[Test]
@@ -55,7 +55,7 @@ final class PlayerVitalsUpdatedEventTest extends TestCase
 
         PlayerVitalsUpdatedEvent::from(
             JsonMessage::from(
-                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"made2903","o":{"intHPMax":2585,"intMPMax":100,"intHP":-1,"intMP":100}}}}',
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero","o":{"intHPMax":2585,"intMPMax":100,"intHP":-1,"intMP":100}}}}',
             )->unwrap(),
         );
     }

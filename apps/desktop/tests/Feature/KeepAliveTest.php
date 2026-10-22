@@ -7,9 +7,7 @@ namespace Lorekeeper\Apps\Desktop\Tests\Feature;
 use Livewire\Livewire;
 use Lorekeeper\Apps\Desktop\Livewire\KeepAlive;
 use Lorekeeper\Apps\Desktop\Native\Heartbeat;
-use Lorekeeper\Apps\Desktop\Native\MainWindow;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
-use Native\Desktop\Facades\Window;
 use PHPUnit\Framework\Attributes\Test;
 
 final class KeepAliveTest extends TestCase
@@ -46,19 +44,14 @@ final class KeepAliveTest extends TestCase
     }
 
     #[Test]
-    public function a_silent_window_is_reloaded_once(): void
+    public function a_silent_window_is_revived_once(): void
     {
-        $windows = Window::fake();
         Livewire::test(KeepAlive::class);
-
-        MainWindow::reviveIfSilent();
-        $windows->assertNotReloaded(MainWindow::ID);
+        static::assertFalse(Heartbeat::revive());
 
         $this->travel(Heartbeat::PATIENCE_SECONDS + 1)->seconds();
-        MainWindow::reviveIfSilent();
-        MainWindow::reviveIfSilent();
 
-        $windows->assertReloaded(MainWindow::ID);
-        static::assertSame([MainWindow::ID], $windows->reloaded);
+        static::assertTrue(Heartbeat::revive());
+        static::assertFalse(Heartbeat::revive());
     }
 }

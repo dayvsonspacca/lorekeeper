@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Providers\Filament;
 
 use Filament\Enums\ThemeMode;
-use Filament\FontProviders\GoogleFontProvider;
+use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
@@ -21,7 +21,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Lorekeeper\Apps\Desktop\Filament\Pages\Bots;
+use Lorekeeper\Apps\Desktop\Filament\Pages\Accounts;
 use Lorekeeper\Apps\Desktop\Filament\Pages\ManagePreferences;
 use Lorekeeper\Apps\Desktop\Livewire\KeepAlive;
 
@@ -35,7 +35,7 @@ final class DesktopPanelProvider extends PanelProvider
             ->path('')
             ->brandName('Lorekeeper')
             ->colors(['primary' => Color::hex('#818cf8'), 'gray' => self::gray()])
-            ->font('IBM Plex Sans', provider: GoogleFontProvider::class)
+            ->font('IBM Plex Sans', url: asset('fonts/ibm-plex/ibm-plex.css'), provider: LocalFontProvider::class)
             ->defaultThemeMode(ThemeMode::Dark)
             ->topbar(false)
             ->sidebarCollapsibleOnDesktop()
@@ -43,10 +43,12 @@ final class DesktopPanelProvider extends PanelProvider
             ->spa()
             ->renderHook(PanelsRenderHook::HEAD_END, static fn(): View => view('theme.scene'))
             ->renderHook(PanelsRenderHook::HEAD_END, static fn(): View => view('theme.desktop'))
+            ->renderHook(PanelsRenderHook::SIDEBAR_LOGO_BEFORE, static fn(): View => view('theme.sidebar-logo'))
+            ->renderHook(PanelsRenderHook::SIDEBAR_FOOTER, static fn(): View => view('theme.sidebar-footer'))
             ->renderHook(PanelsRenderHook::BODY_END, static fn(): string => Blade::render('@livewire($component)', [
                 'component' => KeepAlive::class,
             ]))
-            ->pages([Bots::class, ManagePreferences::class])
+            ->pages([Accounts::class, ManagePreferences::class])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'Lorekeeper\Apps\Desktop\Filament\Resources')
             ->middleware([
                 EncryptCookies::class,

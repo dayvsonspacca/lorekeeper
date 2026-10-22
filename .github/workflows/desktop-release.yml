@@ -1,0 +1,88 @@
+name: Desktop release
+
+on:
+  push:
+    tags: ['desktop-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Desktop
+    uses: ./.github/workflows/app.yml
+    with:
+      app: desktop
+
+  bundle:
+    name: Bundle (deb, AppImage)
+    needs: tests
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: intl, pdo_sqlite, pcntl, curl, xmlreader
+          coverage: none
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/desktop/tauri/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/tauri
+      - uses: extractions/setup-just@v4
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf rsync
+      - uses: actions/cache@v6
+        with:
+          path: apps/desktop/tauri/.php/php
+          key: static-php-${{ hashFiles('apps/desktop/tauri/scripts/linux/php.sh') }}
+      - if: startsWith(github.ref, 'refs/tags/desktop-v')
+        working-directory: apps/desktop/tauri
+        run: |
+          jq --arg version "${GITHUB_REF_NAME#desktop-v}" '.version = $version' tauri.conf.json > tauri.conf.json.tmp
+          mv tauri.conf.json.tmp tauri.conf.json
+      - run: just desktop build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: lorekeeper-desktop-linux
+          if-no-files-found: error
+          path: |
+            apps/desktop/tauri/target/release/bundle/deb/*.deb
+            apps/desktop/tauri/target/release/bundle/appimage/*.AppImage
+
+  release:
+    name: Release
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    needs: bundle
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: lorekeeper-desktop-linux
+          path: bundle
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=${GITHUB_REF_NAME#desktop-v}
+          prerelease=()
+          if [[ $version == *-* ]]; then
+            prerelease=(--prerelease)
+          fi
+          gh release create "$GITHUB_REF_NAME" bundle/deb/*.deb bundle/appimage/*.AppImage \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Lorekeeper desktop $version" \
+            --generate-notes \
+            "${prerelease[@]}"

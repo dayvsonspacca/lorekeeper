@@ -11,7 +11,6 @@ return new class extends Migration {
     {
         Schema::create('preferences', static function (Blueprint $table): void {
             $table->id();
-            $table->boolean('private_rooms')->default(true);
             $table->boolean('block_goto')->default(true);
             $table->boolean('block_whispers')->default(true);
             $table->boolean('block_friend_requests')->default(true);

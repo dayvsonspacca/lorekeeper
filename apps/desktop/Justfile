@@ -1,0 +1,19 @@
+tauri := source_directory() / 'tauri'
+
+# Open the desktop in a Tauri window, served from this folder by the php on your PATH
+dev: deps
+    cd {{ tauri }} && npx tauri dev
+
+# Build the static PHP the bundle ships with
+php:
+    {{ tauri }}/scripts/linux/php.sh
+
+# Bundle the desktop into tauri/target/release/bundle
+build: deps
+    test -x {{ tauri }}/.php/php || {{ tauri }}/scripts/linux/php.sh
+    {{ tauri }}/scripts/stage.sh {{ tauri }}/.php/php
+    cd {{ tauri }} && npx tauri build --config tauri.bundle.json
+
+[private]
+deps:
+    cd {{ tauri }} && npm install --no-fund --no-audit --silent

@@ -1,3 +1,5 @@
+mod desktop 'apps/desktop/Justfile'
+
 list:
     @just --list
 

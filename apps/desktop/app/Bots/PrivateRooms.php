@@ -6,6 +6,7 @@ namespace Lorekeeper\Apps\Desktop\Bots;
 
 use Closure;
 use Generator;
+use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Command\Map\JoinMapCommand;
 use Lorekeeper\Client\Script\Script;
@@ -37,6 +38,22 @@ final readonly class PrivateRooms implements Script
         ?Closure $rooms = null,
     ) {
         $this->rooms = $rooms ?? static fn(MapName $map): RoomId => new RoomId(random_int(self::LOWEST, self::HIGHEST));
+    }
+
+    /**
+     * @template TPlayed
+     *
+     * @param Script<TPlayed> $script
+     *
+     * @return Script<TPlayed>
+     */
+    public static function asPreferred(Script $script, Preferences $preferences): Script
+    {
+        if (!$preferences->private_rooms) {
+            return $script;
+        }
+
+        return new self($script, $preferences->play_together ? SharedRooms::of(...) : null);
     }
 
     #[Override]

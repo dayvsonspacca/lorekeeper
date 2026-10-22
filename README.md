@@ -13,8 +13,8 @@
 
 ### Desktop
 
-Keeps your characters playing on your own machine. Add your accounts, give each hero a list of tasks and let them
-play while you do something else.
+Keeps your characters playing on your own machine. Add your accounts, draw what each hero should do as a script on a
+canvas and let them play while you do something else.
 
 ### Wiki <sub>coming soon</sub>
 

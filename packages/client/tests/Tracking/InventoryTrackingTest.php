@@ -206,7 +206,7 @@ final class InventoryTrackingTest extends TestCase
     {
         return new PlayerData(
             new SocketId($socketId),
-            new PlayerName('lorekeeper03'),
+            new PlayerName('Hero'),
             new PlayerLevelProgress(new PlayerLevel(1), new Gauge(new Experience(0), new Experience(1000))),
             new Wallet(new Gold(0), new AdventureCoins(0)),
             false,
@@ -217,7 +217,7 @@ final class InventoryTrackingTest extends TestCase
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('lorekeeper03'));
+        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
     }
 
     private static function ore(int $quantity): PlayerItem

@@ -11,22 +11,25 @@ use PHPUnit\Framework\TestCase;
 final class BootstrapCacheTest extends TestCase
 {
     private const array PACKAGED = [
-        'NATIVEPHP_RUNNING' => 'true',
+        'LOREKEEPER_SHELL' => 'tauri',
         'APP_DEBUG' => 'false',
-        'NATIVEPHP_USER_DATA_PATH' => '/home/hero/.config/lorekeeper',
+        'LOREKEEPER_DATA_PATH' => '/home/hero/.local/share/lorekeeper',
     ];
 
     #[Test]
     public function the_packaged_app_keeps_its_caches_in_the_user_data_folder(): void
     {
-        static::assertSame('/home/hero/.config/lorekeeper/bootstrap/cache', BootstrapCache::folder(self::PACKAGED));
+        static::assertSame(
+            '/home/hero/.local/share/lorekeeper/bootstrap/cache',
+            BootstrapCache::folder(self::PACKAGED),
+        );
         static::assertSame(
             [
-                'APP_SERVICES_CACHE' => '/home/hero/.config/lorekeeper/bootstrap/cache/services.php',
-                'APP_PACKAGES_CACHE' => '/home/hero/.config/lorekeeper/bootstrap/cache/packages.php',
-                'APP_CONFIG_CACHE' => '/home/hero/.config/lorekeeper/bootstrap/cache/config.php',
-                'APP_ROUTES_CACHE' => '/home/hero/.config/lorekeeper/bootstrap/cache/routes-v7.php',
-                'APP_EVENTS_CACHE' => '/home/hero/.config/lorekeeper/bootstrap/cache/events.php',
+                'APP_SERVICES_CACHE' => '/home/hero/.local/share/lorekeeper/bootstrap/cache/services.php',
+                'APP_PACKAGES_CACHE' => '/home/hero/.local/share/lorekeeper/bootstrap/cache/packages.php',
+                'APP_CONFIG_CACHE' => '/home/hero/.local/share/lorekeeper/bootstrap/cache/config.php',
+                'APP_ROUTES_CACHE' => '/home/hero/.local/share/lorekeeper/bootstrap/cache/routes-v7.php',
+                'APP_EVENTS_CACHE' => '/home/hero/.local/share/lorekeeper/bootstrap/cache/events.php',
             ],
             BootstrapCache::paths(self::PACKAGED),
         );
@@ -37,7 +40,8 @@ final class BootstrapCacheTest extends TestCase
     {
         static::assertNull(BootstrapCache::folder([]));
         static::assertNull(BootstrapCache::folder([...self::PACKAGED, 'APP_DEBUG' => 'true']));
-        static::assertNull(BootstrapCache::folder([...self::PACKAGED, 'NATIVEPHP_USER_DATA_PATH' => '']));
+        static::assertNull(BootstrapCache::folder([...self::PACKAGED, 'LOREKEEPER_DATA_PATH' => '']));
+        static::assertNull(BootstrapCache::folder([...self::PACKAGED, 'LOREKEEPER_SHELL' => 'electron']));
         static::assertSame([], BootstrapCache::paths([...self::PACKAGED, 'APP_DEBUG' => 'true']));
     }
 

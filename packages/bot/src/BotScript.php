@@ -44,17 +44,17 @@ abstract class BotScript implements Script
         return $this->rules();
     }
 
-    protected function me(): Character
+    public function me(): Character
     {
         return $this->me;
     }
 
-    protected function send(Command $command): Send
+    public function send(Command $command): Send
     {
         return new Send($command);
     }
 
-    protected function now(): Timestamp
+    public function now(): Timestamp
     {
         return ($this->clock)();
     }

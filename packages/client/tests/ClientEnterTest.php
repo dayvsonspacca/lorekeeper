@@ -17,6 +17,7 @@ use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Item\Equipment\ClassItem;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Player\GameSetting;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\Player\PlayerTag;
@@ -37,12 +38,12 @@ final class ClientEnterTest extends TestCase
 {
     private const string POLICY = "<cross-domain-policy><allow-access-from domain='*' to-ports='*' /></cross-domain-policy>";
 
-    private const string LOGIN = '%xt%loginResponse%-1%true%45466%made2903%Welcome!%2026-10-19T15:34:06%sNews=1191,sMap=news/Map-UI_r38.swf,sBook=news/spiderbook3.swf,sAssets=Assets_20260731.swf,gMenu=dynamic-gameMenu-17Jan22.swf,sVersion=R0048,QSInfo=519,iMaxBagSlots=525,iMaxBankSlots=950,iMaxHouseSlots=325,iMaxGuildMembers=800,iMaxFriends=300,iMaxLoadoutSlots=50%5.1%';
+    private const string LOGIN = '%xt%loginResponse%-1%true%45466%Hero%Welcome!%2026-10-19T15:34:06%sNews=1191,sMap=news/Map-UI_r38.swf,sBook=news/spiderbook3.swf,sAssets=Assets_20260731.swf,gMenu=dynamic-gameMenu-17Jan22.swf,sVersion=R0048,QSInfo=519,iMaxBagSlots=525,iMaxBankSlots=950,iMaxHouseSlots=325,iMaxGuildMembers=800,iMaxFriends=300,iMaxLoadoutSlots=50%5.1%';
 
     private const string REFUSED = '%xt%loginResponse%-1%0%-1%%Your game client is an older version. Server requires AQW game version 5.1 or higher. Please close the AQW game window and try again.%';
 
     private const string ARRIVAL = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"moveToArea","areaId":65897,"areaName":"battleon-3","intType":"2","sExtra":"","strMapName":"battleon","strMapFileName":"Battleon/town-Battleon-16Oct26.swf","uoBranch":[{"uoName":"made2903","entType":"p","entID":45466,"strUsername":"made2903","strFrame":"Enter","strPad":"Spawn","intState":1,"intLevel":81,"intHP":500,"intMP":100,"intHPMax":500,"intMPMax":100,"tx":0,"ty":0,"afk":false,"showCloak":true,"showHelm":true}],"monBranch":[]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"moveToArea","areaId":65897,"areaName":"battleon-3","intType":"2","sExtra":"","strMapName":"battleon","strMapFileName":"Battleon/town-Battleon-16Oct26.swf","uoBranch":[{"uoName":"Hero","entType":"p","entID":45466,"strUsername":"Hero","strFrame":"Enter","strPad":"Spawn","intState":1,"intLevel":81,"intHP":500,"intMP":100,"intHPMax":500,"intMPMax":100,"tx":0,"ty":0,"afk":false,"showCloak":true,"showHelm":true}],"monBranch":[]}}}
         JSON;
 
     private const string INVENTORY = <<<'JSON'
@@ -58,7 +59,7 @@ final class ClientEnterTest extends TestCase
         JSON;
 
     private const string VITALS = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"made2903","o":{"intHPMax":2585,"intMPMax":100,"intHP":2585,"intMP":100}}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero","o":{"intHPMax":2585,"intMPMax":100,"intHP":2585,"intMP":100}}}}
         JSON;
 
     private const string STATS = <<<'JSON'
@@ -66,7 +67,7 @@ final class ClientEnterTest extends TestCase
         JSON;
 
     private const string PLAYER_DATA = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"initUserDatas","a":[{"uid":45466,"data":{"strUsername":"made2903","intLevel":81,"intExp":4514754,"intExpToLevel":5280000,"intGold":6800132,"intCoins":2899,"iUpg":0,"iUpgDays":-5772,"iBagSlots":131,"id0":0,"id1":0,"id2":64,"id3":0,"id4":0,"id5":0,"id6":0,"id7":0,"iw0":0,"im0":0}}]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"initUserDatas","a":[{"uid":45466,"data":{"strUsername":"Hero","intLevel":81,"intExp":4514754,"intExpToLevel":5280000,"intGold":6800132,"intCoins":2899,"iUpg":0,"iUpgDays":-5772,"iBagSlots":131,"ia1":10128,"id0":0,"id1":0,"id2":64,"id3":0,"id4":0,"id5":0,"id6":0,"id7":0,"iw0":0,"im0":0}}]}}}
         JSON;
 
     #[Test]
@@ -93,7 +94,7 @@ final class ClientEnterTest extends TestCase
         static::assertSame(
             [
                 "<policy-file-request/>\0",
-                "<msg t='sys'><body action='login' r='0'><login z='zone_master'><nick><![CDATA[SPIDER#0001~made2903~5.1]]></nick><pword><![CDATA[TOKEN]]></pword></login></body></msg>\0",
+                "<msg t='sys'><body action='login' r='0'><login z='zone_master'><nick><![CDATA[SPIDER#0001~Hero~5.1]]></nick><pword><![CDATA[TOKEN]]></pword></login></body></msg>\0",
                 "%xt%zm%firstJoin%1%\0",
                 "%xt%zm%retrieveInventory%65897%45466%\0",
                 "%xt%zm%retrieveUserDatas%65897%45466%\0",
@@ -103,7 +104,7 @@ final class ClientEnterTest extends TestCase
 
         $me = $client->character();
         $player = $me->player();
-        static::assertSame('made2903', $player->name->value);
+        static::assertSame('Hero', $player->name->value);
         static::assertSame([81, 4_514_754, 5_280_000], [
             $player->progress->level->value,
             $player->progress->experience->current->value,
@@ -113,6 +114,7 @@ final class ClientEnterTest extends TestCase
         static::assertFalse($player->tags->has(PlayerTag::Member));
         static::assertSame(131, $player->inventory->slots->value);
         static::assertTrue($player->marks->has(new QuestMark(QuestPeriod::Day, 2, 6)));
+        static::assertFalse($player->settings?->allows(GameSetting::Goto));
         static::assertSame([2585, 2585, 100, 100], [
             $player->vitals->health->current->value,
             $player->vitals->health->maximum->value,
@@ -260,7 +262,7 @@ final class ClientEnterTest extends TestCase
 
     private static function login(): GameLogin
     {
-        return new GameLogin(new PlayerName('made2903'), 'TOKEN', new ClientVersion('5.1'));
+        return new GameLogin(new PlayerName('Hero'), 'TOKEN', new ClientVersion('5.1'));
     }
 
     /** @param list<string> $sent */

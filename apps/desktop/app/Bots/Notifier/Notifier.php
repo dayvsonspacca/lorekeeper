@@ -6,5 +6,5 @@ namespace Lorekeeper\Apps\Desktop\Bots\Notifier;
 
 interface Notifier
 {
-    public function show(TaskNotice $notice): void;
+    public function show(Notice $notice): void;
 }

@@ -16,25 +16,23 @@ use PHPUnit\Framework\TestCase;
 final class PlayerAwayUpdatedEventTest extends TestCase
 {
     private const string ENTERED = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"hilise","o":{"uoName":"hilise","ID":72894515,"entType":"p","entID":93474,"strUsername":"Hilise","intLevel":100,"intState":1,"intHP":3455,"intMP":100,"intSP":100,"intHPMax":3455,"intMPMax":100,"intSPMax":100,"showCloak":true,"showHelm":true,"tx":0,"ty":0,"afk":false,"strFrame":"Enter","strPad":"Spawn"}}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"hero2","o":{"uoName":"hero2","ID":72894515,"entType":"p","entID":93474,"strUsername":"Hero2","intLevel":100,"intState":1,"intHP":3455,"intMP":100,"intSP":100,"intHPMax":3455,"intMPMax":100,"intSPMax":100,"showCloak":true,"showHelm":true,"tx":0,"ty":0,"afk":false,"strFrame":"Enter","strPad":"Spawn"}}}}
         JSON;
 
     #[Test]
     public function it_reads_a_player_going_away_and_coming_back(): void
     {
-        $away = PlayerAwayUpdatedEvent::from(
-            DelimitedMessage::from('%xt%uotls%-1%made2903%afk:true%')->unwrap(),
-        )->unwrap();
+        $away = PlayerAwayUpdatedEvent::from(DelimitedMessage::from('%xt%uotls%-1%Hero%afk:true%')->unwrap())->unwrap();
         $back = PlayerAwayUpdatedEvent::from(
-            DelimitedMessage::from('%xt%uotls%-1%made2903%afk:false%')->unwrap(),
+            DelimitedMessage::from('%xt%uotls%-1%Hero%afk:false%')->unwrap(),
         )->unwrap();
 
         static::assertInstanceOf(PlayerUpdatedEvent::class, $away);
-        static::assertSame('made2903', $away->name->value);
+        static::assertSame('Hero', $away->name->value);
         static::assertTrue($away->away);
         static::assertFalse($back->away);
-        static::assertSame('made2903 is away', $away->summary());
-        static::assertSame('made2903 is back', $back->summary());
+        static::assertSame('Hero is away', $away->summary());
+        static::assertSame('Hero is back', $back->summary());
     }
 
     #[Test]
@@ -42,7 +40,7 @@ final class PlayerAwayUpdatedEventTest extends TestCase
     {
         $event = PlayerAwayUpdatedEvent::from(JsonMessage::from(self::ENTERED)->unwrap())->unwrap();
 
-        static::assertSame('hilise', $event->name->value);
+        static::assertSame('hero2', $event->name->value);
         static::assertFalse($event->away);
     }
 
@@ -51,7 +49,7 @@ final class PlayerAwayUpdatedEventTest extends TestCase
     {
         $walked = DelimitedMessage::from('%xt%uotls%-1%cerealhq%tx:739,ty:1,sp:8,strFrame:Enter%')->unwrap();
         $vitals = JsonMessage::from(
-            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"made2903","o":{"intHPMax":2585,"intMPMax":100,"intHP":2585,"intMP":100}}}}',
+            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero","o":{"intHPMax":2585,"intMPMax":100,"intHP":2585,"intMP":100}}}}',
         )->unwrap();
 
         static::assertTrue(PlayerAwayUpdatedEvent::from($walked)->isNone());
@@ -78,7 +76,7 @@ final class PlayerAwayUpdatedEventTest extends TestCase
 
         PlayerAwayUpdatedEvent::from(
             JsonMessage::from(
-                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"hilise","o":{"afk":"maybe"}}}}',
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"hero2","o":{"afk":"maybe"}}}}',
             )->unwrap(),
         );
     }

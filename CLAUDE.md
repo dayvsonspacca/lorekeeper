@@ -12,7 +12,7 @@ A toolbox for AdventureQuest Worlds: framework-free PHP packages (`packages/`) a
 
 - No comments. Docblocks carry only annotations (`@param`, `@return`, `@var`, `@template`, `@throws`, `@mago-expect`...)
 - Layers only point down: `core` ← `server` ← `client` ← `bot` ← apps.
-- Never write AQW accounts or credentials to a file.
+- Never save AQW account names or credentials to a file. If a username is required, use “Hero” as a placeholder.
 
 ### Testing
 

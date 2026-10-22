@@ -27,9 +27,4 @@ final readonly class LocalTime
     {
         return $at->copy()->setTimezone(self::zone())->format('H:i:s');
     }
-
-    public static function startOfToday(?Carbon $now = null): Carbon
-    {
-        return ($now ?? now())->copy()->setTimezone(self::zone())->startOfDay()->utc();
-    }
 }

@@ -1,0 +1,21 @@
+{
+    "lorekeeper": 1,
+    "name": "Every node",
+    "start": "a",
+    "nodes": [
+        {"id": "a", "do": "join", "map": "boxes"},
+        {"id": "b", "do": "move", "cell": "Closet", "pad": "Center", "at": [-40, 120]},
+        {"id": "c", "do": "hunt", "cell": "Closet", "monster": "Sneevil", "item": 42658, "quantity": 1, "minutes": 5},
+        {"id": "d", "do": "fight-to-level", "cell": "r3", "level": 10},
+        {"id": "e", "do": "fight-for", "cell": "r2", "monster": "Carnivorous Cricket", "minutes": 15},
+        {"id": "f", "do": "accept-quest", "quest": 6187},
+        {"id": "g", "do": "turn-in-quest", "quest": 6187},
+        {"id": "h", "do": "turn-in-quest", "quest": 6187, "reward": 42657},
+        {"id": "i", "do": "enhance", "type": "Lucky"},
+        {"id": "j", "do": "rest"},
+        {"id": "k", "do": "wait", "seconds": 30},
+        {"id": "l", "do": "quest-done", "quest": 6187},
+        {"id": "m", "do": "holding", "item": 5586, "quantity": 20},
+        {"id": "n", "do": "level", "level": 30}
+    ]
+}

@@ -97,7 +97,7 @@ final class PlayerProgressTrackingTest extends TestCase
     {
         return new PlayerDataLoadedEvent([new PlayerData(
             new SocketId(122_628),
-            new PlayerName('lorekeeper03'),
+            new PlayerName('Hero'),
             new PlayerLevelProgress(
                 new PlayerLevel(81),
                 new Gauge(new Experience(4_514_754), new Experience(5_280_000)),

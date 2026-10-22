@@ -30,13 +30,19 @@ final class Connection implements SubjectInterface
 
     public function __construct(
         private readonly TCP\StreamInterface $stream,
+        private readonly ?Server $server = null,
     ) {
         $this->reader = new IO\Reader($stream);
     }
 
     public static function open(Server $server): self
     {
-        return new self(TCP\connect($server->address->host, $server->address->port ?? 0));
+        return new self(TCP\connect($server->address->host, $server->address->port ?? 0), $server);
+    }
+
+    public function server(): ?Server
+    {
+        return $this->server;
     }
 
     /** @throws PeerClosedException */

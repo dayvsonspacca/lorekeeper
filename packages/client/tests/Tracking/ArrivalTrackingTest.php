@@ -65,7 +65,7 @@ final class ArrivalTrackingTest extends TestCase
     {
         static::assertSame(CombatState::Dead, StateTracking::follow(
             CombatState::Fighting,
-            new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('Hero'), CombatState::Dead)]),
             self::me(),
         ));
         static::assertSame(CombatState::Fighting, StateTracking::follow(
@@ -87,7 +87,7 @@ final class ArrivalTrackingTest extends TestCase
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('lorekeeper03'));
+        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
     }
 
     private static function arrival(MapSpot $spot): MovedToMapEvent
@@ -111,7 +111,7 @@ final class ArrivalTrackingTest extends TestCase
                 new RoomPlayer(
                     new SocketId(122_628),
                     new MapPlayer(
-                        new PlayerName('lorekeeper03'),
+                        new PlayerName('Hero'),
                         new PlayerLevel(50),
                         Fixture::vitals(),
                         $spot,

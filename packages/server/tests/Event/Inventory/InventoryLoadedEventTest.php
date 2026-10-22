@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 final class InventoryLoadedEventTest extends TestCase
 {
-    private const string HILISE = <<<'JSON'
+    private const string HERO2 = <<<'JSON'
         {"t":"xt","b":{"r":-1,"o":{"cmd":"loadInventoryBig","items":[{"ItemID":17585,"sName":"Blade of Awe","sType":"Sword","sES":"Weapon","iLvl":1,"iRty":20,"iRng":25,"iQty":1,"bUpg":false,"bEquip":false,"EnhID":0},{"ItemID":30629,"sName":"Necrotic Sword of Doom","sType":"Sword","sES":"Weapon","iLvl":1,"iRty":36,"iRng":10,"iQty":1,"bUpg":false,"bEquip":true,"EnhID":52370,"EnhLvl":100,"EnhRty":7,"EnhPatternID":9,"ProcID":4}],"procs":{"4":{"nam":"Health Vampire","desc":"Deals 80% damage and lifesteals for 125% base damage (before stats).","typ":"ma","cd":0,"range":3000,"damage":0.8,"tgt":"h","pct":50,"ref":"aa"}}}}}
         JSON;
 
@@ -51,7 +51,7 @@ final class InventoryLoadedEventTest extends TestCase
     #[Test]
     public function it_reads_what_is_equipped_and_the_effect_of_an_enhancement(): void
     {
-        $items = InventoryLoadedEvent::from(JsonMessage::from(self::HILISE)->unwrap())->unwrap()->items;
+        $items = InventoryLoadedEvent::from(JsonMessage::from(self::HERO2)->unwrap())->unwrap()->items;
         $sword = $items->find(new ItemId(30_629))->unwrap();
         $awe = $items->find(new ItemId(17_585))->unwrap();
 

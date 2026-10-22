@@ -94,7 +94,7 @@ final class ClassTrackingTest extends TestCase
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('lorekeeper03'));
+        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
     }
 
     private static function changed(SocketId $player, string $class): ClassChangedEvent

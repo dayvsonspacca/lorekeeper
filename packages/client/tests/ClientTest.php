@@ -23,6 +23,7 @@ use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Session\ConnectionEstablishedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
+use Lorekeeper\Server\Server;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Async\CancellationTokenInterface;
@@ -30,12 +31,23 @@ use Psl\Async\Exception\CancelledException;
 use Psl\Async\NullCancellationToken;
 use Psl\Async\SignalCancellationToken;
 use Psl\DateTime\Duration;
+use Psl\Network\Address;
 use Psl\TCP;
 use RuntimeException;
 
 /** @mago-expect lint:too-many-methods */
 final class ClientTest extends TestCase
 {
+    #[Test]
+    public function it_tells_the_server_it_plays_on(): void
+    {
+        $server = new Server('Twilly', Address::tcp('127.0.0.1', 5588), true, false);
+        $stream = static::createStub(TCP\StreamInterface::class);
+
+        static::assertSame($server, new Client(new Connection($stream, $server), Fixture::me())->server());
+        static::assertNull(new Client(new Connection($stream), Fixture::me())->server());
+    }
+
     #[Test]
     public function it_sends_and_hands_the_awaited_event_back_to_the_script(): void
     {
@@ -253,7 +265,7 @@ final class ClientTest extends TestCase
     {
         $client = new Client(
             self::connection(
-                "{\"t\":\"xt\",\"b\":{\"r\":-1,\"o\":{\"cmd\":\"uotls\",\"unm\":\"lorekeeper03\",\"o\":{\"intState\":0}}}}\0",
+                "{\"t\":\"xt\",\"b\":{\"r\":-1,\"o\":{\"cmd\":\"uotls\",\"unm\":\"Hero2\",\"o\":{\"intState\":0}}}}\0",
             ),
             self::me(),
         );

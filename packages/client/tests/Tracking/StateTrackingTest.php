@@ -23,9 +23,9 @@ final class StateTrackingTest extends TestCase
     {
         $fighting = new PlayersStateChangedEvent([
             new PlayerState(new PlayerName('Someone'), CombatState::Dead),
-            new PlayerState(new PlayerName('LoreKeeper03'), CombatState::Fighting),
+            new PlayerState(new PlayerName('HERO'), CombatState::Fighting),
         ]);
-        $calm = new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Idle)]);
+        $calm = new PlayersStateChangedEvent([new PlayerState(new PlayerName('Hero'), CombatState::Idle)]);
         $someoneElse = new PlayersStateChangedEvent([new PlayerState(new PlayerName('Someone'), CombatState::Dead)]);
 
         static::assertSame(CombatState::Fighting, StateTracking::follow(CombatState::Idle, $fighting, self::me()));
@@ -40,7 +40,7 @@ final class StateTrackingTest extends TestCase
     #[Test]
     public function it_leaves_combat_when_the_server_says_it_is_idle_again(): void
     {
-        $calm = new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle);
+        $calm = new PlayerStateUpdatedEvent(new PlayerName('Hero'), CombatState::Idle);
         $someoneElse = new PlayerStateUpdatedEvent(new PlayerName('Someone'), CombatState::Idle);
 
         static::assertSame(CombatState::Idle, StateTracking::follow(CombatState::Fighting, $calm, self::me()));
@@ -63,6 +63,6 @@ final class StateTrackingTest extends TestCase
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('lorekeeper03'));
+        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
     }
 }

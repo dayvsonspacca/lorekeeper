@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Bots;
 
-use Lorekeeper\Apps\Desktop\Models\BotRun;
+use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Command\Settings\ChangeGameSettingCommand;
-use Lorekeeper\Client\Command\Settings\GameSetting;
 use Lorekeeper\Client\PeerClosedException;
 use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Stopped;
+use Lorekeeper\Core\Player\GameSetting;
 use Psl\Async\CancellationTokenInterface;
 use Psl\DateTime\Duration;
 
@@ -19,31 +19,31 @@ final readonly class HideFromPlayers
 {
     public static function apply(
         Preferences $preferences,
-        BotRun $run,
+        Account $account,
         Client $client,
         CancellationTokenInterface $stop,
     ): null|Disconnected|Stopped {
-        $blocked = [];
-        foreach (GameSetting::cases() as $setting) {
-            $blocks = $preferences->blocks($setting);
+        $known = $client->character()->player()->settings;
+        $changes = array_values(array_filter(
+            GameSetting::cases(),
+            static fn(GameSetting $setting): bool => $known?->allows($setting) !== !$preferences->blocks($setting),
+        ));
+        $blocked = array_map(self::named(...), array_values(array_filter($changes, $preferences->blocks(...))));
+        if ($blocked !== []) {
+            $account->log('Hiding from other players: ' . implode(', ', $blocked));
+        }
+
+        foreach ($changes as $setting) {
             try {
-                $client->send(new ChangeGameSettingCommand($setting, allowed: !$blocks));
+                $client->send(new ChangeGameSettingCommand($setting, allowed: !$preferences->blocks($setting)));
             } catch (PeerClosedException $closed) {
                 return new Disconnected($closed->getMessage());
-            }
-
-            if ($blocks) {
-                $blocked[] = self::named($setting);
             }
 
             $waited = $client->wait(Duration::seconds(1), $stop);
             if ($waited !== null) {
                 return $waited;
             }
-        }
-
-        if ($blocked !== []) {
-            $run->log('Hidden from other players: ' . implode(', ', $blocked));
         }
 
         return null;

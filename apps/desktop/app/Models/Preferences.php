@@ -6,29 +6,33 @@ namespace Lorekeeper\Apps\Desktop\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
-use Lorekeeper\Client\Command\Settings\GameSetting;
+use Lorekeeper\Core\Player\GameSetting;
 use Override;
 
 /**
  * @property int $id
- * @property bool $private_rooms
- * @property bool $play_together
  * @property bool $block_goto
  * @property bool $block_whispers
  * @property bool $block_friend_requests
  * @property bool $block_party_invites
  * @property bool $block_guild_invites
  * @property bool $block_duels
+ * @property bool $private_rooms
+ * @property bool $play_together
+ * @property bool $start_with_computer
+ * @property bool $notify_updates
  */
 #[Fillable([
-    'private_rooms',
-    'play_together',
     'block_goto',
     'block_whispers',
     'block_friend_requests',
     'block_party_invites',
     'block_guild_invites',
     'block_duels',
+    'private_rooms',
+    'play_together',
+    'start_with_computer',
+    'notify_updates',
 ])]
 final class Preferences extends Model
 {
@@ -43,14 +47,16 @@ final class Preferences extends Model
 
     /** @var array<string, mixed> */
     protected $attributes = [
-        'private_rooms' => true,
-        'play_together' => true,
         'block_goto' => true,
         'block_whispers' => true,
         'block_friend_requests' => true,
         'block_party_invites' => true,
         'block_guild_invites' => true,
         'block_duels' => true,
+        'private_rooms' => true,
+        'play_together' => true,
+        'start_with_computer' => false,
+        'notify_updates' => true,
     ];
 
     public static function current(): self
@@ -71,6 +77,12 @@ final class Preferences extends Model
     #[Override]
     protected function casts(): array
     {
-        return array_fill_keys(['private_rooms', 'play_together', ...array_keys(self::BLOCKS)], value: 'boolean');
+        return array_fill_keys([
+            'private_rooms',
+            'play_together',
+            'start_with_computer',
+            'notify_updates',
+            ...array_keys(self::BLOCKS),
+        ], value: 'boolean');
     }
 }

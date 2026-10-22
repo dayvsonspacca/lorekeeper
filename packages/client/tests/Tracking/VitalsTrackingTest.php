@@ -42,7 +42,7 @@ final class VitalsTrackingTest extends TestCase
         );
         $mine = VitalsTracking::follow(
             $vitals,
-            new PlayerVitalsUpdatedEvent(new PlayerName('LoreKeeper03'), Fixture::vitals(2585, 2585, 90, 100)),
+            new PlayerVitalsUpdatedEvent(new PlayerName('HERO'), Fixture::vitals(2585, 2585, 90, 100)),
             self::me(),
         );
 
@@ -57,7 +57,7 @@ final class VitalsTrackingTest extends TestCase
 
         static::assertSame($vitals, VitalsTracking::follow(
             $vitals,
-            new PlayerVitalsUpdatedEvent(new PlayerName('lorekeeper03'), Fixture::vitals()),
+            new PlayerVitalsUpdatedEvent(new PlayerName('Hero'), Fixture::vitals()),
             self::me(),
         ));
     }
@@ -69,13 +69,13 @@ final class VitalsTrackingTest extends TestCase
             Fixture::vitals(),
             new PlayersHealthChangedEvent([
                 new PlayerHealth(new PlayerName('Someone'), new Health(1)),
-                new PlayerHealth(new PlayerName('lorekeeper03'), new Health(189)),
+                new PlayerHealth(new PlayerName('Hero'), new Health(189)),
             ]),
             self::me(),
         );
         $spent = VitalsTracking::follow(
             $hit,
-            new PlayersManaChangedEvent([new PlayerMana(new PlayerName('lorekeeper03'), new Mana(87))]),
+            new PlayersManaChangedEvent([new PlayerMana(new PlayerName('Hero'), new Mana(87))]),
             self::me(),
         );
 
@@ -88,7 +88,7 @@ final class VitalsTrackingTest extends TestCase
         $healed = VitalsTracking::follow(
             Fixture::vitals(),
             new PlayersHealthChangedEvent([
-                new PlayerHealth(new PlayerName('lorekeeper03'), new Health(450)),
+                new PlayerHealth(new PlayerName('Hero'), new Health(450)),
             ]),
             self::me(),
         );
@@ -101,7 +101,7 @@ final class VitalsTrackingTest extends TestCase
     {
         $dead = VitalsTracking::follow(
             Fixture::vitals(health: 189, mana: 20),
-            new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('Hero'), CombatState::Dead)]),
             self::me(),
         );
         $back = VitalsTracking::follow($dead, new ResurrectedEvent(), self::me());
@@ -116,7 +116,7 @@ final class VitalsTrackingTest extends TestCase
     {
         $dead = VitalsTracking::follow(
             Fixture::vitals(health: 189, mana: 20),
-            new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]),
+            new PlayersStateChangedEvent([new PlayerState(new PlayerName('Hero'), CombatState::Dead)]),
             self::me(),
         );
 
@@ -127,12 +127,12 @@ final class VitalsTrackingTest extends TestCase
         );
         $stillDead = VitalsTracking::follow(
             $dead,
-            new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Dead),
+            new PlayerStateUpdatedEvent(new PlayerName('Hero'), CombatState::Dead),
             self::me(),
         );
         $back = VitalsTracking::follow(
             $dead,
-            new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
+            new PlayerStateUpdatedEvent(new PlayerName('Hero'), CombatState::Idle),
             self::me(),
         );
 
@@ -146,9 +146,9 @@ final class VitalsTrackingTest extends TestCase
     {
         $me = Fixture::me();
         foreach ([
-            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intHPMax":1193,"intMPMax":100,"intHP":990,"intMP":20}}}}',
-            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intState":0}}}}',
-            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intState":1,"intHP":1193,"intMP":100,"intSP":100,"strFrame":"Enter","strPad":"Spawn"}}}}',
+            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero","o":{"intHPMax":1193,"intMPMax":100,"intHP":990,"intMP":20}}}}',
+            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero","o":{"intState":0}}}}',
+            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero","o":{"intState":1,"intHP":1193,"intMP":100,"intSP":100,"strFrame":"Enter","strPad":"Spawn"}}}}',
         ] as $message) {
             foreach (Events::recognize(JsonMessage::from($message)->unwrap()) as $event) {
                 $me->hear($event);
@@ -165,7 +165,7 @@ final class VitalsTrackingTest extends TestCase
 
         static::assertSame($hurt, VitalsTracking::follow(
             $hurt,
-            new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
+            new PlayerStateUpdatedEvent(new PlayerName('Hero'), CombatState::Idle),
             self::me(),
         ));
     }
@@ -201,7 +201,7 @@ final class VitalsTrackingTest extends TestCase
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('lorekeeper03'));
+        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
     }
 
     /** @return list<int> */
