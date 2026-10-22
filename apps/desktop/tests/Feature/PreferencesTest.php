@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Livewire;
 use Lorekeeper\Apps\Desktop\Filament\Pages\ManagePreferences;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
@@ -47,6 +48,17 @@ final class PreferencesTest extends TestCase
         $preferences = Preferences::current();
         static::assertFalse($preferences->blocks(GameSetting::Whispers));
         static::assertTrue($preferences->blocks(GameSetting::Goto));
+    }
+
+    #[Test]
+    public function the_rooms_come_back_on_a_database_that_kept_them(): void
+    {
+        $migration = require database_path('migrations/2026_10_22_000001_let_the_bots_play_together_again.php');
+
+        $migration->up();
+
+        static::assertTrue(Schema::hasColumns('preferences', ['private_rooms', 'play_together']));
+        static::assertTrue(Preferences::current()->play_together);
     }
 
     #[Test]
