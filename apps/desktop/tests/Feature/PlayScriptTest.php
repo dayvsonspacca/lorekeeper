@@ -50,6 +50,7 @@ final class PlayScriptTest extends TestCase
             ],
             $this->logs($account),
         );
+        static::assertSame([['Hero', 'Level check finished']], $this->notifier->shown);
     }
 
     #[Test]
@@ -66,6 +67,7 @@ final class PlayScriptTest extends TestCase
             [["Level check cannot play: the file: 'start' names no node ('gone')", 'error']],
             $this->logs($account),
         );
+        static::assertSame([['Hero', 'Level check cannot play']], $this->notifier->shown);
     }
 
     #[Test]

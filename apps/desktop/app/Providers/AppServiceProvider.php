@@ -11,10 +11,13 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\ProcessLauncher;
+use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
+use Lorekeeper\Apps\Desktop\Bots\Notifier\SilentNotifier;
 use Lorekeeper\Apps\Desktop\Native\BootstrapCache;
 use Lorekeeper\Apps\Desktop\Native\InstallationKey;
 use Lorekeeper\Apps\Desktop\Native\LocalTime;
 use Lorekeeper\Apps\Desktop\Tauri\Shell;
+use Lorekeeper\Apps\Desktop\Tauri\TauriNotifier;
 use Override;
 
 final class AppServiceProvider extends ServiceProvider
@@ -42,5 +45,8 @@ final class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->singleton(Launcher::class, ProcessLauncher::class);
+        $this->app->singleton(Notifier::class, static fn(): Notifier => Shell::running()
+            ? new TauriNotifier()
+            : new SilentNotifier());
     }
 }

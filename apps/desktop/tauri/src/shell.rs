@@ -63,7 +63,7 @@ fn run(app: &AppHandle, mut timeline: Timeline) -> Result<(), Failure> {
     timeline.mark("open");
     php.note_startup(&timeline.summary());
 
-    poll::watch(app, &url, &secret);
+    poll::watch(app, &url, &secret, &php.icon());
 
     Ok(())
 }

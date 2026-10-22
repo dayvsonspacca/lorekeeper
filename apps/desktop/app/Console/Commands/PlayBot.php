@@ -9,6 +9,8 @@ use Lorekeeper\Apps\Desktop\Bots\BotRecorder;
 use Lorekeeper\Apps\Desktop\Bots\BotStatus;
 use Lorekeeper\Apps\Desktop\Bots\HideFromPlayers;
 use Lorekeeper\Apps\Desktop\Bots\LogLevel;
+use Lorekeeper\Apps\Desktop\Bots\Notifier\Notice;
+use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
 use Lorekeeper\Apps\Desktop\Bots\PlayScript;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
@@ -38,7 +40,7 @@ final class PlayBot extends Command
     /** @var string */
     protected $signature = 'bots:play {account}';
 
-    public function handle(LoginClient $logins): int
+    public function handle(LoginClient $logins, Notifier $notifier): int
     {
         $account = Account::query()->findOrFail($this->argument('account'));
 
@@ -91,6 +93,10 @@ final class PlayBot extends Command
         }, $ending->reason);
         if ($settled) {
             $account->log(...self::ending($account));
+            $notice = Notice::leaving($account);
+            if ($notice !== null) {
+                $notifier->show($notice);
+            }
         }
 
         return self::SUCCESS;

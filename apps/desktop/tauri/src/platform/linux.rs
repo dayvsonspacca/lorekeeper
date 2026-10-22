@@ -57,6 +57,15 @@ impl Platform for Linux {
         Ok(())
     }
 
+    fn notify(icon: &Path, title: &str, message: &str) {
+        let _ = notify_rust::Notification::new()
+            .appname("Lorekeeper")
+            .summary(title)
+            .body(message)
+            .image_path(&format!("file://{}", icon.display()))
+            .show();
+    }
+
     fn open_externally(url: &Url) {
         let mut command = Command::new("xdg-open");
         command

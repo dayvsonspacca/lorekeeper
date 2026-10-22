@@ -80,6 +80,10 @@ impl Php {
         self.data.storage().join("logs")
     }
 
+    pub fn icon(&self) -> PathBuf {
+        self.data.icon()
+    }
+
     pub fn note_startup(&self, summary: &str) {
         eprintln!("lorekeeper: {summary}");
         let _ = fs::write(self.data.startup_log(), format!("{summary}\n"));

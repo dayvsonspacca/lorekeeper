@@ -175,6 +175,7 @@ final class PlayBotTest extends TestCase
 
         static::assertSame(BotStatus::Offline, $account->refresh()->status);
         static::assertNull($account->started_at);
+        static::assertSame([], $this->notifier->shown);
     }
 
     #[Test]
@@ -194,6 +195,7 @@ final class PlayBotTest extends TestCase
         static::assertNull($account->pid);
         static::assertNotNull($account->stopped_at);
         static::assertSame('Failed: The MAC is invalid.', $account->logs()->latest('id')->first()?->message);
+        static::assertSame([['Hero', 'Failed: The MAC is invalid.']], $this->notifier->shown);
     }
 
     private function account(): Account

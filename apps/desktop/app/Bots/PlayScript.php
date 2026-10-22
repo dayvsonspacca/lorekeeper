@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Bots;
 
+use Lorekeeper\Apps\Desktop\Bots\Notifier\Notice;
+use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Scripts\FlowNode;
 use Lorekeeper\Apps\Desktop\Scripts\FlowScript;
@@ -29,6 +31,7 @@ final readonly class PlayScript
         } catch (InvalidFlowFile $invalid) {
             $account->scriptEnded($script);
             $account->log("{$script->name} cannot play: " . implode('; ', $invalid->problems), LogLevel::Error);
+            app(Notifier::class)->show(new Notice($account->name, "{$script->name} cannot play"));
 
             return null;
         }
@@ -57,6 +60,14 @@ final readonly class PlayScript
                 LogLevel::Error,
             ],
         });
+        $message = match ($outcome->status) {
+            OutcomeStatus::Done => "{$script->name} finished",
+            OutcomeStatus::Failed => "{$script->name} failed",
+            OutcomeStatus::Cancelled, OutcomeStatus::Disconnected => null,
+        };
+        if ($message !== null) {
+            app(Notifier::class)->show(new Notice($account->name, $message));
+        }
 
         return $outcome;
     }

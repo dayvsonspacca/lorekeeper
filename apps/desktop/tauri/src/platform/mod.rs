@@ -17,6 +17,8 @@ pub trait Platform {
 
     fn on_signals(app: &AppHandle) -> io::Result<()>;
 
+    fn notify(icon: &Path, title: &str, message: &str);
+
     fn open_externally(url: &Url);
 }
 
