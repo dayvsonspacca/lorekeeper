@@ -114,7 +114,7 @@ final class ClientEnterTest extends TestCase
         static::assertFalse($player->tags->has(PlayerTag::Member));
         static::assertSame(131, $player->inventory->slots->value);
         static::assertTrue($player->marks->has(new QuestMark(QuestPeriod::Day, 2, 6)));
-        static::assertTrue($player->settings?->allows(GameSetting::Goto));
+        static::assertFalse($player->settings?->allows(GameSetting::Goto));
         static::assertSame([2585, 2585, 100, 100], [
             $player->vitals->health->current->value,
             $player->vitals->health->maximum->value,

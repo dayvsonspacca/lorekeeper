@@ -87,7 +87,7 @@ final readonly class PlayerSettingsLoadedEvent implements Event
     {
         $allowed = [];
         foreach (self::BITS as $bit => $setting) {
-            if (($bits & (1 << $bit)) === 0) {
+            if (($bits & (1 << $bit)) !== 0) {
                 continue;
             }
 

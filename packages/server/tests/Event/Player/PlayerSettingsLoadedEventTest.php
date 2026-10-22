@@ -15,34 +15,37 @@ use PHPUnit\Framework\TestCase;
 final class PlayerSettingsLoadedEventTest extends TestCase
 {
     #[Test]
-    public function it_reads_which_settings_each_player_allows_from_its_preference_bits(): void
+    public function a_setting_turned_off_sets_its_bit_and_turning_it_on_clears_it(): void
     {
         $event = PlayerSettingsLoadedEvent::from(self::message([
             ['uid' => 45_466, 'data' => ['strUsername' => 'Hero', 'ia1' => 10_128]],
-            ['uid' => 45_467, 'data' => ['strUsername' => 'Hero2', 'ia1' => 36]],
-            ['uid' => 45_468, 'data' => ['strUsername' => 'Hero3', 'ia1' => 0b100_0001_0000]],
-            ['uid' => 45_469, 'data' => ['strUsername' => 'Hero4']],
+            ['uid' => 45_467, 'data' => ['strUsername' => 'Hero2', 'ia1' => 0]],
+            ['uid' => 45_468, 'data' => ['strUsername' => 'Hero3', 'ia1' => 36]],
+            ['uid' => 45_469, 'data' => ['strUsername' => 'Hero4', 'ia1' => 0b100_0001_0000]],
+            ['uid' => 45_470, 'data' => ['strUsername' => 'Hero5']],
         ]))->unwrap();
+        $all = [
+            GameSetting::Goto,
+            GameSetting::FriendRequests,
+            GameSetting::PartyInvites,
+            GameSetting::GuildInvites,
+            GameSetting::Whispers,
+            GameSetting::Duels,
+        ];
 
         static::assertSame([45_466, 'Hero'], [
             $event->players[0]->socketId->value,
             $event->players[0]->name->value,
         ]);
+        static::assertSame([], $event->players[0]->settings->allowed);
+        static::assertSame($all, $event->players[1]->settings->allowed);
+        static::assertSame($all, $event->players[2]->settings->allowed);
         static::assertSame(
-            [
-                GameSetting::Goto,
-                GameSetting::FriendRequests,
-                GameSetting::PartyInvites,
-                GameSetting::GuildInvites,
-                GameSetting::Whispers,
-                GameSetting::Duels,
-            ],
-            $event->players[0]->settings->allowed,
+            [GameSetting::FriendRequests, GameSetting::PartyInvites, GameSetting::GuildInvites, GameSetting::Duels],
+            $event->players[3]->settings->allowed,
         );
-        static::assertSame([], $event->players[1]->settings->allowed);
-        static::assertSame([GameSetting::Goto, GameSetting::Whispers], $event->players[2]->settings->allowed);
-        static::assertCount(3, $event->players);
-        static::assertSame('Settings of Hero, Hero2, Hero3', $event->summary());
+        static::assertCount(4, $event->players);
+        static::assertSame('Settings of Hero, Hero2, Hero3, Hero4', $event->summary());
     }
 
     #[Test]
