@@ -76,6 +76,14 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
+    public function the_home_tells_the_server_each_bot_played_on(): void
+    {
+        $this->botInTheGame()->update(['last_server' => 'Twilly']);
+
+        Livewire::test(Accounts::class)->assertSee(['icestormarena', 'Twilly']);
+    }
+
+    #[Test]
     public function the_pages_show_no_summary_figures(): void
     {
         $this->botInTheGame();

@@ -53,7 +53,7 @@
 
                         <div class="lk-card__place">
                             <x-filament::icon icon="heroicon-m-map-pin" />
-                            <span class="lk-cut">{{ $place }}</span>
+                            <span class="lk-cut">{{ $place }}@if ($account->last_server !== null)<span class="lk-dim"> · {{ $account->last_server }}</span>@endif</span>
                             <span>{{ $active ? $account->duration() ?? '—' : $account->stopped_at?->shortRelativeDiffForHumans() ?? '—' }}</span>
                         </div>
 

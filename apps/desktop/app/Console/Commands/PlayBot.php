@@ -47,7 +47,13 @@ final class PlayBot extends Command
         $claimed = Account::query()
             ->whereKey($account->id)
             ->where('status', BotStatus::Starting)
-            ->update(['status' => BotStatus::Online, 'pid' => getmypid(), 'started_at' => now(), 'stopped_at' => null]);
+            ->update([
+                'status' => BotStatus::Online,
+                'pid' => getmypid(),
+                'started_at' => now(),
+                'stopped_at' => null,
+                'last_server' => null,
+            ]);
         if ($claimed === 0) {
             if ($account->refresh()->status === BotStatus::Stopping && $account->settle(BotStatus::Offline, null)) {
                 $account->log('Stopped before it entered the game');
@@ -111,7 +117,12 @@ final class PlayBot extends Command
         $client->subscribe($recorder->heard(...));
         $client->character()->subscribe($recorder);
         $recorder->update($client->character());
-        $account->log("Entered the game in {$client->character()->location()->map->name->value}", LogLevel::Success);
+        $account->update(['last_server' => $client->server()?->name]);
+        $account->log(
+            "Entered the game in {$client->character()->location()->map->name->value}"
+            . ($account->last_server === null ? '' : " on {$account->last_server}"),
+            LogLevel::Success,
+        );
         $hiding = HideFromPlayers::apply(Preferences::current(), $account, $client, $stop);
         if ($hiding instanceof Disconnected) {
             return new Ending(EndingStatus::Disconnected, $hiding->reason);

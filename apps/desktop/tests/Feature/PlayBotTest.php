@@ -182,7 +182,7 @@ final class PlayBotTest extends TestCase
     public function a_bot_that_crashes_goes_offline_as_failed(): void
     {
         $account = $this->account();
-        $account->update(['status' => BotStatus::Starting]);
+        $account->update(['status' => BotStatus::Starting, 'last_server' => 'Twilly']);
         DB::table('accounts')->update([
             'password' => new Encrypter(random_bytes(32), 'aes-256-cbc')->encryptString('secret'),
         ]);
@@ -192,6 +192,7 @@ final class PlayBotTest extends TestCase
         $account->refresh();
         static::assertSame(BotStatus::Failed, $account->status);
         static::assertSame('The MAC is invalid.', $account->result);
+        static::assertNull($account->last_server);
         static::assertNull($account->pid);
         static::assertNotNull($account->stopped_at);
         static::assertSame('Failed: The MAC is invalid.', $account->logs()->latest('id')->first()?->message);

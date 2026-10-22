@@ -26,8 +26,11 @@ final class ConnectionLifecycleTest extends TestCase
             offset: 1,
         );
 
-        $connection = Connection::open(new Server('Hero', Address::tcp('127.0.0.1', $port), true, false));
+        $server = new Server('Twilly', Address::tcp('127.0.0.1', $port), true, false);
+        $connection = Connection::open($server);
         static::assertFalse($connection->closedHere());
+        static::assertSame($server, $connection->server());
+        static::assertNull(new Connection(static::createStub(TCP\StreamInterface::class))->server());
 
         $connection->close();
         fclose($listener);

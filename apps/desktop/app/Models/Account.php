@@ -21,6 +21,7 @@ use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
  * @property string $name
  * @property string $password
  * @property null|string $server
+ * @property null|string $last_server
  * @property null|int $level
  * @property BotStatus $status
  * @property null|int $pid
@@ -39,6 +40,7 @@ use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
     'name',
     'password',
     'server',
+    'last_server',
     'level',
     'status',
     'pid',
