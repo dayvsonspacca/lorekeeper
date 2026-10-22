@@ -12,6 +12,10 @@ just desktop build  # tauri/target/release/bundle/{deb,appimage}
 `dev` runs with `APP_DEBUG=true` and keeps its data apart from the installed app. `build` stages the app without dev
 dependencies into `build/`, and only `tauri.bundle.json` points the bundle at it.
 
+On GitHub Actions, `.github/workflows/desktop-release.yml` runs the same `build` on Ubuntu 22.04, so the bundle works on
+older glibc. Pushing a `desktop-v<version>` tag publishes both files as a release of that version, a prerelease when the
+version has a suffix like `-alpha`; running the workflow by hand only keeps them as an artifact of the run.
+
 ## Linux only, for now
 
 Everything that depends on the system sits behind the `Platform` trait in `src/platform/`, implemented by
