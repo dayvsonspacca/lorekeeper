@@ -24,10 +24,15 @@ final class BotRecorder implements ObserverInterface
 
     private readonly Witness $witness;
 
+    private readonly Journal $journal;
+
+    private ?Character $me = null;
+
     public function __construct(
         private readonly Account $account,
     ) {
         $this->witness = new Witness();
+        $this->journal = new Journal();
     }
 
     public function heard(Event $event): void
@@ -38,6 +43,9 @@ final class BotRecorder implements ObserverInterface
             $event instanceof LeveledUpEvent => $this->log("Reached level {$event->level->value}", LogLevel::Success),
             default => null,
         };
+        foreach ($this->journal->heard($event, $this->me) as [$message, $level]) {
+            $this->log($message, $level);
+        }
 
         $this->keep($this->witness->heard($event, now()->getTimestamp()));
     }
@@ -49,6 +57,7 @@ final class BotRecorder implements ObserverInterface
             return;
         }
 
+        $this->me = $subject;
         $map = $subject->location()->map->name->value;
         $level = $subject->player()->progress->level->value;
 

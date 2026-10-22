@@ -40,6 +40,7 @@ final readonly class PlayScript
             $outcome = Outcome::of($client->run(
                 new FlowScript($flow, entering: static function (FlowNode $node) use ($account): void {
                     $account->stepping($node->step->describe());
+                    $account->log("→ {$node->step->describe()}");
                 }),
                 new LinkedCancellationToken($stop, $cancel->token()),
             ));

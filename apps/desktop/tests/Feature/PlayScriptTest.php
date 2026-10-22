@@ -45,6 +45,7 @@ final class PlayScriptTest extends TestCase
         static::assertSame(
             [
                 ['Playing Level check',                          'info'],
+                ['→ Level 30 or higher',                         'info'],
                 ['Level check: ended after: Level 30 or higher', 'success'],
             ],
             $this->logs($account),
