@@ -24,13 +24,13 @@ final readonly class Downloads
         return is_dir("{$home}/Downloads") ? "{$home}/Downloads" : $home;
     }
 
-    public static function save(string $title, string $contents): string
+    public static function save(string $title, string $contents, string $extension): string
     {
         $folder = self::folder();
         $base = Str::slug($title) === '' ? 'script' : Str::slug($title);
-        $path = "{$folder}/{$base}.json";
+        $path = "{$folder}/{$base}.{$extension}";
         for ($copy = 2; file_exists($path); $copy++) {
-            $path = "{$folder}/{$base}-{$copy}.json";
+            $path = "{$folder}/{$base}-{$copy}.{$extension}";
         }
 
         file_put_contents($path, $contents);

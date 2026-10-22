@@ -9,6 +9,7 @@ use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Lorekeeper\Apps\Desktop\Models\Script;
 use Lorekeeper\Apps\Desktop\Native\Downloads;
+use Lorekeeper\Apps\Desktop\Scripts\FlowFile;
 use Override;
 
 final class ExportScriptAction extends Action
@@ -29,7 +30,7 @@ final class ExportScriptAction extends Action
             ->icon(Heroicon::OutlinedArrowUpTray)
             ->color('gray')
             ->action(static function (Script $record): void {
-                $path = Downloads::save($record->name, $record->export());
+                $path = Downloads::save($record->name, $record->export(), FlowFile::EXTENSION);
 
                 Notification::make()
                     ->success()

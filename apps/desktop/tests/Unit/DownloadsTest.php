@@ -66,7 +66,7 @@ final class DownloadsTest extends TestCase
     #[Test]
     public function a_title_with_no_letters_is_saved_as_script(): void
     {
-        static::assertSame("{$this->home}/script.json", Downloads::save('!!!', '{}'));
-        static::assertSame('{}', file_get_contents("{$this->home}/script.json"));
+        static::assertSame("{$this->home}/script.lorebot", Downloads::save('!!!', '{}', extension: 'lorebot'));
+        static::assertSame('{}', file_get_contents("{$this->home}/script.lorebot"));
     }
 }

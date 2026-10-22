@@ -13,6 +13,8 @@ final readonly class FlowFile
 {
     public const int VERSION = 1;
 
+    public const string EXTENSION = 'lorebot';
+
     /** @throws InvalidFlowFile */
     public static function parse(string $json): Flow
     {
@@ -32,13 +34,14 @@ final readonly class FlowFile
      */
     public static function fromArray(array $file): Flow
     {
-        $top = new Fields($file, 'the file', ['lorekeeper', 'name', 'author', 'start', 'nodes', 'wires']);
+        $top = new Fields($file, 'the file', ['lorekeeper', 'name', 'author', 'group', 'start', 'nodes', 'wires']);
         if (($file['lorekeeper'] ?? null) !== self::VERSION) {
             $top->problems[] = "the file: 'lorekeeper' must be " . self::VERSION;
         }
 
         $name = $top->text('name');
         $author = $top->optionalText('author');
+        $group = $top->optionalText('group');
         $start = $top->text('start');
         $problems = $top->problems;
         $nodes = self::nodes(self::listed($file, $problems), $problems);
@@ -51,7 +54,7 @@ final readonly class FlowFile
             throw new InvalidFlowFile($problems === [] ? ['the file has no nodes'] : $problems);
         }
 
-        return new Flow($name, $author, $start, array_values($nodes), $wires);
+        return new Flow($name, $author, $start, array_values($nodes), $wires, $group);
     }
 
     public static function encode(Flow $flow): string
@@ -71,6 +74,7 @@ final readonly class FlowFile
             'lorekeeper' => self::VERSION,
             'name' => $flow->name,
             ...($flow->author === null ? [] : ['author' => $flow->author]),
+            ...($flow->group === null ? [] : ['group' => $flow->group]),
             'start' => $flow->start,
             'nodes' => array_map(static fn(FlowNode $node): array => [
                 'id' => $node->id,

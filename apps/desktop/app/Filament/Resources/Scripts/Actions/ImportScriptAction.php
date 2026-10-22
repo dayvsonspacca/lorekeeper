@@ -32,7 +32,7 @@ final class ImportScriptAction extends Action
             ->icon(Heroicon::OutlinedArrowDownTray)
             ->color('gray')
             ->modalHeading('Import a script')
-            ->modalDescription('Pick a script file someone shared with you.')
+            ->modalDescription('Pick a .lorebot file someone shared with you.')
             ->modalSubmitActionLabel('Import')
             ->schema([
                 FileUpload::make('file')

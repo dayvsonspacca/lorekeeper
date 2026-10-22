@@ -15,11 +15,12 @@ use Lorekeeper\Apps\Desktop\Scripts\InvalidFlowFile;
  * @property int $id
  * @property string $name
  * @property null|string $author
+ * @property null|string $group
  * @property array{start?: null|string, nodes?: list<array<string, mixed>>, wires?: list<array<string, mixed>>, canvas?: array<string, mixed>} $drawing
  * @property null|Carbon $created_at
  * @property null|Carbon $updated_at
  */
-#[Fillable(['name', 'author', 'drawing'])]
+#[Fillable(['name', 'author', 'group', 'drawing'])]
 /** @mago-expect lint:cyclomatic-complexity */
 final class Script extends Model
 {
@@ -33,6 +34,7 @@ final class Script extends Model
         return new self([
             'name' => $flow->name,
             'author' => $flow->author,
+            'group' => $flow->group,
             'drawing' => ['start' => $file['start'], 'nodes' => $file['nodes'], 'wires' => $file['wires']],
         ]);
     }
@@ -65,6 +67,7 @@ final class Script extends Model
             'lorekeeper' => FlowFile::VERSION,
             'name' => $this->name,
             ...($this->author === null ? [] : ['author' => $this->author]),
+            ...($this->group === null ? [] : ['group' => $this->group]),
             'start' => $this->drawing['start'] ?? null,
             'nodes' => $this->drawing['nodes'] ?? [],
             'wires' => $this->drawing['wires'] ?? [],

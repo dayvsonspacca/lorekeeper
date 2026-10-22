@@ -20,11 +20,11 @@ final readonly class ScriptFiles
 
     public static function fixture(): string
     {
-        return (string) file_get_contents(__DIR__ . '/Fixtures/flows/crypto-token-daily.json');
+        return (string) file_get_contents(__DIR__ . '/Fixtures/flows/crypto-token-daily.lorebot');
     }
 
     public static function upload(string $contents): UploadedFile
     {
-        return UploadedFile::fake()->createWithContent('script.json', $contents);
+        return UploadedFile::fake()->createWithContent('script.lorebot', $contents);
     }
 }

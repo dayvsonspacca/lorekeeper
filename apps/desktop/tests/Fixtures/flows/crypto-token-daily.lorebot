@@ -2,6 +2,7 @@
     "lorekeeper": 1,
     "name": "Crypto Token daily",
     "author": "Hero",
+    "group": "Dailies",
     "start": "enter",
     "nodes": [
         {"id": "enter", "do": "join", "map": "boxes", "at": [0, 0]},

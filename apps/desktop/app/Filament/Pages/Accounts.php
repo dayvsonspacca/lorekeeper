@@ -16,6 +16,7 @@ use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
 use Lorekeeper\Apps\Desktop\Filament\Schemas\AccountForm;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Apps\Desktop\Models\Script;
+use Lorekeeper\Apps\Desktop\Scripts\Library;
 use Override;
 
 final class Accounts extends Page
@@ -71,14 +72,11 @@ final class Accounts extends Page
             ->schema([
                 Select::make('script')
                     ->label('Script')
-                    ->options(
-                        static fn(): array => Script::query()
-                            ->orderBy('name')
-                            ->get()
-                            ->filter(static fn(Script $script): bool => $script->problems() === [])
-                            ->mapWithKeys(static fn(Script $script): array => [$script->id => $script->name])
-                            ->all(),
-                    )
+                    ->options(Library::playable(...))
+                    ->native(false)
+                    ->searchable()
+                    ->placeholder('Pick a script')
+                    ->noSearchResultsMessage('No script by that name')
                     ->required(),
             ])
             ->action(static function (?Account $record, array $data): void {

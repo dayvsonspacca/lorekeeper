@@ -19,6 +19,7 @@ use Lorekeeper\Apps\Desktop\Filament\Resources\Scripts\Actions\ExportScriptActio
 use Lorekeeper\Apps\Desktop\Filament\Resources\Scripts\Pages\DrawScript;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Scripts\Pages\ManageScripts;
 use Lorekeeper\Apps\Desktop\Models\Script;
+use Lorekeeper\Apps\Desktop\Scripts\Library;
 use Override;
 
 final class ScriptResource extends Resource
@@ -40,6 +41,11 @@ final class ScriptResource extends Resource
                 ->maxLength(120)
                 ->autofocus(),
             TextInput::make('author')->maxLength(120)->placeholder('Who drew it'),
+            TextInput::make('group')
+                ->maxLength(60)
+                ->placeholder('Dailies, farms…')
+                ->helperText('Scripts of a group are listed together when you pick one to play.')
+                ->datalist(Library::groups(...)),
         ]);
     }
 
@@ -54,6 +60,10 @@ final class ScriptResource extends Resource
                         ? 'No author'
                         : "by {$record->author}")
                     ->searchable(),
+                TextColumn::make('group')
+                    ->placeholder('No group')
+                    ->color('gray')
+                    ->sortable(),
                 TextColumn::make('nodes')
                     ->state(static fn(Script $record): string => match ($record->nodes()) {
                         1 => '1 node',
@@ -92,6 +102,7 @@ final class ScriptResource extends Resource
                         ->fillForm(static fn(Script $record): array => [
                             'name' => "{$record->name} (copy)",
                             'author' => $record->author,
+                            'group' => $record->group,
                         ])
                         ->successNotificationTitle('Duplicated'),
                     DeleteAction::make(),

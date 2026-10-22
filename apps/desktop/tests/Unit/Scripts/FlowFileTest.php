@@ -22,6 +22,7 @@ final class FlowFileTest extends TestCase
 
         static::assertSame('Crypto Token daily', $flow->name);
         static::assertSame('Hero', $flow->author);
+        static::assertSame('Dailies', $flow->group);
         static::assertSame('enter', $flow->first()->id);
         static::assertSame([960, 120], $flow->node('hunt')?->at);
         static::assertSame(['yes', 'no'], $flow->node('done')?->exits());
@@ -156,11 +157,12 @@ final class FlowFileTest extends TestCase
             ],
         ];
         yield 'newer version, unknown field, wires not a list' => [
-            '{"lorekeeper": 2, "name": "X", "author": "", "start": "a", "extra": 1, "nodes": [{"id": "a", "do": "rest"}], "wires": 3}',
+            '{"lorekeeper": 2, "name": "X", "author": "", "group": "", "start": "a", "extra": 1, "nodes": [{"id": "a", "do": "rest"}], "wires": 3}',
             [
                 "the file: unexpected field 'extra'",
                 "the file: 'lorekeeper' must be 1",
                 "the file: 'author' must be a text that is not empty",
+                "the file: 'group' must be a text that is not empty",
                 "the file: 'wires' must be a list of objects",
             ],
         ];
@@ -221,6 +223,6 @@ final class FlowFileTest extends TestCase
 
     private static function file(string $name): string
     {
-        return (string) file_get_contents(__DIR__ . "/../../Fixtures/flows/{$name}.json");
+        return (string) file_get_contents(__DIR__ . "/../../Fixtures/flows/{$name}.lorebot");
     }
 }

@@ -10,6 +10,7 @@ use Livewire\Livewire;
 use Lorekeeper\Apps\Desktop\Filament\Resources\Scripts\Pages\ManageScripts;
 use Lorekeeper\Apps\Desktop\Models\Script;
 use Lorekeeper\Apps\Desktop\Scripts\FlowFile;
+use Lorekeeper\Apps\Desktop\Scripts\Library;
 use Lorekeeper\Apps\Desktop\Tests\ScriptFiles;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use Override;
@@ -66,11 +67,12 @@ final class ScriptsTest extends TestCase
     public function a_new_script_starts_empty(): void
     {
         Livewire::test(ManageScripts::class)
-            ->callAction('create', ['name' => 'Daily run', 'author' => 'Hero'])
+            ->callAction('create', ['name' => 'Daily run', 'author' => 'Hero', 'group' => 'Dailies'])
             ->assertHasNoActionErrors();
 
         $script = Script::query()->sole();
         static::assertSame('Daily run', $script->name);
+        static::assertSame('Dailies', $script->group);
         static::assertSame(0, $script->nodes());
         static::assertSame(['start' => null, 'nodes' => [], 'wires' => []], $script->drawing);
     }
@@ -85,6 +87,7 @@ final class ScriptsTest extends TestCase
 
         $script = Script::query()->sole();
         static::assertSame('Hero', $script->author);
+        static::assertSame('Dailies', $script->group);
         static::assertEquals(FlowFile::parse(ScriptFiles::fixture()), $script->flow());
     }
 
@@ -110,9 +113,9 @@ final class ScriptsTest extends TestCase
 
         static::assertEquals(
             FlowFile::parse(ScriptFiles::fixture()),
-            FlowFile::parse((string) file_get_contents("{$this->downloads}/crypto-token-daily.json")),
+            FlowFile::parse((string) file_get_contents("{$this->downloads}/crypto-token-daily.lorebot")),
         );
-        static::assertFileExists("{$this->downloads}/crypto-token-daily-2.json");
+        static::assertFileExists("{$this->downloads}/crypto-token-daily-2.lorebot");
     }
 
     #[Test]
@@ -127,6 +130,27 @@ final class ScriptsTest extends TestCase
         $copy = Script::query()->where('name', 'Crypto Token for alts')->sole();
         static::assertSame($script->drawing, $copy->drawing);
         static::assertSame('Hero', $copy->author);
+        static::assertSame('Dailies', $copy->group);
+    }
+
+    #[Test]
+    public function the_scripts_ready_to_play_are_offered_by_group(): void
+    {
+        $crypto = ScriptFiles::crypto();
+        $tokens = ScriptFiles::crypto();
+        $tokens->update(['name' => 'Tokens of Collection daily']);
+        $loose = ScriptFiles::crypto();
+        $loose->update(['name' => 'Level up', 'group' => null]);
+        Script::query()->create(['name' => 'Half drawn', 'group' => 'Dailies']);
+
+        static::assertSame(
+            [
+                $loose->id => 'Level up',
+                'Dailies' => [$crypto->id => 'Crypto Token daily', $tokens->id => 'Tokens of Collection daily'],
+            ],
+            Library::playable(),
+        );
+        static::assertSame(['Dailies'], Library::groups());
     }
 
     #[Test]

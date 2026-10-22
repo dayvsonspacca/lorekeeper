@@ -14,11 +14,14 @@ final readonly class Flow
     private array $byId;
 
     /**
+     * @mago-expect lint:excessive-parameter-list
+     *
      * @param non-empty-string $name
      * @param null|non-empty-string $author
      * @param non-empty-string $start
      * @param non-empty-list<FlowNode> $nodes
      * @param list<Wire> $wires
+     * @param null|non-empty-string $group
      *
      * @throws InvalidArgumentException
      */
@@ -28,6 +31,7 @@ final readonly class Flow
         public string $start,
         public array $nodes,
         public array $wires = [],
+        public ?string $group = null,
     ) {
         $byId = [];
         foreach ($nodes as $node) {
