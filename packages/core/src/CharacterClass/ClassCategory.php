@@ -8,4 +8,5 @@ enum ClassCategory
 {
     case Melee;
     case Caster;
+    case Hybrid;
 }

@@ -71,6 +71,7 @@ final readonly class ClassChangedEvent implements Event
         return match (substr($code, offset: 0, length: 1)) {
             'M' => ClassCategory::Melee,
             'C' => ClassCategory::Caster,
+            'S' => ClassCategory::Hybrid,
             default => throw new MalformedEventException(static::class, "unknown class category '{$code}'"),
         };
     }
