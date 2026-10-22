@@ -48,7 +48,7 @@ final class DesktopTest extends TestCase
     }
 
     #[Test]
-    public function the_home_shows_a_row_per_character_to_start_and_stop_its_bot(): void
+    public function the_home_shows_a_card_per_character_to_start_and_stop_its_bot(): void
     {
         $idle = $this->account();
         $busy = Account::query()->create(['name' => 'Busy', 'password' => bin2hex(random_bytes(8)), 'level' => 6]);
@@ -56,16 +56,7 @@ final class DesktopTest extends TestCase
         $this->launcher->alive[$busy->id] = true;
 
         Livewire::test(Accounts::class)
-            ->assertSeeInOrder([
-                'Busy',
-                'Entering',
-                'icestormarena',
-                'Stop',
-                'Entering the game',
-                'Hero',
-                'Never played',
-                'Start',
-            ])
+            ->assertSee(['Busy', 'Entering', 'icestormarena', 'Stop', 'Hero', 'Never played', 'Start'])
             ->assertDontSee(['Watch the run', 'Left off', 'Resume', 'Queue', 'Add task'])
             ->call('start', $idle->id)
             ->callAction('stop', arguments: ['account' => $busy->id]);
@@ -81,15 +72,7 @@ final class DesktopTest extends TestCase
         $this->travelTo(Carbon::parse('2026-10-20 15:00:00', 'UTC'));
         $this->botInTheGame();
 
-        Livewire::test(Accounts::class)->assertSeeInOrder([
-            'Hero',
-            'Mage',
-            'Fighting',
-            'icestormarena',
-            '1,840',
-            '2,300',
-            'Frost Spirit',
-        ]);
+        Livewire::test(Accounts::class)->assertSee(['Hero', 'Mage', 'Fighting', 'icestormarena', '1,840', '2,300']);
     }
 
     #[Test]
@@ -115,22 +98,46 @@ final class DesktopTest extends TestCase
         $account = $this->account();
         $account->log('Joined icestormarena');
 
-        Livewire::test(Accounts::class)->call('toggle', $account->id)->assertSee('22:00:00');
+        Livewire::test(Accounts::class)->assertSee('22:00:00');
     }
 
     #[Test]
-    public function a_row_opens_to_show_the_latest_log(): void
+    public function every_card_shows_its_fifty_latest_log_lines(): void
     {
         $account = $this->account();
-        $account->update(['status' => BotStatus::Online]);
-        $account->log('Joined icestormarena');
+        foreach (range(start: 1, end: 51) as $line) {
+            $account->log(sprintf('Line %02d', $line));
+        }
+
+        Livewire::test(Accounts::class)->assertSee(['Line 51', 'Line 02'])->assertDontSee('Line 01');
+    }
+
+    #[Test]
+    public function a_character_that_failed_to_log_in_is_not_shown_as_never_played(): void
+    {
+        $account = $this->account();
+        $account->update(['status' => BotStatus::Failed, 'result' => 'wrong password', 'started_at' => now()]);
 
         Livewire::test(Accounts::class)
-            ->assertSet('expanded', $account->id)
-            ->assertSee('Joined icestormarena')
-            ->call('toggle', $account->id)
-            ->assertSet('expanded', null)
-            ->assertDontSee('Joined icestormarena');
+            ->assertSee('Failed: wrong password')
+            ->assertDontSee(['Not played yet', 'Never played']);
+    }
+
+    #[Test]
+    public function the_cards_show_only_the_characters_in_the_game_or_only_those_off(): void
+    {
+        $this->account();
+        $busy = Account::query()->create(['name' => 'Busy', 'password' => bin2hex(random_bytes(8))]);
+        $busy->update(['status' => BotStatus::Online, 'started_at' => now()]);
+
+        Livewire::test(Accounts::class)
+            ->assertSee(['Busy', 'Hero'])
+            ->set('show', 'game')
+            ->assertSee('Busy')
+            ->assertDontSee('Hero')
+            ->set('show', 'off')
+            ->assertSee('Hero')
+            ->assertDontSee('Busy');
     }
 
     #[Test]
@@ -449,8 +456,7 @@ final class DesktopTest extends TestCase
         $this->launcher->alive[$account->id] = true;
 
         Livewire::test(Accounts::class)
-            ->set('expanded', $account->id)
-            ->assertSee(['Playing Crypto Token daily', 'Playing Crypto Token daily · Join boxes', 'Stop script'])
+            ->assertSee(['Crypto Token daily', 'Join boxes', 'Stop script'])
             ->callAction('stopScript', arguments: ['account' => $account->id]);
 
         static::assertSame([null, null, BotStatus::Online], [

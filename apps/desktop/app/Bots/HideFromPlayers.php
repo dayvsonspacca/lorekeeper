@@ -23,27 +23,25 @@ final readonly class HideFromPlayers
         Client $client,
         CancellationTokenInterface $stop,
     ): null|Disconnected|Stopped {
-        $blocked = [];
+        $blocked = array_map(
+            self::named(...),
+            array_values(array_filter(GameSetting::cases(), $preferences->blocks(...))),
+        );
+        if ($blocked !== []) {
+            $account->log('Hiding from other players: ' . implode(', ', $blocked));
+        }
+
         foreach (GameSetting::cases() as $setting) {
-            $blocks = $preferences->blocks($setting);
             try {
-                $client->send(new ChangeGameSettingCommand($setting, allowed: !$blocks));
+                $client->send(new ChangeGameSettingCommand($setting, allowed: !$preferences->blocks($setting)));
             } catch (PeerClosedException $closed) {
                 return new Disconnected($closed->getMessage());
-            }
-
-            if ($blocks) {
-                $blocked[] = self::named($setting);
             }
 
             $waited = $client->wait(Duration::seconds(1), $stop);
             if ($waited !== null) {
                 return $waited;
             }
-        }
-
-        if ($blocked !== []) {
-            $account->log('Hidden from other players: ' . implode(', ', $blocked));
         }
 
         return null;

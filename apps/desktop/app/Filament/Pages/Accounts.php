@@ -11,21 +11,16 @@ use Filament\Pages\Page;
 use Filament\Panel;
 use Filament\Support\Enums\Size;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Lorekeeper\Apps\Desktop\Bots\Launcher\Launcher;
 use Lorekeeper\Apps\Desktop\Filament\Schemas\AccountForm;
 use Lorekeeper\Apps\Desktop\Models\Account;
-use Lorekeeper\Apps\Desktop\Models\BotLog;
 use Lorekeeper\Apps\Desktop\Models\Script;
-use Lorekeeper\Apps\Desktop\Native\LocalTime;
 use Override;
 
-/**
- * @mago-expect lint:too-many-methods
- * @mago-expect lint:cyclomatic-complexity
- */
 final class Accounts extends Page
 {
-    private const int LOG_LINES = 5;
+    private const int LOG_LINES = 50;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
@@ -35,26 +30,12 @@ final class Accounts extends Page
 
     protected string $view = 'filament.pages.accounts';
 
-    public ?int $expanded = null;
+    public string $show = 'all';
 
     #[Override]
     public static function getRoutePath(Panel $panel): string
     {
         return '/';
-    }
-
-    public function mount(): void
-    {
-        $this->expanded = Account::query()
-            ->orderBy('name')
-            ->get()
-            ->first(static fn(Account $account): bool => $account->playing())
-            ?->id;
-    }
-
-    public function toggle(int $account): void
-    {
-        $this->expanded = $this->expanded === $account ? null : $account;
     }
 
     public function start(int $account): void
@@ -68,16 +49,6 @@ final class Accounts extends Page
             ->color('danger')
             ->outlined()
             ->size(Size::Small)
-            ->requiresConfirmation()
-            ->modalHeading(
-                static fn(array $arguments): string => (
-                    'Stop '
-                    . (Account::query()->find($arguments['account'] ?? 0)->name ?? 'this bot')
-                    . '?'
-                ),
-            )
-            ->modalDescription('The bot logs out of the game.')
-            ->modalSubmitActionLabel('Stop')
             ->action(static function (array $arguments, Launcher $launcher): void {
                 Account::query()
                     ->find($arguments['account'] ?? 0)
@@ -137,9 +108,6 @@ final class Accounts extends Page
         return Action::make('editAccount')
             ->label('Edit')
             ->icon(Heroicon::OutlinedPencilSquare)
-            ->iconButton()
-            ->color('gray')
-            ->size(Size::Small)
             ->record(static fn(array $arguments): ?Account => Account::query()->find($arguments['account'] ?? 0))
             ->modalHeading(static fn(?Account $record): string => 'Edit ' . ($record->name ?? 'account'))
             ->modalSubmitActionLabel('Save')
@@ -158,9 +126,7 @@ final class Accounts extends Page
         return Action::make('deleteAccount')
             ->label('Delete')
             ->icon(Heroicon::OutlinedTrash)
-            ->iconButton()
-            ->color('gray')
-            ->size(Size::Small)
+            ->color('danger')
             ->requiresConfirmation()
             ->record(static fn(array $arguments): ?Account => Account::query()->find($arguments['account'] ?? 0))
             ->modalHeading(static fn(?Account $record): string => 'Delete ' . ($record->name ?? 'this account') . '?')
@@ -179,38 +145,22 @@ final class Accounts extends Page
     protected function getViewData(): array
     {
         $accounts = Account::query()
-            ->with('script')
+            ->with([
+                'script',
+                'logs' => static fn(HasMany $logs): HasMany => $logs->latest('id')->limit(self::LOG_LINES),
+            ])
             ->orderBy('name')
             ->get();
+        $playing = $accounts->filter(static fn(Account $account): bool => $account->playing());
+        $off = $accounts->reject(static fn(Account $account): bool => $account->playing());
 
         return [
-            'accounts' => $accounts,
-            'now' => now()->getTimestamp(),
-            'detail' => $this->detail($accounts->firstWhere('id', $this->expanded)),
-        ];
-    }
-
-    /** @return null|array<string, mixed> */
-    private function detail(?Account $account): ?array
-    {
-        if ($account === null) {
-            return null;
-        }
-
-        return [
-            'logs' => $account
-                ->logs()
-                ->latest('id')
-                ->limit(self::LOG_LINES)
-                ->get()
-                ->reverse()
-                ->map(static fn(BotLog $log): array => [
-                    'at' => LocalTime::clock($log->created_at),
-                    'message' => $log->message,
-                    'level' => $log->level->value,
-                ])
-                ->values()
-                ->all(),
+            'accounts' => match ($this->show) {
+                'game' => $playing->values(),
+                'off' => $off->values(),
+                default => $accounts,
+            },
+            'counts' => ['all' => $accounts->count(), 'game' => $playing->count(), 'off' => $off->count()],
         ];
     }
 
