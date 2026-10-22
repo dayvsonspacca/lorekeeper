@@ -20,4 +20,9 @@ final readonly class Tray
             ->values()
             ->all();
     }
+
+    public static function playing(): bool
+    {
+        return Account::query()->get()->contains(static fn(Account $account): bool => $account->playing());
+    }
 }

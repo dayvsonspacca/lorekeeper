@@ -11,7 +11,7 @@ const QUIT: &str = "quit";
 pub fn show(app: &AppHandle) {
     let handle = app.clone();
     let _ = app.run_on_main_thread(move || {
-        let _ = update(&handle, &[]);
+        let _ = update(&handle, &[], false);
     });
 }
 
@@ -19,9 +19,9 @@ pub fn exists(app: &AppHandle) -> bool {
     app.tray_by_id(TRAY).is_some()
 }
 
-pub fn update(app: &AppHandle, bots: &[String]) -> tauri::Result<()> {
+pub fn update(app: &AppHandle, bots: &[String], playing: bool) -> tauri::Result<()> {
     let open = MenuItem::with_id(app, OPEN, "Open Lorekeeper", true, None::<&str>)?;
-    let quit = MenuItem::with_id(app, QUIT, "Quit and stop the bots", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, QUIT, quit_label(playing), true, None::<&str>)?;
     let top = PredefinedMenuItem::separator(app)?;
     let bottom = PredefinedMenuItem::separator(app)?;
     let labels = bots
@@ -33,8 +33,11 @@ pub fn update(app: &AppHandle, bots: &[String]) -> tauri::Result<()> {
         .collect::<tauri::Result<Vec<_>>>()?;
 
     let mut items: Vec<&dyn IsMenuItem<Wry>> = vec![&open, &top];
-    items.extend(labels.iter().map(|item| item as &dyn IsMenuItem<Wry>));
-    items.extend([&bottom as &dyn IsMenuItem<Wry>, &quit]);
+    if !labels.is_empty() {
+        items.extend(labels.iter().map(|item| item as &dyn IsMenuItem<Wry>));
+        items.push(&bottom);
+    }
+    items.push(&quit);
     let menu = Menu::with_items(app, &items)?;
 
     if let Some(tray) = app.tray_by_id(TRAY) {
@@ -58,4 +61,23 @@ pub fn update(app: &AppHandle, bots: &[String]) -> tauri::Result<()> {
         .build(app)?;
 
     Ok(())
+}
+
+fn quit_label(playing: bool) -> &'static str {
+    if playing {
+        "Quit and stop the bots"
+    } else {
+        "Quit"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::quit_label;
+
+    #[test]
+    fn quitting_only_mentions_the_bots_while_one_plays() {
+        assert_eq!(quit_label(true), "Quit and stop the bots");
+        assert_eq!(quit_label(false), "Quit");
+    }
 }

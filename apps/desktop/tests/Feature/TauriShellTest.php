@@ -45,6 +45,7 @@ final class TauriShellTest extends TestCase
             ->assertOk()
             ->assertExactJson([
                 'bots' => ['● Hero2 · on', '○ Hero3 · off'],
+                'playing' => true,
                 'notices' => [],
                 'reload' => false,
             ]);

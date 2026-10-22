@@ -14,6 +14,7 @@ const SECRET_HEADER: &str = "X-Lorekeeper-Secret";
 #[derive(Deserialize)]
 struct Poll {
     bots: Vec<String>,
+    playing: bool,
     notices: Vec<Notice>,
     reload: bool,
 }
@@ -25,20 +26,21 @@ struct Notice {
 }
 
 pub fn watch(app: &AppHandle, url: &str, secret: &str, icon: &Path) {
-    let mut shown: Vec<String> = Vec::new();
+    let mut shown: (Vec<String>, bool) = (Vec::new(), false);
     loop {
         if let Err(failure) = window::open(app, url, secret) {
             eprintln!("lorekeeper: could not open the app: {failure}");
         }
 
         if let Ok(poll) = poll(url, secret) {
-            if poll.bots != shown {
+            let menu = (poll.bots, poll.playing);
+            if menu != shown {
                 let handle = app.clone();
-                let bots = poll.bots.clone();
+                let (bots, playing) = menu.clone();
                 let _ = app.run_on_main_thread(move || {
-                    let _ = tray::update(&handle, &bots);
+                    let _ = tray::update(&handle, &bots, playing);
                 });
-                shown = poll.bots;
+                shown = menu;
             }
 
             for notice in poll.notices {

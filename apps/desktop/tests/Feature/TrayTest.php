@@ -25,4 +25,23 @@ final class TrayTest extends TestCase
 
         static::assertSame(['● Hero · on', '○ Hero2 · off'], Tray::bots());
     }
+
+    #[Test]
+    public function the_menu_knows_when_a_bot_is_playing(): void
+    {
+        $account = Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
+
+        static::assertFalse(Tray::playing());
+
+        $account->update(['status' => BotStatus::Online]);
+
+        static::assertTrue(Tray::playing());
+    }
+
+    #[Test]
+    public function the_menu_has_nothing_playing_without_accounts(): void
+    {
+        static::assertSame([], Tray::bots());
+        static::assertFalse(Tray::playing());
+    }
 }
