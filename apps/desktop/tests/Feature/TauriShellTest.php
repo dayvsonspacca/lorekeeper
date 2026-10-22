@@ -36,15 +36,15 @@ final class TauriShellTest extends TestCase
     public function the_shell_hears_which_bots_are_on(): void
     {
         Account::query()
-            ->create(['name' => 'made2903', 'password' => bin2hex(random_bytes(8))])
+            ->create(['name' => 'Hero2', 'password' => bin2hex(random_bytes(8))])
             ->update(['status' => BotStatus::Online]);
-        Account::query()->create(['name' => 'lorekeeper03', 'password' => bin2hex(random_bytes(8))]);
+        Account::query()->create(['name' => 'Hero3', 'password' => bin2hex(random_bytes(8))]);
 
         $this
             ->getJson('/shell', [Poll::SECRET_HEADER => $this->secret])
             ->assertOk()
             ->assertExactJson([
-                'bots' => ['○ lorekeeper03 · off', '● made2903 · on'],
+                'bots' => ['● Hero2 · on', '○ Hero3 · off'],
                 'notices' => [],
                 'reload' => false,
             ]);

@@ -58,7 +58,7 @@ final class ScriptsTest extends TestCase
             ->assertTableColumnStateSet('state', '1 problem', $broken)
             ->assertTableColumnStateSet('nodes', '6 nodes', $ready)
             ->assertTableColumnStateSet('nodes', '1 node', $broken)
-            ->assertSee(['by Hilise', 'No author']);
+            ->assertSee(['by Hero', 'No author']);
         $this->get('/scripts')->assertOk()->assertSee('Scripts');
     }
 
@@ -66,7 +66,7 @@ final class ScriptsTest extends TestCase
     public function a_new_script_starts_empty(): void
     {
         Livewire::test(ManageScripts::class)
-            ->callAction('create', ['name' => 'Daily run', 'author' => 'Hilise'])
+            ->callAction('create', ['name' => 'Daily run', 'author' => 'Hero'])
             ->assertHasNoActionErrors();
 
         $script = Script::query()->sole();
@@ -84,7 +84,7 @@ final class ScriptsTest extends TestCase
             ->assertNotified('Imported Crypto Token daily');
 
         $script = Script::query()->sole();
-        static::assertSame('Hilise', $script->author);
+        static::assertSame('Hero', $script->author);
         static::assertEquals(FlowFile::parse(ScriptFiles::fixture()), $script->flow());
     }
 
@@ -126,7 +126,7 @@ final class ScriptsTest extends TestCase
 
         $copy = Script::query()->where('name', 'Crypto Token for alts')->sole();
         static::assertSame($script->drawing, $copy->drawing);
-        static::assertSame('Hilise', $copy->author);
+        static::assertSame('Hero', $copy->author);
     }
 
     #[Test]

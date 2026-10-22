@@ -253,7 +253,7 @@ final class ClientTest extends TestCase
     {
         $client = new Client(
             self::connection(
-                "{\"t\":\"xt\",\"b\":{\"r\":-1,\"o\":{\"cmd\":\"uotls\",\"unm\":\"lorekeeper03\",\"o\":{\"intState\":0}}}}\0",
+                "{\"t\":\"xt\",\"b\":{\"r\":-1,\"o\":{\"cmd\":\"uotls\",\"unm\":\"Hero2\",\"o\":{\"intState\":0}}}}\0",
             ),
             self::me(),
         );

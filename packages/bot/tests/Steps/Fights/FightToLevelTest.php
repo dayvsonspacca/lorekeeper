@@ -50,7 +50,7 @@ final class FightToLevelTest extends TestCase
 
         static::assertSame(
             [
-                '%xt%zm%cmd%1%tfer%lorekeeper03%oaklore%',
+                '%xt%zm%cmd%1%tfer%Hero%oaklore%',
                 '%xt%zm%moveToCell%946%r3%Left%',
                 '%xt%zm%gar%946%0%a1>m:4%wvz%',
                 '%xt%zm%gar%946%0%a1>m:4%wvz%',
@@ -75,7 +75,7 @@ final class FightToLevelTest extends TestCase
 
         static::assertSame(
             [
-                '%xt%zm%cmd%1%tfer%lorekeeper03%icestormarena%',
+                '%xt%zm%cmd%1%tfer%Hero%icestormarena%',
                 '%xt%zm%moveToCell%732692%r7%Left%',
                 '%xt%zm%gar%732692%0%a1>m:13%wvz%',
             ],
@@ -99,7 +99,7 @@ final class FightToLevelTest extends TestCase
 
         static::assertSame(
             [
-                '%xt%zm%cmd%1%tfer%lorekeeper03%icestormunder%',
+                '%xt%zm%cmd%1%tfer%Hero%icestormunder%',
                 '%xt%zm%moveToCell%5120%r2%Top%',
                 '%xt%zm%gar%5120%0%a1>m:1%wvz%',
             ],
@@ -135,7 +135,7 @@ final class FightToLevelTest extends TestCase
 
         static::assertSame(
             [
-                '%xt%zm%cmd%1%tfer%lorekeeper03%icestormarena%',
+                '%xt%zm%cmd%1%tfer%Hero%icestormarena%',
                 '%xt%zm%moveToCell%732692%r7%Left%',
                 '%xt%zm%gar%732692%0%a1>m:13%wvz%',
                 '%xt%zm%gar%732692%0%a4>p:122628%wvz%',
@@ -155,7 +155,7 @@ final class FightToLevelTest extends TestCase
             Fixture::arrival('icestormarena', 732_692, ['r7' => [13, 20]]),
         ]);
 
-        static::assertSame(['%xt%zm%cmd%1%tfer%lorekeeper03%icestormarena%'], Play::sent($steps));
+        static::assertSame(['%xt%zm%cmd%1%tfer%Hero%icestormarena%'], Play::sent($steps));
         static::assertEquals(new Done('all steps are done'), $result);
     }
 
@@ -187,7 +187,7 @@ final class FightToLevelTest extends TestCase
 
         static::assertSame(
             [
-                '%xt%zm%cmd%1%tfer%lorekeeper03%swordhavenundead%',
+                '%xt%zm%cmd%1%tfer%Hero%swordhavenundead%',
                 '%xt%zm%moveToCell%2046%Gates%Left%',
                 '%xt%zm%gar%2046%0%a1>m:1%wvz%',
             ],

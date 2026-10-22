@@ -56,7 +56,7 @@ final class EldersBloodDailyTest extends TestCase
 
         static::assertSame(
             [
-                '%xt%zm%cmd%1%tfer%lorekeeper03%arcangrove%',
+                '%xt%zm%cmd%1%tfer%Hero%arcangrove%',
                 '%xt%zm%getQuests%7101%802%',
                 '%xt%zm%acceptQuest%7101%802%',
                 '%xt%zm%moveToCell%7101%LeftBack%Left%',

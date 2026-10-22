@@ -70,7 +70,7 @@ final class CryptoTokenDailyTest extends TestCase
 
         static::assertSame(
             [
-                '%xt%zm%cmd%1%tfer%lorekeeper03%boxes%',
+                '%xt%zm%cmd%1%tfer%Hero%boxes%',
                 '%xt%zm%getQuests%138097%6187%',
                 '%xt%zm%acceptQuest%138097%6187%',
                 '%xt%zm%moveToCell%138097%Closet%Center%',
@@ -89,22 +89,19 @@ final class CryptoTokenDailyTest extends TestCase
     public function it_leaves_the_fight_a_task_before_left_behind_before_travelling(): void
     {
         $me = Fixture::me(level: 4, map: 'arcangrove');
-        $me->hear(new PlayersStateChangedEvent([new PlayerState(
-            new PlayerName('lorekeeper03'),
-            CombatState::Fighting,
-        )]));
+        $me->hear(new PlayersStateChangedEvent([new PlayerState(new PlayerName('Hero'), CombatState::Fighting)]));
 
         [$steps] = Play::run(Dailies::cryptoToken(), $me, [
             null,
             null,
-            new PlayerStateUpdatedEvent(new PlayerName('lorekeeper03'), CombatState::Idle),
+            new PlayerStateUpdatedEvent(new PlayerName('Hero'), CombatState::Idle),
             Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
             self::loaded(),
             null,
         ]);
 
         static::assertSame(
-            ['%xt%zm%moveToCell%1%Enter%Spawn%', '%xt%zm%cmd%1%tfer%lorekeeper03%boxes%'],
+            ['%xt%zm%moveToCell%1%Enter%Spawn%', '%xt%zm%cmd%1%tfer%Hero%boxes%'],
             array_slice(Play::sent($steps), offset: 0, length: 2),
         );
     }
@@ -121,10 +118,7 @@ final class CryptoTokenDailyTest extends TestCase
         ]);
 
         static::assertEquals(new Done('stopped: Quest 6187 was already done'), $result);
-        static::assertSame(
-            ['%xt%zm%cmd%1%tfer%lorekeeper03%boxes%', '%xt%zm%getQuests%138097%6187%'],
-            Play::sent($steps),
-        );
+        static::assertSame(['%xt%zm%cmd%1%tfer%Hero%boxes%', '%xt%zm%getQuests%138097%6187%'], Play::sent($steps));
     }
 
     #[Test]

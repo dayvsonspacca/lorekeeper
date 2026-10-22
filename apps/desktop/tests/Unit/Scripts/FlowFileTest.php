@@ -21,7 +21,7 @@ final class FlowFileTest extends TestCase
         $flow = FlowFile::parse(self::file('crypto-token-daily'));
 
         static::assertSame('Crypto Token daily', $flow->name);
-        static::assertSame('Hilise', $flow->author);
+        static::assertSame('Hero', $flow->author);
         static::assertSame('enter', $flow->first()->id);
         static::assertSame([960, 120], $flow->node('hunt')?->at);
         static::assertSame(['yes', 'no'], $flow->node('done')?->exits());

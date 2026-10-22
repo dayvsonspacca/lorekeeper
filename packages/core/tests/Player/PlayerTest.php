@@ -35,7 +35,7 @@ final class PlayerTest extends TestCase
     #[Test]
     public function a_player_knows_its_level_with_the_experience_toward_the_next_and_its_wallet(): void
     {
-        $player = self::made2903();
+        $player = self::Hero();
 
         static::assertSame(81, $player->progress->level->value);
         static::assertSame([4_514_754, 5_280_000], [
@@ -48,7 +48,7 @@ final class PlayerTest extends TestCase
     #[Test]
     public function a_player_is_a_member_once_tagged_so(): void
     {
-        $player = self::made2903();
+        $player = self::Hero();
 
         static::assertFalse($player->tags->has(PlayerTag::Member));
 
@@ -57,10 +57,10 @@ final class PlayerTest extends TestCase
         static::assertTrue($player->tags->has(PlayerTag::Member));
     }
 
-    private static function made2903(): Player
+    private static function Hero(): Player
     {
         return new Player(
-            new PlayerName('made2903'),
+            new PlayerName('Hero'),
             new PlayerLevelProgress(
                 new PlayerLevel(81),
                 new Gauge(new Experience(4_514_754), new Experience(5_280_000)),

@@ -132,6 +132,6 @@ final class FlowScriptTest extends TestCase
 
     private static function me(int $level = 10): Character
     {
-        return Characters::me('lorekeeper03', $level, 'battleon');
+        return Characters::me('Hero', $level, 'battleon');
     }
 }

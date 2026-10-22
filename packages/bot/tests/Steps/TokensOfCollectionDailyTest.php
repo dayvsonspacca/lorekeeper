@@ -54,7 +54,7 @@ final class TokensOfCollectionDailyTest extends TestCase
 
         static::assertSame(
             [
-                '%xt%zm%cmd%1%tfer%lorekeeper03%terrarium%',
+                '%xt%zm%cmd%1%tfer%Hero%terrarium%',
                 '%xt%zm%getQuests%189254%1316%',
                 '%xt%zm%acceptQuest%189254%1316%',
                 '%xt%zm%moveToCell%189254%r2%Left%',

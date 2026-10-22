@@ -50,7 +50,7 @@ final class EnhanceTest extends TestCase
     #[Test]
     public function it_buys_the_strongest_lucky_enhancement_the_character_can_use_for_each_equipped_item(): void
     {
-        $me = self::lorekeeper03();
+        $me = self::Hero();
 
         [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), $me, [
             self::shop(),
@@ -68,7 +68,7 @@ final class EnhanceTest extends TestCase
     #[Test]
     public function it_waits_and_asks_again_when_the_game_says_it_was_too_soon(): void
     {
-        $me = self::lorekeeper03();
+        $me = self::Hero();
 
         [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), $me, [
             self::shop(),
@@ -89,7 +89,7 @@ final class EnhanceTest extends TestCase
     #[Test]
     public function gear_that_already_has_the_best_enhancement_is_left_alone(): void
     {
-        $me = self::lorekeeper03();
+        $me = self::Hero();
         $me->hear(ItemsEnhancedEvent::from(JsonMessage::from(self::ENHANCED)->unwrap())->unwrap());
 
         [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), $me, [self::shop()]);
@@ -101,7 +101,7 @@ final class EnhanceTest extends TestCase
     #[Test]
     public function gear_with_an_enhancement_of_an_unhandled_type_is_left_alone(): void
     {
-        $me = self::lorekeeper03();
+        $me = self::Hero();
         $me->hear(InventoryLoadedEvent::from(JsonMessage::from(self::BLINDING_LIGHT)->unwrap())->unwrap());
 
         [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), $me, [self::shop()]);
@@ -113,7 +113,7 @@ final class EnhanceTest extends TestCase
     #[Test]
     public function a_member_takes_the_member_enhancement_of_the_highest_level_it_can_use(): void
     {
-        $me = self::lorekeeper03();
+        $me = self::Hero();
         $me->player()->tags->add(PlayerTag::Member);
 
         [$steps] = Play::run(self::enhance(EnhancementType::Lucky), $me, [self::shop(), null]);
@@ -124,7 +124,7 @@ final class EnhanceTest extends TestCase
     #[Test]
     public function types_no_shop_sells_are_refused(): void
     {
-        [$steps, $result] = Play::run(self::enhance(EnhancementType::Adventurer), self::lorekeeper03(), []);
+        [$steps, $result] = Play::run(self::enhance(EnhancementType::Adventurer), self::Hero(), []);
 
         static::assertEquals(
             new Failed('step 1 (Enhance the equipped gear with Adventurer): no shop sells Adventurer enhancements'),
@@ -136,7 +136,7 @@ final class EnhanceTest extends TestCase
     #[Test]
     public function it_stops_when_the_shop_does_not_open(): void
     {
-        [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), self::lorekeeper03(), [null]);
+        [$steps, $result] = Play::run(self::enhance(EnhancementType::Lucky), self::Hero(), [null]);
 
         static::assertEquals(
             new Failed('step 1 (Enhance the equipped gear with Lucky): the Lucky enhancement shop did not open'),
@@ -145,7 +145,7 @@ final class EnhanceTest extends TestCase
         static::assertSame(['%xt%zm%loadShop%1%147%'], Play::sent($steps));
     }
 
-    private static function lorekeeper03(): Character
+    private static function Hero(): Character
     {
         $me = Fixture::me(level: 23);
         $me->hear(InventoryLoadedEvent::from(JsonMessage::from(self::INVENTORY)->unwrap())->unwrap());

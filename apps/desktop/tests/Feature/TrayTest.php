@@ -19,10 +19,10 @@ final class TrayTest extends TestCase
     public function the_menu_tells_which_bots_are_on(): void
     {
         Account::query()
-            ->create(['name' => 'made2903', 'password' => bin2hex(random_bytes(8))])
+            ->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))])
             ->update(['status' => BotStatus::Online]);
-        Account::query()->create(['name' => 'lorekeeper03', 'password' => bin2hex(random_bytes(8))]);
+        Account::query()->create(['name' => 'Hero2', 'password' => bin2hex(random_bytes(8))]);
 
-        static::assertSame(['○ lorekeeper03 · off', '● made2903 · on'], Tray::bots());
+        static::assertSame(['● Hero · on', '○ Hero2 · off'], Tray::bots());
     }
 }

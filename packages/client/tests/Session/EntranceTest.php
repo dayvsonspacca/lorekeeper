@@ -34,10 +34,10 @@ use PHPUnit\Framework\TestCase;
 
 final class EntranceTest extends TestCase
 {
-    private const string LOGIN = '%xt%loginResponse%-1%true%45466%made2903%Welcome!%2026-10-19T15:34:06%sNews=1191%5.1%';
+    private const string LOGIN = '%xt%loginResponse%-1%true%45466%Hero3%Welcome!%2026-10-19T15:34:06%sNews=1191%5.1%';
 
     private const string ARRIVAL = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"moveToArea","areaId":65897,"areaName":"battleon-3","intType":"2","sExtra":"","strMapName":"battleon","strMapFileName":"Battleon/town-Battleon-16Oct26.swf","uoBranch":[{"uoName":"made2903","entType":"p","entID":45466,"strUsername":"made2903","strFrame":"Enter","strPad":"Spawn","intState":1,"intLevel":81,"intHP":500,"intMP":100,"intHPMax":500,"intMPMax":100,"tx":0,"ty":0,"afk":false,"showCloak":true,"showHelm":true}],"monBranch":[]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"moveToArea","areaId":65897,"areaName":"battleon-3","intType":"2","sExtra":"","strMapName":"battleon","strMapFileName":"Battleon/town-Battleon-16Oct26.swf","uoBranch":[{"uoName":"Hero3","entType":"p","entID":45466,"strUsername":"Hero3","strFrame":"Enter","strPad":"Spawn","intState":1,"intLevel":81,"intHP":500,"intMP":100,"intHPMax":500,"intMPMax":100,"tx":0,"ty":0,"afk":false,"showCloak":true,"showHelm":true}],"monBranch":[]}}}
         JSON;
 
     private const string INVENTORY = <<<'JSON'
@@ -53,7 +53,7 @@ final class EntranceTest extends TestCase
         JSON;
 
     private const string VITALS = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"made2903","o":{"intHPMax":2585,"intMPMax":100,"intHP":2585,"intMP":100}}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero3","o":{"intHPMax":2585,"intMPMax":100,"intHP":2585,"intMP":100}}}}
         JSON;
 
     #[Test]
@@ -119,7 +119,7 @@ final class EntranceTest extends TestCase
 
     private static function entrance(string ...$messages): Entrance
     {
-        $entrance = new Entrance(new PlayerName('made2903'));
+        $entrance = new Entrance(new PlayerName('Hero3'));
         foreach ($messages as $message) {
             foreach (Events::recognize(MessageParser::parse($message)->unwrap()) as $event) {
                 static::assertInstanceOf(Event::class, $event);
@@ -134,7 +134,7 @@ final class EntranceTest extends TestCase
     {
         return new PlayerData(
             new SocketId($socketId),
-            new PlayerName('made2903'),
+            new PlayerName('Hero3'),
             new PlayerLevelProgress(new PlayerLevel(81), new Gauge(new Experience(0), new Experience(1000))),
             new Wallet(new Gold(0), new AdventureCoins(0)),
             true,

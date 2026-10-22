@@ -56,7 +56,7 @@ final class CharacterTest extends TestCase
         $scales = new PlayerItem(new Resource(new ItemId(11_475), new ItemName('Dragon Scale'), new ItemLevel(1)));
 
         $me->hear(new LeveledUpEvent(new PlayerLevel(5), new Experience(500)));
-        $me->hear(new PlayersHealthChangedEvent([new PlayerHealth(new PlayerName('lorekeeper03'), new Health(189))]));
+        $me->hear(new PlayersHealthChangedEvent([new PlayerHealth(new PlayerName('Hero'), new Health(189))]));
         $me->hear(
             new ClassChangedEvent(
                 new SocketId(122_628),
@@ -70,7 +70,7 @@ final class CharacterTest extends TestCase
         $me->hear(new StatsUpdatedEvent([new Haste(0.331)]));
 
         $player = $me->player();
-        static::assertSame('lorekeeper03', $player->name->value);
+        static::assertSame('Hero', $player->name->value);
         static::assertSame(5, $player->progress->level->value);
         static::assertSame(189, $player->vitals->health->current->value);
         static::assertSame('Blaze Binder', $player->class->class->name->value);
@@ -118,7 +118,7 @@ final class CharacterTest extends TestCase
                 new RoomPlayer(
                     new SocketId(122_628),
                     new MapPlayer(
-                        new PlayerName('lorekeeper03'),
+                        new PlayerName('Hero'),
                         new PlayerLevel(50),
                         Fixture::vitals(),
                         $spot,
@@ -135,7 +135,7 @@ final class CharacterTest extends TestCase
         static::assertTrue($me->away());
         static::assertSame(4, $me->player()->progress->level->value);
 
-        $me->hear(new PlayersStateChangedEvent([new PlayerState(new PlayerName('lorekeeper03'), CombatState::Dead)]));
+        $me->hear(new PlayersStateChangedEvent([new PlayerState(new PlayerName('Hero'), CombatState::Dead)]));
         static::assertSame(CombatState::Dead, $me->state());
         static::assertFalse($me->player()->vitals->alive());
     }
@@ -157,7 +157,7 @@ final class CharacterTest extends TestCase
 
         $me->subscribe($watcher);
         $me->subscribe($watcher);
-        $me->hear(new PlayerVitalsUpdatedEvent(new PlayerName('lorekeeper03'), Fixture::vitals()));
+        $me->hear(new PlayerVitalsUpdatedEvent(new PlayerName('Hero'), Fixture::vitals()));
         $me->hear(new LeveledUpEvent(new PlayerLevel(4), new Experience(400)));
         $me->hear(new LeveledUpEvent(new PlayerLevel(5), new Experience(500)));
         $me->unsubscribe($watcher);

@@ -19,7 +19,7 @@ final class RequestTest extends TestCase
         ]);
 
         static::assertNotNull($request);
-        static::assertSame(['scripts/LevelUp.php', 'lorekeeper03', 'Twilly', 300], [
+        static::assertSame(['scripts/LevelUp.php', 'Hero', 'Twilly', 300], [
             $request->script,
             $request->player,
             $request->server,
@@ -41,12 +41,12 @@ final class RequestTest extends TestCase
     public function it_needs_a_script_and_the_account_in_the_environment(): void
     {
         static::assertNull(Request::parse([], self::environment()));
-        static::assertNull(Request::parse(['scripts/Watch.php'], ['AQW_PLAYER' => 'lorekeeper03']));
+        static::assertNull(Request::parse(['scripts/Watch.php'], ['AQW_PLAYER' => 'Hero']));
     }
 
     /** @return array<string, string> */
     private static function environment(): array
     {
-        return ['AQW_PLAYER' => 'lorekeeper03', 'AQW_PASSWORD' => bin2hex(random_bytes(8))];
+        return ['AQW_PLAYER' => 'Hero', 'AQW_PASSWORD' => bin2hex(random_bytes(8))];
     }
 }

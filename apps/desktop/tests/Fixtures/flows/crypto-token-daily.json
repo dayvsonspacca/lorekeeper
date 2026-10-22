@@ -1,7 +1,7 @@
 {
     "lorekeeper": 1,
     "name": "Crypto Token daily",
-    "author": "Hilise",
+    "author": "Hero",
     "start": "enter",
     "nodes": [
         {"id": "enter", "do": "join", "map": "boxes", "at": [0, 0]},

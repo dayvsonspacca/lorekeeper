@@ -69,7 +69,7 @@ final readonly class Fixture
         return new Character(
             new SocketId(122_628),
             new Player(
-                new PlayerName('lorekeeper03'),
+                new PlayerName('Hero'),
                 new PlayerLevelProgress(new PlayerLevel($level), new Gauge(new Experience(0), new Experience(1000))),
                 self::vitals(),
                 new PlayerClass(

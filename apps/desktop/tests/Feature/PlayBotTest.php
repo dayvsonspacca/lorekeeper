@@ -50,9 +50,9 @@ final class PlayBotTest extends TestCase
     public function the_recorder_follows_the_character_map_and_level(): void
     {
         $account = $this->account();
-        $account->update(['name' => 'lorekeeper03']);
+        $account->update(['name' => 'Hero2']);
         $recorder = new BotRecorder($account);
-        $me = Characters::me('lorekeeper03', level: 4, map: 'battleon');
+        $me = Characters::me('Hero2', level: 4, map: 'battleon');
 
         $me->subscribe($recorder);
         $recorder->update($me);
@@ -111,7 +111,7 @@ final class PlayBotTest extends TestCase
         $this->travelTo(now()->setTimestamp(1_800_000_000));
         $account = $this->account();
         $recorder = new BotRecorder($account);
-        $me = Characters::me('lorekeeper03', level: 12, map: 'oaklore', monsters: [new MapMonster(
+        $me = Characters::me('Hero2', level: 12, map: 'oaklore', monsters: [new MapMonster(
             new MonsterSpawnId(1),
             new Monster(
                 new MonsterName('Bonemuncher'),
@@ -128,7 +128,7 @@ final class PlayBotTest extends TestCase
         $recorder->update($me);
         $scene = $account->refresh()->scene();
         static::assertNotNull($scene);
-        static::assertSame(['lorekeeper03', 12, 390, 'Mage', 'idle'], [
+        static::assertSame(['Hero2', 12, 390, 'Mage', 'idle'], [
             $scene->hero['name'],
             $scene->hero['level'],
             $scene->hero['maxHealth'],

@@ -20,11 +20,11 @@ final class CombatRoundEventTest extends TestCase
     {
         $fighting = PlayersStateChangedEvent::from(
             JsonMessage::from(
-                '{"t":"xt","b":{"r":-1,"o":{"cmd":"ct","m":{"21":{"intState":2,"intHP":8691}},"p":{"fahry123":{"intState":2}}}}}',
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"ct","m":{"21":{"intState":2,"intHP":8691}},"p":{"Hero":{"intState":2}}}}}',
             )->unwrap(),
         )->unwrap();
 
-        static::assertEquals([new PlayerState(new PlayerName('fahry123'), CombatState::Fighting)], $fighting->players);
+        static::assertEquals([new PlayerState(new PlayerName('Hero'), CombatState::Fighting)], $fighting->players);
     }
 
     #[Test]
@@ -35,7 +35,7 @@ final class CombatRoundEventTest extends TestCase
 
         PlayersStateChangedEvent::from(
             JsonMessage::from(
-                '{"t":"xt","b":{"r":-1,"o":{"cmd":"ct","m":{"21":{"intState":3,"intHP":8691}},"p":{"fahry123":{"intState":2}}}}}',
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"ct","m":{"21":{"intState":3,"intHP":8691}},"p":{"Hero":{"intState":2}}}}}',
             )->unwrap(),
         );
     }

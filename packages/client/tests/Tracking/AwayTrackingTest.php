@@ -19,8 +19,8 @@ final class AwayTrackingTest extends TestCase
     #[Test]
     public function it_goes_away_and_comes_back_when_the_server_says_so_about_it(): void
     {
-        $away = new PlayerAwayUpdatedEvent(new PlayerName('LoreKeeper03'), away: true);
-        $back = new PlayerAwayUpdatedEvent(new PlayerName('lorekeeper03'), away: false);
+        $away = new PlayerAwayUpdatedEvent(new PlayerName('HERO'), away: true);
+        $back = new PlayerAwayUpdatedEvent(new PlayerName('Hero'), away: false);
         $someoneElse = new PlayerAwayUpdatedEvent(new PlayerName('Someone'), away: true);
 
         static::assertTrue(AwayTracking::follow(false, $away, self::me()));
@@ -37,6 +37,6 @@ final class AwayTrackingTest extends TestCase
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('lorekeeper03'));
+        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
     }
 }

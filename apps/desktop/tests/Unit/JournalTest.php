@@ -37,7 +37,7 @@ final class JournalTest extends TestCase
     public function it_tells_how_a_daily_goes_from_accepting_to_picking_up_the_reward(): void
     {
         $journal = new Journal();
-        $me = Characters::me('Hilise', 30, 'arcangrove');
+        $me = Characters::me('Hero', 30, 'arcangrove');
         $slain = self::resource(5574, 'Slain Gorillaphant');
         $lines = [];
         $hear = static function (Event $event) use ($journal, $me, &$lines): void {

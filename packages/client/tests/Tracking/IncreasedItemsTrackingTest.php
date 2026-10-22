@@ -38,7 +38,7 @@ final class IncreasedItemsTrackingTest extends TestCase
             )]),
         );
 
-        $me = new Identity(new SocketId(122_628), new PlayerName('lorekeeper03'));
+        $me = new Identity(new SocketId(122_628), new PlayerName('Hero'));
         $inventory = InventoryTracking::follow(
             $inventory,
             new QuestItemsIncreasedEvent([

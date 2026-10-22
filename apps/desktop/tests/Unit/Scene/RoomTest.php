@@ -46,7 +46,7 @@ final class RoomTest extends TestCase
     #[Test]
     public function it_follows_how_the_monsters_fight_die_and_come_back(): void
     {
-        $me = new PlayerName('lorekeeper03');
+        $me = new PlayerName('Hero');
         $room = Room::of(self::map());
 
         $room = $room->heard(
@@ -76,7 +76,7 @@ final class RoomTest extends TestCase
                 new MonsterHealth(new MonsterSpawnId(2), new Health(9999)),
                 new MonsterHealth(new MonsterSpawnId(77), new Health(10)),
             ]),
-            new PlayerName('lorekeeper03'),
+            new PlayerName('Hero'),
             now: 100,
         );
 
@@ -87,9 +87,9 @@ final class RoomTest extends TestCase
     #[Test]
     public function it_keeps_the_other_players_in_the_room(): void
     {
-        $me = new PlayerName('lorekeeper03');
+        $me = new PlayerName('Hero');
         $arrival = new MovedToMapEvent(new AreaId(7), new RoomId(3), self::map(), [
-            self::seen(1, 'lorekeeper03'),
+            self::seen(1, 'Hero'),
             self::seen(2, 'Artix'),
         ]);
 

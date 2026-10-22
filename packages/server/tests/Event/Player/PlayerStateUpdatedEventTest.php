@@ -19,15 +19,13 @@ final class PlayerStateUpdatedEventTest extends TestCase
     public function it_reads_a_player_leaving_combat(): void
     {
         $event = PlayerStateUpdatedEvent::from(
-            JsonMessage::from(
-                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intState":1}}}}',
-            )->unwrap(),
+            JsonMessage::from('{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero2","o":{"intState":1}}}}')->unwrap(),
         )->unwrap();
 
         static::assertInstanceOf(PlayerUpdatedEvent::class, $event);
-        static::assertSame('lorekeeper03', $event->name->value);
+        static::assertSame('Hero2', $event->name->value);
         static::assertSame(CombatState::Idle, $event->state);
-        static::assertSame('lorekeeper03 is idle', $event->summary());
+        static::assertSame('Hero2 is idle', $event->summary());
         static::assertNull($event->health);
         static::assertNull($event->mana);
     }
@@ -37,7 +35,7 @@ final class PlayerStateUpdatedEventTest extends TestCase
     {
         $event = PlayerStateUpdatedEvent::from(
             JsonMessage::from(
-                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intState":1,"intHP":1193,"intMP":100,"intSP":100,"strFrame":"Enter","strPad":"Spawn"}}}}',
+                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero2","o":{"intState":1,"intHP":1193,"intMP":100,"intSP":100,"strFrame":"Enter","strPad":"Spawn"}}}}',
             )->unwrap(),
         )->unwrap();
 
@@ -50,14 +48,12 @@ final class PlayerStateUpdatedEventTest extends TestCase
     public function it_ignores_updates_that_say_nothing_about_the_state(): void
     {
         $vitals = JsonMessage::from(
-            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intHPMax":1193,"intMPMax":100,"intHP":990,"intMP":95}}}}',
+            '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero2","o":{"intHPMax":1193,"intMPMax":100,"intHP":990,"intMP":95}}}}',
         )->unwrap();
 
         static::assertTrue(PlayerStateUpdatedEvent::from($vitals)->isNone());
         static::assertTrue(
-            PlayerStateUpdatedEvent::from(
-                DelimitedMessage::from('%xt%uotls%-1%made2903%afk:true%')->unwrap(),
-            )->isNone(),
+            PlayerStateUpdatedEvent::from(DelimitedMessage::from('%xt%uotls%-1%Hero%afk:true%')->unwrap())->isNone(),
         );
     }
 
@@ -67,9 +63,7 @@ final class PlayerStateUpdatedEventTest extends TestCase
         $this->expectException(MalformedEventException::class);
 
         PlayerStateUpdatedEvent::from(
-            JsonMessage::from(
-                '{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"lorekeeper03","o":{"intState":7}}}}',
-            )->unwrap(),
+            JsonMessage::from('{"t":"xt","b":{"r":-1,"o":{"cmd":"uotls","unm":"Hero2","o":{"intState":7}}}}')->unwrap(),
         );
     }
 }
