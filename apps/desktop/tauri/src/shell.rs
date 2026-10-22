@@ -20,6 +20,7 @@ pub fn start(app: AppHandle, timeline: Timeline) {
     thread::spawn(move || {
         if let Err(failure) = run(&app, timeline) {
             splash::fail(&app, &failure.to_string());
+            window::show(&app);
         }
     });
 }

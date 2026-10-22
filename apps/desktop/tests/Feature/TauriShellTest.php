@@ -10,6 +10,7 @@ use Lorekeeper\Apps\Desktop\Bots\Notifier\Notice;
 use Lorekeeper\Apps\Desktop\Bots\Notifier\Notifier;
 use Lorekeeper\Apps\Desktop\Bots\Notifier\SilentNotifier;
 use Lorekeeper\Apps\Desktop\Models\Account;
+use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Lorekeeper\Apps\Desktop\Native\Heartbeat;
 use Lorekeeper\Apps\Desktop\Tauri\Poll;
 use Lorekeeper\Apps\Desktop\Tauri\TauriNotifier;
@@ -46,9 +47,18 @@ final class TauriShellTest extends TestCase
             ->assertExactJson([
                 'bots' => ['● Hero2 · on', '○ Hero3 · off'],
                 'playing' => true,
+                'start_with_computer' => false,
                 'notices' => [],
                 'reload' => false,
             ]);
+    }
+
+    #[Test]
+    public function the_shell_hears_when_to_start_with_the_computer(): void
+    {
+        Preferences::current()->update(['start_with_computer' => true]);
+
+        $this->getJson('/shell', [Poll::SECRET_HEADER => $this->secret])->assertJsonPath('start_with_computer', true);
     }
 
     #[Test]

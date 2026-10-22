@@ -8,6 +8,7 @@ mod tray;
 mod window;
 
 use tauri::RunEvent;
+use tauri_plugin_window_state::StateFlags;
 
 use platform::{Current, Platform};
 use timeline::Timeline;
@@ -21,7 +22,11 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, _, _| {
             window::show(app)
         }))
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(StateFlags::all() - StateFlags::VISIBLE)
+                .build(),
+        )
         .manage(shell::Server::default())
         .manage(splash::Splash::default())
         .invoke_handler(tauri::generate_handler![

@@ -6,12 +6,14 @@ use crate::{tray, Failure};
 
 const MAIN: &str = "main";
 const SECRET_QUERY: &str = "lorekeeper_secret";
+pub const HIDDEN: &str = "--hidden";
 
 pub fn create(app: &App) -> tauri::Result<()> {
     WebviewWindowBuilder::new(app, MAIN, WebviewUrl::App("index.html".into()))
         .title("Lorekeeper")
         .inner_size(1280.0, 820.0)
         .min_inner_size(900.0, 600.0)
+        .visible(!std::env::args().any(|argument| argument == HIDDEN))
         .on_navigation(|target| {
             if leaves_the_app(target) {
                 Current::open_externally(target);

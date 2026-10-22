@@ -27,8 +27,10 @@ so `ProcessLauncher` needs its own port too.
 ## How the shell talks to the app
 
 - At start it runs `artisan desktop:boot`, then serves `public/` with `php -S` on a free port in its own process group.
-- Every 3 seconds it polls `/shell` with a secret only it knows, to refresh the tray, show notifications and reload a window
-  that went blank.
+- Every 3 seconds it polls `/shell` with a secret only it knows, to refresh the tray, show notifications, reload a window
+  that went blank and keep the autostart entry in line with the preference.
+- The app knows its version from `LOREKEEPER_VERSION`. A few times a day it asks GitHub for the newest `desktop-v*`
+  release, announces a newer one once and offers its download in the sidebar.
 - On quit, or on `SIGTERM`/`SIGINT`/`SIGHUP`, it stops the whole group: the server and every bot it launched. A group left
   behind by a crash is stopped on the next start.
 - Data lives in the app data folder (`~/.local/share/com.dayvsonspacca.lorekeeper.desktop` on Linux, `dev/` inside it

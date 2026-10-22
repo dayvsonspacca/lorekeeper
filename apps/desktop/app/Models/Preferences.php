@@ -19,6 +19,8 @@ use Override;
  * @property bool $block_duels
  * @property bool $private_rooms
  * @property bool $play_together
+ * @property bool $start_with_computer
+ * @property bool $notify_updates
  */
 #[Fillable([
     'block_goto',
@@ -29,6 +31,8 @@ use Override;
     'block_duels',
     'private_rooms',
     'play_together',
+    'start_with_computer',
+    'notify_updates',
 ])]
 final class Preferences extends Model
 {
@@ -51,6 +55,8 @@ final class Preferences extends Model
         'block_duels' => true,
         'private_rooms' => true,
         'play_together' => true,
+        'start_with_computer' => false,
+        'notify_updates' => true,
     ];
 
     public static function current(): self
@@ -71,6 +77,12 @@ final class Preferences extends Model
     #[Override]
     protected function casts(): array
     {
-        return array_fill_keys(['private_rooms', 'play_together', ...array_keys(self::BLOCKS)], value: 'boolean');
+        return array_fill_keys([
+            'private_rooms',
+            'play_together',
+            'start_with_computer',
+            'notify_updates',
+            ...array_keys(self::BLOCKS),
+        ], value: 'boolean');
     }
 }

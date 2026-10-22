@@ -11,6 +11,7 @@ use signal_hook::iterator::Signals;
 use tauri::{AppHandle, Url};
 
 use super::Platform;
+use crate::window;
 
 pub struct Linux;
 
@@ -79,10 +80,7 @@ impl Platform for Linux {
             return;
         }
 
-        let exec = env::var("APPIMAGE")
-            .map(PathBuf::from)
-            .or_else(|_| env::current_exe());
-        let Ok(exec) = exec else {
+        let Some(exec) = executable() else {
             return;
         };
 
@@ -96,6 +94,21 @@ impl Platform for Linux {
             &home.join("applications").join(format!("{NAME}.desktop")),
             desktop_entry(&exec, cfg!(debug_assertions)).as_bytes(),
         );
+    }
+
+    fn start_with_computer(enabled: bool) {
+        let Some(entry) = config_home().map(|config| config.join("autostart").join(AUTOSTART))
+        else {
+            return;
+        };
+        if !enabled {
+            let _ = fs::remove_file(entry);
+            return;
+        }
+
+        if let Some(exec) = executable() {
+            let _ = keep(&entry, autostart_entry(&exec).as_bytes());
+        }
     }
 
     fn open_externally(url: &Url) {
@@ -116,6 +129,11 @@ impl Platform for Linux {
 }
 
 const NAME: &str = "lorekeeper";
+const AUTOSTART: &str = if cfg!(debug_assertions) {
+    "lorekeeper-dev.desktop"
+} else {
+    "lorekeeper.desktop"
+};
 const SYSTEM_DATA: &str = "/usr/local/share:/usr/share";
 const INSTALLED_AS: [&str; 3] = [
     "lorekeeper.desktop",
@@ -135,6 +153,25 @@ fn data_home() -> Option<PathBuf> {
         })
 }
 
+fn config_home() -> Option<PathBuf> {
+    env::var("XDG_CONFIG_HOME")
+        .ok()
+        .filter(|dir| !dir.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| {
+            env::var("HOME")
+                .ok()
+                .map(|home| Path::new(&home).join(".config"))
+        })
+}
+
+fn executable() -> Option<PathBuf> {
+    env::var("APPIMAGE")
+        .map(PathBuf::from)
+        .or_else(|_| env::current_exe())
+        .ok()
+}
+
 fn installed(dirs: &str) -> bool {
     dirs.split(':').filter(|dir| !dir.is_empty()).any(|dir| {
         INSTALLED_AS
@@ -144,6 +181,22 @@ fn installed(dirs: &str) -> bool {
 }
 
 fn desktop_entry(exec: &Path, hidden: bool) -> String {
+    let mut entry = launcher(exec, "");
+    if hidden {
+        entry.push_str("NoDisplay=true\n");
+    }
+
+    entry
+}
+
+fn autostart_entry(exec: &Path) -> String {
+    let mut entry = launcher(exec, &format!(" {}", window::HIDDEN));
+    entry.push_str("X-GNOME-Autostart-enabled=true\n");
+
+    entry
+}
+
+fn launcher(exec: &Path, arguments: &str) -> String {
     let exec = exec
         .display()
         .to_string()
@@ -152,16 +205,11 @@ fn desktop_entry(exec: &Path, hidden: bool) -> String {
         .replace('`', "\\`")
         .replace('$', "\\$")
         .replace('%', "%%");
-    let mut entry = format!(
+    format!(
         "[Desktop Entry]\nType=Application\nName=Lorekeeper\n\
          Comment=Keep several AdventureQuest Worlds bots playing on your machine\n\
-         Exec=\"{exec}\"\nIcon={NAME}\nStartupWMClass={NAME}\nCategories=Game;\nTerminal=false\n"
-    );
-    if hidden {
-        entry.push_str("NoDisplay=true\n");
-    }
-
-    entry
+         Exec=\"{exec}\"{arguments}\nIcon={NAME}\nStartupWMClass={NAME}\nCategories=Game;\nTerminal=false\n"
+    )
 }
 
 fn keep(path: &Path, contents: &[u8]) -> io::Result<()> {
@@ -285,6 +333,15 @@ mod tests {
         assert!(entry.contains("\nIcon=lorekeeper\nStartupWMClass=lorekeeper\n"));
         assert!(!entry.contains("NoDisplay"));
         assert!(desktop_entry(Path::new("/dev/lorekeeper"), true).ends_with("NoDisplay=true\n"));
+    }
+
+    #[test]
+    fn the_computer_starts_the_app_hidden_in_the_tray() {
+        let entry = autostart_entry(Path::new("/home/hero/Apps/Lorekeeper.AppImage"));
+
+        assert!(entry.contains("\nExec=\"/home/hero/Apps/Lorekeeper.AppImage\" --hidden\n"));
+        assert!(entry.ends_with("X-GNOME-Autostart-enabled=true\n"));
+        assert!(!entry.contains("NoDisplay"));
     }
 
     #[test]

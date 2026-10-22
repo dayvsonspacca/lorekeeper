@@ -15,6 +15,7 @@ const SECRET_HEADER: &str = "X-Lorekeeper-Secret";
 struct Poll {
     bots: Vec<String>,
     playing: bool,
+    start_with_computer: bool,
     notices: Vec<Notice>,
     reload: bool,
 }
@@ -27,12 +28,18 @@ struct Notice {
 
 pub fn watch(app: &AppHandle, url: &str, secret: &str, icon: &Path) {
     let mut shown: (Vec<String>, bool) = (Vec::new(), false);
+    let mut starting: Option<bool> = None;
     loop {
         if let Err(failure) = window::open(app, url, secret) {
             eprintln!("lorekeeper: could not open the app: {failure}");
         }
 
         if let Ok(poll) = poll(url, secret) {
+            if starting != Some(poll.start_with_computer) {
+                Current::start_with_computer(poll.start_with_computer);
+                starting = Some(poll.start_with_computer);
+            }
+
             let menu = (poll.bots, poll.playing);
             if menu != shown {
                 let handle = app.clone();

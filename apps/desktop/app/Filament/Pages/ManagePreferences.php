@@ -14,8 +14,6 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\HtmlString;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Override;
 
@@ -41,6 +39,8 @@ final class ManagePreferences extends Page
         $this->form->fill(Preferences::current()->only([
             'private_rooms',
             'play_together',
+            'start_with_computer',
+            'notify_updates',
             ...array_keys(Preferences::BLOCKS),
         ]));
     }
@@ -99,11 +99,17 @@ final class ManagePreferences extends Page
             Section::make('Updates')
                 ->contained(false)
                 ->description('How the app keeps itself up to date.')
-                ->schema([self::unavailable('update_automatically', 'Update automatically')]),
+                ->schema([
+                    self::toggle('notify_updates', 'Tell me when a new version is out')
+                        ->helperText('Checks GitHub a few times a day and offers the download in the sidebar.'),
+                ]),
             Section::make('Startup')
                 ->contained(false)
                 ->description('When the app opens.')
-                ->schema([self::unavailable('start_with_computer', 'Start when the computer starts')]),
+                ->schema([
+                    self::toggle('start_with_computer', 'Start when the computer starts')
+                        ->helperText('Opens in the tray when you log in, ready to play.'),
+                ]),
         ];
     }
 
@@ -116,20 +122,6 @@ final class ManagePreferences extends Page
     public function save(): void
     {
         Preferences::current()->update($this->form->getState());
-    }
-
-    private static function unavailable(string $name, string $label): Toggle
-    {
-        return Toggle::make($name)
-            ->label($label)
-            ->default(false)
-            ->disabled()
-            ->dehydrated(false)
-            ->hint(new HtmlString(Blade::render(
-                '<x-filament::badge color="primary" icon="heroicon-m-lock-closed">Soon</x-filament::badge>',
-            )))
-            ->extraFieldWrapperAttributes(['class' => 'lk-unavailable'])
-            ->helperText('Not available yet.');
     }
 
     private static function toggle(string $name, string $label): Toggle

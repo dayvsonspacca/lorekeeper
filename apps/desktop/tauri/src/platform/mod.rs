@@ -21,6 +21,8 @@ pub trait Platform {
 
     fn introduce(icon: &Path);
 
+    fn start_with_computer(enabled: bool);
+
     fn open_externally(url: &Url);
 }
 

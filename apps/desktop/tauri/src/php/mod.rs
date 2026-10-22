@@ -59,6 +59,7 @@ impl Php {
             ("LOREKEEPER_SHELL_SECRET", secret.to_string()),
             ("LOREKEEPER_SHELL_PID", std::process::id().to_string()),
             ("LOREKEEPER_DATA_PATH", data.root().display().to_string()),
+            ("LOREKEEPER_VERSION", app.package_info().version.to_string()),
             ("LARAVEL_STORAGE_PATH", data.storage().display().to_string()),
             ("DB_CONNECTION", "sqlite".to_string()),
             ("DB_DATABASE", data.database().display().to_string()),

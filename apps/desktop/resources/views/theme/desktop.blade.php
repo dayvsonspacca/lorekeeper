@@ -41,8 +41,6 @@
     .lk-tabs .fi-tabs-item:hover { color: var(--gray-200); background: var(--gray-800); }
     .lk-tabs .fi-tabs-item.fi-active { color: var(--gray-950); background: var(--primary-400); }
     .lk-tabs .fi-tabs-item.fi-active .fi-icon, .lk-tabs .fi-tabs-item.fi-active .fi-tabs-item-label { color: var(--gray-950); }
-    .lk-unavailable .fi-fo-field-label, .lk-unavailable [id$="-helper-text"] { opacity: .4; }
-    .lk-unavailable, .lk-unavailable * { cursor: not-allowed !important; }
     .lk-sidebar-bottom { flex: none; overflow: visible; padding-block: .75rem; }
     .fi-header-heading { font-size: 1.125rem; font-weight: 600; letter-spacing: 0; }
     .fi-main { padding-top: 1.25rem; }

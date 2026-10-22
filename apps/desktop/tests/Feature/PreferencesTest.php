@@ -73,26 +73,29 @@ final class PreferencesTest extends TestCase
     }
 
     #[Test]
-    public function the_app_settings_wait_for_a_later_version(): void
+    public function new_versions_are_announced_until_turned_off(): void
     {
-        $page = Livewire::test(ManagePreferences::class)
-            ->assertSee([
-                'Game',
-                'Application',
-                'Update automatically',
-                'Start when the computer starts',
-                'Not available yet.',
-            ])
-            ->assertFormFieldDisabled('update_automatically')
-            ->assertFormFieldDisabled('start_with_computer')
-            ->set('data.update_automatically', true)
-            ->set('data.start_with_computer', true)
-            ->set('data.block_duels', false);
+        static::assertTrue(Preferences::current()->notify_updates);
 
-        $page->call('save');
+        Livewire::test(ManagePreferences::class)
+            ->assertSee(['Game', 'Application', 'Tell me when a new version is out'])
+            ->assertDontSee('Not available yet.')
+            ->assertFormFieldEnabled('notify_updates')
+            ->set('data.notify_updates', false);
 
-        static::assertFalse(Preferences::current()->blocks(GameSetting::Duels));
-        static::assertArrayNotHasKey('update_automatically', Preferences::current()->getAttributes());
-        static::assertArrayNotHasKey('start_with_computer', Preferences::current()->getAttributes());
+        static::assertFalse(Preferences::current()->notify_updates);
+    }
+
+    #[Test]
+    public function starting_with_the_computer_is_off_until_asked(): void
+    {
+        static::assertFalse(Preferences::current()->start_with_computer);
+
+        Livewire::test(ManagePreferences::class)
+            ->assertSee('Start when the computer starts')
+            ->assertFormFieldEnabled('start_with_computer')
+            ->set('data.start_with_computer', true);
+
+        static::assertTrue(Preferences::current()->start_with_computer);
     }
 }
