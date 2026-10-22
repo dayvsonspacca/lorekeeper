@@ -19,6 +19,8 @@ pub trait Platform {
 
     fn notify(icon: &Path, title: &str, message: &str);
 
+    fn introduce(icon: &Path);
+
     fn open_externally(url: &Url);
 }
 

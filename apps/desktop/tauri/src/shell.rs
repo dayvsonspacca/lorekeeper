@@ -60,6 +60,7 @@ fn run(app: &AppHandle, mut timeline: Timeline) -> Result<(), Failure> {
     timeline.mark("server");
     window::open(app, &url, &secret)?;
     tray::show(app);
+    Current::introduce(&php.icon());
     timeline.mark("open");
     php.note_startup(&timeline.summary());
 

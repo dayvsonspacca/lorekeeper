@@ -2,7 +2,7 @@ use std::env;
 use std::fs;
 use std::io;
 use std::os::unix::process::CommandExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::thread;
 
@@ -66,6 +66,38 @@ impl Platform for Linux {
             .show();
     }
 
+    fn introduce(icon: &Path) {
+        let Some(home) = data_home() else {
+            return;
+        };
+        let system = env::var("XDG_DATA_DIRS").unwrap_or_else(|_| SYSTEM_DATA.to_string());
+        let system = match env::var("APPDIR") {
+            Ok(appdir) => without_the_appimage(&system, &appdir),
+            Err(_) => system,
+        };
+        if installed(&system) {
+            return;
+        }
+
+        let exec = env::var("APPIMAGE")
+            .map(PathBuf::from)
+            .or_else(|_| env::current_exe());
+        let Ok(exec) = exec else {
+            return;
+        };
+
+        let _ = keep(
+            &home
+                .join("icons/hicolor/128x128/apps")
+                .join(format!("{NAME}.png")),
+            &fs::read(icon).unwrap_or_default(),
+        );
+        let _ = keep(
+            &home.join("applications").join(format!("{NAME}.desktop")),
+            desktop_entry(&exec, cfg!(debug_assertions)).as_bytes(),
+        );
+    }
+
     fn open_externally(url: &Url) {
         let mut command = Command::new("xdg-open");
         command
@@ -81,6 +113,66 @@ impl Platform for Linux {
             thread::spawn(move || opener.wait());
         }
     }
+}
+
+const NAME: &str = "lorekeeper";
+const SYSTEM_DATA: &str = "/usr/local/share:/usr/share";
+const INSTALLED_AS: [&str; 3] = [
+    "lorekeeper.desktop",
+    "Lorekeeper.desktop",
+    "com.dayvsonspacca.lorekeeper.desktop.desktop",
+];
+
+fn data_home() -> Option<PathBuf> {
+    env::var("XDG_DATA_HOME")
+        .ok()
+        .filter(|dir| !dir.is_empty())
+        .map(PathBuf::from)
+        .or_else(|| {
+            env::var("HOME")
+                .ok()
+                .map(|home| Path::new(&home).join(".local/share"))
+        })
+}
+
+fn installed(dirs: &str) -> bool {
+    dirs.split(':').filter(|dir| !dir.is_empty()).any(|dir| {
+        INSTALLED_AS
+            .iter()
+            .any(|name| Path::new(dir).join("applications").join(name).is_file())
+    })
+}
+
+fn desktop_entry(exec: &Path, hidden: bool) -> String {
+    let exec = exec
+        .display()
+        .to_string()
+        .replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('`', "\\`")
+        .replace('$', "\\$")
+        .replace('%', "%%");
+    let mut entry = format!(
+        "[Desktop Entry]\nType=Application\nName=Lorekeeper\n\
+         Comment=Keep several AdventureQuest Worlds bots playing on your machine\n\
+         Exec=\"{exec}\"\nIcon={NAME}\nStartupWMClass={NAME}\nCategories=Game;\nTerminal=false\n"
+    );
+    if hidden {
+        entry.push_str("NoDisplay=true\n");
+    }
+
+    entry
+}
+
+fn keep(path: &Path, contents: &[u8]) -> io::Result<()> {
+    if contents.is_empty() || fs::read(path).is_ok_and(|kept| kept == contents) {
+        return Ok(());
+    }
+    if let Some(folder) = path.parent() {
+        fs::create_dir_all(folder)?;
+    }
+
+    fs::write(path, contents)
 }
 
 const APPIMAGE_VARIABLES: [&str; 15] = [
@@ -179,6 +271,55 @@ mod tests {
             ),
             "/usr/share:/usr/local/share"
         );
+    }
+
+    #[test]
+    fn the_desktop_entry_names_the_icon_and_window_and_quotes_the_path() {
+        let entry = desktop_entry(
+            Path::new("/home/hero/Apps/Lore keeper \"1\".AppImage"),
+            false,
+        );
+
+        assert!(entry.starts_with("[Desktop Entry]\nType=Application\nName=Lorekeeper\n"));
+        assert!(entry.contains("\nExec=\"/home/hero/Apps/Lore keeper \\\"1\\\".AppImage\"\n"));
+        assert!(entry.contains("\nIcon=lorekeeper\nStartupWMClass=lorekeeper\n"));
+        assert!(!entry.contains("NoDisplay"));
+        assert!(desktop_entry(Path::new("/dev/lorekeeper"), true).ends_with("NoDisplay=true\n"));
+    }
+
+    #[test]
+    fn an_installed_package_keeps_its_own_entry() {
+        let root = env::temp_dir().join(format!("lorekeeper-installed-{}", std::process::id()));
+        let empty = root.join("empty");
+        let system = root.join("system");
+        fs::create_dir_all(empty.join("applications")).unwrap();
+        fs::create_dir_all(system.join("applications")).unwrap();
+        fs::write(system.join("applications/Lorekeeper.desktop"), "").unwrap();
+
+        assert!(!installed(&format!("{}:", empty.display())));
+        assert!(installed(&format!(
+            "{}:{}",
+            empty.display(),
+            system.display()
+        )));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn a_file_is_written_only_when_it_changes() {
+        let root = env::temp_dir().join(format!("lorekeeper-keep-{}", std::process::id()));
+        let path = root.join("icons/lorekeeper.png");
+
+        keep(&path, b"one").unwrap();
+        let written = fs::metadata(&path).unwrap().modified().unwrap();
+        thread::sleep(std::time::Duration::from_millis(20));
+        keep(&path, b"one").unwrap();
+        assert_eq!(fs::metadata(&path).unwrap().modified().unwrap(), written);
+        keep(&path, b"two").unwrap();
+        assert_eq!(fs::read(&path).unwrap(), b"two");
+        keep(&path, b"").unwrap();
+        assert_eq!(fs::read(&path).unwrap(), b"two");
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
