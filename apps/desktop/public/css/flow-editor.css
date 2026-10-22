@@ -61,6 +61,8 @@
 .lk-flow__stage { position: relative; min-width: 0; }
 
 .lk-flow .drawflow { transform-origin: 0 0; }
+.lk-flow__canvas--panning, .lk-flow__canvas--panning * { cursor: grab !important; }
+.lk-flow__canvas--grabbing, .lk-flow__canvas--grabbing * { cursor: grabbing !important; }
 
 .lk-flow__canvas {
     width: 100%;

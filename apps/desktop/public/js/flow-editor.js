@@ -1,6 +1,9 @@
 (() => {
     const EXITS = { action: ['next', 'failed'], check: ['yes', 'no'] };
     const SAVE_AFTER = 600;
+    const REMEMBER_AFTER = 350;
+    const HISTORY = 100;
+    const WHEEL = 0.0015;
     const BEND = 60;
 
     const plain = (value) => JSON.parse(JSON.stringify(value));
@@ -20,6 +23,14 @@
         let timer = null;
         let shortcut = null;
         let framing = null;
+        let remembering = null;
+        let restoring = false;
+        let history = [];
+        let step = -1;
+        let panning = null;
+        let pan = null;
+        let released = null;
+        let grab = null;
 
         const exits = (kind) => (kinds[kind]?.check ? EXITS.check : EXITS.action);
 
@@ -69,6 +80,7 @@
                     return ` M ${fromX} ${fromY} C ${fromX + BEND} ${fromY} ${fromX + BEND} ${middle} ${fromX} ${middle}`
                         + ` L ${toX} ${middle} C ${toX - BEND} ${middle} ${toX - BEND} ${toY} ${toX} ${toY}`;
                 };
+                flow.zoom_enter = (event) => this.wheel(event);
                 flow.start();
 
                 const removeNode = flow.removeNodeId.bind(flow);
@@ -87,6 +99,7 @@
                 };
 
                 this.draw(config.drawing ?? {});
+                this.remember();
                 this.fit();
                 this.listen();
                 framing = new ResizeObserver(() => this.fit());
@@ -96,13 +109,96 @@
                 }
                 this.mark();
 
-                shortcut = (event) => {
-                    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
-                        event.preventDefault();
-                        this.save();
+                shortcut = (event) => this.key(event);
+                released = (event) => {
+                    if (event.code === 'Space') {
+                        this.panning(false);
                     }
                 };
+                grab = (event) => this.grab(event);
                 window.addEventListener('keydown', shortcut);
+                window.addEventListener('keyup', released);
+                window.addEventListener('blur', released);
+                this.$refs.canvas.parentElement.addEventListener('mousedown', grab, true);
+            },
+
+            key(event) {
+                const command = event.ctrlKey || event.metaKey;
+                const letter = event.key.toLowerCase();
+                if (command && letter === 's') {
+                    event.preventDefault();
+                    this.save();
+
+                    return;
+                }
+
+                if (typing()) {
+                    return;
+                }
+
+                if (command && (letter === 'y' || (letter === 'z' && event.shiftKey))) {
+                    event.preventDefault();
+                    this.redo();
+                } else if (command && letter === 'z') {
+                    event.preventDefault();
+                    this.undo();
+                } else if (event.code === 'Space') {
+                    event.preventDefault();
+                    this.panning(true);
+                }
+            },
+
+            panning(on) {
+                panning = on ? panning ?? {} : null;
+                this.$refs.canvas.classList.toggle('lk-flow__canvas--panning', on);
+                if (!on) {
+                    this.$refs.canvas.classList.remove('lk-flow__canvas--grabbing');
+                }
+            },
+
+            grab(event) {
+                if (panning === null || event.button !== 0) {
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                const from = { x: event.clientX, y: event.clientY, canvasX: flow.canvas_x, canvasY: flow.canvas_y };
+                this.$refs.canvas.classList.add('lk-flow__canvas--grabbing');
+                const move = (moved) => {
+                    this.view(from.canvasX + moved.clientX - from.x, from.canvasY + moved.clientY - from.y, flow.zoom);
+                };
+                const drop = () => {
+                    window.removeEventListener('mousemove', move);
+                    window.removeEventListener('mouseup', drop);
+                    pan = null;
+                    this.$refs.canvas.classList.remove('lk-flow__canvas--grabbing');
+                    flow.dispatch('translate', { x: flow.canvas_x, y: flow.canvas_y });
+                };
+                pan = drop;
+                window.addEventListener('mousemove', move);
+                window.addEventListener('mouseup', drop);
+            },
+
+            wheel(event) {
+                event.preventDefault();
+                const box = this.$refs.canvas.getBoundingClientRect();
+                this.zoomAt(event.clientX - box.left, event.clientY - box.top, Math.exp(-event.deltaY * WHEEL));
+            },
+
+            zoomAt(x, y, factor) {
+                const zoom = Math.min(flow.zoom_max, Math.max(flow.zoom_min, flow.zoom * factor));
+                const scale = zoom / flow.zoom;
+                this.view(x - (x - flow.canvas_x) * scale, y - (y - flow.canvas_y) * scale, zoom);
+                flow.dispatch('zoom', zoom);
+            },
+
+            view(x, y, zoom) {
+                flow.canvas_x = x;
+                flow.canvas_y = y;
+                flow.zoom = zoom;
+                flow.zoom_last_value = zoom;
+                flow.precanvas.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`;
             },
 
             destroy() {
@@ -111,6 +207,10 @@
                 }
 
                 window.removeEventListener('keydown', shortcut);
+                window.removeEventListener('keyup', released);
+                window.removeEventListener('blur', released);
+                pan?.();
+                clearTimeout(remembering);
                 framing.disconnect();
                 flow.node_selected = null;
                 flow.connection_selected = null;
@@ -289,7 +389,47 @@
             },
 
             zoom(direction) {
-                direction > 0 ? flow.zoom_in() : flow.zoom_out();
+                const box = this.$refs.canvas.getBoundingClientRect();
+                this.zoomAt(box.width / 2, box.height / 2, direction > 0 ? 1.2 : 1 / 1.2);
+            },
+
+            remember() {
+                clearTimeout(remembering);
+                const now = JSON.stringify(this.drawing());
+                if (history[step] === now) {
+                    return;
+                }
+
+                history = [...history.slice(0, step + 1), now].slice(-HISTORY);
+                step = history.length - 1;
+            },
+
+            undo() {
+                this.remember();
+                if (step > 0) {
+                    step--;
+                    this.restore(history[step]);
+                }
+            },
+
+            redo() {
+                this.remember();
+                if (step < history.length - 1) {
+                    step++;
+                    this.restore(history[step]);
+                }
+            },
+
+            restore(snapshot) {
+                restoring = true;
+                flow.node_selected = null;
+                flow.connection_selected = null;
+                flow.clear();
+                this.draw(JSON.parse(snapshot));
+                restoring = false;
+                this.selected = null;
+                this.mark();
+                this.unsaved();
             },
 
             drawing() {
@@ -320,6 +460,16 @@
             },
 
             touched() {
+                if (restoring) {
+                    return;
+                }
+
+                clearTimeout(remembering);
+                remembering = setTimeout(() => this.remember(), REMEMBER_AFTER);
+                this.unsaved();
+            },
+
+            unsaved() {
                 this.status = 'unsaved';
                 clearTimeout(timer);
                 timer = setTimeout(() => this.save(), SAVE_AFTER);

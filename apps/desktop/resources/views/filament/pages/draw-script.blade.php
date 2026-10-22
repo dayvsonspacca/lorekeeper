@@ -53,6 +53,7 @@
                     <p>Drag a step from the left onto the canvas, or click it.</p>
                     <p>Pull a wire from a node's exit to the next node. Start is where the bot begins.</p>
                     <p>Select a node to fill it in. Delete removes what is selected.</p>
+                    <p>Scroll to zoom, hold Space and drag to move around, Ctrl+Z to undo and Ctrl+Shift+Z to redo.</p>
                 </div>
             </template>
 
