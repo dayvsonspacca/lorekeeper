@@ -21,6 +21,34 @@ final class BotLog extends Model
 {
     public const null UPDATED_AT = null;
 
+    public const int KEEP = 500;
+
+    public const int EVERY = 100;
+
+    public static function trim(int $account): void
+    {
+        $oldest = self::query()
+            ->where('account_id', $account)
+            ->latest('id')
+            ->skip(self::KEEP - 1)
+            ->value('id');
+        if ($oldest === null) {
+            return;
+        }
+
+        self::query()
+            ->where('account_id', $account)
+            ->where('id', '<', $oldest)
+            ->delete();
+    }
+
+    public static function trimAll(): void
+    {
+        foreach (self::query()->distinct()->pluck('account_id') as $account) {
+            self::trim($account);
+        }
+    }
+
     /** @return array<string, string> */
     protected function casts(): array
     {

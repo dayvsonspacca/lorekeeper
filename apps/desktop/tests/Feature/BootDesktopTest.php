@@ -8,6 +8,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Lorekeeper\Apps\Desktop\Models\Account;
+use Lorekeeper\Apps\Desktop\Models\BotLog;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use Override;
 use PDO;
@@ -72,6 +73,25 @@ final class BootDesktopTest extends TestCase
         $this->artisan('desktop:boot')->assertSuccessful();
 
         static::assertDirectoryDoesNotExist("{$this->folder}/storage/backups");
+    }
+
+    #[Test]
+    public function a_start_trims_the_logs_a_long_session_left(): void
+    {
+        $account = Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
+        BotLog::query()->insert(array_map(
+            static fn(int $line): array => [
+                'account_id' => $account->id,
+                'message' => "Line {$line}",
+                'level' => 'info',
+                'created_at' => now(),
+            ],
+            range(1, BotLog::KEEP + 10),
+        ));
+
+        $this->artisan('desktop:boot')->assertSuccessful();
+
+        static::assertSame(BotLog::KEEP, $account->logs()->count());
     }
 
     private function update(string $up): void

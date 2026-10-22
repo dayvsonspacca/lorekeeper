@@ -8,13 +8,14 @@ use Illuminate\Console\Command;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Facades\DB;
 use Lorekeeper\Apps\Desktop\Models\Account;
+use Lorekeeper\Apps\Desktop\Models\BotLog;
 use Lorekeeper\Apps\Desktop\Native\Backups;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Throwable;
 
 #[AsCommand(
     name: 'desktop:boot',
-    description: 'Bring the database up to date and mark the bots the last session left playing as interrupted',
+    description: 'Bring the database up to date, mark the bots the last session left playing as interrupted and trim their old logs',
 )]
 final class BootDesktop extends Command
 {
@@ -40,6 +41,7 @@ final class BootDesktop extends Command
         }
 
         Account::interrupted();
+        BotLog::trimAll();
 
         return self::SUCCESS;
     }

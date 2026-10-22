@@ -183,7 +183,10 @@ final class Account extends Model
 
     public function log(string $message, LogLevel $level = LogLevel::Info): void
     {
-        $this->logs()->create(['message' => $message, 'level' => $level]);
+        $line = $this->logs()->create(['message' => $message, 'level' => $level]);
+        if (($line->id % BotLog::EVERY) === 0) {
+            BotLog::trim($this->id);
+        }
     }
 
     /**
