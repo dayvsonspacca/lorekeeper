@@ -6,7 +6,7 @@ namespace Lorekeeper\Bot\Abilities\Fight;
 
 use Lorekeeper\Client\Command\Combat\Attack;
 use Lorekeeper\Client\Script\TimedOut;
-use Lorekeeper\Core\Combat\Targetable;
+use Lorekeeper\Core\Game\Combat\Traits\Targetable;
 use Lorekeeper\Core\World\Map\Map;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapMonster;
@@ -38,7 +38,7 @@ final readonly class Targets
         }
 
         $here = array_values(array_filter(
-            $map->monsters,
+            iterator_to_array($map->monsters, preserve_keys: false),
             static fn(MapMonster $monster): bool => $monster->cell->value === $cell->value,
         ));
         $kind = self::kindOf($aimed, $here) ?? throw new RuntimeException(

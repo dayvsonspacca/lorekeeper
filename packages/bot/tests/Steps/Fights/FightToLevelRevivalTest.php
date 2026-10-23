@@ -10,10 +10,10 @@ use Lorekeeper\Bot\Steps\Pauses\Rest;
 use Lorekeeper\Bot\Tests\Steps\InOrder;
 use Lorekeeper\Bot\Tests\Steps\Play;
 use Lorekeeper\Client\Tests\Fixture;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
+use Lorekeeper\Core\Game\Level\Experience;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapPad;
@@ -62,7 +62,7 @@ final class FightToLevelRevivalTest extends TestCase
             ],
             Play::sent($steps),
         );
-        static::assertTrue($me->player()->vitals->alive());
+        static::assertTrue($me->hero()->vitals->alive());
     }
 
     #[Test]
@@ -86,7 +86,7 @@ final class FightToLevelRevivalTest extends TestCase
         ]);
 
         static::assertContains('%xt%zm%resPlayerTimed%946%122628%', Play::sent($steps));
-        static::assertTrue($me->player()->vitals->alive());
+        static::assertTrue($me->hero()->vitals->alive());
     }
 
     #[Test]
@@ -109,7 +109,7 @@ final class FightToLevelRevivalTest extends TestCase
         ]);
 
         static::assertNotContains('%xt%zm%resPlayerTimed%946%122628%', Play::sent($steps));
-        static::assertTrue($me->player()->vitals->alive());
+        static::assertTrue($me->hero()->vitals->alive());
     }
 
     #[Test]
@@ -128,7 +128,7 @@ final class FightToLevelRevivalTest extends TestCase
         ]);
 
         static::assertNotContains('%xt%zm%resPlayerTimed%946%122628%', Play::sent($steps));
-        static::assertTrue($me->player()->vitals->alive());
+        static::assertTrue($me->hero()->vitals->alive());
     }
 
     /** @param 'Left'|'Top' $pad */

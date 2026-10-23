@@ -29,6 +29,6 @@ final readonly class Holding implements Check
     {
         yield from [];
 
-        return $bot->me()->player()->inventory->quantity($this->item) >= $this->quantity->value;
+        return $bot->me()->hero()->inventory->quantity($this->item) >= $this->quantity->value;
     }
 }

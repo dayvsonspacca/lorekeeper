@@ -15,7 +15,7 @@ use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Client\Tests\Fixture;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapPad;
@@ -68,11 +68,9 @@ final class RestsTest extends TestCase
         $me = Fixture::me(area: 946);
 
         return new Character(
-            $me->socketId(),
-            $me->player(),
+            $me->hero(),
             new Location(
                 $me->location()->area,
-                $me->location()->room,
                 $me->location()->map,
                 new MapSpot(new MapCell($cell), $cell === 'Enter' ? MapPad::Spawn : MapPad::Left),
             ),

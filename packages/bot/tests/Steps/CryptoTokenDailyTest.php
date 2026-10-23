@@ -9,23 +9,24 @@ use Lorekeeper\Client\Script\Done;
 use Lorekeeper\Client\Script\Failed;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Client\Tests\Fixture;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Quest\Quest;
+use Lorekeeper\Core\World\Quest\QuestGroup;
+use Lorekeeper\Core\World\Quest\QuestGroupId;
+use Lorekeeper\Core\World\Quest\QuestGroupNumber;
 use Lorekeeper\Core\World\Quest\QuestId;
-use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestName;
-use Lorekeeper\Core\World\Quest\QuestPeriod;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\QuestItemsReceivedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
@@ -48,7 +49,9 @@ final class CryptoTokenDailyTest extends TestCase
     public function it_accepts_hunts_the_ore_turns_it_in_and_picks_up_the_token(): void
     {
         $me = Fixture::me(level: 4, map: 'battleon');
-        $token = new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)));
+        $token = new HeldItem(
+            new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1), new Quantity(99)),
+        );
 
         [$steps, $result] = Play::run(Dailies::cryptoToken(), $me, [
             Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
@@ -57,8 +60,8 @@ final class CryptoTokenDailyTest extends TestCase
             null,
             null,
             null,
-            new QuestItemsReceivedEvent([new PlayerItem(
-                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+            new QuestItemsReceivedEvent([new HeldItem(
+                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1), new Quantity(99)),
             )]),
             [
                 new QuestCompletedEvent(new QuestId(6187), new QuestName("Odd's 'n' Ends")),
@@ -81,8 +84,8 @@ final class CryptoTokenDailyTest extends TestCase
             Play::sent($steps),
         );
         static::assertEquals(new Done('all steps are done'), $result);
-        static::assertSame(1, $me->player()->inventory->quantity(new ItemId(42_657)));
-        static::assertSame(0, $me->player()->inventory->quantity(new ItemId(42_658)));
+        static::assertSame(1, $me->hero()->inventory->quantity(new ItemId(42_657)));
+        static::assertSame(0, $me->hero()->inventory->quantity(new ItemId(42_658)));
     }
 
     #[Test]
@@ -110,7 +113,7 @@ final class CryptoTokenDailyTest extends TestCase
     public function it_stays_put_when_the_daily_was_already_done_today(): void
     {
         $me = Fixture::me(level: 4);
-        $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 2, 6)));
+        $me->hear(new QuestMarkedEvent(new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(70))));
 
         [$steps, $result] = Play::run(Dailies::cryptoToken(), $me, [
             Fixture::arrival('boxes', 138_097, ['Closet' => [5, 1]]),
@@ -172,7 +175,7 @@ final class CryptoTokenDailyTest extends TestCase
     public function it_does_not_travel_when_already_in_boxes(): void
     {
         $me = Fixture::me(level: 4, map: 'boxes');
-        $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 2, 6)));
+        $me->hear(new QuestMarkedEvent(new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(70))));
 
         [$steps, $result] = Play::run(Dailies::cryptoToken(), $me, [self::loaded()]);
 
@@ -200,8 +203,8 @@ final class CryptoTokenDailyTest extends TestCase
             null,
             null,
             null,
-            new QuestItemsReceivedEvent([new PlayerItem(
-                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+            new QuestItemsReceivedEvent([new HeldItem(
+                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1), new Quantity(99)),
             )]),
         ];
     }
@@ -211,11 +214,11 @@ final class CryptoTokenDailyTest extends TestCase
         return new QuestLoadedEvent([new Quest(
             new QuestId(6187),
             new QuestName("Odd's 'n' Ends"),
+            [],
+            [],
+            [],
             Option\none(),
-            [],
-            [],
-            [],
-            Option\some(new QuestMark(QuestPeriod::Day, 2, 6)),
+            Option\some(new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(70))),
         )]);
     }
 }

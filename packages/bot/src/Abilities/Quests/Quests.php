@@ -14,7 +14,6 @@ use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Core\World\Quest\QuestId;
-use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
 use Lorekeeper\Server\Event\Quest\QuestCompletedEvent;
@@ -45,10 +44,10 @@ trait Quests
                 continue;
             }
 
-            return $loaded
-                ->mark
-                ->map(fn(QuestMark $mark): bool => $this->me()->player()->marks->has($mark))
-                ->unwrapOr(false);
+            return $this
+                ->me()
+                ->hero()
+                ->progression->quests->completed($loaded);
         }
 
         return false;

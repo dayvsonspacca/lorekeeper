@@ -4,42 +4,47 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Bot\Abilities\Gear;
 
-use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\Item\Equipment\Equipment;
+use Lorekeeper\Core\Item\Item;
+use Lorekeeper\Core\Item\ItemPrice;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementItem;
-use Lorekeeper\Core\Player\Player;
-use Lorekeeper\Core\Player\PlayerItem;
+use Lorekeeper\Core\Player\Hero\Hero;
 use Lorekeeper\Core\Player\PlayerTag;
-use Lorekeeper\Core\World\Shop\CurrencyShopItem;
+use Lorekeeper\Core\World\Currency\Gold;
+use Lorekeeper\Core\World\Shop\CurrencyShop;
 
 final readonly class UsableEnhancements
 {
-    /**
-     * @param list<CurrencyShopItem> $offer
-     *
-     * @return list<CurrencyShopItem>
-     */
-    public static function among(array $offer, PlayerItem $held, Player $player): array
+    /** @return list<EnhancementItem> */
+    public static function among(CurrencyShop $shop, Equipment $held, Hero $hero): array
     {
-        return array_values(array_filter($offer, static fn(CurrencyShopItem $sold): bool => self::usable(
-            $sold,
-            $held,
-            $player,
-        )));
+        $usable = [];
+        foreach ($shop->inventory as $sold) {
+            if (!self::usable($sold, $shop, $held, $hero)) {
+                continue;
+            }
+
+            $usable[] = $sold;
+        }
+
+        return $usable;
     }
 
-    private static function usable(CurrencyShopItem $sold, PlayerItem $held, Player $player): bool
+    /** @phpstan-assert-if-true EnhancementItem $sold */
+    private static function usable(Item $sold, CurrencyShop $shop, Equipment $held, Hero $hero): bool
     {
-        $enhancement = $sold->item;
-        $price = $sold->price->amount;
-
         return (
-            $enhancement instanceof EnhancementItem
-            && $enhancement->fits($held->item)
-            && $enhancement->level->value <= $player->progress->level->value
-            && ($player->tags->has(PlayerTag::Member) || !$enhancement->tags->has(ItemTag::MemberOnly))
-            && $price instanceof Gold
-            && $price->value <= $player->wallet->gold->value
+            $sold instanceof EnhancementItem
+            && $sold->fits($held)
+            && $sold->level->value <= $hero->level->value
+            && ($hero->tags->has(PlayerTag::Member) || !$sold->tags->has(ItemTag::MemberOnly))
+            && $shop->price($sold->id)->isSomeAnd(
+                static fn(ItemPrice $price): bool => (
+                    $price->amount instanceof Gold
+                    && $hero->inventory->wallet->affords($price)
+                ),
+            )
         );
     }
 }

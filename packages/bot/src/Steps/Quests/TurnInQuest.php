@@ -30,7 +30,7 @@ final readonly class TurnInQuest implements Action
     #[Override]
     public function play(StepScript $bot): Generator
     {
-        $heldBefore = $this->reward === null ? 0 : $bot->me()->player()->inventory->quantity($this->reward);
+        $heldBefore = $this->reward === null ? 0 : $bot->me()->hero()->inventory->quantity($this->reward);
         $turningIn = $bot->turnIn($this->quest);
         yield from $turningIn;
         $refusal = $turningIn->getReturn();

@@ -19,10 +19,10 @@ use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\TimedOut;
-use Lorekeeper\Core\CharacterClass\Skill\Skill;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
-use Lorekeeper\Core\Player\PlayerSkill;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Player\Hero\Class\HeroSkill;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Core\World\Monster\MonsterName;
@@ -59,7 +59,7 @@ trait Kills
         $cooldowns = new Cooldowns();
 
         while (!$until()) {
-            if (!$this->me()->player()->vitals->alive()) {
+            if (!$this->me()->hero()->vitals->alive()) {
                 yield from $this->resurrect($spot);
                 $targets = $targets->revived();
 
@@ -72,13 +72,13 @@ trait Kills
                 ? null
                 : $cooldowns->ready(
                     $this->unlocked(),
-                    $this->me()->player()->vitals,
-                    ClassRules::of($this->me()->player()->class->class->name),
+                    $this->me()->hero()->vitals,
+                    ClassRules::of($this->me()->hero()->class->class->name),
                     $now,
                 );
             if ($target !== null && $skill !== null) {
                 yield $this->send($this->cast($skill, $attack->at($target)));
-                $cooldowns = $cooldowns->used($skill, $now, $this->me()->player()->stats->haste);
+                $cooldowns = $cooldowns->used($skill, $now, $this->me()->hero()->attributes->stats->haste);
             }
 
             $heard = yield new Await([
@@ -104,7 +104,7 @@ trait Kills
             return $attack->with($skill->slot);
         }
 
-        return new SupportPlayerCommand($this->me()->location()->area, $skill->slot, $this->me()->socketId());
+        return new SupportPlayerCommand($this->me()->location()->area, $skill->slot, $this->me()->hero()->spawnId);
     }
 
     /** @throws RuntimeException */
@@ -133,12 +133,10 @@ trait Kills
     private function resurrect(MapSpot $spot): Generator
     {
         yield new Pause(Duration::seconds(10));
-        if (!$this->me()->player()->vitals->alive()) {
-            yield $this->send(new ResurrectCommand($this->me()->location()->area, $this->me()->socketId()))->awaits(
-                Duration::seconds(15),
-                ResurrectedEvent::class,
-                PlayerStateUpdatedEvent::class,
-            );
+        if (!$this->me()->hero()->vitals->alive()) {
+            yield $this->send(
+                new ResurrectCommand($this->me()->location()->area, $this->me()->hero()->spawnId),
+            )->awaits(Duration::seconds(15), ResurrectedEvent::class, PlayerStateUpdatedEvent::class);
         }
 
         yield from $this->jump($spot);
@@ -148,8 +146,8 @@ trait Kills
     private function unlocked(): array
     {
         return array_values(array_map(
-            static fn(PlayerSkill $held): Skill => $held->skill,
-            array_filter($this->me()->player()->class->skills, static fn(PlayerSkill $held): bool => $held->unlocked),
+            static fn(HeroSkill $held): Skill => $held->skill,
+            array_filter($this->me()->hero()->class->skills, static fn(HeroSkill $held): bool => $held->unlocked),
         ));
     }
 }

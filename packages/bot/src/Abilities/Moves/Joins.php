@@ -9,7 +9,7 @@ use Lorekeeper\Client\Command\Map\JoinMapCommand;
 use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\TimedOut;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapPad;
@@ -42,7 +42,7 @@ trait Joins
         yield from $this->leaveCombat();
 
         /** @var Event|TimedOut $joined */
-        $joined = yield $this->send(new JoinMapCommand($this->me()->player()->name, $map, Option\none()))->awaits(
+        $joined = yield $this->send(new JoinMapCommand($this->me()->hero()->name, $map, Option\none()))->awaits(
             Duration::seconds(15),
             MapJoins::class,
             MapRefusals::class,

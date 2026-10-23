@@ -11,15 +11,16 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Quest\Quest;
+use Lorekeeper\Core\World\Quest\QuestGroup;
+use Lorekeeper\Core\World\Quest\QuestGroupId;
+use Lorekeeper\Core\World\Quest\QuestGroupNumber;
 use Lorekeeper\Core\World\Quest\QuestId;
-use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestName;
-use Lorekeeper\Core\World\Quest\QuestPeriod;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemIncrease;
 use Lorekeeper\Server\Event\Inventory\ItemsIncreasedEvent;
@@ -40,7 +41,9 @@ final class TokensOfCollectionDailyTest extends TestCase
     public function it_hunts_the_crickets_for_two_tokens_turns_them_in_and_picks_up_the_reward(): void
     {
         $me = Fixture::me(level: 82, map: 'battleon');
-        $token = new PlayerItem(new Resource(new ItemId(9397), new ItemName('Token of Collection'), new ItemLevel(1)));
+        $token = new HeldItem(
+            new Resource(new ItemId(9397), new ItemName('Token of Collection'), new ItemLevel(1), new Quantity(99)),
+        );
 
         [$steps, $result] = Play::run(Dailies::tokensOfCollection(), $me, [
             ...self::hunted(),
@@ -68,15 +71,15 @@ final class TokensOfCollectionDailyTest extends TestCase
             Play::sent($steps),
         );
         static::assertEquals(new Done('all steps are done'), $result);
-        static::assertSame(2, $me->player()->inventory->quantity(new ItemId(9397)));
-        static::assertSame(0, $me->player()->inventory->quantity(new ItemId(9392)));
+        static::assertSame(2, $me->hero()->inventory->quantity(new ItemId(9397)));
+        static::assertSame(0, $me->hero()->inventory->quantity(new ItemId(9392)));
     }
 
     #[Test]
     public function it_stays_put_when_the_daily_was_already_done_today(): void
     {
         $me = Fixture::me(level: 82);
-        $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 1, 14)));
+        $me->hear(new QuestMarkedEvent(new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(46))));
 
         [$steps, $result] = Play::run(
             Dailies::tokensOfCollection(),
@@ -95,18 +98,18 @@ final class TokensOfCollectionDailyTest extends TestCase
     public function a_loaded_quest_other_than_the_daily_does_not_count_as_done_and_a_refused_quest_stops_it(): void
     {
         $me = Fixture::me(level: 82);
-        $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 0, 25)));
+        $me->hear(new QuestMarkedEvent(new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(25))));
 
         [$steps, $result] = Play::run(Dailies::tokensOfCollection(), $me, [
             self::terrarium(),
             new QuestLoadedEvent([new Quest(
                 new QuestId(802),
                 new QuestName("Experiment 107: Elder's Blood Potion"),
+                [],
+                [],
+                [],
                 Option\none(),
-                [],
-                [],
-                [],
-                Option\some(new QuestMark(QuestPeriod::Day, 0, 25)),
+                Option\some(new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(25))),
             )]),
             null,
         ]);
@@ -176,8 +179,13 @@ final class TokensOfCollectionDailyTest extends TestCase
             null,
             null,
             null,
-            new ItemDroppedEvent([new PlayerItem(
-                new Resource(new ItemId(9392), new ItemName('This Might Be A Token'), new ItemLevel(1)),
+            new ItemDroppedEvent([new HeldItem(
+                new Resource(
+                    new ItemId(9392),
+                    new ItemName('This Might Be A Token'),
+                    new ItemLevel(1),
+                    new Quantity(99),
+                ),
             )]),
             new DropPickedUpEvent(new ItemId(9392), new Quantity(1), new Quantity(1)),
             null,
@@ -201,11 +209,11 @@ final class TokensOfCollectionDailyTest extends TestCase
         return new QuestLoadedEvent([new Quest(
             new QuestId(1316),
             new QuestName('Tokens of Collection'),
+            [],
+            [],
+            [],
             Option\none(),
-            [],
-            [],
-            [],
-            Option\some(new QuestMark(QuestPeriod::Day, 1, 14)),
+            Option\some(new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(46))),
         )]);
     }
 }

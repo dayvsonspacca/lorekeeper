@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Bot\Abilities\Fight;
 
-use Lorekeeper\Core\Attribute\Stat\Haste;
-use Lorekeeper\Core\CharacterClass\Skill\Skill;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Game\Attribute\Stat\Haste;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
 use Psl\DateTime\Duration;
 use Psl\DateTime\Timestamp;
 

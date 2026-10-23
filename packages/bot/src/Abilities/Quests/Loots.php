@@ -27,7 +27,7 @@ trait Loots
     /** @return Generator<int, Instruction, null|Event|TimedOut, bool> */
     protected function collect(ItemId $reward, int $heldBefore): Generator
     {
-        if ($this->me()->player()->inventory->quantity($reward) > $heldBefore) {
+        if ($this->me()->hero()->inventory->quantity($reward) > $heldBefore) {
             return true;
         }
 
@@ -49,7 +49,7 @@ trait Loots
         }
 
         /** @var Event|TimedOut $answer */
-        $answer = yield $this->send(new PickUpDropCommand($this->me()->socketId(), $item))->awaits(
+        $answer = yield $this->send(new PickUpDropCommand($this->me()->hero()->spawnId, $item))->awaits(
             Duration::seconds(10),
             DropPickedUpEvent::class,
         );

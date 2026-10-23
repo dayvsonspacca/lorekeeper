@@ -12,12 +12,10 @@ use Lorekeeper\Bot\Steps\StepScript;
 use Lorekeeper\Client\Command\Inventory\EnhanceItemCommand;
 use Lorekeeper\Client\Command\Shop\LoadShopCommand;
 use Lorekeeper\Client\Script\Failed;
-use Lorekeeper\Core\Item\Equipment\Cape;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
-use Lorekeeper\Core\Item\Equipment\Helm;
-use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
+use Lorekeeper\Core\Item\Equipment\Equipment;
+use Lorekeeper\Core\Item\Equipment\Traits\Enchantable;
+use Lorekeeper\Core\Item\EquipmentSlot;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementType;
-use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\World\Shop\CurrencyShop;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
@@ -39,7 +37,7 @@ final readonly class Enhance implements Action
     #[Override]
     public function play(StepScript $bot): Generator
     {
-        $shop = EnhancementShops::selling($this->type, $bot->me()->player()->progress->level);
+        $shop = EnhancementShops::selling($this->type, $bot->me()->hero()->level);
         if ($shop === null) {
             return new Failed("no shop sells {$this->type->name} enhancements");
         }
@@ -52,43 +50,44 @@ final readonly class Enhance implements Action
         ));
         yield from $loading;
         $loaded = $loading->getReturn();
-        if (!$loaded instanceof ShopLoadedEvent || !$loaded->shop instanceof CurrencyShop) {
+        $selling = $loaded instanceof ShopLoadedEvent ? $loaded->shop : null;
+        if (!$selling instanceof CurrencyShop) {
             return new Failed("the {$this->type->name} enhancement shop did not open");
         }
 
-        $offer = array_values($loaded->shop->inventory->items->toArray());
         foreach (self::equipped($bot) as $held) {
-            $best = BestEnhancement::for($held, $this->type, $offer, $bot->me()->player());
+            $best = BestEnhancement::for($held, $this->type, $selling, $bot->me()->hero());
             if ($best === null) {
                 continue;
             }
 
-            $enhancing = $bot->paced($bot->send(
-                new EnhanceItemCommand($area, $held->item->id, $best->item->id, $shop),
-            )->awaits(Duration::seconds(10), ItemsEnhancedEvent::class));
+            $enhancing = $bot->paced($bot->send(new EnhanceItemCommand($area, $held->id, $best->id, $shop))->awaits(
+                Duration::seconds(10),
+                ItemsEnhancedEvent::class,
+            ));
             yield from $enhancing;
             if (!$enhancing->getReturn() instanceof ItemsEnhancedEvent) {
-                return new Failed("the game would not enhance {$held->item->name->value}");
+                return new Failed("the game would not enhance {$held->name->value}");
             }
         }
 
         return null;
     }
 
-    /** @return list<PlayerItem> */
+    /** @return list<Equipment&Enchantable> */
     private static function equipped(StepScript $bot): array
     {
-        return array_values(array_filter(
-            $bot->me()->player()->inventory->permanent->items->toArray(),
-            static fn(PlayerItem $held): bool => (
-                $held->equipped
-                && (
-                    $held->item instanceof Weapon
-                    || $held->item instanceof ClassItem
-                    || $held->item instanceof Helm
-                    || $held->item instanceof Cape
-                )
-            ),
-        ));
+        $equipment = $bot->me()->hero()->inventory->equipment;
+        $equipped = [];
+        foreach (EquipmentSlot::cases() as $slot) {
+            $item = $equipment->equipped($slot)->unwrapOr(null);
+            if (!$item instanceof Enchantable) {
+                continue;
+            }
+
+            $equipped[] = $item;
+        }
+
+        return $equipped;
     }
 }

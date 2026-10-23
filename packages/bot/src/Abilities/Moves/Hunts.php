@@ -57,7 +57,7 @@ trait Hunts
     {
         return $this
             ->me()
-            ->player()
+            ->hero()
             ->inventory->quantity($item) >= $wanted->value;
     }
 }
