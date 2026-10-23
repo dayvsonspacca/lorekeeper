@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Item\Equipment;
 
+use Lorekeeper\Core\Item\Equipment\Traits\Enchantable;
 use Lorekeeper\Core\Item\EquipmentSlot;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
