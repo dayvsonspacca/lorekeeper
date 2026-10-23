@@ -35,9 +35,11 @@ final readonly class Rank implements Stringable
     {
         $rank = 1;
         foreach (self::STARTS as $candidate => $start) {
-            if ($points->value >= $start) {
-                $rank = $candidate;
+            if ($points->value < $start) {
+                break;
             }
+
+            $rank = $candidate;
         }
 
         return new self($rank);
