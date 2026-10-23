@@ -12,5 +12,6 @@ final readonly class Map
         public MapName $name,
         public Gamefile $file,
         public MapMonsters $monsters,
+        public MapPlayers $players,
     ) {}
 }
