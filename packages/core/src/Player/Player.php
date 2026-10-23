@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Player;
 
 use Lorekeeper\Core\Game\Attribute\Vitals;
-use Lorekeeper\Core\Support\Tag\Taggable;
-use Lorekeeper\Core\Support\Tag\Tags;
+use Lorekeeper\Core\Game\Tag\Tags;
+use Lorekeeper\Core\Game\Tag\Traits\Taggable;
 
 readonly class Player
 {

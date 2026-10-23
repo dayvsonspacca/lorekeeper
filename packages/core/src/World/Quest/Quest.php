@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Quest;
 
-use Lorekeeper\Core\Support\Tag\Taggable;
-use Lorekeeper\Core\Support\Tag\Tags;
+use Lorekeeper\Core\Game\Tag\Tags;
+use Lorekeeper\Core\Game\Tag\Traits\Taggable;
 use Lorekeeper\Core\World\Quest\Objective\QuestObjective;
 use Lorekeeper\Core\World\Quest\Requirement\QuestRequirement;
 use Lorekeeper\Core\World\Quest\Reward\QuestReward;

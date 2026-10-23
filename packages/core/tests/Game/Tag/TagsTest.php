@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Tests\Support\Tag;
+namespace Lorekeeper\Core\Tests\Game\Tag;
 
+use Lorekeeper\Core\Game\Tag\Tags;
 use Lorekeeper\Core\Item\ItemTag;
-use Lorekeeper\Core\Support\Tag\Tags;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

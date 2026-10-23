@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Support\Tag;
+namespace Lorekeeper\Core\Game\Tag\Traits;
+
+use Lorekeeper\Core\Game\Tag\Tag;
+use Lorekeeper\Core\Game\Tag\Tags;
 
 /**
  * @template T of Tag

@@ -2,6 +2,6 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Support\Tag;
+namespace Lorekeeper\Core\Game\Tag;
 
 interface Tag {}

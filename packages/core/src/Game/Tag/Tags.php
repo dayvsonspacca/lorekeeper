@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Support\Tag;
+namespace Lorekeeper\Core\Game\Tag;
 
 /**
  * @template T of Tag
