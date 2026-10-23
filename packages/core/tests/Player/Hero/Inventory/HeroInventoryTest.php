@@ -24,7 +24,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function it_starts_empty_with_the_slots_of_its_bag(): void
     {
-        $inventory = new HeroInventory(new Quantity(131));
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131));
 
         static::assertSame(131, $inventory->slots->value);
         static::assertCount(0, $inventory->permanent);
@@ -36,7 +36,7 @@ final class HeroInventoryTest extends TestCase
     {
         $healer = new ClassItem(new ItemId(15_651), new ItemName('Healer'), new ItemLevel(1), Option\none());
         $ore = self::temporary(42_658, 'Metal Ore');
-        $inventory = new HeroInventory(new Quantity(131))->add($healer)->add($ore);
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))->add($healer)->add($ore);
 
         static::assertSame($healer, $inventory->find(new ItemId(15_651))->unwrap());
         static::assertSame($ore, $inventory->find(new ItemId(42_658))->unwrap());
@@ -48,7 +48,7 @@ final class HeroInventoryTest extends TestCase
     {
         $scales = self::resource(11_475, 'Dragon Scale');
         $ore = self::temporary(42_658, 'Metal Ore');
-        $inventory = new HeroInventory(new Quantity(131))->add($scales)->add($ore);
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))->add($scales)->add($ore);
 
         static::assertSame([11_475 => $scales], iterator_to_array($inventory->permanent));
         static::assertSame([42_658 => $ore], iterator_to_array($inventory->temporary));
@@ -57,7 +57,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function it_tells_how_many_of_an_item_it_holds(): void
     {
-        $inventory = new HeroInventory(new Quantity(131))->add(
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))->add(
             self::resource(42_657, 'Crypto Token'),
             new Quantity(3),
         )->add(self::temporary(42_658, 'Metal Ore'));
@@ -70,7 +70,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function it_holds_one_of_what_does_not_stack(): void
     {
-        $inventory = new HeroInventory(new Quantity(131))->add(
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))->add(
             new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none()),
         );
 
@@ -82,7 +82,7 @@ final class HeroInventoryTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new HeroInventory(new Quantity(131))->add(
+        new HeroInventory(new Quantity(131), new Quantity(131))->add(
             new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none()),
             new Quantity(2),
         );
@@ -93,13 +93,16 @@ final class HeroInventoryTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new HeroInventory(new Quantity(131))->add(self::resource(11_475, 'Dragon Scale'), new Quantity(1001));
+        new HeroInventory(new Quantity(131), new Quantity(131))->add(
+            self::resource(11_475, 'Dragon Scale'),
+            new Quantity(1001),
+        );
     }
 
     #[Test]
     public function an_item_put_straight_into_the_bag_counts_as_one(): void
     {
-        $inventory = new HeroInventory(new Quantity(131));
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131));
         $inventory->permanent->add(self::resource(11_475, 'Dragon Scale'));
 
         static::assertSame(1, $inventory->quantity(new ItemId(11_475)));
@@ -108,7 +111,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function it_forgets_how_many_it_held_once_the_item_is_gone(): void
     {
-        $inventory = new HeroInventory(new Quantity(131))->add(
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))->add(
             self::resource(11_475, 'Dragon Scale'),
             new Quantity(50),
         );
@@ -120,7 +123,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function each_different_kept_item_takes_one_slot_however_many_it_stacks(): void
     {
-        $inventory = new HeroInventory(new Quantity(2))->add(
+        $inventory = new HeroInventory(new Quantity(2), new Quantity(2))->add(
             self::resource(11_475, 'Dragon Scale'),
             new Quantity(50),
         )->add(self::temporary(42_658, 'Metal Ore'));
@@ -137,7 +140,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function it_has_no_free_slot_while_holding_more_than_its_bag_fits(): void
     {
-        $inventory = new HeroInventory(new Quantity(1))->add(self::resource(
+        $inventory = new HeroInventory(new Quantity(1), new Quantity(1))->add(self::resource(
             11_475,
             'Dragon Scale',
         ))->add(self::resource(42_657, 'Crypto Token'));
@@ -149,7 +152,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function it_rejects_keeping_an_item_it_already_holds_as_temporary(): void
     {
-        $inventory = new HeroInventory(new Quantity(131))->add(self::temporary(42_658, 'Metal Ore'));
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))->add(self::temporary(42_658, 'Metal Ore'));
 
         $this->expectException(InvalidArgumentException::class);
 
@@ -159,7 +162,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function it_rejects_holding_as_temporary_an_item_it_already_keeps(): void
     {
-        $inventory = new HeroInventory(new Quantity(131))->add(self::resource(42_658, 'Metal Ore'));
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))->add(self::resource(42_658, 'Metal Ore'));
 
         $this->expectException(InvalidArgumentException::class);
 
@@ -169,7 +172,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function it_receives_a_new_item_or_more_of_one_it_holds(): void
     {
-        $inventory = new HeroInventory(new Quantity(131))
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))
             ->receive(self::resource(11_475, 'Dragon Scale'), new Quantity(50))
             ->receive(self::resource(11_475, 'Dragon Scale'), new Quantity(25));
 
@@ -180,7 +183,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function it_rejects_receiving_more_than_a_stack_holds(): void
     {
-        $inventory = new HeroInventory(new Quantity(131))->add(
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))->add(
             self::resource(11_475, 'Dragon Scale'),
             new Quantity(990),
         );
@@ -194,7 +197,7 @@ final class HeroInventoryTest extends TestCase
     public function it_rejects_receiving_a_second_of_what_does_not_stack(): void
     {
         $helm = new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none());
-        $inventory = new HeroInventory(new Quantity(131))->add($helm);
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))->add($helm);
 
         $this->expectException(InvalidArgumentException::class);
 
@@ -204,7 +207,7 @@ final class HeroInventoryTest extends TestCase
     #[Test]
     public function it_takes_part_of_a_stack_and_drops_the_item_once_none_is_left(): void
     {
-        $inventory = new HeroInventory(new Quantity(131))
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(131))
             ->add(self::resource(11_475, 'Dragon Scale'), new Quantity(50))
             ->add(self::temporary(42_658, 'Metal Ore'), new Quantity(3))
             ->take(new ItemId(11_475), new Quantity(20));
@@ -223,17 +226,17 @@ final class HeroInventoryTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new HeroInventory(new Quantity(131))->take(new ItemId(11_475), new Quantity(1));
+        new HeroInventory(new Quantity(131), new Quantity(131))->take(new ItemId(11_475), new Quantity(1));
     }
 
     #[Test]
     public function an_item_fits_if_already_kept_or_while_a_slot_is_free(): void
     {
-        $inventory = new HeroInventory(new Quantity(1))->add(self::resource(11_475, 'Dragon Scale'));
+        $inventory = new HeroInventory(new Quantity(1), new Quantity(1))->add(self::resource(11_475, 'Dragon Scale'));
 
         static::assertTrue($inventory->fits(new ItemId(11_475)));
         static::assertFalse($inventory->fits(new ItemId(42_657)));
-        static::assertTrue(new HeroInventory(new Quantity(1))->fits(new ItemId(42_657)));
+        static::assertTrue(new HeroInventory(new Quantity(1), new Quantity(1))->fits(new ItemId(42_657)));
     }
 
     private static function resource(int $id, string $name): Resource

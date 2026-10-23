@@ -10,4 +10,5 @@ enum ItemTag implements Tag
 {
     case MemberOnly;
     case Temporary;
+    case CannotBeBanked;
 }

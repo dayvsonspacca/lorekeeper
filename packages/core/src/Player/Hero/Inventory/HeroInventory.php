@@ -5,34 +5,32 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Player\Hero\Inventory;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Item\Inventory;
 use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemTag;
-use Lorekeeper\Core\Item\Traits\Stackable;
+use Lorekeeper\Core\Item\Stock;
 use Lorekeeper\Core\Support\Quantity;
 use Psl\Option;
 
 final class HeroInventory
 {
-    /** @var Inventory<Item> */
-    public readonly Inventory $permanent;
+    public readonly Stock $permanent;
 
-    /** @var Inventory<Item> */
-    public readonly Inventory $temporary;
+    public readonly Stock $temporary;
 
     public readonly HeroEquipment $equipment;
 
-    /** @var array<positive-int, Quantity> */
-    private array $quantities = [];
+    public readonly HeroBank $bank;
 
     public function __construct(
         public readonly Quantity $slots,
+        Quantity $bankSlots,
         public readonly HeroWallet $wallet = new HeroWallet(),
     ) {
-        $this->permanent = new Inventory([]);
-        $this->temporary = new Inventory([]);
+        $this->permanent = new Stock();
+        $this->temporary = new Stock();
         $this->equipment = new HeroEquipment($this->permanent);
+        $this->bank = new HeroBank($bankSlots, $this);
     }
 
     /**
@@ -42,17 +40,12 @@ final class HeroInventory
      */
     public function add(Item $item, Quantity $quantity = new Quantity(1)): static
     {
-        self::stack($item, $quantity->value);
-
         $temporary = $item->tags->has(ItemTag::Temporary);
-        if (($temporary ? $this->permanent : $this->temporary)->has($item)) {
+        if (($temporary ? $this->permanent : $this->temporary)->find($item->id)->isSome()) {
             throw new InvalidArgumentException("Item {$item->id} is both kept and temporary.");
         }
 
-        ($temporary ? $this->temporary : $this->permanent)->add($item);
-        if ($item instanceof Stackable) {
-            $this->quantities[$item->id->value] = $quantity;
-        }
+        ($temporary ? $this->temporary : $this->permanent)->add($item, $quantity);
 
         return $this;
     }
@@ -64,15 +57,11 @@ final class HeroInventory
      */
     public function receive(Item $item, Quantity $quantity = new Quantity(1)): static
     {
-        $held = $this->quantity($item->id);
-        if ($held === 0) {
+        if ($this->find($item->id)->isNone()) {
             return $this->add($item, $quantity);
         }
 
-        $total = self::stack($item, $held + $quantity->value);
-        if ($item instanceof Stackable) {
-            $this->quantities[$item->id->value] = $total;
-        }
+        $this->holding($item->id)->receive($item, $quantity);
 
         return $this;
     }
@@ -84,19 +73,7 @@ final class HeroInventory
      */
     public function take(ItemId $id, Quantity $quantity): static
     {
-        $left = $this->quantity($id) - $quantity->value;
-        if ($this->find($id)->isNone()) {
-            throw new InvalidArgumentException("Item {$id} is not held, so none can be taken.");
-        }
-
-        if ($left > 0) {
-            $this->quantities[$id->value] = new Quantity($left);
-
-            return $this;
-        }
-
-        ($this->permanent->find($id)->isSome() ? $this->permanent : $this->temporary)->remove($id);
-        unset($this->quantities[$id->value]);
+        $this->holding($id)->take($id, $quantity);
 
         return $this;
     }
@@ -109,12 +86,7 @@ final class HeroInventory
 
     public function quantity(ItemId $id): int
     {
-        return $this
-            ->find($id)
-            ->map(fn(Item $item): int => $item instanceof Stackable
-                ? $this->quantities[$item->id->value]->value ?? 1
-                : 1)
-            ->unwrapOr(0);
+        return $this->holding($id)->quantity($id);
     }
 
     /** @return non-negative-int */
@@ -133,14 +105,8 @@ final class HeroInventory
         return $this->permanent->find($id)->isSome() || !$this->full();
     }
 
-    /** @throws InvalidArgumentException */
-    private static function stack(Item $item, int $total): Quantity
+    private function holding(ItemId $id): Stock
     {
-        $most = $item instanceof Stackable ? $item->stack->value : 1;
-        if ($total > $most) {
-            throw new InvalidArgumentException("{$item->name} stacks up to {$most}, not {$total}.");
-        }
-
-        return new Quantity($total);
+        return $this->permanent->find($id)->isSome() ? $this->permanent : $this->temporary;
     }
 }

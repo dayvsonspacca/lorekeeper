@@ -109,7 +109,11 @@ final class HeroTest extends TestCase
                 [],
             ),
             new HeroProgression(new LevelProgression(new Gauge(new Experience(4_514_754), new Experience(5_280_000)))),
-            new HeroInventory(new Quantity(131), new HeroWallet(new Gold(6_800_132), new AdventureCoins(2899))),
+            new HeroInventory(
+                new Quantity(131),
+                new Quantity(131),
+                new HeroWallet(new Gold(6_800_132), new AdventureCoins(2899)),
+            ),
         );
     }
 }
