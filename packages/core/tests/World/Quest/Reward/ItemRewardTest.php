@@ -20,7 +20,7 @@ final class ItemRewardTest extends TestCase
     #[Test]
     public function it_holds_item_drop_rate_quantity_and_type(): void
     {
-        $gem = new Resource(new ItemId(1234), new ItemName('Realm Gem'), new ItemLevel(1));
+        $gem = new Resource(new ItemId(1234), new ItemName('Realm Gem'), new ItemLevel(1), new Quantity(100));
         $reward = new ItemReward($gem, new DropRate(10.0), new Quantity(3), ItemRewardType::Random);
 
         static::assertSame($gem, $reward->item);

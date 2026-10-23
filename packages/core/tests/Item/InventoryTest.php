@@ -11,6 +11,7 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
+use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Option;
@@ -20,7 +21,7 @@ final class InventoryTest extends TestCase
     #[Test]
     public function it_finds_an_item_by_its_id(): void
     {
-        $scales = new Resource(new ItemId(11_475), new ItemName('Dragon Scale'), new ItemLevel(1));
+        $scales = new Resource(new ItemId(11_475), new ItemName('Dragon Scale'), new ItemLevel(1), new Quantity(1000));
         $inventory = new Inventory([
             new ClassItem(new ItemId(15_651), new ItemName('Healer'), new ItemLevel(1), Option\none()),
             $scales,

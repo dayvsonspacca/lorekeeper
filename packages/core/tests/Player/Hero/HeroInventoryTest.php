@@ -174,7 +174,7 @@ final class HeroInventoryTest extends TestCase
 
     private static function resource(int $id, string $name): Resource
     {
-        return new Resource(new ItemId($id), new ItemName($name), new ItemLevel(1));
+        return new Resource(new ItemId($id), new ItemName($name), new ItemLevel(1), new Quantity(1000));
     }
 
     private static function temporary(int $id, string $name): Resource
