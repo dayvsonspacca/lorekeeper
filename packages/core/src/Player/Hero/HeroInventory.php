@@ -7,6 +7,7 @@ namespace Lorekeeper\Core\Player\Hero;
 use InvalidArgumentException;
 use Lorekeeper\Core\Item\Inventory;
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Support\Quantity;
 use Psl\Option\Option;
 
@@ -23,7 +24,17 @@ final readonly class HeroInventory
         public Quantity $slots,
         public Inventory $temporary = new Inventory([]),
     ) {
+        foreach ($permanent as $held) {
+            if ($held->item->tags->has(ItemTag::Temporary)) {
+                throw new InvalidArgumentException("Item {$held->item->id} is temporary but kept.");
+            }
+        }
+
         foreach ($temporary as $held) {
+            if (!$held->item->tags->has(ItemTag::Temporary)) {
+                throw new InvalidArgumentException("Item {$held->item->id} is not temporary but held as one.");
+            }
+
             if ($permanent->has($held)) {
                 throw new InvalidArgumentException("Item {$held->item->id} is both kept and temporary.");
             }

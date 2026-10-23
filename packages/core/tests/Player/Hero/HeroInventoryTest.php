@@ -10,6 +10,7 @@ use Lorekeeper\Core\Item\Inventory;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
 use Lorekeeper\Core\Player\Hero\HeroInventory;
 use Lorekeeper\Core\Player\Hero\HeroItem;
@@ -26,7 +27,7 @@ final class HeroInventoryTest extends TestCase
         $healer = new HeroItem(
             new ClassItem(new ItemId(15_651), new ItemName('Healer'), new ItemLevel(1), Option\none()),
         );
-        $ore = new HeroItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)));
+        $ore = self::temporary(42_658, 'Metal Ore');
         $inventory = new HeroInventory(new Inventory([$healer]), new Quantity(131), new Inventory([$ore]));
 
         static::assertSame($healer, $inventory->find(new ItemId(15_651))->unwrap());
@@ -43,9 +44,7 @@ final class HeroInventoryTest extends TestCase
                 new Quantity(3),
             )]),
             new Quantity(131),
-            new Inventory([new HeroItem(
-                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
-            )]),
+            new Inventory([self::temporary(42_658, 'Metal Ore')]),
         );
 
         static::assertSame(3, $inventory->quantity(new ItemId(42_657)));
@@ -74,9 +73,7 @@ final class HeroInventoryTest extends TestCase
                 new Quantity(50),
             )]),
             new Quantity(2),
-            new Inventory([new HeroItem(
-                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
-            )]),
+            new Inventory([self::temporary(42_658, 'Metal Ore')]),
         );
 
         static::assertSame(1, $inventory->free());
@@ -103,12 +100,46 @@ final class HeroInventoryTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_an_item_both_kept_and_temporary(): void
+    public function it_rejects_keeping_a_temporary_item(): void
     {
-        $ore = new HeroItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)));
-
         $this->expectException(InvalidArgumentException::class);
 
-        new HeroInventory(new Inventory([$ore]), new Quantity(131), new Inventory([$ore]));
+        new HeroInventory(new Inventory([self::temporary(42_658, 'Metal Ore')]), new Quantity(131));
+    }
+
+    #[Test]
+    public function it_rejects_holding_a_kept_item_as_temporary(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new HeroInventory(
+            new Inventory([]),
+            new Quantity(131),
+            new Inventory([new HeroItem(
+                new Resource(new ItemId(11_475), new ItemName('Dragon Scale'), new ItemLevel(1)),
+            )]),
+        );
+    }
+
+    #[Test]
+    public function it_rejects_an_item_both_kept_and_temporary(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new HeroInventory(
+            new Inventory([new HeroItem(
+                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+            )]),
+            new Quantity(131),
+            new Inventory([self::temporary(42_658, 'Metal Ore')]),
+        );
+    }
+
+    private static function temporary(int $id, string $name): HeroItem
+    {
+        $item = new Resource(new ItemId($id), new ItemName($name), new ItemLevel(1));
+        $item->tags->add(ItemTag::Temporary);
+
+        return new HeroItem($item);
     }
 }

@@ -9,4 +9,5 @@ use Lorekeeper\Core\Support\Tag\Tag;
 enum ItemTag implements Tag
 {
     case MemberOnly;
+    case Temporary;
 }
