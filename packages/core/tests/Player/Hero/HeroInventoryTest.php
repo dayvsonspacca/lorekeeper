@@ -66,6 +66,43 @@ final class HeroInventoryTest extends TestCase
     }
 
     #[Test]
+    public function each_different_kept_item_takes_one_slot_however_many_it_stacks(): void
+    {
+        $inventory = new HeroInventory(
+            new Inventory([new HeroItem(
+                new Resource(new ItemId(11_475), new ItemName('Dragon Scale'), new ItemLevel(1)),
+                new Quantity(50),
+            )]),
+            new Quantity(2),
+            new Inventory([new HeroItem(
+                new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
+            )]),
+        );
+
+        static::assertSame(1, $inventory->free());
+        static::assertFalse($inventory->full());
+
+        $inventory->permanent->add(new HeroItem(
+            new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)),
+        ));
+
+        static::assertSame(0, $inventory->free());
+        static::assertTrue($inventory->full());
+    }
+
+    #[Test]
+    public function it_has_no_free_slot_while_holding_more_than_its_bag_fits(): void
+    {
+        $inventory = new HeroInventory(new Inventory([
+            new HeroItem(new Resource(new ItemId(11_475), new ItemName('Dragon Scale'), new ItemLevel(1))),
+            new HeroItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1))),
+        ]), new Quantity(1));
+
+        static::assertSame(0, $inventory->free());
+        static::assertTrue($inventory->full());
+    }
+
+    #[Test]
     public function it_rejects_an_item_both_kept_and_temporary(): void
     {
         $ore = new HeroItem(new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)));

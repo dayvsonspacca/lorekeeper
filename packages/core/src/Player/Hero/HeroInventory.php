@@ -43,4 +43,15 @@ final readonly class HeroInventory
             ->map(static fn(HeroItem $held): int => $held->quantity->value)
             ->unwrapOr(0);
     }
+
+    /** @return non-negative-int */
+    public function free(): int
+    {
+        return max(0, $this->slots->value - count($this->permanent));
+    }
+
+    public function full(): bool
+    {
+        return count($this->permanent) >= $this->slots->value;
+    }
 }
