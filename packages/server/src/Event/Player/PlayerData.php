@@ -4,23 +4,32 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Player;
 
-use Lorekeeper\Core\Player\PlayerLevelProgress;
+use Lorekeeper\Core\Game\Level\Experience;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroWallet;
+use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\Player\PlayerQuestMarks;
-use Lorekeeper\Core\Player\Wallet;
+use Lorekeeper\Core\Player\PlayerSpawnId;
+use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\Support\Quantity;
-use Lorekeeper\Server\SocketId;
+use Lorekeeper\Core\World\Quest\QuestGroupId;
 
 final readonly class PlayerData
 {
-    /** @mago-expect lint:excessive-parameter-list */
+    /**
+     * @param Gauge<Experience> $experience
+     * @param list<QuestGroupId> $quests
+     *
+     * @mago-expect lint:excessive-parameter-list
+     */
     public function __construct(
-        public SocketId $socketId,
+        public PlayerSpawnId $spawnId,
         public PlayerName $name,
-        public PlayerLevelProgress $progress,
-        public Wallet $wallet,
+        public PlayerLevel $level,
+        public Gauge $experience,
+        public HeroWallet $wallet,
         public bool $member,
         public Quantity $bagSlots,
-        public PlayerQuestMarks $marks,
+        public Quantity $bankSlots,
+        public array $quests,
     ) {}
 }

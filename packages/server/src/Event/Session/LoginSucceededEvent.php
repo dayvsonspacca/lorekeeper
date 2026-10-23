@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Session;
 
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\DelimitedMessage;
 use Lorekeeper\Server\Message\Message;
-use Lorekeeper\Server\SocketId;
 use Override;
 use Psl\Option;
 use Psl\Type;
@@ -23,7 +23,7 @@ final readonly class LoginSucceededEvent implements Event
     use NamedAfterClass;
 
     public function __construct(
-        public SocketId $socketId,
+        public PlayerSpawnId $spawnId,
     ) {}
 
     /** @return Option\Option<static> */
@@ -39,17 +39,17 @@ final readonly class LoginSucceededEvent implements Event
         }
 
         try {
-            $socketId = Type\positive_int()->coerce($message->data[4] ?? null);
+            $spawnId = Type\positive_int()->coerce($message->data[4] ?? null);
         } catch (CoercionException $exception) {
-            throw new MalformedEventException(static::class, 'socket id is missing or invalid', $exception);
+            throw new MalformedEventException(static::class, 'spawn id is missing or invalid', $exception);
         }
 
-        return Option\some(new static(new SocketId($socketId)));
+        return Option\some(new static(new PlayerSpawnId($spawnId)));
     }
 
     #[Override]
     public function summary(): string
     {
-        return "Logged in as socket {$this->socketId->value}";
+        return "Logged in as spawn {$this->spawnId->value}";
     }
 }

@@ -18,14 +18,14 @@ final class LoginSucceededEventTest extends TestCase
     private const string FAILURE = '%xt%loginResponse%-1%0%-1%%Your game client is an older version. Server requires AQW game version 5.1 or higher. Please close the AQW game window and try again.%';
 
     #[Test]
-    public function it_matches_successful_login_with_socket_id(): void
+    public function it_matches_successful_login_with_spawn_id(): void
     {
         $message = DelimitedMessage::from(self::SUCCESS)->unwrap();
 
         $event = LoginSucceededEvent::from($message)->unwrap();
 
-        static::assertSame(59_878, $event->socketId->value);
-        static::assertSame('Logged in as socket 59878', $event->summary());
+        static::assertSame(59_878, $event->spawnId->value);
+        static::assertSame('Logged in as spawn 59878', $event->summary());
     }
 
     #[Test]
@@ -53,7 +53,7 @@ final class LoginSucceededEventTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_successful_login_without_socket_id(): void
+    public function it_rejects_successful_login_without_spawn_id(): void
     {
         $message = DelimitedMessage::from('%xt%loginResponse%-1%true%')->unwrap();
 
@@ -63,7 +63,7 @@ final class LoginSucceededEventTest extends TestCase
     }
 
     #[Test]
-    public function it_rejects_successful_login_with_invalid_socket_id(): void
+    public function it_rejects_successful_login_with_invalid_spawn_id(): void
     {
         $message = DelimitedMessage::from('%xt%loginResponse%-1%true%abc%')->unwrap();
 

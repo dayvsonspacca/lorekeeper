@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Reward;
 
-use Lorekeeper\Core\Currency\Gold;
-use Lorekeeper\Core\Progression\ClassPoints;
-use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\Game\Level\Experience;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
+use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;

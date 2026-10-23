@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Map;
 
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Monster\MonsterRace;
+use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -16,6 +18,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
+/** @mago-expect lint:too-many-methods */
 final class MovedToMapEventTest extends TestCase
 {
     private const string FOREST = <<<'JSON'
@@ -37,11 +40,11 @@ final class MovedToMapEventTest extends TestCase
         $battleon = MovedToMapEvent::from(self::message(self::BATTLEON))->unwrap();
 
         static::assertSame(687_803, $forest->areaId->value);
-        static::assertSame(1, $forest->roomId->value);
+        static::assertSame(1, $forest->map->room->value);
         static::assertSame('forest', $forest->map->name->value);
         static::assertSame('GreenGuard/town-Forest-13Aug24.swf', $forest->map->file->value);
         static::assertSame('forest (room 1)', $forest->summary());
-        static::assertSame(2, $battleon->roomId->value);
+        static::assertSame(2, $battleon->map->room->value);
     }
 
     #[Test]
@@ -64,10 +67,10 @@ final class MovedToMapEventTest extends TestCase
                 $monster->id->value,
                 $monster->monster->name->value,
                 $monster->cell->value,
-            ], $forest->monsters),
+            ], array_values(iterator_to_array($forest->monsters))),
         );
 
-        $grunt = $forest->monsters[3];
+        $grunt = $forest->monsters->find(new MonsterSpawnId(4))->unwrap();
         static::assertSame(3, $grunt->monster->level->value);
         static::assertSame(MonsterRace::None, $grunt->monster->race);
         static::assertSame('Zardman.swf', $grunt->monster->appearance->file->value);
@@ -79,9 +82,12 @@ final class MovedToMapEventTest extends TestCase
             $grunt->vitals->mana->current->value,
             $grunt->vitals->mana->maximum->value,
         ]);
-        static::assertSame(970, $forest->monsters[7]->vitals->health->maximum->value);
         static::assertSame(
-            [],
+            970,
+            $forest->monsters->find(new MonsterSpawnId(8))->unwrap()->vitals->health->maximum->value,
+        );
+        static::assertCount(
+            0,
             MovedToMapEvent::from(self::message(self::BATTLEON))
                 ->unwrap()
                 ->map
@@ -96,10 +102,15 @@ final class MovedToMapEventTest extends TestCase
 
         static::assertSame(
             [1],
-            array_map(static fn(MapMonster $monster): int => $monster->id->value, $arena->monsters),
+            array_map(
+                static fn(MapMonster $monster): int => $monster->id->value,
+                array_values(iterator_to_array($arena->monsters)),
+            ),
         );
-        static::assertSame('Skeletal Ice Mage', $arena->monsters[0]->monster->name->value);
-        static::assertSame('r4', $arena->monsters[0]->cell->value);
+
+        $mage = $arena->monsters->find(new MonsterSpawnId(1))->unwrap();
+        static::assertSame('Skeletal Ice Mage', $mage->monster->name->value);
+        static::assertSame('r4', $mage->cell->value);
     }
 
     #[Test]
@@ -116,32 +127,44 @@ final class MovedToMapEventTest extends TestCase
             $expected,
             MovedToMapEvent::from(self::message(self::move($race)))
                 ->unwrap()
-                ->map
-                ->monsters[0]->monster->race,
+                ->map->monsters->find(new MonsterSpawnId(1))->unwrap()
+                ->monster->race,
         );
     }
 
     #[Test]
     public function it_sees_each_player_in_the_map(): void
     {
-        $seen = MovedToMapEvent::from(self::message(self::BATTLEON))->unwrap();
-        $last = $seen->players[8]->player;
+        $players = MovedToMapEvent::from(self::message(self::BATTLEON))
+            ->unwrap()
+            ->map
+            ->players;
+        $last = $players->find(new PlayerSpawnId(116_500))->unwrap();
 
-        static::assertCount(9, $seen->players);
-        static::assertSame(116_500, $seen->players[8]->socketId->value);
-        static::assertSame('Hero 9', $last->name->value);
-        static::assertSame(81, $last->level->value);
+        static::assertCount(9, $players);
+        static::assertSame(116_500, $last->player->spawnId->value);
+        static::assertSame('Hero 9', $last->player->name->value);
+        static::assertSame(81, $last->player->level->value);
         static::assertSame('Enter', $last->spot->cell->value);
         static::assertSame(MapPad::Spawn, $last->spot->pad);
         static::assertSame(CombatState::Idle, $last->state);
         static::assertSame([500, 500, 100, 100], [
-            $last->vitals->health->current->value,
-            $last->vitals->health->maximum->value,
-            $last->vitals->mana->current->value,
-            $last->vitals->mana->maximum->value,
+            $last->player->vitals->health->current->value,
+            $last->player->vitals->health->maximum->value,
+            $last->player->vitals->mana->current->value,
+            $last->player->vitals->mana->maximum->value,
         ]);
-        static::assertFalse($last->away);
-        static::assertTrue($seen->players[0]->player->away);
+    }
+
+    #[Test]
+    public function it_rejects_a_spawn_listed_twice(): void
+    {
+        $this->expectException(MalformedEventException::class);
+        $this->expectExceptionMessage('a monster or player is in the room more than once');
+
+        $move = json_decode(self::move('None'), associative: true, flags: JSON_THROW_ON_ERROR);
+        $move['b']['o']['monmap'][] = $move['b']['o']['monmap'][0];
+        MovedToMapEvent::from(self::message(json_encode($move, flags: JSON_THROW_ON_ERROR)));
     }
 
     #[Test]

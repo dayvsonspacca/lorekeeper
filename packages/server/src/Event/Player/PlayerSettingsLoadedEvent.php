@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Player;
 
-use Lorekeeper\Core\Player\GameSetting;
+use Lorekeeper\Core\Game\Setting\GameSetting;
+use Lorekeeper\Core\Player\Hero\HeroSettings;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\Player\PlayerSettings;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
-use Lorekeeper\Server\SocketId;
 use Override;
 use Psl\Option;
 use Psl\Type;
@@ -67,7 +67,7 @@ final readonly class PlayerSettingsLoadedEvent implements Event
             }
 
             $players[] = new PlayerSettingsData(
-                new SocketId($entry['uid']),
+                new PlayerSpawnId($entry['uid']),
                 new PlayerName($entry['data']['strUsername']),
                 self::settings($entry['data']['ia1']),
             );
@@ -86,7 +86,7 @@ final readonly class PlayerSettingsLoadedEvent implements Event
         ));
     }
 
-    private static function settings(int $bits): PlayerSettings
+    private static function settings(int $bits): HeroSettings
     {
         $allowed = [];
         foreach (self::BITS as $bit => $setting) {
@@ -97,6 +97,6 @@ final readonly class PlayerSettingsLoadedEvent implements Event
             $allowed[] = $setting;
         }
 
-        return new PlayerSettings($allowed);
+        return new HeroSettings($allowed);
     }
 }

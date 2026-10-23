@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Inventory;
 
-use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
+use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Server\Event\Item\Helper\Enhancements;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;

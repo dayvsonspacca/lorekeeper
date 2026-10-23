@@ -4,23 +4,26 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Quest;
 
-use Lorekeeper\Core\CharacterClass\ClassId;
-use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\Game\Level\Experience;
+use Lorekeeper\Core\Game\Rank\Rank;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassId;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
 use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Player\PlayerLevel;
-use Lorekeeper\Core\Progression\ClassPoints;
-use Lorekeeper\Core\Progression\Experience;
-use Lorekeeper\Core\Progression\Rank;
-use Lorekeeper\Core\Progression\Reputation;
 use Lorekeeper\Core\Support\Quantity;
+use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Core\World\Faction\FactionId;
+use Lorekeeper\Core\World\Faction\Reputation;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
 use Lorekeeper\Core\World\Quest\Objective\QuestObjective;
 use Lorekeeper\Core\World\Quest\Quest;
 use Lorekeeper\Core\World\Quest\QuestDescription;
+use Lorekeeper\Core\World\Quest\QuestGroup;
+use Lorekeeper\Core\World\Quest\QuestGroupId;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
+use Lorekeeper\Core\World\Quest\QuestTag;
 use Lorekeeper\Core\World\Quest\Requirement\ClassRankRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\FactionRankRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\ItemRequirement;
@@ -38,7 +41,7 @@ use Lorekeeper\Core\World\Quest\Reward\ReputationReward;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Event\NamedAfterClass;
-use Lorekeeper\Server\Event\Quest\Helper\QuestMarks;
+use Lorekeeper\Server\Event\Quest\Helper\QuestGroups;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -145,12 +148,10 @@ final readonly class QuestLoadedEvent implements Event
         $description = trim($quest['sDesc']);
         $items = self::items($quest);
 
-        return new Quest(
+        $groupId = QuestGroups::of($quest['sField'] ?? '', $quest['iIndex'] ?? -1);
+        $loaded = new Quest(
             new QuestId($quest['QuestID']),
             new QuestName($quest['sName']),
-            $description === ''
-                ? Option\none()
-                : Option\some(new QuestDescription($quest['sDesc'], trim($quest['sEndText'] ?? ''))),
             self::requirements($quest, $items),
             array_map(
                 static fn(array $turnIn): QuestObjective => new ItemObjective(
@@ -160,8 +161,23 @@ final readonly class QuestLoadedEvent implements Event
                 $quest['turnin'] ?? [],
             ),
             self::rewards($quest, $items),
-            QuestMarks::of($quest['sField'] ?? '', $quest['iIndex'] ?? -1),
+            $description === ''
+                ? Option\none()
+                : Option\some(new QuestDescription($quest['sDesc'], trim($quest['sEndText'] ?? ''))),
+            $groupId,
         );
+
+        if ($quest['bUpg']) {
+            $loaded->tags->add(QuestTag::MemberOnly);
+        }
+
+        $groupId->map(static fn(QuestGroupId $id) => $loaded->tags->add(match ($id->group) {
+            QuestGroup::Daily => QuestTag::Daily,
+            QuestGroup::Weekly => QuestTag::Weekly,
+            QuestGroup::Monthly => QuestTag::Monthly,
+        }));
+
+        return $loaded;
     }
 
     /**
@@ -183,14 +199,14 @@ final readonly class QuestLoadedEvent implements Event
         if ($quest['iClass'] > 0) {
             $requirements[] = new ClassRankRequirement(
                 new ClassId($quest['iClass']),
-                Rank::fromPoints(new ClassPoints($quest['iReqCP'])),
+                Rank::of(new ClassPoints($quest['iReqCP'])),
             );
         }
 
         if ($quest['iReqRep'] > 0 && $quest['FactionID'] !== self::NO_FACTION) {
             $requirements[] = new FactionRankRequirement(
                 new FactionId($quest['FactionID']),
-                Rank::fromPoints(new Reputation($quest['iReqRep'])),
+                Rank::of(new Reputation($quest['iReqRep'])),
             );
         }
 

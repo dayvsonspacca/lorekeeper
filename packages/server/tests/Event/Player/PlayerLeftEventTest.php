@@ -19,9 +19,9 @@ final class PlayerLeftEventTest extends TestCase
     {
         $event = PlayerLeftEvent::from(DelimitedMessage::from('%xt%exitArea%-1%75536%hero%')->unwrap())->unwrap();
 
-        static::assertSame(75_536, $event->socketId->value);
+        static::assertSame(75_536, $event->spawnId->value);
         static::assertSame('hero', $event->name->value);
-        static::assertSame('hero (socket 75536) left', $event->summary());
+        static::assertSame('hero (spawn 75536) left', $event->summary());
     }
 
     #[Test]

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Combat;
 
-use Lorekeeper\Core\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Health;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Override;
 use Psl\Option;

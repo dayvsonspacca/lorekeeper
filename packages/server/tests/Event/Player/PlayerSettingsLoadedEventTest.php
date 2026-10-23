@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Player;
 
-use Lorekeeper\Core\Player\GameSetting;
+use Lorekeeper\Core\Game\Setting\GameSetting;
 use Lorekeeper\Server\Event\Player\PlayerSettingsLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -34,7 +34,7 @@ final class PlayerSettingsLoadedEventTest extends TestCase
         ];
 
         static::assertSame([45_466, 'Hero'], [
-            $event->players[0]->socketId->value,
+            $event->players[0]->spawnId->value,
             $event->players[0]->name->value,
         ]);
         static::assertSame([], $event->players[0]->settings->allowed);

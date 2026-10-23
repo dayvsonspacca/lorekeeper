@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Quest;
 
-use Lorekeeper\Core\World\Quest\QuestMark;
-use Lorekeeper\Core\World\Quest\QuestPeriod;
+use Lorekeeper\Core\World\Quest\QuestGroup;
+use Lorekeeper\Core\World\Quest\QuestGroupId;
+use Lorekeeper\Core\World\Quest\QuestGroupNumber;
 use Lorekeeper\Server\Event\Quest\QuestMarkedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -23,8 +24,8 @@ final class QuestMarkedEventTest extends TestCase
             )->unwrap(),
         )->unwrap();
 
-        static::assertEquals(new QuestMark(QuestPeriod::Day, 2, 6), $event->mark);
-        static::assertSame('Marked Day quest 2:6', $event->summary());
+        static::assertEquals(new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(70)), $event->quest);
+        static::assertSame('Completed Daily quest 70', $event->summary());
     }
 
     #[Test]

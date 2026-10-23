@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Quest;
 
-use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\Game\Level\Experience;
 use Lorekeeper\Core\Item\Equipment\Pet;
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
 use Lorekeeper\Core\Item\Equipment\Weapon\WeaponType;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Core\World\Quest\Objective\ItemObjective;
 use Lorekeeper\Core\World\Quest\Quest;
-use Lorekeeper\Core\World\Quest\QuestMark;
-use Lorekeeper\Core\World\Quest\QuestPeriod;
+use Lorekeeper\Core\World\Quest\QuestGroup;
+use Lorekeeper\Core\World\Quest\QuestGroupId;
+use Lorekeeper\Core\World\Quest\QuestGroupNumber;
+use Lorekeeper\Core\World\Quest\QuestTag;
 use Lorekeeper\Core\World\Quest\Requirement\ClassRankRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\FactionRankRequirement;
 use Lorekeeper\Core\World\Quest\Requirement\ItemRequirement;
@@ -30,6 +32,7 @@ use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 
 final class QuestLoadedEventTest extends TestCase
@@ -48,8 +51,13 @@ final class QuestLoadedEventTest extends TestCase
             QuestLoadedEvent::from(JsonMessage::from('{"b":{"o":{"cmd":"loadShop"}}}')->unwrap())->isNone(),
         );
         static::assertSame([39, 40, 342, 3295, 3777, 5682], array_keys($quests));
-        static::assertEquals(new QuestMark(QuestPeriod::Day, 0, 3), $quests[342]->mark->unwrap());
-        static::assertTrue($rats->mark->isNone());
+        static::assertEquals(
+            new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(3)),
+            $quests[342]->groupId->unwrap(),
+        );
+        static::assertTrue($quests[342]->tags->has(QuestTag::Daily));
+        static::assertTrue($rats->groupId->isNone());
+        static::assertFalse($rats->tags->has(QuestTag::Daily));
         static::assertSame('Missing King', $rats->name->value);
         static::assertSame(
             "Great work - now we'll never run out of rats!",
@@ -105,6 +113,8 @@ final class QuestLoadedEventTest extends TestCase
 
         static::assertSame([], $quests[39]->requirements);
         static::assertEquals([new MemberRequirement()], $quests[40]->requirements);
+        static::assertTrue($quests[40]->tags->has(QuestTag::MemberOnly));
+        static::assertFalse($quests[39]->tags->has(QuestTag::MemberOnly));
         static::assertSame(15, $only(PlayerLevelRequirement::class, $quests[3295])->level->value);
 
         $dwarfhold = $only(FactionRankRequirement::class, $quests[342]);
@@ -142,6 +152,18 @@ final class QuestLoadedEventTest extends TestCase
         static::assertCount(1, $rewards);
         static::assertTrue($rewards[0]->item->tags->has(ItemTag::MemberOnly));
         static::assertSame('1 quests: Hero Quest', $event->summary());
+    }
+
+    #[Test]
+    #[TestWith(['id1', QuestTag::Daily])]
+    #[TestWith(['iw0', QuestTag::Weekly])]
+    #[TestWith(['im0', QuestTag::Monthly])]
+    public function a_quest_in_a_group_is_tagged_with_how_often_it_repeats(string $field, QuestTag $tag): void
+    {
+        $quest = self::load(self::quest('Armor', 0, ['sField' => $field, 'iIndex' => 2]))->quests[0];
+
+        static::assertTrue($quest->tags->has($tag));
+        static::assertTrue($quest->groupId->isSome());
     }
 
     #[Test]

@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Shop;
 
-use Lorekeeper\Core\Currency\AdventureCoins;
-use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\Equipment\Armor;
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
 use Lorekeeper\Core\Item\Equipment\Weapon\WeaponType;
+use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Boost;
 use Lorekeeper\Core\Item\Misc\Resource;
+use Lorekeeper\Core\World\Currency\AdventureCoins;
+use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Core\World\Shop\CurrencyShop;
-use Lorekeeper\Core\World\Shop\CurrencyShopItem;
 use Lorekeeper\Core\World\Shop\MergeShop;
-use Lorekeeper\Core\World\Shop\MergeShopItem;
 use Lorekeeper\Core\World\Shop\ShopTag;
 use Lorekeeper\Server\Event\Shop\ShopLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -45,20 +44,20 @@ final class ShopLoadedEventTest extends TestCase
         static::assertFalse($shop->tags->has(ShopTag::MemberOnly));
         static::assertFalse($shop->tags->has(ShopTag::House));
 
-        /** @var list<CurrencyShopItem> $items */
-        $items = array_values($shop->inventory->items->toArray());
-        [$fan, $armor, $map] = $items;
+        [$fan, $armor, $map] = array_values(iterator_to_array($shop->inventory));
+        $fanPrice = $shop->price($fan->id)->unwrap();
+        $armorPrice = $shop->price($armor->id)->unwrap();
 
-        static::assertInstanceOf(Weapon::class, $fan->item);
-        static::assertSame(WeaponType::Dagger, $fan->item->type);
-        static::assertSame('Lovely Fan', $fan->item->name->value);
-        static::assertInstanceOf(Gold::class, $fan->price->amount);
-        static::assertSame(5000, $fan->price->amount->value);
-        static::assertInstanceOf(Armor::class, $armor->item);
-        static::assertInstanceOf(AdventureCoins::class, $armor->price->amount);
-        static::assertSame(450, $armor->price->amount->value);
-        static::assertInstanceOf(Resource::class, $map->item);
-        static::assertFalse($map->item->tags->has(ItemTag::MemberOnly));
+        static::assertInstanceOf(Weapon::class, $fan);
+        static::assertSame(WeaponType::Dagger, $fan->type);
+        static::assertSame('Lovely Fan', $fan->name->value);
+        static::assertInstanceOf(Gold::class, $fanPrice->amount);
+        static::assertSame(5000, $fanPrice->amount->value);
+        static::assertInstanceOf(Armor::class, $armor);
+        static::assertInstanceOf(AdventureCoins::class, $armorPrice->amount);
+        static::assertSame(450, $armorPrice->amount->value);
+        static::assertInstanceOf(Resource::class, $map);
+        static::assertFalse($map->tags->has(ItemTag::MemberOnly));
         static::assertSame('Battleon Assorted shop: 3 items', $event->summary());
     }
 
@@ -71,15 +70,15 @@ final class ShopLoadedEventTest extends TestCase
         static::assertInstanceOf(MergeShop::class, $shop);
         static::assertSame('Reward Gem Shop', $shop->name->value);
 
-        /** @var list<MergeShopItem> $items */
-        $items = array_values($shop->inventory->items->toArray());
+        $items = array_values(iterator_to_array($shop->inventory));
+        $costs = array_map(static fn(Item $item): array => $shop->costs($item->id)->unwrap(), $items);
 
         static::assertSame(
             [15, 5, 7, 3, 10],
-            array_map(static fn(MergeShopItem $item): int => $item->costs[0]->quantity->value, $items),
+            array_map(static fn(array $cost): int => $cost[0]->quantity->value, $costs),
         );
-        static::assertSame(17_109, $items[0]->costs[0]->itemId->value);
-        static::assertInstanceOf(Boost::class, $items[3]->item);
+        static::assertSame(17_109, $costs[0][0]->itemId->value);
+        static::assertInstanceOf(Boost::class, $items[3]);
         static::assertSame('Reward Gem Shop: 5 items', $event->summary());
     }
 
@@ -89,9 +88,8 @@ final class ShopLoadedEventTest extends TestCase
         $shop = self::load(self::shop(item: ['bUpg' => true]))->shop;
 
         static::assertInstanceOf(CurrencyShop::class, $shop);
-        /** @var list<CurrencyShopItem> $items */
-        $items = array_values($shop->inventory->items->toArray());
-        static::assertTrue($items[0]->item->tags->has(ItemTag::MemberOnly));
+        $items = array_values(iterator_to_array($shop->inventory));
+        static::assertTrue($items[0]->tags->has(ItemTag::MemberOnly));
     }
 
     #[Test]

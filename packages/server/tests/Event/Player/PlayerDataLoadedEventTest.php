@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Player;
 
-use Lorekeeper\Core\World\Quest\QuestMark;
-use Lorekeeper\Core\World\Quest\QuestPeriod;
+use Lorekeeper\Core\World\Quest\QuestGroup;
+use Lorekeeper\Core\World\Quest\QuestGroupId;
+use Lorekeeper\Core\World\Quest\QuestGroupNumber;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -19,21 +20,21 @@ final class PlayerDataLoadedEventTest extends TestCase
         JSON;
 
     #[Test]
-    public function it_reads_the_progress_wallet_membership_bag_and_marks_of_a_real_player(): void
+    public function it_reads_the_level_wallet_membership_slots_and_quests_of_a_real_player(): void
     {
         $event = PlayerDataLoadedEvent::from(JsonMessage::from(self::HERO)->unwrap())->unwrap();
         $player = $event->players[0];
 
-        static::assertSame([45_466, 'Hero'], [$player->socketId->value, $player->name->value]);
+        static::assertSame([45_466, 'Hero'], [$player->spawnId->value, $player->name->value]);
         static::assertSame([81, 4_514_754, 5_280_000], [
-            $player->progress->level->value,
-            $player->progress->experience->current->value,
-            $player->progress->experience->maximum->value,
+            $player->level->value,
+            $player->experience->current->value,
+            $player->experience->maximum->value,
         ]);
         static::assertSame([6_800_132, 2899], [$player->wallet->gold->value, $player->wallet->coins->value]);
         static::assertFalse($player->member);
-        static::assertSame(131, $player->bagSlots->value);
-        static::assertEquals([new QuestMark(QuestPeriod::Day, 2, 6)], $player->marks->marks);
+        static::assertSame([131, 131], [$player->bagSlots->value, $player->bankSlots->value]);
+        static::assertEquals([new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(70))], $player->quests);
         static::assertSame('Data of Hero', $event->summary());
     }
 

@@ -21,9 +21,9 @@ final class PlayerEnteredEventTest extends TestCase
     {
         $event = PlayerEnteredEvent::from(XmlMessage::from(self::ENTERED)->unwrap())->unwrap();
 
-        static::assertSame(75_477, $event->socketId->value);
+        static::assertSame(75_477, $event->spawnId->value);
         static::assertSame('hero', $event->name->value);
-        static::assertSame('hero (socket 75477) entered', $event->summary());
+        static::assertSame('hero (spawn 75477) entered', $event->summary());
     }
 
     #[Test]

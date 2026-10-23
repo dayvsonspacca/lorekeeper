@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Player;
 
-use Lorekeeper\Core\Attribute\Stat\Boost\DamageBoost;
-use Lorekeeper\Core\Attribute\Stat\Boost\MagicalBoost;
-use Lorekeeper\Core\Attribute\Stat\Chance\Evasion;
-use Lorekeeper\Core\Attribute\Stat\Chance\HitChance;
-use Lorekeeper\Core\Attribute\Stat\CriticalMultiplier;
-use Lorekeeper\Core\Attribute\Stat\Haste;
-use Lorekeeper\Core\Attribute\Stat\Primary\Luck;
-use Lorekeeper\Core\Attribute\Stat\Primary\Strength;
-use Lorekeeper\Core\Attribute\Stat\Resistance\DamageResistance;
-use Lorekeeper\Core\Attribute\Stat\Resistance\MagicalResistance;
-use Lorekeeper\Core\Attribute\Stat\Stat;
+use Lorekeeper\Core\Game\Attribute\Stat\Boost\DamageBoost;
+use Lorekeeper\Core\Game\Attribute\Stat\Boost\MagicalBoost;
+use Lorekeeper\Core\Game\Attribute\Stat\Chance\Evasion;
+use Lorekeeper\Core\Game\Attribute\Stat\Chance\HitChance;
+use Lorekeeper\Core\Game\Attribute\Stat\CriticalMultiplier;
+use Lorekeeper\Core\Game\Attribute\Stat\Haste;
+use Lorekeeper\Core\Game\Attribute\Stat\Primary\Luck;
+use Lorekeeper\Core\Game\Attribute\Stat\Primary\Strength;
+use Lorekeeper\Core\Game\Attribute\Stat\Resistance\DamageResistance;
+use Lorekeeper\Core\Game\Attribute\Stat\Resistance\MagicalResistance;
+use Lorekeeper\Core\Game\Attribute\Stat\Stat;
 use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;

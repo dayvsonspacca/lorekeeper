@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Item;
 
 use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
-use Lorekeeper\Server\SocketId;
 use Override;
 use Psl\Option;
 use Psl\Type;
@@ -24,7 +24,7 @@ final readonly class ItemUnequippedEvent implements Event
     use NamedAfterClass;
 
     public function __construct(
-        public SocketId $player,
+        public PlayerSpawnId $player,
         public ItemId $itemId,
     ) {}
 
@@ -45,12 +45,12 @@ final readonly class ItemUnequippedEvent implements Event
             throw new MalformedEventException(static::class, 'unequipped item is missing or invalid', $exception);
         }
 
-        return Option\some(new static(new SocketId($data['uid']), new ItemId($data['ItemID'])));
+        return Option\some(new static(new PlayerSpawnId($data['uid']), new ItemId($data['ItemID'])));
     }
 
     #[Override]
     public function summary(): string
     {
-        return "Socket {$this->player->value} unequipped item {$this->itemId->value}";
+        return "Spawn {$this->player->value} unequipped item {$this->itemId->value}";
     }
 }

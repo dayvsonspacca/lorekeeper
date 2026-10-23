@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Quest;
 
-use Lorekeeper\Core\World\Quest\QuestMark;
+use Lorekeeper\Core\World\Quest\QuestGroupId;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
-use Lorekeeper\Server\Event\Quest\Helper\QuestMarks;
+use Lorekeeper\Server\Event\Quest\Helper\QuestGroups;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -24,7 +24,7 @@ final readonly class QuestMarkedEvent implements Event
     use NamedAfterClass;
 
     public function __construct(
-        public QuestMark $mark,
+        public QuestGroupId $quest,
     ) {}
 
     /** @return Option\Option<static> */
@@ -49,14 +49,14 @@ final readonly class QuestMarkedEvent implements Event
             return Option\none();
         }
 
-        return QuestMarks::of($achievement['field'], $achievement['index'])->map(
-            static fn(QuestMark $mark): static => new static($mark),
+        return QuestGroups::of($achievement['field'], $achievement['index'])->map(
+            static fn(QuestGroupId $quest): static => new static($quest),
         );
     }
 
     #[Override]
     public function summary(): string
     {
-        return "Marked {$this->mark->period->name} quest {$this->mark->group}:{$this->mark->index}";
+        return "Completed {$this->quest->group->name} quest {$this->quest->number}";
     }
 }

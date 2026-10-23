@@ -5,20 +5,25 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Map;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Asset\Gamefile;
-use Lorekeeper\Core\Asset\Linkage;
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Attribute\Vitals;
+use Lorekeeper\Core\Game\Asset\Gamefile;
+use Lorekeeper\Core\Game\Asset\Linkage;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\World\Map\Map;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapMonster;
+use Lorekeeper\Core\World\Map\MapMonsters;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapPlayer;
+use Lorekeeper\Core\World\Map\MapPlayers;
+use Lorekeeper\Core\World\Map\MapRoom;
 use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Core\World\Monster\Monster;
 use Lorekeeper\Core\World\Monster\MonsterAppearance;
@@ -33,8 +38,6 @@ use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
-use Lorekeeper\Server\RoomId;
-use Lorekeeper\Server\SocketId;
 use Override;
 use Psl\Option;
 use Psl\Type;
@@ -51,7 +54,7 @@ use Psl\Type\Exception\CoercionException;
  *     mondef?: list<array{MonID: positive-int, strMonName: non-empty-string, intLevel: positive-int, sRace: string, strMonFileName: non-empty-string, strLinkage: non-empty-string, ...}>,
  *     monmap?: list<array{MonMapID: positive-int, MonID: positive-int, strFrame: non-empty-string, ...}>,
  *     monBranch?: list<array{MonMapID: positive-int, intState: int<0, 2>, intHP: non-negative-int, intHPMax: non-negative-int, intMP: non-negative-int, intMPMax: non-negative-int, ...}>,
- *     uoBranch?: list<array{entID: positive-int, strUsername: non-empty-string, intLevel: int<1, 100>, strFrame: non-empty-string, strPad: non-empty-string, intState: int<0, 2>, intHP: non-negative-int, intHPMax: non-negative-int, intMP: non-negative-int, intMPMax: non-negative-int, afk: bool, ...}>,
+ *     uoBranch?: list<array{entID: positive-int, strUsername: non-empty-string, intLevel: int<1, 100>, strFrame: non-empty-string, strPad: non-empty-string, intState: int<0, 2>, intHP: non-negative-int, intHPMax: non-negative-int, intMP: non-negative-int, intMPMax: non-negative-int, ...}>,
  *     ...
  * }
  *
@@ -61,12 +64,9 @@ final readonly class MovedToMapEvent implements Event
 {
     use NamedAfterClass;
 
-    /** @param list<RoomPlayer> $players */
     public function __construct(
         public AreaId $areaId,
-        public RoomId $roomId,
         public Map $map,
-        public array $players,
     ) {}
 
     /** @return Option\Option<static> */
@@ -79,20 +79,29 @@ final readonly class MovedToMapEvent implements Event
 
         $data = self::arrival($message->data);
 
-        return Option\some(
-            new static(
-                new AreaId($data['areaId']),
+        try {
+            $map = new Map(
+                new MapName($data['strMapName']),
                 self::room($data['areaName']),
-                new Map(new MapName($data['strMapName']), new Gamefile($data['strMapFileName']), self::monsters($data)),
-                self::players($data),
-            ),
-        );
+                new Gamefile($data['strMapFileName']),
+                new MapMonsters(self::monsters($data)),
+                new MapPlayers(self::players($data)),
+            );
+        } catch (InvalidArgumentException $exception) {
+            throw new MalformedEventException(
+                static::class,
+                'a monster or player is in the room more than once',
+                $exception,
+            );
+        }
+
+        return Option\some(new static(new AreaId($data['areaId']), $map));
     }
 
     #[Override]
     public function summary(): string
     {
-        return "{$this->map->name->value} (room {$this->roomId->value})";
+        return "{$this->map->name->value} (room {$this->map->room->value})";
     }
 
     /**
@@ -142,7 +151,6 @@ final readonly class MovedToMapEvent implements Event
                     'strFrame' => Type\non_empty_string(),
                     'strPad' => Type\non_empty_string(),
                     ...$vitals,
-                    'afk' => Type\bool(),
                 ], allowUnknownFields: true))),
             ], allowUnknownFields: true)->coerce($data);
         } catch (CoercionException $exception) {
@@ -199,21 +207,20 @@ final readonly class MovedToMapEvent implements Event
      *
      * @throws MalformedEventException
      *
-     * @return list<RoomPlayer>
+     * @return list<MapPlayer>
      */
     private static function players(array $data): array
     {
         return array_map(
-            static fn(array $player): RoomPlayer => new RoomPlayer(
-                new SocketId($player['entID']),
-                new MapPlayer(
+            static fn(array $player): MapPlayer => new MapPlayer(
+                new Player(
+                    new PlayerSpawnId($player['entID']),
                     new PlayerName($player['strUsername']),
                     new PlayerLevel($player['intLevel']),
                     self::vitals($player),
-                    new MapSpot(new MapCell($player['strFrame']), self::pad($player['strPad'])),
-                    CombatStates::read($player['intState']),
-                    $player['afk'],
                 ),
+                new MapSpot(new MapCell($player['strFrame']), self::pad($player['strPad'])),
+                CombatStates::read($player['intState']),
             ),
             $data['uoBranch'] ?? [],
         );
@@ -237,7 +244,7 @@ final readonly class MovedToMapEvent implements Event
     }
 
     /** @throws MalformedEventException */
-    private static function room(string $areaName): RoomId
+    private static function room(string $areaName): MapRoom
     {
         $separator = strrpos($areaName, needle: '-');
         $room = $separator === false ? '' : substr($areaName, $separator + 1);
@@ -246,7 +253,7 @@ final readonly class MovedToMapEvent implements Event
             throw new MalformedEventException(static::class, "area name '{$areaName}' has no room number");
         }
 
-        return new RoomId((int) $room);
+        return new MapRoom((int) $room);
     }
 
     /** @throws MalformedEventException */

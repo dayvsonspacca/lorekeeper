@@ -6,7 +6,7 @@ namespace Lorekeeper\Server\Event\Item\Helper;
 
 use Lorekeeper\Core\Item\Equipment\Armor;
 use Lorekeeper\Core\Item\Equipment\Cape;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassItem;
 use Lorekeeper\Core\Item\Equipment\GroundItem;
 use Lorekeeper\Core\Item\Equipment\Helm;
 use Lorekeeper\Core\Item\Equipment\Necklace;
@@ -21,8 +21,10 @@ use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Boost;
 use Lorekeeper\Core\Item\Misc\Resource;
+use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Psl\Type;
@@ -48,6 +50,8 @@ final readonly class ItemKinds
                 'sName' => Type\non_empty_string(),
                 'sType' => Type\optional(Type\string()),
                 'iLvl' => Type\int_range(min: 0, max: 100),
+                'iStk' => Type\optional(Type\positive_int()),
+                'bTemp' => Type\optional(Type\bool()),
             ], allowUnknownFields: true)->coerce($entry);
         } catch (CoercionException $exception) {
             throw new MalformedEventException($event, 'an item has no id, name or level', $exception);
@@ -56,7 +60,34 @@ final readonly class ItemKinds
         $id = new ItemId($data['ItemID']);
         $name = new ItemName($data['sName']);
         $level = new ItemLevel(max($data['iLvl'], self::LEVEL_OF_AN_ITEM_WITHOUT_ONE));
-        $type = $data['sType'] ?? '';
+        $stack = new Quantity($data['iStk'] ?? 1);
+        $item = self::kind($data['sType'] ?? '', $id, $name, $level, $stack, $entry, $procs, $event);
+        if ($data['bTemp'] ?? false) {
+            $item->tags->add(ItemTag::Temporary);
+        }
+
+        return $item;
+    }
+
+    /**
+     * @param array<array-key, mixed> $entry
+     * @param array<array-key, mixed> $procs
+     * @param class-string<Event> $event
+     *
+     * @throws MalformedEventException
+     *
+     * @mago-expect lint:excessive-parameter-list
+     */
+    private static function kind(
+        string $type,
+        ItemId $id,
+        ItemName $name,
+        ItemLevel $level,
+        Quantity $stack,
+        array $entry,
+        array $procs,
+        string $event,
+    ): Item {
         $weapon = self::weaponType($type);
         if ($weapon !== null) {
             return self::weapon($id, $name, $level, $weapon, $entry, $procs, $event);
@@ -73,9 +104,9 @@ final readonly class ItemKinds
             'Floor Item' => new HouseItem($id, $name, $level, HouseItemType::Floor),
             'Wall Item' => new HouseItem($id, $name, $level, HouseItemType::Wall),
             'House' => new HouseItem($id, $name, $level, HouseItemType::House),
-            'ServerUse' => new Boost($id, $name, $level),
+            'ServerUse' => new Boost($id, $name, $level, $stack),
             'Enhancement' => Enhancements::sold($id, $name, $level, $entry, $event),
-            'Item', 'Note', 'Quest Item', 'Resource' => new Resource($id, $name, $level),
+            'Item', 'Note', 'Quest Item', 'Resource' => new Resource($id, $name, $level, $stack),
             default => throw new MalformedEventException($event, "unknown item type '{$type}'"),
         };
     }
