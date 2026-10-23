@@ -69,6 +69,35 @@ final class HeroInventoryTest extends TestCase
     }
 
     #[Test]
+    public function it_holds_one_of_what_does_not_stack(): void
+    {
+        $inventory = new HeroInventory(new Quantity(131))->add(
+            new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none()),
+        );
+
+        static::assertSame(1, $inventory->quantity(new ItemId(4_767)));
+    }
+
+    #[Test]
+    public function it_rejects_more_than_one_of_what_does_not_stack(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new HeroInventory(new Quantity(131))->add(
+            new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none()),
+            new Quantity(2),
+        );
+    }
+
+    #[Test]
+    public function it_rejects_more_than_a_stack_holds(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new HeroInventory(new Quantity(131))->add(self::resource(11_475, 'Dragon Scale'), new Quantity(1001));
+    }
+
+    #[Test]
     public function an_item_put_straight_into_the_bag_counts_as_one(): void
     {
         $inventory = new HeroInventory(new Quantity(131));

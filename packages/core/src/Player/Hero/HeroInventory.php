@@ -11,6 +11,7 @@ use Lorekeeper\Core\Item\Inventory;
 use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemTag;
+use Lorekeeper\Core\Item\Traits\Stackable;
 use Lorekeeper\Core\Support\Quantity;
 use Psl\Option;
 
@@ -42,13 +43,20 @@ final class HeroInventory
      */
     public function add(Item $item, Quantity $quantity = new Quantity(1)): static
     {
+        $most = $item instanceof Stackable ? $item->stack->value : 1;
+        if ($quantity->value > $most) {
+            throw new InvalidArgumentException("{$item->name} stacks up to {$most}, not {$quantity}.");
+        }
+
         $temporary = $item->tags->has(ItemTag::Temporary);
         if (($temporary ? $this->permanent : $this->temporary)->has($item)) {
             throw new InvalidArgumentException("Item {$item->id} is both kept and temporary.");
         }
 
         ($temporary ? $this->temporary : $this->permanent)->add($item);
-        $this->quantities[$item->id->value] = $quantity;
+        if ($item instanceof Stackable) {
+            $this->quantities[$item->id->value] = $quantity;
+        }
 
         return $this;
     }
@@ -89,7 +97,9 @@ final class HeroInventory
     {
         return $this
             ->find($id)
-            ->map(fn(Item $item): int => $this->quantities[$item->id->value]->value ?? 1)
+            ->map(fn(Item $item): int => $item instanceof Stackable
+                ? $this->quantities[$item->id->value]->value ?? 1
+                : 1)
             ->unwrapOr(0);
     }
 
