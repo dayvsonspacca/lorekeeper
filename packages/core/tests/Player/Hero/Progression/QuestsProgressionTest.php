@@ -37,6 +37,41 @@ final class QuestsProgressionTest extends TestCase
         static::assertFalse($quests->completed(self::quest(Option\none())));
     }
 
+    #[Test]
+    public function it_completes_a_grouped_quest_only_once(): void
+    {
+        $quests = new QuestsProgression();
+
+        $quests->complete(self::daily(70));
+        $quests->complete(self::daily(70));
+
+        static::assertTrue($quests->has(self::daily(70)));
+        static::assertCount(1, $quests->completed);
+    }
+
+    #[Test]
+    public function it_forgets_a_single_grouped_quest(): void
+    {
+        $quests = new QuestsProgression([self::daily(70), self::daily(9)]);
+
+        $quests->forget(self::daily(70));
+
+        static::assertFalse($quests->has(self::daily(70)));
+        static::assertTrue($quests->has(self::daily(9)));
+    }
+
+    #[Test]
+    public function a_new_period_clears_only_the_quests_of_its_group(): void
+    {
+        $weekly = new QuestGroupId(QuestGroup::Weekly, new QuestGroupNumber(3));
+        $quests = new QuestsProgression([self::daily(70), $weekly]);
+
+        $quests->reset(QuestGroup::Daily);
+
+        static::assertFalse($quests->has(self::daily(70)));
+        static::assertTrue($quests->has($weekly));
+    }
+
     private static function daily(int $number): QuestGroupId
     {
         return new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber($number));
