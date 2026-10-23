@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Tests\Player;
+namespace Lorekeeper\Core\Tests\Player\Hero;
 
 use Lorekeeper\Core\Item\Equipment\Weapon\DamageVariance;
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
@@ -13,19 +13,19 @@ use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\PlayerItem;
+use Lorekeeper\Core\Player\Hero\HeroItem;
 use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Option;
 
-final class PlayerItemTest extends TestCase
+final class HeroItemTest extends TestCase
 {
     #[Test]
     public function it_keeps_how_many_of_the_item_the_player_has(): void
     {
         $scales = new Resource(new ItemId(11_475), new ItemName('Dragon Scale'), new ItemLevel(1));
-        $held = new PlayerItem($scales, new Quantity(5));
+        $held = new HeroItem($scales, new Quantity(5));
 
         static::assertSame($scales, $held->item);
         static::assertSame(5, $held->quantity->value);
@@ -34,7 +34,7 @@ final class PlayerItemTest extends TestCase
     #[Test]
     public function it_has_one_unless_told_otherwise(): void
     {
-        $held = new PlayerItem(
+        $held = new HeroItem(
             new Weapon(
                 new ItemId(4767),
                 new ItemName('Unidentified 20'),
@@ -57,6 +57,6 @@ final class PlayerItemTest extends TestCase
 
         $voucher->tags->add(ItemTag::MemberOnly);
 
-        static::assertTrue(new PlayerItem($voucher)->item->tags->has(ItemTag::MemberOnly));
+        static::assertTrue(new HeroItem($voucher)->item->tags->has(ItemTag::MemberOnly));
     }
 }

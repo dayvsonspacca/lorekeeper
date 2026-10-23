@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Player;
+namespace Lorekeeper\Core\Player\Hero;
 
 use Lorekeeper\Core\World\Quest\QuestMark;
 
-final readonly class PlayerQuestMarks
+final readonly class HeroQuestMarks
 {
     /** @param list<QuestMark> $marks */
     public function __construct(

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Tests\World\Quest;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Player\PlayerQuestMarks;
+use Lorekeeper\Core\Player\Hero\HeroQuestMarks;
 use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestPeriod;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,11 +26,11 @@ final class QuestMarkTest extends TestCase
     #[Test]
     public function the_player_holds_the_marks_of_the_quests_done_in_their_period(): void
     {
-        $marks = new PlayerQuestMarks([new QuestMark(QuestPeriod::Day, 2, 6)]);
+        $marks = new HeroQuestMarks([new QuestMark(QuestPeriod::Day, 2, 6)]);
 
         static::assertTrue($marks->has(new QuestMark(QuestPeriod::Day, 2, 6)));
         static::assertFalse($marks->has(new QuestMark(QuestPeriod::Day, 0, 9)));
-        static::assertFalse(new PlayerQuestMarks()->has(new QuestMark(QuestPeriod::Day, 2, 6)));
+        static::assertFalse(new HeroQuestMarks()->has(new QuestMark(QuestPeriod::Day, 2, 6)));
     }
 
     #[Test]

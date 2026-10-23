@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Tests\Player;
+namespace Lorekeeper\Core\Tests\Player\Hero;
 
 use Lorekeeper\Core\CharacterClass\CharacterClass;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\Player\PlayerClass;
+use Lorekeeper\Core\Player\Hero\HeroClass;
 use Lorekeeper\Core\Progression\ClassPoints;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use Psl\Option;
 
-final class PlayerClassTest extends TestCase
+final class HeroClassTest extends TestCase
 {
     #[Test]
     #[TestWith([0, 1])]
@@ -24,6 +24,6 @@ final class PlayerClassTest extends TestCase
     {
         $mage = new CharacterClass(new ClassName('Mage'), ClassCategory::Caster, Option\none(), [], []);
 
-        static::assertSame($rank, new PlayerClass($mage, new ClassPoints($points), [])->rank()->value);
+        static::assertSame($rank, new HeroClass($mage, new ClassPoints($points), [])->rank()->value);
     }
 }

@@ -9,4 +9,4 @@ use Lorekeeper\Core\Item\Inventory;
 /**
  * @extends Inventory<MergeShopItem>
  */
-final readonly class MergeShopInventory extends Inventory {}
+final class MergeShopInventory extends Inventory {}

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Player;
+namespace Lorekeeper\Core\Player\Hero;
 
 use Lorekeeper\Core\Item\HoldsItem;
 use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Support\Quantity;
 
-final readonly class PlayerItem implements HoldsItem
+final readonly class HeroItem implements HoldsItem
 {
     public function __construct(
         public Item $item,

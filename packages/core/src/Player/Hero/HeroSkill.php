@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Player;
+namespace Lorekeeper\Core\Player\Hero;
 
 use Lorekeeper\Core\CharacterClass\Skill\Skill;
 
-final readonly class PlayerSkill
+final readonly class HeroSkill
 {
     public function __construct(
         public Skill $skill,
