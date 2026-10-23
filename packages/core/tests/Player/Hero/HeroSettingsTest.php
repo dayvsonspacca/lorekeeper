@@ -21,4 +21,16 @@ final class HeroSettingsTest extends TestCase
         static::assertFalse($settings->allows(GameSetting::Whispers));
         static::assertFalse(new HeroSettings()->allows(GameSetting::Goto));
     }
+
+    #[Test]
+    public function a_player_turns_settings_on_and_off(): void
+    {
+        $settings = new HeroSettings([GameSetting::Goto]);
+
+        $settings->allow(GameSetting::Whispers);
+        $settings->allow(GameSetting::Whispers);
+        $settings->deny(GameSetting::Goto);
+
+        static::assertSame([GameSetting::Whispers], $settings->allowed);
+    }
 }
