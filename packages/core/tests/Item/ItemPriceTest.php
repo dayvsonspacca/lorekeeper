@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\Item;
 
-use Lorekeeper\Core\Currency\AdventureCoins;
-use Lorekeeper\Core\Currency\Gold;
 use Lorekeeper\Core\Item\ItemPrice;
+use Lorekeeper\Core\World\Currency\AdventureCoins;
+use Lorekeeper\Core\World\Currency\Gold;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

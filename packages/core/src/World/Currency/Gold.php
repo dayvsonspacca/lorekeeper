@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Currency;
+namespace Lorekeeper\Core\World\Currency;
 
 use Lorekeeper\Core\Support\NonNegativeInteger;
 

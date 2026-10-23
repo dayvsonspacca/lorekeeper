@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Item;
 
-use Lorekeeper\Core\Currency\AdventureCoins;
-use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\World\Currency\AdventureCoins;
+use Lorekeeper\Core\World\Currency\Gold;
 
 final readonly class ItemPrice
 {
