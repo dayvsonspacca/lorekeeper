@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Player\Hero;
+namespace Lorekeeper\Core\Game\Setting;
 
-enum HeroGameSetting
+enum GameSetting
 {
     case Goto;
     case Whispers;
