@@ -13,6 +13,9 @@ use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
+/**
+ * The server refused to complete a quest for our player, and said why.
+ */
 final readonly class QuestTurnInRefusedEvent implements Event
 {
     use NamedAfterClass;

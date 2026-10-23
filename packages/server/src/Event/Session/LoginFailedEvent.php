@@ -11,6 +11,9 @@ use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
+/**
+ * The server refused to log our player in.
+ */
 final readonly class LoginFailedEvent implements Event
 {
     use NamedAfterClass;

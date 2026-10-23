@@ -15,6 +15,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * A monster in the room came back to life.
+ */
 final readonly class MonsterRespawnedEvent implements Event
 {
     use NamedAfterClass;

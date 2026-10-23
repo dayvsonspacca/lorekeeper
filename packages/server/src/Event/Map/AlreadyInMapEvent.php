@@ -7,6 +7,9 @@ namespace Lorekeeper\Server\Event\Map;
 use Lorekeeper\Server\Event\NoticeEvent;
 use Override;
 
+/**
+ * The server refused to move our player because they are already in that map.
+ */
 final readonly class AlreadyInMapEvent extends NoticeEvent
 {
     #[Override]

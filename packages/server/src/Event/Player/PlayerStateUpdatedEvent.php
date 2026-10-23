@@ -17,6 +17,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * A player in the room died, went idle or started fighting.
+ */
 final readonly class PlayerStateUpdatedEvent extends PlayerUpdatedEvent
 {
     public function __construct(

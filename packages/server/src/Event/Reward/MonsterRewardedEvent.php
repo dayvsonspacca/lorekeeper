@@ -14,6 +14,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * Our player earned gold, experience or class points for killing a monster.
+ */
 final readonly class MonsterRewardedEvent extends RewardedEvent
 {
     public function __construct(

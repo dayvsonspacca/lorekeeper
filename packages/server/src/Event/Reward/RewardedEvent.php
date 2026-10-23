@@ -17,6 +17,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * Our player earned gold, experience or class points.
+ */
 abstract readonly class RewardedEvent implements Event
 {
     use NamedAfterClass;

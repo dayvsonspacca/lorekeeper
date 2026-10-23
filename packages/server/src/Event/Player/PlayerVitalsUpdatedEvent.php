@@ -18,6 +18,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * The health or mana of a player in the room changed.
+ */
 final readonly class PlayerVitalsUpdatedEvent extends PlayerUpdatedEvent
 {
     public function __construct(

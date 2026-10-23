@@ -15,6 +15,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * Items left our player's inventory, turned in to complete a quest.
+ */
 final readonly class ItemsTurnedInEvent extends InventoryUpdatedEvent
 {
     /** @param non-empty-list<TurnedInItem> $items */

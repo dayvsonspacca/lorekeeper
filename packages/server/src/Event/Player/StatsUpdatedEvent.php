@@ -40,6 +40,9 @@ use Psl\Type;
 use Psl\Type\Exception\AssertException;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * Our player's stats changed.
+ */
 final readonly class StatsUpdatedEvent implements Event
 {
     use NamedAfterClass;

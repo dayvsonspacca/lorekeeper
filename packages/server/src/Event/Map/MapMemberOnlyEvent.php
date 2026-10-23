@@ -12,6 +12,9 @@ use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
+/**
+ * The server refused to move our player because the map is only for members.
+ */
 final readonly class MapMemberOnlyEvent implements Event
 {
     use NamedAfterClass;

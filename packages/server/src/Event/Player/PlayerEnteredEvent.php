@@ -17,6 +17,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * A player entered the room.
+ */
 final readonly class PlayerEnteredEvent implements Event
 {
     use NamedAfterClass;

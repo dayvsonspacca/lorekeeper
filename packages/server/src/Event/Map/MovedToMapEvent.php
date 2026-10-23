@@ -41,6 +41,8 @@ use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
 /**
+ * Our player arrived in a map, with the monsters and players already in the room.
+ *
  * @psalm-type Arrival = array{
  *     areaId: positive-int,
  *     areaName: non-empty-string,

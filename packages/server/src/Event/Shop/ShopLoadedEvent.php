@@ -35,6 +35,8 @@ use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
 /**
+ * The server sent a shop and the items it sells.
+ *
  * @psalm-type ShopEntry = array{ItemID: positive-int, sName: non-empty-string, sType: string, iCost?: non-negative-int, bCoins?: bool, bUpg?: bool, turnin?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, ...}
  *
  * @mago-expect lint:cyclomatic-complexity

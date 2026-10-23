@@ -9,6 +9,9 @@ use Lorekeeper\Core\Player\PlayerName;
 use Override;
 use Psl\Option;
 
+/**
+ * The mana of one or more players in the room changed.
+ */
 final readonly class PlayersManaChangedEvent extends CombatRoundEvent
 {
     /** @param non-empty-list<PlayerMana> $players */

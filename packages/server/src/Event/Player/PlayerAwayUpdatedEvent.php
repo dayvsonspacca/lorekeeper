@@ -14,6 +14,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * A player in the room went away or came back.
+ */
 final readonly class PlayerAwayUpdatedEvent extends PlayerUpdatedEvent
 {
     public function __construct(

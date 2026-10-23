@@ -11,6 +11,9 @@ use Lorekeeper\Server\Message\XmlMessage;
 use Override;
 use Psl\Option;
 
+/**
+ * The connection to the game server is open.
+ */
 final readonly class ConnectionEstablishedEvent implements Event
 {
     use NamedAfterClass;

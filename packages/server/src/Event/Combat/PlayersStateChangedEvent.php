@@ -9,6 +9,9 @@ use Lorekeeper\Server\Event\Combat\Helper\CombatStates;
 use Override;
 use Psl\Option;
 
+/**
+ * One or more players in the room died, went idle or started fighting.
+ */
 final readonly class PlayersStateChangedEvent extends CombatRoundEvent
 {
     /** @param non-empty-list<PlayerState> $players */

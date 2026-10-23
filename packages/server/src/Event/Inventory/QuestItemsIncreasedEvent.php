@@ -12,6 +12,9 @@ use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
+/**
+ * Our player got more of one or more temporary quest items they already had.
+ */
 final readonly class QuestItemsIncreasedEvent extends InventoryUpdatedEvent
 {
     /** @param non-empty-list<ItemIncrease> $items */

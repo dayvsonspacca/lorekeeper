@@ -19,6 +19,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * The server sent every item in our player's inventory.
+ */
 final readonly class InventoryLoadedEvent extends InventoryUpdatedEvent
 {
     public function __construct(

@@ -15,6 +15,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * Our player accepted a quest.
+ */
 final readonly class QuestAcceptedEvent implements Event
 {
     use NamedAfterClass;

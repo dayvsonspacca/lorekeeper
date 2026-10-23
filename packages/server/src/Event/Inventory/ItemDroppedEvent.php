@@ -18,6 +18,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * One or more items landed in our player's drop list, waiting to be picked up.
+ */
 final readonly class ItemDroppedEvent implements Event
 {
     use NamedAfterClass;

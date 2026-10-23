@@ -6,6 +6,12 @@ namespace Lorekeeper\Server\Event;
 
 use Override;
 
+/**
+ * The server refused the last command because it came too quickly after the previous one.
+ *
+ * The command is  dropped, not queued, so it has to be sent again after a short pause.
+ *
+ */
 final readonly class ActionTooSoonEvent extends NoticeEvent
 {
     #[Override]

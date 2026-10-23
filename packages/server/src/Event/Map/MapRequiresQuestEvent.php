@@ -7,6 +7,9 @@ namespace Lorekeeper\Server\Event\Map;
 use Lorekeeper\Server\Event\NoticeEvent;
 use Override;
 
+/**
+ * The server refused to move our player because the map needs a quest to be done first.
+ */
 final readonly class MapRequiresQuestEvent extends NoticeEvent
 {
     #[Override]

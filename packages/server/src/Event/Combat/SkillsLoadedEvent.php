@@ -26,6 +26,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * The server sent the skills and passives of our player's current class.
+ */
 final readonly class SkillsLoadedEvent implements Event
 {
     use NamedAfterClass;

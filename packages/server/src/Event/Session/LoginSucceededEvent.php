@@ -15,6 +15,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * The server logged our player in.
+ */
 final readonly class LoginSucceededEvent implements Event
 {
     use NamedAfterClass;

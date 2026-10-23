@@ -16,6 +16,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * A player in the room equipped an item.
+ */
 final readonly class ItemEquippedEvent implements Event
 {
     use NamedAfterClass;

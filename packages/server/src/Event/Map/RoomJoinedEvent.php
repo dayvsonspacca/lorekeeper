@@ -16,6 +16,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * Our player joined a room, with the names of the players already in it.
+ */
 final readonly class RoomJoinedEvent implements Event
 {
     use NamedAfterClass;

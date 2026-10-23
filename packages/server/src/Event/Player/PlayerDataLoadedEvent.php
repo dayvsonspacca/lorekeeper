@@ -26,6 +26,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * The server sent the level, wallet, membership and bag slots of players in the room.
+ */
 final readonly class PlayerDataLoadedEvent implements Event
 {
     use NamedAfterClass;

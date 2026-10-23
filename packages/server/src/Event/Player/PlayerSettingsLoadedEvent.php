@@ -18,6 +18,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * The server sent the game settings of players in the room.
+ */
 final readonly class PlayerSettingsLoadedEvent implements Event
 {
     use NamedAfterClass;

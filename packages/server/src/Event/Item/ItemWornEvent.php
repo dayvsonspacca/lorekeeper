@@ -16,6 +16,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * A player in the room put on an item as a cosmetic.
+ */
 final readonly class ItemWornEvent implements Event
 {
     use NamedAfterClass;

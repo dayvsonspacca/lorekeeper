@@ -19,6 +19,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * A player in the room changed their class.
+ */
 final readonly class ClassChangedEvent implements Event
 {
     use NamedAfterClass;

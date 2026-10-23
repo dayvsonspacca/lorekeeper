@@ -48,6 +48,8 @@ use Psl\Type as Coerce;
 use Psl\Type\Exception\CoercionException;
 
 /**
+ * The server sent the details of one or more quests: requirements, items to turn in and rewards.
+ *
  * @psalm-type ItemData = array{ItemID: positive-int, sName: non-empty-string, sType: string, bUpg?: bool, ...}
  * @psalm-type QuestData = array{QuestID: positive-int, sName: non-empty-string, sDesc: string, sEndText?: string, iLvl: non-negative-int, iExp: non-negative-int, iGold: non-negative-int, iClass: non-negative-int, iReqCP: non-negative-int, FactionID: positive-int, iReqRep: non-negative-int, iRep: non-negative-int, bUpg: bool, bQuest?: bool|int, strPrevious?: string, sField?: string, iIndex?: int, turnin?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, reward?: list<array{ItemID: positive-int, iQty: positive-int, iRate: float|int, iType: int, ...}>, reqd?: list<array{ItemID: positive-int, iQty: positive-int, ...}>, oItems?: array<array-key, ItemData>, oReqd?: array<array-key, ItemData>, oRewards?: array{itemsS?: array<array-key, ItemData>, itemsR?: array<array-key, ItemData>, ...}, ...}
  *

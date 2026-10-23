@@ -11,6 +11,9 @@ use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
+/**
+ * Our player came back to life after dying.
+ */
 final readonly class ResurrectedEvent implements Event
 {
     use NamedAfterClass;

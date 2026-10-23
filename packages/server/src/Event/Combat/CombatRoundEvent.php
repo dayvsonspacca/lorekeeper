@@ -14,6 +14,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * A round of combat changed the health, mana or state of monsters and players in the room.
+ */
 abstract readonly class CombatRoundEvent implements Event
 {
     use NamedAfterClass;

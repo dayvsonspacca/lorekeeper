@@ -16,6 +16,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * Our player reached a new level.
+ */
 final readonly class LeveledUpEvent implements Event
 {
     use NamedAfterClass;

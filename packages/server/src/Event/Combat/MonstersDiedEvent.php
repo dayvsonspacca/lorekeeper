@@ -8,6 +8,9 @@ use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Override;
 use Psl\Option;
 
+/**
+ * One or more monsters in the room died.
+ */
 final readonly class MonstersDiedEvent extends CombatRoundEvent
 {
     /** @param non-empty-list<MonsterSpawnId> $monsters */

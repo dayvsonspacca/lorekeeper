@@ -13,6 +13,9 @@ use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
+/**
+ * Our player completed a quest.
+ */
 final readonly class QuestCompletedEvent implements Event
 {
     use NamedAfterClass;

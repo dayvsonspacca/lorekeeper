@@ -16,6 +16,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * A player in the room unequipped an item.
+ */
 final readonly class ItemUnequippedEvent implements Event
 {
     use NamedAfterClass;

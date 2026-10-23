@@ -7,6 +7,9 @@ namespace Lorekeeper\Server\Event\Map;
 use Lorekeeper\Server\Event\NoticeEvent;
 use Override;
 
+/**
+ * The server refused to move our player because the map is locked.
+ */
 final readonly class MapLockedEvent extends NoticeEvent
 {
     #[Override]

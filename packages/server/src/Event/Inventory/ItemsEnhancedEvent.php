@@ -17,6 +17,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * Our player paid gold at a shop to enhance one or more items.
+ */
 final readonly class ItemsEnhancedEvent extends InventoryUpdatedEvent
 {
     /** @param non-empty-list<ItemId> $items */

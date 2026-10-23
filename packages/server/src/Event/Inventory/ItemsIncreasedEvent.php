@@ -12,6 +12,9 @@ use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
+/**
+ * Our player got more of one or more items they already had in their inventory.
+ */
 final readonly class ItemsIncreasedEvent extends InventoryUpdatedEvent
 {
     /** @param non-empty-list<ItemIncrease> $items */

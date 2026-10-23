@@ -6,6 +6,9 @@ namespace Lorekeeper\Server\Event;
 
 use Override;
 
+/**
+ * The server refused the last command because our player left combat too recently.
+ */
 final readonly class TooSoonAfterCombatEvent extends NoticeEvent
 {
     #[Override]

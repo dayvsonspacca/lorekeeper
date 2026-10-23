@@ -16,6 +16,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * A daily, weekly or monthly quest was marked as done for our player.
+ */
 final readonly class QuestMarkedEvent implements Event
 {
     use NamedAfterClass;

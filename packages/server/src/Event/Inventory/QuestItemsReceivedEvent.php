@@ -13,6 +13,9 @@ use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
+/**
+ * Our player received one or more temporary quest items for the first time.
+ */
 final readonly class QuestItemsReceivedEvent extends InventoryUpdatedEvent
 {
     /** @param non-empty-list<PlayerItem> $items */

@@ -9,6 +9,9 @@ use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Override;
 use Psl\Option;
 
+/**
+ * The health of one or more monsters in the room changed.
+ */
 final readonly class MonstersHealthChangedEvent extends CombatRoundEvent
 {
     /** @param non-empty-list<MonsterHealth> $monsters */

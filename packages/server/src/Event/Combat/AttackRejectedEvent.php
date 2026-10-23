@@ -11,6 +11,9 @@ use Lorekeeper\Server\Message\Message;
 use Override;
 use Psl\Option;
 
+/**
+ * The server refused our attack.
+ */
 final readonly class AttackRejectedEvent implements Event
 {
     use NamedAfterClass;

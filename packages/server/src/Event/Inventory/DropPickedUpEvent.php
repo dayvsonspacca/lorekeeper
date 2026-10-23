@@ -14,6 +14,9 @@ use Psl\Option;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
+/**
+ * Our player picked up an item from the drop list into their inventory.
+ */
 final readonly class DropPickedUpEvent extends InventoryUpdatedEvent
 {
     public function __construct(
