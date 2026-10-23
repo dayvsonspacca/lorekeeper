@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Bots\Scene;
 
 use Lorekeeper\Client\Character;
-use Lorekeeper\Core\CharacterClass\Passive\ClassPassive;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
-use Lorekeeper\Core\CharacterClass\Skill\Damage\SkillDamage;
-use Lorekeeper\Core\CharacterClass\Skill\SkillDescription;
-use Lorekeeper\Core\Player\PlayerSkill;
+use Lorekeeper\Core\Game\Rank\Rank;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Passive\ClassPassive;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\ManaRestore;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Damage\SkillDamage;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillDescription;
+use Lorekeeper\Core\Player\Hero\Class\HeroSkill;
 use Lorekeeper\Core\Player\PlayerTag;
-use Lorekeeper\Core\Progression\Rank;
 use Lorekeeper\Core\World\Map\MapMonster;
 use Psl\Type;
 use Psl\Type\Exception\CoercionException;
@@ -81,34 +81,34 @@ final readonly class Scene
 
     public static function capture(Character $me, Room $room, Pulse $pulse, Feed $feed, int $now): self
     {
-        $player = $me->player();
-        $class = $player->class;
+        $hero = $me->hero();
+        $class = $hero->class;
         $rank = $class->rank();
 
         return new self(
             [
-                'name' => $player->name->value,
-                'level' => $player->progress->level->value,
-                'experience' => $player->progress->experience->current->value,
-                'maxExperience' => $player->progress->experience->maximum->value,
-                'gold' => $player->wallet->gold->value,
-                'member' => $player->tags->has(PlayerTag::Member),
-                'health' => $player->vitals->health->current->value,
-                'maxHealth' => $player->vitals->health->maximum->value,
-                'mana' => $player->vitals->mana->current->value,
-                'maxMana' => $player->vitals->mana->maximum->value,
+                'name' => $hero->name->value,
+                'level' => $hero->level->value,
+                'experience' => $hero->progression->level->experience->current->value,
+                'maxExperience' => $hero->progression->level->experience->maximum->value,
+                'gold' => $hero->inventory->wallet->gold->value,
+                'member' => $hero->tags->has(PlayerTag::Member),
+                'health' => $hero->vitals->health->current->value,
+                'maxHealth' => $hero->vitals->health->maximum->value,
+                'mana' => $hero->vitals->mana->current->value,
+                'maxMana' => $hero->vitals->mana->maximum->value,
                 'class' => $class->class->name->value,
                 'category' => strtolower($class->class->category->name),
                 'rank' => $rank->value,
                 'points' => $class->points->value,
-                'rankFrom' => $rank->minimumPoints(),
-                'rankTo' => $rank->value < 10 ? new Rank($rank->value + 1)->minimumPoints() : null,
+                'rankFrom' => $rank->start(),
+                'rankTo' => $rank->value < 10 ? new Rank($rank->value + 1)->start() : null,
                 'state' => strtolower($me->state()->name),
                 'away' => $me->away(),
                 'map' => $me->location()->map->name->value,
-                'room' => $me->location()->room->value,
-                'items' => count($player->inventory->permanent->items) + count($player->inventory->temporary->items),
-                'skills' => array_map(static fn(PlayerSkill $skill): array => [
+                'room' => $me->location()->map->room->value,
+                'items' => count($hero->inventory->permanent) + count($hero->inventory->temporary),
+                'skills' => array_map(static fn(HeroSkill $skill): array => [
                     'slot' => $skill->skill->slot->name,
                     'cost' => $skill->skill->cost instanceof ManaCost ? $skill->skill->cost->mana->value : 0,
                     'restores' => $skill->skill->cost instanceof ManaRestore ? $skill->skill->cost->mana->value : 0,
@@ -137,7 +137,7 @@ final readonly class Scene
                     'name' => $passive->name->value,
                     'description' => $passive->description->value,
                 ], $class->class->passives),
-                'stats' => StatSheet::of($player->stats),
+                'stats' => StatSheet::of($hero->attributes->stats),
             ],
             array_values(array_map(static fn(MapMonster $monster): array => [
                 'id' => $monster->id->value,
@@ -154,7 +154,7 @@ final readonly class Scene
             $pulse,
             $feed,
             $now,
-            Backpack::of($player->inventory),
+            Backpack::of($hero->inventory),
         );
     }
 

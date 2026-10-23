@@ -13,8 +13,8 @@ use Lorekeeper\Apps\Desktop\Tests\TestCase;
 use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Script\Disconnected;
-use Lorekeeper\Core\Player\GameSetting;
-use Lorekeeper\Core\Player\PlayerSettings;
+use Lorekeeper\Core\Game\Setting\GameSetting;
+use Lorekeeper\Core\Player\Hero\HeroSettings;
 use PHPUnit\Framework\Attributes\Test;
 use Psl\Async\NullCancellationToken;
 use Psl\TCP;
@@ -54,7 +54,7 @@ final class HideFromPlayersTest extends TestCase
     {
         $account = Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
         $preferences = $this->blocking(['block_goto', 'block_duels']);
-        $settings = new PlayerSettings([
+        $settings = new HeroSettings([
             GameSetting::Whispers,
             GameSetting::FriendRequests,
             GameSetting::PartyInvites,
@@ -77,7 +77,7 @@ final class HideFromPlayersTest extends TestCase
     {
         $account = Account::query()->create(['name' => 'Hero', 'password' => bin2hex(random_bytes(8))]);
         $preferences = $this->blocking(['block_goto', 'block_duels']);
-        $settings = new PlayerSettings([
+        $settings = new HeroSettings([
             GameSetting::Whispers,
             GameSetting::FriendRequests,
             GameSetting::PartyInvites,
@@ -106,7 +106,7 @@ final class HideFromPlayersTest extends TestCase
         return $preferences;
     }
 
-    private function closedClient(?PlayerSettings $settings = null): Client
+    private function closedClient(?HeroSettings $settings = null): Client
     {
         return new Client(
             new Connection(static::createConfiguredStub(TCP\StreamInterface::class, [

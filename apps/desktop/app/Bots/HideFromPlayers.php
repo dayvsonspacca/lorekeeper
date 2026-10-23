@@ -11,7 +11,7 @@ use Lorekeeper\Client\Command\Settings\ChangeGameSettingCommand;
 use Lorekeeper\Client\PeerClosedException;
 use Lorekeeper\Client\Script\Disconnected;
 use Lorekeeper\Client\Script\Stopped;
-use Lorekeeper\Core\Player\GameSetting;
+use Lorekeeper\Core\Game\Setting\GameSetting;
 use Psl\Async\CancellationTokenInterface;
 use Psl\DateTime\Duration;
 
@@ -23,7 +23,7 @@ final readonly class HideFromPlayers
         Client $client,
         CancellationTokenInterface $stop,
     ): null|Disconnected|Stopped {
-        $known = $client->character()->player()->settings;
+        $known = $client->character()->hero()->settings;
         $changes = array_values(array_filter(
             GameSetting::cases(),
             static fn(GameSetting $setting): bool => $known?->allows($setting) !== !$preferences->blocks($setting),

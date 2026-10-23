@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Tests\Unit\Scene;
 
 use Lorekeeper\Apps\Desktop\Bots\Scene\StatSheet;
-use Lorekeeper\Core\Attribute\Stat\Boost\Boosts;
-use Lorekeeper\Core\Attribute\Stat\Boost\MagicalBoost;
-use Lorekeeper\Core\Attribute\Stat\Haste;
-use Lorekeeper\Core\Attribute\Stat\Primary\PrimaryAttributes;
-use Lorekeeper\Core\Attribute\Stat\Primary\Strength;
-use Lorekeeper\Core\Attribute\Stat\Resistance\DamageResistance;
-use Lorekeeper\Core\Attribute\Stat\Resistance\Resistances;
-use Lorekeeper\Core\Attribute\Stat\Stats;
+use Lorekeeper\Core\Game\Attribute\Stat\Boost\Boosts;
+use Lorekeeper\Core\Game\Attribute\Stat\Boost\MagicalBoost;
+use Lorekeeper\Core\Game\Attribute\Stat\Haste;
+use Lorekeeper\Core\Game\Attribute\Stat\Primary\PrimaryAttributes;
+use Lorekeeper\Core\Game\Attribute\Stat\Primary\Strength;
+use Lorekeeper\Core\Game\Attribute\Stat\Resistance\DamageResistance;
+use Lorekeeper\Core\Game\Attribute\Stat\Resistance\Resistances;
+use Lorekeeper\Core\Game\Attribute\Stat\Stats;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

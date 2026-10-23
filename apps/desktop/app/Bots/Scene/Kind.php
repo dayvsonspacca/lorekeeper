@@ -6,7 +6,7 @@ namespace Lorekeeper\Apps\Desktop\Bots\Scene;
 
 use Lorekeeper\Core\Item\Equipment\Armor;
 use Lorekeeper\Core\Item\Equipment\Cape;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassItem;
 use Lorekeeper\Core\Item\Equipment\GroundItem;
 use Lorekeeper\Core\Item\Equipment\Helm;
 use Lorekeeper\Core\Item\Equipment\Necklace;

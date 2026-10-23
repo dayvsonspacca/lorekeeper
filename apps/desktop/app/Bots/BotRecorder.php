@@ -8,7 +8,7 @@ use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Witness;
 use Lorekeeper\Apps\Desktop\Models\Account;
 use Lorekeeper\Client\Character;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
@@ -59,7 +59,7 @@ final class BotRecorder implements ObserverInterface
 
         $this->me = $subject;
         $map = $subject->location()->map->name->value;
-        $level = $subject->player()->progress->level->value;
+        $level = $subject->hero()->level->value;
 
         if ($this->account->map !== $map || $this->account->level !== $level) {
             $this->account->update(['map' => $map, 'level' => $level]);

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Bots\Scene;
 
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
+use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemTag;
-use Lorekeeper\Core\Player\PlayerInventory;
-use Lorekeeper\Core\Player\PlayerItem;
-use Lorekeeper\Core\Player\PlayerItems;
+use Lorekeeper\Core\Item\Stock;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroInventory;
 use Psl\Type;
 
 /**
@@ -27,9 +27,9 @@ final readonly class Backpack
         public array $temporary = [],
     ) {}
 
-    public static function of(PlayerInventory $inventory): self
+    public static function of(HeroInventory $inventory): self
     {
-        return new self(self::held($inventory->permanent), self::held($inventory->temporary));
+        return new self(self::held($inventory->permanent, $inventory), self::held($inventory->temporary, $inventory));
     }
 
     /** @param array{kept: list<Held>, temporary: list<Held>} $data */
@@ -104,20 +104,23 @@ final readonly class Backpack
     }
 
     /** @return list<Held> */
-    private static function held(PlayerItems $items): array
+    private static function held(Stock $stock, HeroInventory $inventory): array
     {
-        $held = array_values(array_map(static fn(PlayerItem $held): array => [
-            'id' => $held->item->id->value,
-            'name' => $held->item->name->value,
-            'kind' => Kind::of($held->item),
-            'type' => Kind::label($held->item),
-            'quantity' => $held->quantity->value,
-            'member' => $held->item->tags->has(ItemTag::MemberOnly),
-            'level' => $held->item->level->value,
-            'equipped' => $held->equipped,
-            'enhancement' => Enhanced::of($held->item),
-            ...($held->item instanceof Weapon ? ['variance' => $held->item->damage->variance->percent] : []),
-        ], $items->items->toArray()));
+        $held = array_map(
+            static fn(Item $item): array => [
+                'id' => $item->id->value,
+                'name' => $item->name->value,
+                'kind' => Kind::of($item),
+                'type' => Kind::label($item),
+                'quantity' => $stock->quantity($item->id),
+                'member' => $item->tags->has(ItemTag::MemberOnly),
+                'level' => $item->level->value,
+                'equipped' => $inventory->equipment->equips($item->id),
+                'enhancement' => Enhanced::of($item),
+                ...($item instanceof Weapon ? ['variance' => $item->damage->variance->percent] : []),
+            ],
+            iterator_to_array($stock, preserve_keys: false),
+        );
 
         usort($held, static fn(array $a, array $b): int => [$a['kind'], $a['name']] <=> [$b['kind'], $b['name']]);
 

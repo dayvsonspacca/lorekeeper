@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Bots\Scene;
 
-use Lorekeeper\Core\Attribute\Stat\Boost\Boost;
-use Lorekeeper\Core\Attribute\Stat\Haste;
-use Lorekeeper\Core\Attribute\Stat\HealingIntake;
-use Lorekeeper\Core\Attribute\Stat\Primary\PrimaryAttribute;
-use Lorekeeper\Core\Attribute\Stat\Resistance\Resistance;
-use Lorekeeper\Core\Attribute\Stat\Stat;
-use Lorekeeper\Core\Attribute\Stat\Stats;
+use Lorekeeper\Core\Game\Attribute\Stat\Boost\Boost;
+use Lorekeeper\Core\Game\Attribute\Stat\Haste;
+use Lorekeeper\Core\Game\Attribute\Stat\HealingIntake;
+use Lorekeeper\Core\Game\Attribute\Stat\Primary\PrimaryAttribute;
+use Lorekeeper\Core\Game\Attribute\Stat\Resistance\Resistance;
+use Lorekeeper\Core\Game\Attribute\Stat\Stat;
+use Lorekeeper\Core\Game\Attribute\Stat\Stats;
 use Lorekeeper\Core\Support\NonNegativeInteger;
 
 /**
