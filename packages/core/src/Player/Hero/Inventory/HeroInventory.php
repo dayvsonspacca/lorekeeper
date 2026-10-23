@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Player\Hero;
+namespace Lorekeeper\Core\Player\Hero\Inventory;
 
 use InvalidArgumentException;
 use Lorekeeper\Core\Item\Inventory;
@@ -11,6 +11,8 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Traits\Stackable;
 use Lorekeeper\Core\Support\Quantity;
+use Lorekeeper\Core\World\Currency\AdventureCoins;
+use Lorekeeper\Core\World\Currency\Gold;
 use Psl\Option;
 
 final class HeroInventory
@@ -28,6 +30,7 @@ final class HeroInventory
 
     public function __construct(
         public readonly Quantity $slots,
+        public readonly HeroWallet $wallet = new HeroWallet(new Gold(0), new AdventureCoins(0)),
     ) {
         $this->permanent = new Inventory([]);
         $this->temporary = new Inventory([]);

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Player\Hero;
+namespace Lorekeeper\Core\Player\Hero\Class;
 
 use Lorekeeper\Core\Game\Rank\Rank;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\CharacterClass;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Tests\Player\Hero;
+namespace Lorekeeper\Core\Tests\Player\Hero\Inventory;
 
 use InvalidArgumentException;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassItem;
@@ -12,7 +12,7 @@ use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\Hero\HeroInventory;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroInventory;
 use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Player\Hero;
+namespace Lorekeeper\Core\Player\Hero\Inventory;
 
 use InvalidArgumentException;
 use Lorekeeper\Core\Item\Equipment\Equipment;

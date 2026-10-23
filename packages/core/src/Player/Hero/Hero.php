@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Player\Hero;
 
-use Lorekeeper\Core\Game\Attribute\Stat\Stats;
-use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Player\Hero\Class\HeroClass;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroInventory;
 use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
@@ -18,14 +18,12 @@ final readonly class Hero extends Player
         PlayerSpawnId $spawnId,
         PlayerName $name,
         PlayerLevel $level,
-        public HeroProgression $progression,
-        Vitals $vitals,
+        public HeroAttributes $attributes,
         public HeroClass $class,
+        public HeroProgression $progression,
         public HeroInventory $inventory,
-        public HeroWallet $wallet,
-        public Stats $stats = new Stats(),
-        public ?HeroSettings $settings = null,
+        public HeroSettings $settings = new HeroSettings(),
     ) {
-        parent::__construct($spawnId, $name, $level, $vitals);
+        parent::__construct($spawnId, $name, $level, $attributes->vitals);
     }
 }

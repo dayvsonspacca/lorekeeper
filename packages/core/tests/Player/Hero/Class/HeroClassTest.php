@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Tests\Player\Hero;
+namespace Lorekeeper\Core\Tests\Player\Hero\Class;
 
 use Lorekeeper\Core\Item\Equipment\CharacterClass\CharacterClass;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassCategory;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassName;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
-use Lorekeeper\Core\Player\Hero\HeroClass;
+use Lorekeeper\Core\Player\Hero\Class\HeroClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;

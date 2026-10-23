@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Player\Hero;
+namespace Lorekeeper\Core\Player\Hero\Inventory;
 
 use Lorekeeper\Core\World\Currency\AdventureCoins;
 use Lorekeeper\Core\World\Currency\Gold;

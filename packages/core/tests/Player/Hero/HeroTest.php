@@ -12,11 +12,17 @@ use Lorekeeper\Core\Item\Equipment\CharacterClass\CharacterClass;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassCategory;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassName;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
+use Lorekeeper\Core\Item\Equipment\Helm;
+use Lorekeeper\Core\Item\EquipmentSlot;
+use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
+use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Player\Hero\Class\HeroClass;
 use Lorekeeper\Core\Player\Hero\Hero;
-use Lorekeeper\Core\Player\Hero\HeroClass;
-use Lorekeeper\Core\Player\Hero\HeroInventory;
+use Lorekeeper\Core\Player\Hero\HeroAttributes;
 use Lorekeeper\Core\Player\Hero\HeroProgression;
-use Lorekeeper\Core\Player\Hero\HeroWallet;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroInventory;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroWallet;
 use Lorekeeper\Core\Player\Hero\Progression\LevelProgression;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
@@ -39,11 +45,27 @@ final class HeroTest extends TestCase
 
         static::assertSame(45_466, $hero->spawnId->value);
         static::assertSame(81, $hero->level->value);
+        static::assertSame($hero->vitals, $hero->attributes->vitals);
         static::assertSame([4_514_754, 5_280_000], [
             $hero->progression->level->experience->current->value,
             $hero->progression->level->experience->maximum->value,
         ]);
-        static::assertSame([6_800_132, 2899], [$hero->wallet->gold->value, $hero->wallet->coins->value]);
+        static::assertSame([6_800_132, 2899], [
+            $hero->inventory->wallet->gold->value,
+            $hero->inventory->wallet->coins->value,
+        ]);
+    }
+
+    #[Test]
+    public function a_hero_wears_what_its_inventory_keeps(): void
+    {
+        $hero = self::hero();
+        $helm = new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none());
+
+        $hero->inventory->add($helm);
+        $hero->inventory->equipment->equip($helm);
+
+        static::assertSame($helm, $hero->inventory->equipment->equipped(EquipmentSlot::Helm)->unwrap());
     }
 
     #[Test]
@@ -64,15 +86,16 @@ final class HeroTest extends TestCase
             new PlayerSpawnId(45_466),
             new PlayerName('Hero'),
             new PlayerLevel(81),
-            new HeroProgression(new LevelProgression(new Gauge(new Experience(4_514_754), new Experience(5_280_000)))),
-            new Vitals(new Gauge(new Health(2585), new Health(2585)), new Gauge(new Mana(100), new Mana(100))),
+            new HeroAttributes(
+                new Vitals(new Gauge(new Health(2585), new Health(2585)), new Gauge(new Mana(100), new Mana(100))),
+            ),
             new HeroClass(
                 new CharacterClass(new ClassName('Blaze Binder'), ClassCategory::Caster, Option\none(), [], []),
                 new ClassPoints(302_500),
                 [],
             ),
-            new HeroInventory(new Quantity(131)),
-            new HeroWallet(new Gold(6_800_132), new AdventureCoins(2899)),
+            new HeroProgression(new LevelProgression(new Gauge(new Experience(4_514_754), new Experience(5_280_000)))),
+            new HeroInventory(new Quantity(131), new HeroWallet(new Gold(6_800_132), new AdventureCoins(2899))),
         );
     }
 }
