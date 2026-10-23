@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Tests\Progression;
+namespace Lorekeeper\Core\Tests\Game\Level;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Progression\LevelRange;
+use Lorekeeper\Core\Game\Level\LevelRange;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Progression;
+namespace Lorekeeper\Core\Game\Level;
 
 use Lorekeeper\Core\Support\NonNegativeInteger;
 
