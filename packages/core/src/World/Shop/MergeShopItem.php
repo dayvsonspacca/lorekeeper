@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\World\Shop;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Item\HoldsItem;
 use Lorekeeper\Core\Item\Item;
 
-final readonly class MergeShopItem implements HoldsItem
+final readonly class MergeShopItem
 {
     /** @var non-empty-list<MergeCost> */
     public array $costs;
