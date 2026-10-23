@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Currency;
 
-use Lorekeeper\Core\Support\NonNegativeInteger;
+use Override;
 
-final readonly class Gold extends NonNegativeInteger {}
+final readonly class Gold extends Currency
+{
+    #[Override]
+    public function symbol(): string
+    {
+        return 'G';
+    }
+}
