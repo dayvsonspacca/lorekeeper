@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Player\Hero;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Item\Equipment\Equipment;
-use Lorekeeper\Core\Item\EquipmentSlot;
 use Lorekeeper\Core\Item\Inventory;
 use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
@@ -23,17 +21,17 @@ final class HeroInventory
     /** @var Inventory<Item> */
     public readonly Inventory $temporary;
 
+    public readonly HeroEquipment $equipment;
+
     /** @var array<positive-int, Quantity> */
     private array $quantities = [];
-
-    /** @var array<string, ItemId> */
-    private array $equipped = [];
 
     public function __construct(
         public readonly Quantity $slots,
     ) {
         $this->permanent = new Inventory([]);
         $this->temporary = new Inventory([]);
+        $this->equipment = new HeroEquipment($this->permanent);
     }
 
     /**
@@ -43,10 +41,7 @@ final class HeroInventory
      */
     public function add(Item $item, Quantity $quantity = new Quantity(1)): static
     {
-        $most = $item instanceof Stackable ? $item->stack->value : 1;
-        if ($quantity->value > $most) {
-            throw new InvalidArgumentException("{$item->name} stacks up to {$most}, not {$quantity}.");
-        }
+        self::stack($item, $quantity->value);
 
         $temporary = $item->tags->has(ItemTag::Temporary);
         if (($temporary ? $this->permanent : $this->temporary)->has($item)) {
@@ -66,25 +61,43 @@ final class HeroInventory
      *
      * @throws InvalidArgumentException
      */
-    public function equip(Equipment $item): static
+    public function receive(Item $item, Quantity $quantity = new Quantity(1)): static
     {
-        if (!$this->permanent->has($item)) {
-            throw new InvalidArgumentException("Item {$item->id} is not kept, so it cannot be equipped.");
+        $held = $this->quantity($item->id);
+        if ($held === 0) {
+            return $this->add($item, $quantity);
         }
 
-        $this->equipped[$item->slot()->value] = $item->id;
+        $total = self::stack($item, $held + $quantity->value);
+        if ($item instanceof Stackable) {
+            $this->quantities[$item->id->value] = $total;
+        }
 
         return $this;
     }
 
-    /** @return Option\Option<Equipment> */
-    public function equipped(EquipmentSlot $slot): Option\Option
+    /**
+     * @return $this
+     *
+     * @throws InvalidArgumentException
+     */
+    public function take(ItemId $id, Quantity $quantity): static
     {
-        return Option\from_nullable($this->equipped[$slot->value] ?? null)
-            ->andThen(fn(ItemId $id): Option\Option => $this->permanent->find($id))
-            ->andThen(static fn(Item $item): Option\Option => $item instanceof Equipment
-                ? Option\some($item)
-                : Option\none());
+        $left = $this->quantity($id) - $quantity->value;
+        if ($this->find($id)->isNone()) {
+            throw new InvalidArgumentException("Item {$id} is not held, so none can be taken.");
+        }
+
+        if ($left > 0) {
+            $this->quantities[$id->value] = new Quantity($left);
+
+            return $this;
+        }
+
+        ($this->permanent->find($id)->isSome() ? $this->permanent : $this->temporary)->remove($id);
+        unset($this->quantities[$id->value]);
+
+        return $this;
     }
 
     /** @return Option\Option<Item> */
@@ -112,5 +125,21 @@ final class HeroInventory
     public function full(): bool
     {
         return count($this->permanent) >= $this->slots->value;
+    }
+
+    public function fits(ItemId $id): bool
+    {
+        return $this->permanent->find($id)->isSome() || !$this->full();
+    }
+
+    /** @throws InvalidArgumentException */
+    private static function stack(Item $item, int $total): Quantity
+    {
+        $most = $item instanceof Stackable ? $item->stack->value : 1;
+        if ($total > $most) {
+            throw new InvalidArgumentException("{$item->name} stacks up to {$most}, not {$total}.");
+        }
+
+        return new Quantity($total);
     }
 }

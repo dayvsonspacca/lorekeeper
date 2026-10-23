@@ -7,7 +7,6 @@ namespace Lorekeeper\Core\Tests\Player\Hero;
 use InvalidArgumentException;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassItem;
 use Lorekeeper\Core\Item\Equipment\Helm;
-use Lorekeeper\Core\Item\EquipmentSlot;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
@@ -148,40 +147,6 @@ final class HeroInventoryTest extends TestCase
     }
 
     #[Test]
-    public function it_wears_one_kept_equipment_per_slot(): void
-    {
-        $helm = new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none());
-        $healer = new ClassItem(new ItemId(15_651), new ItemName('Healer'), new ItemLevel(1), Option\none());
-        $inventory = new HeroInventory(new Quantity(131))
-            ->add($helm)
-            ->add($healer)
-            ->equip($helm);
-
-        static::assertSame($helm, $inventory->equipped(EquipmentSlot::Helm)->unwrap());
-        static::assertTrue($inventory->equipped(EquipmentSlot::CharacterClass)->isNone());
-    }
-
-    #[Test]
-    public function it_wears_nothing_once_the_equipment_is_gone(): void
-    {
-        $helm = new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none());
-        $inventory = new HeroInventory(new Quantity(131))->add($helm)->equip($helm);
-        $inventory->permanent->remove(new ItemId(4_767));
-
-        static::assertTrue($inventory->equipped(EquipmentSlot::Helm)->isNone());
-    }
-
-    #[Test]
-    public function it_rejects_equipping_what_it_does_not_keep(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        new HeroInventory(new Quantity(131))->equip(
-            new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none()),
-        );
-    }
-
-    #[Test]
     public function it_rejects_keeping_an_item_it_already_holds_as_temporary(): void
     {
         $inventory = new HeroInventory(new Quantity(131))->add(self::temporary(42_658, 'Metal Ore'));
@@ -199,6 +164,76 @@ final class HeroInventoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         $inventory->add(self::temporary(42_658, 'Metal Ore'));
+    }
+
+    #[Test]
+    public function it_receives_a_new_item_or_more_of_one_it_holds(): void
+    {
+        $inventory = new HeroInventory(new Quantity(131))
+            ->receive(self::resource(11_475, 'Dragon Scale'), new Quantity(50))
+            ->receive(self::resource(11_475, 'Dragon Scale'), new Quantity(25));
+
+        static::assertSame(75, $inventory->quantity(new ItemId(11_475)));
+        static::assertCount(1, $inventory->permanent);
+    }
+
+    #[Test]
+    public function it_rejects_receiving_more_than_a_stack_holds(): void
+    {
+        $inventory = new HeroInventory(new Quantity(131))->add(
+            self::resource(11_475, 'Dragon Scale'),
+            new Quantity(990),
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $inventory->receive(self::resource(11_475, 'Dragon Scale'), new Quantity(20));
+    }
+
+    #[Test]
+    public function it_rejects_receiving_a_second_of_what_does_not_stack(): void
+    {
+        $helm = new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none());
+        $inventory = new HeroInventory(new Quantity(131))->add($helm);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $inventory->receive($helm);
+    }
+
+    #[Test]
+    public function it_takes_part_of_a_stack_and_drops_the_item_once_none_is_left(): void
+    {
+        $inventory = new HeroInventory(new Quantity(131))
+            ->add(self::resource(11_475, 'Dragon Scale'), new Quantity(50))
+            ->add(self::temporary(42_658, 'Metal Ore'), new Quantity(3))
+            ->take(new ItemId(11_475), new Quantity(20));
+
+        static::assertSame(30, $inventory->quantity(new ItemId(11_475)));
+
+        $inventory->take(new ItemId(11_475), new Quantity(30))->take(new ItemId(42_658), new Quantity(5));
+
+        static::assertSame(0, $inventory->quantity(new ItemId(11_475)));
+        static::assertCount(0, $inventory->permanent);
+        static::assertCount(0, $inventory->temporary);
+    }
+
+    #[Test]
+    public function it_rejects_taking_what_it_does_not_hold(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new HeroInventory(new Quantity(131))->take(new ItemId(11_475), new Quantity(1));
+    }
+
+    #[Test]
+    public function an_item_fits_if_already_kept_or_while_a_slot_is_free(): void
+    {
+        $inventory = new HeroInventory(new Quantity(1))->add(self::resource(11_475, 'Dragon Scale'));
+
+        static::assertTrue($inventory->fits(new ItemId(11_475)));
+        static::assertFalse($inventory->fits(new ItemId(42_657)));
+        static::assertTrue(new HeroInventory(new Quantity(1))->fits(new ItemId(42_657)));
     }
 
     private static function resource(int $id, string $name): Resource
