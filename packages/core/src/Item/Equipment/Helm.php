@@ -13,15 +13,16 @@ use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
 use Override;
 use Psl\Option;
 
-final readonly class Helm extends Equipment
+final readonly class Helm extends Equipment implements Enchantable
 {
-    use Enchantable;
-
     /** @param Option\Option<Enhancement> $enhancement */
-    public function __construct(ItemId $id, ItemName $name, ItemLevel $level, Option\Option $enhancement)
-    {
+    public function __construct(
+        ItemId $id,
+        ItemName $name,
+        ItemLevel $level,
+        public Option\Option $enhancement,
+    ) {
         parent::__construct($id, $name, $level);
-        $this->enhancement = $enhancement;
     }
 
     #[Override]

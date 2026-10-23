@@ -14,10 +14,8 @@ use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
 use Override;
 use Psl\Option;
 
-final readonly class Weapon extends Equipment
+final readonly class Weapon extends Equipment implements Enchantable
 {
-    use Enchantable;
-
     /**
      * @param Option\Option<Enhancement> $enhancement
      *
@@ -29,10 +27,9 @@ final readonly class Weapon extends Equipment
         ItemLevel $level,
         public WeaponType $type,
         public WeaponDamage $damage,
-        Option\Option $enhancement,
+        public Option\Option $enhancement,
     ) {
         parent::__construct($id, $name, $level);
-        $this->enhancement = $enhancement;
     }
 
     #[Override]

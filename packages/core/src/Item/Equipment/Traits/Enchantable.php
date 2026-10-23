@@ -7,8 +7,8 @@ namespace Lorekeeper\Core\Item\Equipment\Traits;
 use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
 use Psl\Option;
 
-trait Enchantable
+interface Enchantable
 {
     /** @var Option\Option<Enhancement> */
-    public readonly Option\Option $enhancement;
+    public Option\Option $enhancement { get; }
 }
