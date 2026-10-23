@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\Game\Attribute\Stat;
 
+use Closure;
 use InvalidArgumentException;
 use Lorekeeper\Core\Game\Attribute\Stat\Boost\DamageBoost;
 use Lorekeeper\Core\Game\Attribute\Stat\Boost\DotBoost;
@@ -29,11 +30,14 @@ use Lorekeeper\Core\Game\Attribute\Stat\Resistance\DotResistance;
 use Lorekeeper\Core\Game\Attribute\Stat\Resistance\MagicalResistance;
 use Lorekeeper\Core\Game\Attribute\Stat\Resistance\PhysicalResistance;
 use Lorekeeper\Core\Game\Attribute\Stat\Stat;
+use Lorekeeper\Core\Game\Attribute\Stat\StatDescription;
 use Lorekeeper\Core\Game\Attribute\Stat\Stats;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use UnhandledMatchError;
 
+/** @mago-expect lint:too-many-methods */
 final class StatsTest extends TestCase
 {
     #[Test]
@@ -66,6 +70,73 @@ final class StatsTest extends TestCase
             'Reduces all incoming damage, except True Damage.',
             new DamageResistance(0.1)->describe()->value,
         );
+    }
+
+    #[Test]
+    #[DataProvider('updated')]
+    public function it_takes_the_value_the_server_sends_for_each_stat(Stat $stat, Closure $read): void
+    {
+        $stats = new Stats();
+
+        $stats->update($stat);
+
+        static::assertSame($stat, $read($stats));
+    }
+
+    #[Test]
+    public function it_refuses_a_stat_it_does_not_know(): void
+    {
+        $this->expectException(UnhandledMatchError::class);
+
+        new Stats()->update(new class implements Stat {
+            public function describe(): StatDescription
+            {
+                return new StatDescription('Unknown.');
+            }
+        });
+    }
+
+    /** @return iterable<string, array{Stat, Closure(Stats): Stat}> */
+    public static function updated(): iterable
+    {
+        yield 'strength' => [new Strength(12), static fn(Stats $stats): Stat => $stats->primary->strength];
+        yield 'intellect' => [new Intellect(12), static fn(Stats $stats): Stat => $stats->primary->intellect];
+        yield 'dexterity' => [new Dexterity(12), static fn(Stats $stats): Stat => $stats->primary->dexterity];
+        yield 'endurance' => [new Endurance(12), static fn(Stats $stats): Stat => $stats->primary->endurance];
+        yield 'wisdom' => [new Wisdom(12), static fn(Stats $stats): Stat => $stats->primary->wisdom];
+        yield 'luck' => [new Luck(12), static fn(Stats $stats): Stat => $stats->primary->luck];
+        yield 'attack power' => [new AttackPower(12), static fn(Stats $stats): Stat => $stats->powers->attack];
+        yield 'spell power' => [new SpellPower(12), static fn(Stats $stats): Stat => $stats->powers->spell];
+        yield 'hit chance' => [new HitChance(0.95), static fn(Stats $stats): Stat => $stats->chances->hit];
+        yield 'critical chance' => [
+            new CriticalChance(0.2),
+            static fn(Stats $stats): Stat => $stats->chances->critical,
+        ];
+        yield 'evasion' => [new Evasion(0.1), static fn(Stats $stats): Stat => $stats->chances->evasion];
+        yield 'damage resistance' => [
+            new DamageResistance(0.2),
+            static fn(Stats $stats): Stat => $stats->resistances->damage,
+        ];
+        yield 'physical resistance' => [
+            new PhysicalResistance(0.2),
+            static fn(Stats $stats): Stat => $stats->resistances->physical,
+        ];
+        yield 'magical resistance' => [
+            new MagicalResistance(0.2),
+            static fn(Stats $stats): Stat => $stats->resistances->magical,
+        ];
+        yield 'dot resistance' => [new DotResistance(0.2), static fn(Stats $stats): Stat => $stats->resistances->dot];
+        yield 'damage boost' => [new DamageBoost(0.2), static fn(Stats $stats): Stat => $stats->boosts->damage];
+        yield 'physical boost' => [new PhysicalBoost(0.2), static fn(Stats $stats): Stat => $stats->boosts->physical];
+        yield 'magical boost' => [new MagicalBoost(0.2), static fn(Stats $stats): Stat => $stats->boosts->magical];
+        yield 'healing boost' => [new HealingBoost(0.2), static fn(Stats $stats): Stat => $stats->boosts->healing];
+        yield 'dot boost' => [new DotBoost(0.2), static fn(Stats $stats): Stat => $stats->boosts->dot];
+        yield 'haste' => [new Haste(0.3), static fn(Stats $stats): Stat => $stats->haste];
+        yield 'critical multiplier' => [
+            new CriticalMultiplier(1.75),
+            static fn(Stats $stats): Stat => $stats->criticalMultiplier,
+        ];
+        yield 'healing intake' => [new HealingIntake(1.1), static fn(Stats $stats): Stat => $stats->healingIntake];
     }
 
     #[Test]
