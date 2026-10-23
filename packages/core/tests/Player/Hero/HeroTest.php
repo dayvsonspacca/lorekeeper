@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\Player\Hero;
 
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\CharacterClass;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\ClassName;
 use Lorekeeper\Core\CharacterClass\ClassPoints;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Vitals;
 use Lorekeeper\Core\Game\Level\Experience;
 use Lorekeeper\Core\Player\Hero\Hero;
 use Lorekeeper\Core\Player\Hero\HeroClass;

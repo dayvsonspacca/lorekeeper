@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\Player;
 
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Attribute\Vitals;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Vitals;
 use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;

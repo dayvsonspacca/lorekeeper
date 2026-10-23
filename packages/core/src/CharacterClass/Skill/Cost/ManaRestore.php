@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\CharacterClass\Skill\Cost;
 
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Attribute\Vitals;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Vitals;
 use Override;
 
 final readonly class ManaRestore implements SkillCost

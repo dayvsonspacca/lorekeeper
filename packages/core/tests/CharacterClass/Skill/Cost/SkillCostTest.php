@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\CharacterClass\Skill\Cost;
 
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Vitals;
 use Lorekeeper\Core\Support\Gauge;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

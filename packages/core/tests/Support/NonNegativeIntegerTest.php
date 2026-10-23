@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\Support;
 
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
 use Lorekeeper\Core\Support\NonNegativeInteger;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Tests\CharacterClass\Skill;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
 use Lorekeeper\Core\CharacterClass\Skill\Damage\DamageMultiplier;
 use Lorekeeper\Core\CharacterClass\Skill\Damage\DamageSource;
@@ -15,6 +14,7 @@ use Lorekeeper\Core\CharacterClass\Skill\SkillDescription;
 use Lorekeeper\Core\CharacterClass\Skill\SkillName;
 use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Game\Attribute\Mana;
 use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

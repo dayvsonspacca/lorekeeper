@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Player;
 
-use Lorekeeper\Core\Attribute\Vitals;
+use Lorekeeper\Core\Game\Attribute\Vitals;
 use Lorekeeper\Core\Support\Tag\Taggable;
 use Lorekeeper\Core\Support\Tag\Tags;
 

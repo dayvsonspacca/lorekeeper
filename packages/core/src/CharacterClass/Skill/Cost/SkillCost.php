@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\CharacterClass\Skill\Cost;
 
-use Lorekeeper\Core\Attribute\Vitals;
+use Lorekeeper\Core\Game\Attribute\Vitals;
 
 interface SkillCost
 {

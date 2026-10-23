@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Player\Hero;
 
-use Lorekeeper\Core\Attribute\Stat\Stats;
-use Lorekeeper\Core\Attribute\Vitals;
+use Lorekeeper\Core\Game\Attribute\Stat\Stats;
+use Lorekeeper\Core\Game\Attribute\Vitals;
 use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerName;
 
