@@ -14,6 +14,7 @@ readonly class Player
     use Taggable;
 
     public function __construct(
+        public PlayerSpawnId $spawnId,
         public PlayerName $name,
         public PlayerLevel $level,
         public Vitals $vitals,

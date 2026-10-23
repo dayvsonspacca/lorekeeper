@@ -20,6 +20,7 @@ use Lorekeeper\Core\Player\Hero\HeroQuestMarks;
 use Lorekeeper\Core\Player\Hero\HeroWallet;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Core\Player\PlayerTag;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\Support\Quantity;
@@ -32,10 +33,11 @@ use Psl\Option;
 final class HeroTest extends TestCase
 {
     #[Test]
-    public function a_hero_knows_its_level_with_the_experience_toward_the_next_and_its_wallet(): void
+    public function a_hero_knows_its_spawn_id_its_level_with_the_experience_toward_the_next_and_its_wallet(): void
     {
         $hero = self::hero();
 
+        static::assertSame(45_466, $hero->spawnId->value);
         static::assertSame(81, $hero->level->value);
         static::assertSame($hero->level, $hero->progress->level);
         static::assertSame([4_514_754, 5_280_000], [
@@ -60,6 +62,7 @@ final class HeroTest extends TestCase
     private static function hero(): Hero
     {
         return new Hero(
+            new PlayerSpawnId(45_466),
             new PlayerName('Hero'),
             new HeroLevelProgress(new PlayerLevel(81), new Gauge(new Experience(4_514_754), new Experience(5_280_000))),
             new Vitals(new Gauge(new Health(2585), new Health(2585)), new Gauge(new Mana(100), new Mana(100))),
