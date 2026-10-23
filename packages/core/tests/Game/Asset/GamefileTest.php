@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Tests\Asset;
+namespace Lorekeeper\Core\Tests\Game\Asset;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Asset\Gamefile;
+use Lorekeeper\Core\Game\Asset\Gamefile;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Type\Exception\AssertException;

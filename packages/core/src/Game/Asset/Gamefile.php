@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Asset;
+namespace Lorekeeper\Core\Game\Asset;
 
 use InvalidArgumentException;
 use Psl\Type;
