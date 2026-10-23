@@ -31,6 +31,16 @@ final class PlayerLevelTest extends TestCase
     }
 
     #[Test]
+    public function it_goes_up_one_level_at_a_time_and_never_past_the_last(): void
+    {
+        static::assertSame(43, new PlayerLevel(42)->up()->value);
+
+        $this->expectException(AssertException::class);
+
+        new PlayerLevel(100)->up();
+    }
+
+    #[Test]
     public function it_converts_to_string(): void
     {
         static::assertSame('42', (string) new PlayerLevel(42));

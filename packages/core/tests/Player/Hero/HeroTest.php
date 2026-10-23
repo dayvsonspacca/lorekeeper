@@ -69,6 +69,20 @@ final class HeroTest extends TestCase
     }
 
     #[Test]
+    public function a_hero_goes_up_a_level_and_starts_its_experience_over(): void
+    {
+        $hero = self::hero();
+
+        $hero->up(new Experience(5_600_000));
+
+        static::assertSame(82, $hero->level->value);
+        static::assertSame([0, 5_600_000], [
+            $hero->progression->level->experience->current->value,
+            $hero->progression->level->experience->maximum->value,
+        ]);
+    }
+
+    #[Test]
     public function a_hero_is_a_member_once_tagged_so(): void
     {
         $hero = self::hero();

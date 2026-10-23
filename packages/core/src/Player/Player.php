@@ -8,16 +8,16 @@ use Lorekeeper\Core\Game\Attribute\Vitals;
 use Lorekeeper\Core\Game\Tag\Tags;
 use Lorekeeper\Core\Game\Tag\Traits\Taggable;
 
-readonly class Player
+class Player
 {
     /** @use Taggable<PlayerTag> */
     use Taggable;
 
     public function __construct(
-        public PlayerSpawnId $spawnId,
-        public PlayerName $name,
-        public PlayerLevel $level,
-        public Vitals $vitals,
+        public readonly PlayerSpawnId $spawnId,
+        public readonly PlayerName $name,
+        public protected(set) PlayerLevel $level,
+        public readonly Vitals $vitals,
     ) {
         $this->tags = new Tags();
     }
