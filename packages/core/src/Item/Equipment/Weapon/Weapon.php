@@ -6,6 +6,7 @@ namespace Lorekeeper\Core\Item\Equipment\Weapon;
 
 use Lorekeeper\Core\Item\Equipment\Equipment;
 use Lorekeeper\Core\Item\Equipment\Traits\Enchantable;
+use Lorekeeper\Core\Item\Equipment\Traits\GrantsBoosts;
 use Lorekeeper\Core\Item\EquipmentSlot;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
@@ -14,7 +15,7 @@ use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
 use Override;
 use Psl\Option;
 
-final class Weapon extends Equipment implements Enchantable
+final class Weapon extends Equipment implements Enchantable, GrantsBoosts
 {
     /**
      * @param Option\Option<Enhancement> $enhancement

@@ -13,6 +13,7 @@ use Lorekeeper\Core\Item\Equipment\Helm;
 use Lorekeeper\Core\Item\Equipment\Necklace;
 use Lorekeeper\Core\Item\Equipment\Pet;
 use Lorekeeper\Core\Item\Equipment\Traits\Enchantable;
+use Lorekeeper\Core\Item\Equipment\Traits\GrantsBoosts;
 use Lorekeeper\Core\Item\Equipment\Weapon\DamageVariance;
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
 use Lorekeeper\Core\Item\Equipment\Weapon\WeaponDamage;
@@ -54,6 +55,15 @@ final class EquipmentTest extends TestCase
         static::assertSame(
             [true, false, true, true, true, false, false, false],
             array_map(static fn(Equipment $equipment): bool => $equipment instanceof Enchantable, self::kinds()),
+        );
+    }
+
+    #[Test]
+    public function only_armors_weapons_helms_capes_and_pets_grant_boosts(): void
+    {
+        static::assertSame(
+            [false, true, true, true, true, true, false, false],
+            array_map(static fn(Equipment $equipment): bool => $equipment instanceof GrantsBoosts, self::kinds()),
         );
     }
 
