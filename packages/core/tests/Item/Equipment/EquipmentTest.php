@@ -21,6 +21,9 @@ use Lorekeeper\Core\Item\EquipmentSlot;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
+use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementRarity;
+use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementType;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\Option;
@@ -52,6 +55,27 @@ final class EquipmentTest extends TestCase
             [true, false, true, true, true, false, false, false],
             array_map(static fn(Equipment $equipment): bool => $equipment instanceof Enchantable, self::kinds()),
         );
+    }
+
+    #[Test]
+    public function an_enchantable_equipment_takes_the_enhancement_applied_to_it(): void
+    {
+        $lucky = new Enhancement(EnhancementType::Lucky, EnhancementRarity::PlusZero, new ItemLevel(21), Option\none());
+        $enchantables = array_values(array_filter(
+            self::kinds(),
+            static fn(Equipment $equipment): bool => $equipment instanceof Enchantable,
+        ));
+
+        foreach ($enchantables as $equipment) {
+            static::assertInstanceOf(Enchantable::class, $equipment);
+            static::assertTrue($equipment->enhancement->isNone());
+
+            $equipment->enchant($lucky);
+
+            static::assertSame($lucky, $equipment->enhancement->unwrap());
+        }
+
+        static::assertCount(4, $enchantables);
     }
 
     /** @return list<Equipment> */

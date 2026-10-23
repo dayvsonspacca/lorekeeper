@@ -9,13 +9,13 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 
-final readonly class HouseItem extends Item
+final class HouseItem extends Item
 {
     public function __construct(
         ItemId $id,
         ItemName $name,
         ItemLevel $level,
-        public HouseItemType $type,
+        public readonly HouseItemType $type,
     ) {
         parent::__construct($id, $name, $level);
     }

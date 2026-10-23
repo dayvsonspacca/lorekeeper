@@ -7,7 +7,7 @@ namespace Lorekeeper\Core\Item\Equipment;
 use Lorekeeper\Core\Item\EquipmentSlot;
 use Override;
 
-final readonly class Pet extends Equipment
+final class Pet extends Equipment
 {
     #[Override]
     public function slot(): EquipmentSlot

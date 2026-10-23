@@ -11,4 +11,6 @@ interface Enchantable
 {
     /** @var Option\Option<Enhancement> */
     public Option\Option $enhancement { get; }
+
+    public function enchant(Enhancement $enhancement): void;
 }
