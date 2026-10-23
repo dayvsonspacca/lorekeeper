@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Player\Hero;
 
 use Lorekeeper\Core\CharacterClass\CharacterClass;
-use Lorekeeper\Core\Progression\ClassPoints;
-use Lorekeeper\Core\Progression\Rank;
+use Lorekeeper\Core\CharacterClass\ClassPoints;
+use Lorekeeper\Core\Game\Rank\Rank;
 
 final readonly class HeroClass
 {
@@ -19,6 +19,6 @@ final readonly class HeroClass
 
     public function rank(): Rank
     {
-        return Rank::fromPoints($this->points);
+        return Rank::of($this->points);
     }
 }

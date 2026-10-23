@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Progression;
+namespace Lorekeeper\Core\Game\Rank;
 
+use Lorekeeper\Core\Game\Rank\Traits\GrantsRank;
 use Psl\Type;
 use Stringable;
 
 final readonly class Rank implements Stringable
 {
-    private const array MINIMUM_POINTS = [
+    private const array STARTS = [
         1 => 0,
         2 => 900,
         3 => 3600,
@@ -30,24 +31,21 @@ final readonly class Rank implements Stringable
         $this->value = Type\int_range(min: 1, max: 10)->assert($value);
     }
 
-    public static function fromPoints(ClassPoints|Reputation $points): self
+    public static function of(GrantsRank $points): self
     {
         $rank = 1;
-
-        foreach (self::MINIMUM_POINTS as $candidate => $minimum) {
-            if ($points->value < $minimum) {
-                break;
+        foreach (self::STARTS as $candidate => $start) {
+            if ($points->value >= $start) {
+                $rank = $candidate;
             }
-
-            $rank = $candidate;
         }
 
         return new self($rank);
     }
 
-    public function minimumPoints(): int
+    public function start(): int
     {
-        return self::MINIMUM_POINTS[$this->value];
+        return self::STARTS[$this->value];
     }
 
     public function __toString(): string

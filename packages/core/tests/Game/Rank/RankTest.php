@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Tests\Progression;
+namespace Lorekeeper\Core\Tests\Game\Rank;
 
-use Lorekeeper\Core\Progression\ClassPoints;
-use Lorekeeper\Core\Progression\Rank;
-use Lorekeeper\Core\Progression\Reputation;
+use Lorekeeper\Core\CharacterClass\ClassPoints;
+use Lorekeeper\Core\Game\Rank\Rank;
+use Lorekeeper\Core\World\Faction\Reputation;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -43,22 +43,22 @@ final class RankTest extends TestCase
     #[TestWith([999_999, 10])]
     public function it_resolves_rank_from_class_points(int $points, int $rank): void
     {
-        static::assertSame($rank, Rank::fromPoints(new ClassPoints($points))->value);
+        static::assertSame($rank, Rank::of(new ClassPoints($points))->value);
     }
 
     #[Test]
     public function it_resolves_rank_from_reputation(): void
     {
-        static::assertSame(10, Rank::fromPoints(new Reputation(302_500))->value);
+        static::assertSame(10, Rank::of(new Reputation(302_500))->value);
     }
 
     #[Test]
     #[TestWith([1, 0])]
     #[TestWith([2, 900])]
     #[TestWith([10, 302_500])]
-    public function it_knows_the_minimum_points_of_each_rank(int $rank, int $points): void
+    public function it_knows_the_points_each_rank_starts_at(int $rank, int $points): void
     {
-        static::assertSame($points, new Rank($rank)->minimumPoints());
+        static::assertSame($points, new Rank($rank)->start());
     }
 
     #[Test]

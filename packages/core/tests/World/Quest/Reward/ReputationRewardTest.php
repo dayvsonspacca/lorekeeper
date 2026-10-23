@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\World\Quest\Reward;
 
-use Lorekeeper\Core\Progression\Reputation;
 use Lorekeeper\Core\World\Faction\FactionId;
+use Lorekeeper\Core\World\Faction\Reputation;
 use Lorekeeper\Core\World\Quest\Reward\ReputationReward;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
