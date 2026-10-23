@@ -7,12 +7,21 @@ namespace Lorekeeper\Core\World\Map;
 use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\Player\Player;
 
-final readonly class MapPlayer
+final class MapPlayer
 {
     public function __construct(
-        public Player $player,
-        public MapSpot $spot,
-        public CombatState $state,
-        public bool $away,
+        public readonly Player $player,
+        public private(set) MapSpot $spot,
+        public private(set) CombatState $state,
     ) {}
+
+    public function move(MapSpot $spot): void
+    {
+        $this->spot = $spot;
+    }
+
+    public function change(CombatState $state): void
+    {
+        $this->state = $state;
+    }
 }

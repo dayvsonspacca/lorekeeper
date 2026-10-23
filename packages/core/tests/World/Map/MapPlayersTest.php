@@ -42,6 +42,19 @@ final class MapPlayersTest extends TestCase
         new MapPlayers([self::seen(45_466, 'Hero'), self::seen(45_466, 'Hero')]);
     }
 
+    #[Test]
+    public function a_player_moves_and_fights_in_the_room(): void
+    {
+        $ally = self::seen(45_467, 'Ally');
+        $spot = new MapSpot(new MapCell('r2'), MapPad::Left);
+
+        $ally->move($spot);
+        $ally->change(CombatState::Fighting);
+
+        static::assertSame($spot, $ally->spot);
+        static::assertSame(CombatState::Fighting, $ally->state);
+    }
+
     private static function seen(int $id, string $name): MapPlayer
     {
         return new MapPlayer(
@@ -53,7 +66,6 @@ final class MapPlayersTest extends TestCase
             ),
             new MapSpot(new MapCell('Enter'), MapPad::Spawn),
             CombatState::Idle,
-            false,
         );
     }
 }

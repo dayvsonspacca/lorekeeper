@@ -44,6 +44,17 @@ final class MapMonstersTest extends TestCase
         new MapMonsters([self::spawn(1), self::spawn(1)]);
     }
 
+    #[Test]
+    public function a_monster_changes_its_combat_state_where_it_stands(): void
+    {
+        $grunt = self::spawn(3);
+        $monsters = new MapMonsters([$grunt]);
+
+        $monsters->find(new MonsterSpawnId(3))->unwrap()->change(CombatState::Dead);
+
+        static::assertSame(CombatState::Dead, $grunt->state);
+    }
+
     private static function spawn(int $id): MapMonster
     {
         return new MapMonster(
