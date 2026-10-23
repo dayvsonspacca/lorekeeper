@@ -140,6 +140,25 @@ final class EntranceTest extends TestCase
         static::assertSame($mine, $entrance->character()->hero()->settings);
     }
 
+    #[Test]
+    public function without_settings_in_its_data_it_has_everything_allowed_like_a_new_account(): void
+    {
+        $entrance = self::entrance(
+            self::LOGIN,
+            self::ARRIVAL,
+            self::INVENTORY,
+            self::CLASS_CHANGE,
+            self::SKILLS,
+            self::VITALS,
+        );
+        $entrance->hear(new PlayerDataLoadedEvent([self::member(45_466)]));
+
+        $settings = $entrance->character()->hero()->settings;
+        foreach (GameSetting::cases() as $setting) {
+            static::assertTrue($settings->allows($setting));
+        }
+    }
+
     private static function entrance(string ...$messages): Entrance
     {
         $entrance = new Entrance(new PlayerName('Hero3'));

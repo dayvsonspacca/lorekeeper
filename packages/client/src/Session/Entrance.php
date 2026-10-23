@@ -11,6 +11,7 @@ use Lorekeeper\Client\Tracking\InventoryTracking;
 use Lorekeeper\Client\Tracking\StatsTracking;
 use Lorekeeper\Core\Game\Attribute\Stat\Stats;
 use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Game\Setting\GameSetting;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\CharacterClass;
 use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Skill;
 use Lorekeeper\Core\Player\Hero\Class\HeroClass;
@@ -147,7 +148,7 @@ final class Entrance
             ),
             new HeroProgression(new LevelProgression($data->experience), new QuestsProgression($data->quests)),
             $inventory,
-            $this->settings ?? new HeroSettings(),
+            $this->settings ?? new HeroSettings(GameSetting::cases()),
         );
         if ($data->member) {
             $hero->tags->add(PlayerTag::Member);
