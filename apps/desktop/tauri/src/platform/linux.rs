@@ -5,6 +5,7 @@ use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::thread;
+use std::time::SystemTime;
 
 use signal_hook::consts::{SIGHUP, SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
@@ -84,15 +85,10 @@ impl Platform for Linux {
             return;
         };
 
-        let _ = keep(
-            &home
-                .join("icons/hicolor/128x128/apps")
-                .join(format!("{NAME}.png")),
+        place(
+            &home,
             &fs::read(icon).unwrap_or_default(),
-        );
-        let _ = keep(
-            &home.join("applications").join(format!("{NAME}.desktop")),
-            desktop_entry(&exec, cfg!(debug_assertions)).as_bytes(),
+            &desktop_entry(&exec, cfg!(debug_assertions)),
         );
     }
 
@@ -212,15 +208,33 @@ fn launcher(exec: &Path, arguments: &str) -> String {
     )
 }
 
-fn keep(path: &Path, contents: &[u8]) -> io::Result<()> {
+fn place(home: &Path, icon: &[u8], entry: &str) {
+    let theme = home.join("icons/hicolor");
+    let icon = keep(
+        &theme.join("128x128/apps").join(format!("{NAME}.png")),
+        icon,
+    );
+    let entry = keep(
+        &home.join("applications").join(format!("{NAME}.desktop")),
+        entry.as_bytes(),
+    );
+
+    if matches!(icon, Ok(true)) || matches!(entry, Ok(true)) {
+        let _ = fs::File::open(&theme).and_then(|folder| folder.set_modified(SystemTime::now()));
+    }
+}
+
+fn keep(path: &Path, contents: &[u8]) -> io::Result<bool> {
     if contents.is_empty() || fs::read(path).is_ok_and(|kept| kept == contents) {
-        return Ok(());
+        return Ok(false);
     }
     if let Some(folder) = path.parent() {
         fs::create_dir_all(folder)?;
     }
 
-    fs::write(path, contents)
+    fs::write(path, contents)?;
+
+    Ok(true)
 }
 
 const APPIMAGE_VARIABLES: [&str; 15] = [
@@ -363,18 +377,46 @@ mod tests {
     }
 
     #[test]
+    fn a_new_icon_tells_the_desktop_to_look_for_icons_again() {
+        let home = env::temp_dir().join(format!("lorekeeper-icon-{}", std::process::id()));
+        let theme = home.join("icons/hicolor");
+        let long_ago = SystemTime::now() - Duration::from_secs(3600);
+        let aged = || {
+            fs::create_dir_all(theme.join("128x128/apps")).unwrap();
+            fs::File::open(&theme)
+                .unwrap()
+                .set_modified(long_ago)
+                .unwrap();
+        };
+        let looked = || fs::metadata(&theme).unwrap().modified().unwrap();
+
+        aged();
+        place(&home, b"icon", "entry");
+        assert!(looked() > long_ago);
+        assert!(theme.join("128x128/apps/lorekeeper.png").is_file());
+
+        aged();
+        place(&home, b"icon", "entry");
+        assert_eq!(looked(), long_ago);
+
+        place(&home, b"icon", "moved entry");
+        assert!(looked() > long_ago);
+        fs::remove_dir_all(home).unwrap();
+    }
+
+    #[test]
     fn a_file_is_written_only_when_it_changes() {
         let root = env::temp_dir().join(format!("lorekeeper-keep-{}", std::process::id()));
         let path = root.join("icons/lorekeeper.png");
 
-        keep(&path, b"one").unwrap();
+        assert!(keep(&path, b"one").unwrap());
         let written = fs::metadata(&path).unwrap().modified().unwrap();
         thread::sleep(std::time::Duration::from_millis(20));
-        keep(&path, b"one").unwrap();
+        assert!(!keep(&path, b"one").unwrap());
         assert_eq!(fs::metadata(&path).unwrap().modified().unwrap(), written);
-        keep(&path, b"two").unwrap();
+        assert!(keep(&path, b"two").unwrap());
         assert_eq!(fs::read(&path).unwrap(), b"two");
-        keep(&path, b"").unwrap();
+        assert!(!keep(&path, b"").unwrap());
         assert_eq!(fs::read(&path).unwrap(), b"two");
         fs::remove_dir_all(root).unwrap();
     }
