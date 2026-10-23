@@ -4,23 +4,21 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Player;
 
-use Lorekeeper\Core\Currency\AdventureCoins;
-use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\Game\Level\Experience;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroWallet;
 use Lorekeeper\Core\Player\PlayerLevel;
-use Lorekeeper\Core\Player\PlayerLevelProgress;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\Player\PlayerQuestMarks;
-use Lorekeeper\Core\Player\Wallet;
-use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\Support\Quantity;
+use Lorekeeper\Core\World\Currency\AdventureCoins;
+use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
-use Lorekeeper\Server\Event\Quest\Helper\QuestMarks;
+use Lorekeeper\Server\Event\Quest\Helper\QuestGroups;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
-use Lorekeeper\Server\SocketId;
 use Override;
 use Psl\Option;
 use Psl\Type;
@@ -59,6 +57,7 @@ final readonly class PlayerDataLoadedEvent implements Event
                     'iUpg' => Type\int(),
                     'iUpgDays' => Type\int(),
                     'iBagSlots' => Type\positive_int(),
+                    'iBankSlots' => Type\positive_int(),
                 ], allowUnknownFields: true),
             ], allowUnknownFields: true))
                 ->coerce($message->data['a'] ?? null);
@@ -67,19 +66,18 @@ final readonly class PlayerDataLoadedEvent implements Event
             foreach ($entries as $entry) {
                 $data = $entry['data'];
                 $players[] = new PlayerData(
-                    new SocketId($entry['uid']),
+                    new PlayerSpawnId($entry['uid']),
                     new PlayerName($data['strUsername']),
-                    new PlayerLevelProgress(
-                        new PlayerLevel($data['intLevel']),
-                        new Gauge(
-                            new Experience($data['intExp']),
-                            new Experience(max($data['intExp'], $data['intExpToLevel'])),
-                        ),
+                    new PlayerLevel($data['intLevel']),
+                    new Gauge(
+                        new Experience($data['intExp']),
+                        new Experience(max($data['intExp'], $data['intExpToLevel'])),
                     ),
-                    new Wallet(new Gold($data['intGold']), new AdventureCoins($data['intCoins'])),
+                    new HeroWallet(new Gold($data['intGold']), new AdventureCoins($data['intCoins'])),
                     $data['iUpg'] > 0 && $data['iUpgDays'] >= 0,
                     new Quantity($data['iBagSlots']),
-                    new PlayerQuestMarks(QuestMarks::held($data)),
+                    new Quantity($data['iBankSlots']),
+                    QuestGroups::held($data),
                 );
             }
         } catch (CoercionException $exception) {

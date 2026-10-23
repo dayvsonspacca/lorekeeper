@@ -10,13 +10,13 @@ use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemName;
 
-final readonly class EnhancementItem extends Item
+final class EnhancementItem extends Item
 {
     public function __construct(
         ItemId $id,
         ItemName $name,
-        public Enhancement $enhancement,
-        public EquipmentSlot $slot,
+        public readonly Enhancement $enhancement,
+        public readonly EquipmentSlot $slot,
     ) {
         parent::__construct($id, $name, $enhancement->level);
     }

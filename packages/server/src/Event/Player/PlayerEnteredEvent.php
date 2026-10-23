@@ -6,12 +6,12 @@ namespace Lorekeeper\Server\Event\Player;
 
 use DOMElement;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\Message;
 use Lorekeeper\Server\Message\XmlMessage;
-use Lorekeeper\Server\SocketId;
 use Override;
 use Psl\Option;
 use Psl\Type;
@@ -25,7 +25,7 @@ final readonly class PlayerEnteredEvent implements Event
     use NamedAfterClass;
 
     public function __construct(
-        public SocketId $socketId,
+        public PlayerSpawnId $spawnId,
         public PlayerName $name,
     ) {}
 
@@ -48,18 +48,22 @@ final readonly class PlayerEnteredEvent implements Event
         }
 
         try {
-            $socketId = Type\positive_int()->coerce($user->getAttribute('i'));
+            $spawnId = Type\positive_int()->coerce($user->getAttribute('i'));
             $name = Type\non_empty_string()->coerce($user->getElementsByTagName('n')->item(0)?->textContent);
         } catch (CoercionException $exception) {
-            throw new MalformedEventException(static::class, 'player socket or name is missing or invalid', $exception);
+            throw new MalformedEventException(
+                static::class,
+                'player spawn id or name is missing or invalid',
+                $exception,
+            );
         }
 
-        return Option\some(new static(new SocketId($socketId), new PlayerName($name)));
+        return Option\some(new static(new PlayerSpawnId($spawnId), new PlayerName($name)));
     }
 
     #[Override]
     public function summary(): string
     {
-        return "{$this->name->value} (socket {$this->socketId->value}) entered";
+        return "{$this->name->value} (spawn {$this->spawnId->value}) entered";
     }
 }

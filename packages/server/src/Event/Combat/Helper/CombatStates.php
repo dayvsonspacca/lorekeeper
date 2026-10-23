@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Combat\Helper;
 
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
 
 final readonly class CombatStates
 {

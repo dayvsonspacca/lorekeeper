@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Tests\Event\Inventory;
 
 use Lorekeeper\Core\Item\Equipment\Armor;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassItem;
 use Lorekeeper\Core\Item\Equipment\Necklace;
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
 use Lorekeeper\Core\Item\Equipment\Weapon\WeaponType;
-use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\PlayerItem;
+use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+/** @mago-expect lint:too-many-methods */
 final class InventoryLoadedEventTest extends TestCase
 {
     private const string HERO2 = <<<'JSON'
@@ -51,9 +51,9 @@ final class InventoryLoadedEventTest extends TestCase
     #[Test]
     public function it_reads_what_is_equipped_and_the_effect_of_an_enhancement(): void
     {
-        $items = InventoryLoadedEvent::from(JsonMessage::from(self::HERO2)->unwrap())->unwrap()->items;
-        $sword = $items->find(new ItemId(30_629))->unwrap();
-        $awe = $items->find(new ItemId(17_585))->unwrap();
+        $items = self::load(self::HERO2);
+        $sword = self::held($items, 30_629);
+        $awe = self::held($items, 17_585);
 
         static::assertTrue($sword->equipped);
         static::assertInstanceOf(Weapon::class, $sword->item);
@@ -81,6 +81,27 @@ final class InventoryLoadedEventTest extends TestCase
         static::assertSame(1, $sword->quantity->value);
         static::assertSame('Healer', $healer->item->name->value);
         static::assertSame(1, $healer->quantity->value);
+    }
+
+    #[Test]
+    public function it_reads_what_is_worn_as_a_costume(): void
+    {
+        [$helm] = self::load(json_encode(['b' => ['o' => [
+            'cmd' => 'loadInventoryBig',
+            'items' => [
+                [
+                    'ItemID' => 4_768,
+                    'sName' => 'Dragon Helm',
+                    'sType' => 'Helm',
+                    'iLvl' => 1,
+                    'bEquip' => false,
+                    'bWear' => true,
+                ],
+            ],
+        ]]], flags: JSON_THROW_ON_ERROR));
+
+        static::assertTrue($helm->worn);
+        static::assertFalse($helm->equipped);
     }
 
     #[Test]
@@ -123,14 +144,22 @@ final class InventoryLoadedEventTest extends TestCase
         InventoryLoadedEvent::from(JsonMessage::from('{"b":{"o":{"cmd":"loadInventoryBig"}}}')->unwrap());
     }
 
-    /** @return list<PlayerItem> */
+    /** @return list<HeldItem> */
     private static function load(string $message): array
     {
-        return array_values(
-            InventoryLoadedEvent::from(JsonMessage::from($message)->unwrap())
-                ->unwrap()
-                ->items->items->toArray(),
-        );
+        return InventoryLoadedEvent::from(JsonMessage::from($message)->unwrap())->unwrap()->items;
+    }
+
+    /** @param list<HeldItem> $items */
+    private static function held(array $items, int $id): HeldItem
+    {
+        foreach ($items as $held) {
+            if ($held->item->id->value === $id) {
+                return $held;
+            }
+        }
+
+        static::fail("Item {$id} was not loaded.");
     }
 
     private static function item(string $type): string

@@ -6,7 +6,7 @@ namespace Lorekeeper\Apps\Desktop\Tests\Unit\Scene;
 
 use Lorekeeper\Apps\Desktop\Bots\Scene\Backpack;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassItem;
 use Lorekeeper\Core\Item\Equipment\Weapon\DamageVariance;
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
 use Lorekeeper\Core\Item\Equipment\Weapon\WeaponDamage;
@@ -16,9 +16,7 @@ use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\PlayerInventory;
-use Lorekeeper\Core\Player\PlayerItem;
-use Lorekeeper\Core\Player\PlayerItems;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroInventory;
 use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,24 +36,18 @@ final class BackpackTest extends TestCase
             Option\none(),
         );
         $sword->tags->add(ItemTag::MemberOnly);
-        $backpack = Backpack::of(
-            new PlayerInventory(
-                new PlayerItems([
-                    new PlayerItem($sword),
-                    new PlayerItem(
-                        new ClassItem(new ItemId(15_651), new ItemName('Healer'), new ItemLevel(1), Option\none()),
-                    ),
-                    new PlayerItem(
-                        new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)),
-                        new Quantity(4),
-                    ),
-                ]),
-                new Quantity(131),
-                new PlayerItems([new PlayerItem(
-                    new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1)),
-                )]),
-            ),
-        );
+        $ore = new Resource(new ItemId(42_658), new ItemName('Metal Ore'), new ItemLevel(1), new Quantity(1));
+        $ore->tags->add(ItemTag::Temporary);
+        $inventory = new HeroInventory(new Quantity(131), new Quantity(30));
+        $inventory
+            ->add($sword)
+            ->add(new ClassItem(new ItemId(15_651), new ItemName('Healer'), new ItemLevel(1), Option\none()))
+            ->add(
+                new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1), new Quantity(99)),
+                new Quantity(4),
+            )
+            ->add($ore);
+        $backpack = Backpack::of($inventory);
 
         static::assertSame(
             [

@@ -4,41 +4,18 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Item;
 
-use InvalidArgumentException;
-use Psl\Collection\Map;
-use Psl\Option;
+use Lorekeeper\Core\Support\Collection;
 
 /**
- * @template T of HoldsItem
+ * @template T of Item
+ *
+ * @extends Collection<ItemId, T>
  */
-abstract readonly class Inventory
+class Inventory extends Collection
 {
-    /** @var Map<positive-int, T> */
-    public Map $items;
-
-    /**
-     * @param list<T> $items
-     *
-     * @throws InvalidArgumentException
-     */
-    final public function __construct(array $items)
+    /** @param T $item */
+    final protected static function key(mixed $item): ItemId
     {
-        $byId = [];
-        foreach ($items as $holding) {
-            $id = $holding->item->id;
-            if (array_key_exists($id->value, $byId)) {
-                throw new InvalidArgumentException("Item {$id} is in the inventory more than once.");
-            }
-
-            $byId[$id->value] = $holding;
-        }
-
-        $this->items = new Map($byId);
-    }
-
-    /** @return Option\Option<T> */
-    public function find(ItemId $id): Option\Option
-    {
-        return Option\from_nullable($this->items->get($id->value));
+        return $item->id;
     }
 }

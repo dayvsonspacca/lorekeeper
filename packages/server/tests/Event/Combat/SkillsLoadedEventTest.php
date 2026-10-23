@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Combat;
 
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\Player\PlayerSkill;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Player\Hero\Class\HeroSkill;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Message\JsonMessage;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,7 +22,7 @@ final class SkillsLoadedEventTest extends TestCase
 
         static::assertSame(
             [SkillSlot::AutoAttack],
-            array_map(static fn(PlayerSkill $held): SkillSlot => $held->skill->slot, $event->skills),
+            array_map(static fn(HeroSkill $held): SkillSlot => $held->skill->slot, $event->skills),
         );
     }
 }

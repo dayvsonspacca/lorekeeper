@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\World\Quest\Requirement;
 
-use Lorekeeper\Core\Progression\Rank;
+use Lorekeeper\Core\Game\Rank\Rank;
 use Lorekeeper\Core\World\Faction\FactionId;
 use Lorekeeper\Core\World\Quest\Requirement\FactionRankRequirement;
 use PHPUnit\Framework\Attributes\Test;

@@ -122,8 +122,8 @@ final class Client
         MovedToMapEvent $arrival,
         LoginSucceededEvent $logged,
     ): void {
-        $connection->send(new LoadPlayerInventoryCommand($arrival->areaId, $logged->socketId));
-        $connection->send(new LoadPlayerDataCommand($arrival->areaId, $logged->socketId));
+        $connection->send(new LoadPlayerInventoryCommand($arrival->areaId, $logged->spawnId));
+        $connection->send(new LoadPlayerDataCommand($arrival->areaId, $logged->spawnId));
     }
 
     /** @param Closure(Event): void $subscriber */

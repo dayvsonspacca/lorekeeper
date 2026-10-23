@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tracking;
 
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
+use Lorekeeper\Core\World\Map\MapPlayer;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Event;
@@ -37,12 +38,11 @@ final readonly class StateTracking
 
     private static function arrived(CombatState $state, MovedToMapEvent $event, Identity $me): CombatState
     {
-        foreach ($event->players as $seen) {
-            if ($me->owns($seen->socketId)) {
-                return $seen->player->state;
-            }
-        }
-
-        return $state;
+        return $event
+            ->map
+            ->players
+            ->find($me->spawnId)
+            ->map(static fn(MapPlayer $seen): CombatState => $seen->state)
+            ->unwrapOr($state);
     }
 }

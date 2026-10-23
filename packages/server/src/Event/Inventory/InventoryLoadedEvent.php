@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Inventory;
 
-use InvalidArgumentException;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
 use Lorekeeper\Core\Item\ItemTag;
-use Lorekeeper\Core\Player\PlayerItem;
-use Lorekeeper\Core\Player\PlayerItems;
+use Lorekeeper\Core\Item\Traits\Stackable;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -24,8 +21,9 @@ use Psl\Type\Exception\CoercionException;
  */
 final readonly class InventoryLoadedEvent extends InventoryUpdatedEvent
 {
+    /** @param list<HeldItem> $items */
     public function __construct(
-        public PlayerItems $items,
+        public array $items,
     ) {}
 
     /** @return Option\Option<static> */
@@ -44,6 +42,7 @@ final readonly class InventoryLoadedEvent extends InventoryUpdatedEvent
                 'iQty' => Type\optional(Type\positive_int()),
                 'bUpg' => Type\optional(Type\bool()),
                 'bEquip' => Type\optional(Type\bool()),
+                'bWear' => Type\optional(Type\bool()),
             ], allowUnknownFields: true))
                 ->coerce($message->data['items'] ?? null);
             $procs = Type\optional(Type\dict(Type\array_key(), Type\mixed()))->coerce($message->data['procs'] ?? []);
@@ -53,28 +52,29 @@ final readonly class InventoryLoadedEvent extends InventoryUpdatedEvent
 
         $held = [];
         foreach ($items as $entry) {
+            if (array_key_exists($entry['ItemID'], $held)) {
+                throw new MalformedEventException(static::class, 'an item is in the inventory more than once');
+            }
+
             $item = ItemKinds::read($entry, static::class, $procs);
             if ($entry['bUpg'] ?? false) {
                 $item->tags->add(ItemTag::MemberOnly);
             }
 
-            $held[] = new PlayerItem(
+            $held[$entry['ItemID']] = new HeldItem(
                 $item,
-                $item instanceof ClassItem ? new Quantity(1) : new Quantity($entry['iQty'] ?? 1),
+                new Quantity($item instanceof Stackable ? $entry['iQty'] ?? 1 : 1),
                 $entry['bEquip'] ?? false,
+                $entry['bWear'] ?? false,
             );
         }
 
-        try {
-            return Option\some(new static(new PlayerItems($held)));
-        } catch (InvalidArgumentException $exception) {
-            throw new MalformedEventException(static::class, 'an item is in the inventory more than once', $exception);
-        }
+        return Option\some(new static(array_values($held)));
     }
 
     #[Override]
     public function summary(): string
     {
-        return 'Inventory loaded: ' . count($this->items->items) . ' items';
+        return 'Inventory loaded: ' . count($this->items) . ' items';
     }
 }

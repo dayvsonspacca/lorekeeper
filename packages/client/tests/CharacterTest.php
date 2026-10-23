@@ -5,23 +5,23 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tests;
 
 use Lorekeeper\Client\Character;
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Stat\Haste;
-use Lorekeeper\Core\CharacterClass\ClassCategory;
-use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Stat\Haste;
+use Lorekeeper\Core\Game\Combat\CombatState;
+use Lorekeeper\Core\Game\Level\Experience;
+use Lorekeeper\Core\Game\Setting\GameSetting;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassCategory;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\GameSetting;
-use Lorekeeper\Core\Player\PlayerItem;
-use Lorekeeper\Core\Player\PlayerItems;
+use Lorekeeper\Core\Player\Hero\HeroSettings;
+use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\Player\PlayerSettings;
-use Lorekeeper\Core\Progression\ClassPoints;
-use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapPad;
@@ -33,13 +33,12 @@ use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
-use Lorekeeper\Server\Event\Map\RoomPlayer;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
-use Lorekeeper\Server\SocketId;
 use Override;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -53,55 +52,57 @@ final class CharacterTest extends TestCase
     public function it_keeps_up_with_what_the_server_says_about_the_player(): void
     {
         $me = Fixture::me(level: 4);
-        $scales = new PlayerItem(new Resource(new ItemId(11_475), new ItemName('Dragon Scale'), new ItemLevel(1)));
+        $scales = new Resource(new ItemId(11_475), new ItemName('Dragon Scale'), new ItemLevel(1), new Quantity(99));
 
         $me->hear(new LeveledUpEvent(new PlayerLevel(5), new Experience(500)));
         $me->hear(new PlayersHealthChangedEvent([new PlayerHealth(new PlayerName('Hero'), new Health(189))]));
         $me->hear(
             new ClassChangedEvent(
-                new SocketId(122_628),
+                new PlayerSpawnId(122_628),
                 new ClassName('Blaze Binder'),
                 ClassCategory::Caster,
                 new ClassPoints(302_500),
                 Option\none(),
             ),
         );
-        $me->hear(new InventoryLoadedEvent(new PlayerItems([$scales])));
+        $me->hear(new InventoryLoadedEvent([new HeldItem($scales)]));
         $me->hear(new StatsUpdatedEvent([new Haste(0.331)]));
 
-        $player = $me->player();
-        static::assertSame('Hero', $player->name->value);
-        static::assertSame(5, $player->progress->level->value);
-        static::assertSame(189, $player->vitals->health->current->value);
-        static::assertSame('Blaze Binder', $player->class->class->name->value);
-        static::assertSame($scales, $player->inventory->find(new ItemId(11_475))->unwrap());
-        static::assertSame(0.331, $player->stats->haste->value);
+        $hero = $me->hero();
+        static::assertSame('Hero', $hero->name->value);
+        static::assertSame(5, $hero->level->value);
+        static::assertSame(189, $hero->vitals->health->current->value);
+        static::assertSame('Blaze Binder', $hero->class->class->name->value);
+        static::assertSame($scales, $hero->inventory->find(new ItemId(11_475))->unwrap());
+        static::assertSame(0.331, $hero->attributes->stats->haste->value);
     }
 
     #[Test]
     public function it_keeps_the_settings_the_player_came_in_with(): void
     {
-        $settings = new PlayerSettings([GameSetting::Goto]);
+        $settings = new HeroSettings([GameSetting::Goto]);
         $me = Fixture::me(level: 4, settings: $settings);
 
         $me->hear(new LeveledUpEvent(new PlayerLevel(5), new Experience(500)));
 
-        static::assertSame($settings, $me->player()->settings);
+        static::assertSame($settings, $me->hero()->settings);
     }
 
     #[Test]
     public function a_reward_left_in_the_drops_joins_the_inventory_once_picked_up(): void
     {
         $me = Fixture::me(level: 4);
-        $token = new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)));
+        $token = new HeldItem(
+            new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1), new Quantity(99)),
+        );
 
         $me->hear(new ItemDroppedEvent([$token]));
         static::assertSame($token, $me->drops()->find(new ItemId(42_657)));
-        static::assertSame(0, $me->player()->inventory->quantity(new ItemId(42_657)));
+        static::assertTrue($me->hero()->inventory->find(new ItemId(42_657))->isNone());
 
         $me->hear(new DropPickedUpEvent(new ItemId(42_657), new Quantity(1), new Quantity(1)));
         static::assertNull($me->drops()->find(new ItemId(42_657)));
-        static::assertSame(1, $me->player()->inventory->quantity(new ItemId(42_657)));
+        static::assertSame(1, $me->hero()->inventory->quantity(new ItemId(42_657)));
     }
 
     #[Test]
@@ -115,16 +116,15 @@ final class CharacterTest extends TestCase
             946,
             [],
             [
-                new RoomPlayer(
-                    new SocketId(122_628),
-                    new MapPlayer(
+                new MapPlayer(
+                    new Player(
+                        new PlayerSpawnId(122_628),
                         new PlayerName('Hero'),
                         new PlayerLevel(50),
                         Fixture::vitals(),
-                        $spot,
-                        CombatState::Fighting,
-                        true,
                     ),
+                    $spot,
+                    CombatState::Fighting,
                 ),
             ],
         ));
@@ -132,12 +132,12 @@ final class CharacterTest extends TestCase
         static::assertSame('oaklore', $me->location()->map->name->value);
         static::assertSame($spot, $me->location()->spot);
         static::assertSame(CombatState::Fighting, $me->state());
-        static::assertTrue($me->away());
-        static::assertSame(4, $me->player()->progress->level->value);
+        static::assertFalse($me->away());
+        static::assertSame(4, $me->hero()->level->value);
 
         $me->hear(new PlayersStateChangedEvent([new PlayerState(new PlayerName('Hero'), CombatState::Dead)]));
         static::assertSame(CombatState::Dead, $me->state());
-        static::assertFalse($me->player()->vitals->alive());
+        static::assertFalse($me->hero()->vitals->alive());
     }
 
     #[Test]
@@ -151,7 +151,7 @@ final class CharacterTest extends TestCase
             #[Override]
             public function update(SubjectInterface $subject): void
             {
-                $this->levels[] = $subject instanceof Character ? $subject->player()->progress->level->value : null;
+                $this->levels[] = $subject instanceof Character ? $subject->hero()->level->value : null;
             }
         };
 

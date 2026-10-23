@@ -6,9 +6,9 @@ namespace Lorekeeper\Client\Command\Combat;
 
 use InvalidArgumentException;
 use Lorekeeper\Client\Command\Command;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\AreaId;
-use Lorekeeper\Server\SocketId;
 use Override;
 
 final readonly class SupportPlayerCommand implements Command
@@ -19,7 +19,7 @@ final readonly class SupportPlayerCommand implements Command
     public function __construct(
         private AreaId $area,
         SkillSlot $skill,
-        private SocketId $player,
+        private PlayerSpawnId $player,
     ) {
         $this->code = match ($skill) {
             SkillSlot::First => 'a1',

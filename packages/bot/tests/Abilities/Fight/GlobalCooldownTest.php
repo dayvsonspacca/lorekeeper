@@ -6,12 +6,12 @@ namespace Lorekeeper\Bot\Tests\Abilities\Fight;
 
 use Lorekeeper\Bot\Abilities\Fight\GlobalCooldown;
 use Lorekeeper\Client\Tests\Fixture;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Attribute\Stat\Haste;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
-use Lorekeeper\Core\CharacterClass\Skill\Skill;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Stat\Haste;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillTarget;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;

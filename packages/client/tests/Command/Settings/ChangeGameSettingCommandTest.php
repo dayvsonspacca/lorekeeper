@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tests\Command\Settings;
 
 use Lorekeeper\Client\Command\Settings\ChangeGameSettingCommand;
-use Lorekeeper\Core\Player\GameSetting;
+use Lorekeeper\Core\Game\Setting\GameSetting;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Command\Combat;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\Combat\Targetable;
+use Lorekeeper\Core\Game\Combat\Traits\Targetable;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\AreaId;
 use Override;

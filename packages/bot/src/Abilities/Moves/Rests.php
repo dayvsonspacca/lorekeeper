@@ -9,7 +9,7 @@ use Lorekeeper\Client\Script\Await;
 use Lorekeeper\Client\Script\Instruction;
 use Lorekeeper\Client\Script\Pause;
 use Lorekeeper\Client\Script\TimedOut;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapSpot;

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tracking;
 
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Server\SocketId;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 
 final readonly class Identity
 {
     public function __construct(
-        public SocketId $socketId,
+        public PlayerSpawnId $spawnId,
         public PlayerName $name,
     ) {}
 
@@ -19,8 +19,8 @@ final readonly class Identity
         return strcasecmp($name->value, $this->name->value) === 0;
     }
 
-    public function owns(SocketId $socketId): bool
+    public function owns(PlayerSpawnId $spawnId): bool
     {
-        return $socketId->value === $this->socketId->value;
+        return $spawnId->equals($this->spawnId);
     }
 }

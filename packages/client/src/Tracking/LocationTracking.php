@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tracking;
 
 use Lorekeeper\Client\Location;
+use Lorekeeper\Core\World\Map\MapPlayer;
+use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 
@@ -16,15 +18,13 @@ final readonly class LocationTracking
             return $location;
         }
 
-        $spot = $location->spot;
-        foreach ($event->players as $seen) {
-            if (!$me->owns($seen->socketId)) {
-                continue;
-            }
+        $spot = $event
+            ->map
+            ->players
+            ->find($me->spawnId)
+            ->map(static fn(MapPlayer $seen): MapSpot => $seen->spot)
+            ->unwrapOr($location->spot);
 
-            $spot = $seen->player->spot;
-        }
-
-        return new Location($event->areaId, $event->roomId, $event->map, $spot);
+        return new Location($event->areaId, $event->map, $spot);
     }
 }

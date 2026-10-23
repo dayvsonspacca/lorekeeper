@@ -4,35 +4,33 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Bot\Abilities\Gear;
 
-use Lorekeeper\Core\Item\Equipment\Cape;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
-use Lorekeeper\Core\Item\Equipment\Helm;
-use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
+use Lorekeeper\Core\Item\Equipment\Equipment;
+use Lorekeeper\Core\Item\Equipment\Traits\Enchantable;
 use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementItem;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementRarity;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementType;
-use Lorekeeper\Core\Player\Player;
-use Lorekeeper\Core\Player\PlayerItem;
-use Lorekeeper\Core\World\Shop\CurrencyShopItem;
+use Lorekeeper\Core\Player\Hero\Hero;
+use Lorekeeper\Core\World\Shop\CurrencyShop;
 
 final readonly class BestEnhancement
 {
-    /** @param list<CurrencyShopItem> $offer */
-    public static function for(PlayerItem $held, EnhancementType $type, array $offer, Player $player): ?CurrencyShopItem
-    {
-        $usable = UsableEnhancements::among($offer, $held, $player);
-        usort($usable, static fn(CurrencyShopItem $a, CurrencyShopItem $b): int => self::rank($b) <=> self::rank($a));
+    public static function for(
+        Equipment&Enchantable $held,
+        EnhancementType $type,
+        CurrencyShop $shop,
+        Hero $hero,
+    ): ?EnhancementItem {
+        $usable = UsableEnhancements::among($shop, $held, $hero);
+        usort(
+            $usable,
+            static fn(EnhancementItem $a, EnhancementItem $b): int => (
+                self::strength($b->enhancement) <=> self::strength($a->enhancement)
+            ),
+        );
         $best = $usable[0] ?? null;
 
         return $best !== null && self::improves($best, $held, $type) ? $best : null;
-    }
-
-    private static function rank(CurrencyShopItem $sold): int
-    {
-        $item = $sold->item;
-
-        return $item instanceof EnhancementItem ? self::strength($item->enhancement) : 0;
     }
 
     private static function strength(Enhancement $enhancement): int
@@ -43,32 +41,17 @@ final readonly class BestEnhancement
         );
     }
 
-    private static function improves(CurrencyShopItem $best, PlayerItem $held, EnhancementType $type): bool
+    private static function improves(EnhancementItem $best, Enchantable $held, EnhancementType $type): bool
     {
-        $offered = $best->item;
-        $item = $held->item;
-        if (
-            !$offered instanceof EnhancementItem
-            || !$item instanceof Weapon
-            && !$item instanceof ClassItem
-            && !$item instanceof Helm
-            && !$item instanceof Cape
-        ) {
-            return false;
-        }
-
-        $current = $item->enhancement->unwrapOr(null);
-        if (
-            $current?->type === EnhancementType::Unhandled
-            || $offered->enhancement->type === EnhancementType::Unhandled
-        ) {
+        $current = $held->enhancement->unwrapOr(null);
+        if ($current?->type === EnhancementType::Unhandled || $best->enhancement->type === EnhancementType::Unhandled) {
             return false;
         }
 
         return (
             $current === null
             || $current->type !== $type
-            || self::strength($current) < self::strength($offered->enhancement)
+            || self::strength($current) < self::strength($best->enhancement)
         );
     }
 }

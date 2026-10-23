@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Combat;
 
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\CharacterClass\Passive\ClassPassive;
-use Lorekeeper\Core\CharacterClass\Passive\PassiveDescription;
-use Lorekeeper\Core\CharacterClass\Passive\PassiveName;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\SkillCost;
-use Lorekeeper\Core\CharacterClass\Skill\Damage\DamageMultiplier;
-use Lorekeeper\Core\CharacterClass\Skill\Damage\DamageSource;
-use Lorekeeper\Core\CharacterClass\Skill\Damage\SkillDamage;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Combat\CombatState;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Passive\ClassPassive;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Passive\PassiveDescription;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Passive\PassiveName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\ManaRestore;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\SkillCost;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Damage\DamageMultiplier;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Damage\DamageSource;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Damage\SkillDamage;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Player\Hero\Class\HeroSkill;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Combat\AttackRejectedEvent;
 use Lorekeeper\Server\Event\Combat\MonsterHealth;
@@ -63,7 +63,7 @@ final class CombatEventsTest extends TestCase
                 [SkillSlot::Fourth, SkillTarget::Self, new ManaCost(new Mana(0)), 20_000],
                 [SkillSlot::Potion, SkillTarget::Ally, new ManaCost(new Mana(0)), 60_000],
             ],
-            array_map(static fn(PlayerSkill $held): array => [
+            array_map(static fn(HeroSkill $held): array => [
                 $held->skill->slot,
                 $held->skill->target,
                 $held->skill->cost,
@@ -72,7 +72,7 @@ final class CombatEventsTest extends TestCase
         );
         static::assertSame(
             [true, true, false, false, true],
-            array_map(static fn(PlayerSkill $held): bool => $held->unlocked, $event->skills),
+            array_map(static fn(HeroSkill $held): bool => $held->unlocked, $event->skills),
         );
         static::assertSame('5 skills, 3 unlocked', $event->summary());
     }
@@ -93,7 +93,7 @@ final class CombatEventsTest extends TestCase
                 new ManaCost(new Mana(40)),
                 new ManaCost(new Mana(0)),
             ],
-            array_map(static fn(PlayerSkill $held): SkillCost => $held->skill->cost, $event->skills),
+            array_map(static fn(HeroSkill $held): SkillCost => $held->skill->cost, $event->skills),
         );
     }
 
@@ -198,11 +198,11 @@ final class CombatEventsTest extends TestCase
 
         static::assertSame(
             [3, 3, 3, 1, 3, 1],
-            array_map(static fn(PlayerSkill $held): int => $held->skill->targets->value, $event->skills),
+            array_map(static fn(HeroSkill $held): int => $held->skill->targets->value, $event->skills),
         );
         static::assertSame(
             [true, true, true, true, true, true],
-            array_map(static fn(PlayerSkill $held): bool => $held->unlocked, $event->skills),
+            array_map(static fn(HeroSkill $held): bool => $held->unlocked, $event->skills),
         );
     }
 

@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\CharacterClass;
 
-use Lorekeeper\Core\CharacterClass\ClassCategory;
-use Lorekeeper\Core\CharacterClass\ClassDescription;
-use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\Progression\ClassPoints;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassCategory;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassDescription;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
-use Lorekeeper\Server\SocketId;
 use Override;
 use Psl\Option;
 use Psl\Type;
@@ -28,7 +28,7 @@ final readonly class ClassChangedEvent implements Event
 
     /** @param Option\Option<ClassDescription> $description */
     public function __construct(
-        public SocketId $player,
+        public PlayerSpawnId $player,
         public ClassName $className,
         public ClassCategory $category,
         public ClassPoints $points,
@@ -59,7 +59,7 @@ final readonly class ClassChangedEvent implements Event
 
         return Option\some(
             new static(
-                new SocketId($data['uid']),
+                new PlayerSpawnId($data['uid']),
                 new ClassName($data['sClassName']),
                 self::category($data['sClassCat']),
                 new ClassPoints($data['iCP']),
@@ -82,6 +82,6 @@ final readonly class ClassChangedEvent implements Event
     #[Override]
     public function summary(): string
     {
-        return "Socket {$this->player->value} is {$this->className->value} ({$this->category->name}, {$this->points->value} CP)";
+        return "Spawn {$this->player->value} is {$this->className->value} ({$this->category->name}, {$this->points->value} CP)";
     }
 }

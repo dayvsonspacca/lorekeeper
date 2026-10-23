@@ -7,6 +7,7 @@
     "php": "~8.4.0 || ~8.5.0",
     "php-standard-library/type": "^6.2",
     "php-standard-library/collection": "^6.2",
+    "php-standard-library/comparison": "^6.2",
     "php-standard-library/option": "^6.2",
     "php-standard-library/date-time": "^6.2"
   },

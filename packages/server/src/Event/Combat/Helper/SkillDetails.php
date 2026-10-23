@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Combat\Helper;
 
-use Lorekeeper\Core\CharacterClass\Skill\Damage\DamageMultiplier;
-use Lorekeeper\Core\CharacterClass\Skill\Damage\DamageSource;
-use Lorekeeper\Core\CharacterClass\Skill\Damage\SkillDamage;
-use Lorekeeper\Core\CharacterClass\Skill\SkillDescription;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Damage\DamageMultiplier;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Damage\DamageSource;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Damage\SkillDamage;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillDescription;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Psl\Option;

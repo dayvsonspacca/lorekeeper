@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tracking;
 
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Attribute\Vitals;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayersManaChangedEvent;
@@ -17,107 +17,128 @@ use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 
-/** @mago-expect lint:cyclomatic-complexity */
+/**
+ * @mago-expect lint:cyclomatic-complexity
+ * @mago-expect lint:kan-defect
+ */
 final readonly class VitalsTracking
 {
-    public static function follow(Vitals $vitals, Event $event, Identity $me): Vitals
+    public static function follow(Vitals $vitals, Event $event, Identity $me): bool
     {
-        $next = match (true) {
-            $event instanceof PlayerVitalsUpdatedEvent => $me->is($event->name) ? $event->vitals : $vitals,
+        $before = self::reading($vitals);
+
+        match (true) {
+            $event instanceof PlayerVitalsUpdatedEvent && $me->is($event->name) => $vitals->recount(
+                $event->vitals->health,
+                $event->vitals->mana,
+            ),
             $event instanceof PlayersHealthChangedEvent => self::hit($vitals, $event, $me),
             $event instanceof PlayersManaChangedEvent => self::spent($vitals, $event, $me),
             $event instanceof PlayersStateChangedEvent => self::changed($vitals, $event, $me),
-            $event instanceof PlayerStateUpdatedEvent => self::updated($vitals, $event, $me),
-            $event instanceof ResurrectedEvent => self::full($vitals),
-            default => $vitals,
+            $event instanceof PlayerStateUpdatedEvent && $me->is($event->name) => self::updated($vitals, $event),
+            $event instanceof ResurrectedEvent => $vitals->revive(),
+            default => null,
         };
 
-        return self::same($vitals, $next) ? $vitals : $next;
+        return self::reading($vitals) !== $before;
     }
 
-    private static function changed(Vitals $vitals, PlayersStateChangedEvent $event, Identity $me): Vitals
+    private static function hit(Vitals $vitals, PlayersHealthChangedEvent $event, Identity $me): void
     {
         foreach ($event->players as $player) {
-            if ($me->is($player->player)) {
-                return self::stood($vitals, $player->state);
+            if (!$me->is($player->player)) {
+                continue;
             }
-        }
 
-        return $vitals;
+            self::health($vitals, $player->health);
+        }
     }
 
-    private static function updated(Vitals $vitals, PlayerStateUpdatedEvent $event, Identity $me): Vitals
+    private static function spent(Vitals $vitals, PlayersManaChangedEvent $event, Identity $me): void
     {
-        if (!$me->is($event->name)) {
-            return $vitals;
+        foreach ($event->players as $player) {
+            if (!$me->is($player->player)) {
+                continue;
+            }
+
+            self::mana($vitals, $player->mana);
         }
-
-        $stood = self::stood($vitals, $event->state);
-        $healed = $event->health === null ? $stood : self::health($stood, $event->health);
-
-        return $event->mana === null ? $healed : self::mana($healed, $event->mana);
     }
 
-    private static function stood(Vitals $vitals, CombatState $state): Vitals
+    private static function changed(Vitals $vitals, PlayersStateChangedEvent $event, Identity $me): void
     {
-        return match (true) {
-            $state === CombatState::Dead => self::health($vitals, new Health(0)),
-            $vitals->alive() => $vitals,
-            default => self::full($vitals),
+        foreach ($event->players as $player) {
+            if (!$me->is($player->player)) {
+                continue;
+            }
+
+            self::stood($vitals, $player->state);
+        }
+    }
+
+    private static function updated(Vitals $vitals, PlayerStateUpdatedEvent $event): void
+    {
+        self::stood($vitals, $event->state);
+        if ($event->health !== null) {
+            self::health($vitals, $event->health);
+        }
+
+        if ($event->mana !== null) {
+            self::mana($vitals, $event->mana);
+        }
+    }
+
+    private static function stood(Vitals $vitals, CombatState $state): void
+    {
+        if ($state === CombatState::Dead) {
+            $vitals->die();
+
+            return;
+        }
+
+        $vitals->revive();
+    }
+
+    private static function health(Vitals $vitals, Health $now): void
+    {
+        if ($now->value > $vitals->health->maximum->value) {
+            $vitals->recount(new Gauge($now, $now), $vitals->mana);
+
+            return;
+        }
+
+        $change = $now->value - $vitals->health->current->value;
+        match ($change <=> 0) {
+            -1 => $vitals->hurt(new Health(abs($change))),
+            1 => $vitals->heal(new Health(abs($change))),
+            default => null,
         };
     }
 
-    private static function full(Vitals $vitals): Vitals
+    private static function mana(Vitals $vitals, Mana $now): void
     {
-        return new Vitals(
-            new Gauge($vitals->health->maximum, $vitals->health->maximum),
-            new Gauge($vitals->mana->maximum, $vitals->mana->maximum),
-        );
-    }
+        if ($now->value > $vitals->mana->maximum->value) {
+            $vitals->recount($vitals->health, new Gauge($now, $now));
 
-    private static function hit(Vitals $vitals, PlayersHealthChangedEvent $event, Identity $me): Vitals
-    {
-        foreach ($event->players as $player) {
-            if ($me->is($player->player)) {
-                return self::health($vitals, $player->health);
-            }
+            return;
         }
 
-        return $vitals;
+        $change = $now->value - $vitals->mana->current->value;
+        match ($change <=> 0) {
+            -1 => $vitals->spend(new Mana(abs($change))),
+            1 => $vitals->regain(new Mana(abs($change))),
+            default => null,
+        };
     }
 
-    private static function spent(Vitals $vitals, PlayersManaChangedEvent $event, Identity $me): Vitals
+    /** @return list<int> */
+    private static function reading(Vitals $vitals): array
     {
-        foreach ($event->players as $player) {
-            if ($me->is($player->player)) {
-                return self::mana($vitals, $player->mana);
-            }
-        }
-
-        return $vitals;
-    }
-
-    private static function health(Vitals $vitals, Health $health): Vitals
-    {
-        $maximum = $vitals->health->maximum;
-
-        return new Vitals(new Gauge($health, $health->value > $maximum->value ? $health : $maximum), $vitals->mana);
-    }
-
-    private static function mana(Vitals $vitals, Mana $mana): Vitals
-    {
-        $maximum = $vitals->mana->maximum;
-
-        return new Vitals($vitals->health, new Gauge($mana, $mana->value > $maximum->value ? $mana : $maximum));
-    }
-
-    private static function same(Vitals $one, Vitals $other): bool
-    {
-        return (
-            $one->health->current->value === $other->health->current->value
-            && $one->health->maximum->value === $other->health->maximum->value
-            && $one->mana->current->value === $other->mana->current->value
-            && $one->mana->maximum->value === $other->mana->maximum->value
-        );
+        return [
+            $vitals->health->current->value,
+            $vitals->health->maximum->value,
+            $vitals->mana->current->value,
+            $vitals->mana->maximum->value,
+        ];
     }
 }

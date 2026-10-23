@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Quest\Reward;
 
-use Lorekeeper\Core\Progression\Reputation;
 use Lorekeeper\Core\World\Faction\FactionId;
+use Lorekeeper\Core\World\Faction\Reputation;
 
 final readonly class ReputationReward implements QuestReward
 {

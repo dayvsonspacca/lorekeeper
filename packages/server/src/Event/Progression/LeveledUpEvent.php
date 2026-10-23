@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Progression;
 
+use Lorekeeper\Core\Game\Level\Experience;
 use Lorekeeper\Core\Player\PlayerLevel;
-use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;

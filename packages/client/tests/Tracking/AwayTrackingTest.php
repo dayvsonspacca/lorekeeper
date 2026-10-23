@@ -8,9 +8,9 @@ use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Client\Tracking\AwayTracking;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Player\PlayerAwayUpdatedEvent;
-use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -37,6 +37,6 @@ final class AwayTrackingTest extends TestCase
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
+        return new Identity(new PlayerSpawnId(122_628), new PlayerName('Hero'));
     }
 }

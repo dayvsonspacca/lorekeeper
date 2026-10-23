@@ -9,22 +9,23 @@ use Lorekeeper\Apps\Desktop\Bots\Scene\Pulse;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Room;
 use Lorekeeper\Apps\Desktop\Bots\Scene\Scene;
 use Lorekeeper\Apps\Desktop\Tests\Characters;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\CharacterClass\CharacterClass;
-use Lorekeeper\Core\CharacterClass\ClassCategory;
-use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\CharacterClass\Passive\ClassPassive;
-use Lorekeeper\Core\CharacterClass\Passive\PassiveDescription;
-use Lorekeeper\Core\CharacterClass\Passive\PassiveName;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
-use Lorekeeper\Core\CharacterClass\Skill\Damage\DamageMultiplier;
-use Lorekeeper\Core\CharacterClass\Skill\Damage\DamageSource;
-use Lorekeeper\Core\CharacterClass\Skill\Damage\SkillDamage;
-use Lorekeeper\Core\CharacterClass\Skill\Skill;
-use Lorekeeper\Core\CharacterClass\Skill\SkillDescription;
-use Lorekeeper\Core\CharacterClass\Skill\SkillName;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\CharacterClass;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassCategory;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Passive\ClassPassive;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Passive\PassiveDescription;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Passive\PassiveName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Damage\DamageMultiplier;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Damage\DamageSource;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Damage\SkillDamage;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillDescription;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillTarget;
 use Lorekeeper\Core\Item\Equipment\Helm;
 use Lorekeeper\Core\Item\Equipment\Weapon\DamageVariance;
 use Lorekeeper\Core\Item\Equipment\Weapon\Weapon;
@@ -39,12 +40,9 @@ use Lorekeeper\Core\Item\Misc\Enhancement\Enhancement;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementEffect;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementRarity;
 use Lorekeeper\Core\Item\Misc\Enhancement\EnhancementType;
-use Lorekeeper\Core\Player\PlayerClass;
-use Lorekeeper\Core\Player\PlayerInventory;
-use Lorekeeper\Core\Player\PlayerItem;
-use Lorekeeper\Core\Player\PlayerItems;
-use Lorekeeper\Core\Player\PlayerSkill;
-use Lorekeeper\Core\Progression\ClassPoints;
+use Lorekeeper\Core\Player\Hero\Class\HeroClass;
+use Lorekeeper\Core\Player\Hero\Class\HeroSkill;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroInventory;
 use Lorekeeper\Core\Support\Quantity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -100,7 +98,7 @@ final class SceneTest extends TestCase
 
     private static function captured(): Scene
     {
-        $class = new PlayerClass(
+        $class = new HeroClass(
             new CharacterClass(
                 new ClassName('Mage'),
                 ClassCategory::Caster,
@@ -109,7 +107,7 @@ final class SceneTest extends TestCase
                 [new ClassPassive(new PassiveName('Arcane Flux'), new PassiveDescription('Spells cost less mana.'))],
             ),
             new ClassPoints(0),
-            [new PlayerSkill(
+            [new HeroSkill(
                 new Skill(
                     SkillSlot::First,
                     new SkillName('Wildfire'),
@@ -144,11 +142,11 @@ final class SceneTest extends TestCase
             ),
         );
         $hood = new Helm(new ItemId(2), new ItemName('Hood'), new ItemLevel(1), Option\none());
-        $inventory = new PlayerInventory(new PlayerItems([
-            new PlayerItem($hood, equipped: true),
-            new PlayerItem($blade, equipped: true),
-            new PlayerItem(new Helm(new ItemId(3), new ItemName('Spare Hood'), new ItemLevel(1), Option\none())),
-        ]), new Quantity(30));
+        $inventory = new HeroInventory(new Quantity(30), new Quantity(30));
+        $inventory->add($hood)->add($blade)->add(
+            new Helm(new ItemId(3), new ItemName('Spare Hood'), new ItemLevel(1), Option\none()),
+        );
+        $inventory->equipment->equip($hood)->equip($blade);
 
         return Scene::capture(
             Characters::me('Hero', 10, 'battleon', class: $class, inventory: $inventory),

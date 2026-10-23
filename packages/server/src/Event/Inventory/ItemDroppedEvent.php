@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Inventory;
 
 use Lorekeeper\Core\Item\ItemTag;
-use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Item\Helper\ItemKinds;
@@ -25,7 +24,7 @@ final readonly class ItemDroppedEvent implements Event
 {
     use NamedAfterClass;
 
-    /** @param non-empty-list<PlayerItem> $items */
+    /** @param non-empty-list<HeldItem> $items */
     public function __construct(
         public array $items,
     ) {}
@@ -57,7 +56,7 @@ final readonly class ItemDroppedEvent implements Event
                 $item->tags->add(ItemTag::MemberOnly);
             }
 
-            $dropped[] = new PlayerItem($item, new Quantity($entry['iQty']));
+            $dropped[] = new HeldItem($item, new Quantity($entry['iQty']));
         }
 
         return Option\some(new static($dropped));
@@ -68,7 +67,7 @@ final readonly class ItemDroppedEvent implements Event
     {
         return 'Dropped '
         . implode(', ', array_map(
-            static fn(PlayerItem $held): string => "{$held->quantity->value} {$held->item->name->value}",
+            static fn(HeldItem $held): string => "{$held->quantity->value} {$held->item->name->value}",
             $this->items,
         ));
     }

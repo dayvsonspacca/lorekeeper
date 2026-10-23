@@ -69,7 +69,7 @@ final class ClientTest extends TestCase
         ));
 
         static::assertInstanceOf(LoginSucceededEvent::class, $result);
-        static::assertSame(59_878, $result->socketId->value);
+        static::assertSame(59_878, $result->spawnId->value);
         static::assertSame(["<policy-file-request/>\0"], $sent);
     }
 

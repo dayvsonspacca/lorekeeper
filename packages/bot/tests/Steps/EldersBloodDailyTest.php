@@ -11,16 +11,16 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\PlayerItem;
-use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Quest\Quest;
+use Lorekeeper\Core\World\Quest\QuestGroup;
+use Lorekeeper\Core\World\Quest\QuestGroupId;
+use Lorekeeper\Core\World\Quest\QuestGroupNumber;
 use Lorekeeper\Core\World\Quest\QuestId;
-use Lorekeeper\Core\World\Quest\QuestMark;
 use Lorekeeper\Core\World\Quest\QuestName;
-use Lorekeeper\Core\World\Quest\QuestPeriod;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemIncrease;
@@ -42,7 +42,9 @@ final class EldersBloodDailyTest extends TestCase
     public function it_slays_fifty_gorillaphants_turns_them_in_and_picks_up_the_blood(): void
     {
         $me = Fixture::me(level: 30, map: 'battleon');
-        $blood = new PlayerItem(new Resource(new ItemId(5586), new ItemName("Elders' Blood"), new ItemLevel(1)));
+        $blood = new HeldItem(
+            new Resource(new ItemId(5586), new ItemName("Elders' Blood"), new ItemLevel(1), new Quantity(99)),
+        );
 
         [$steps, $result] = Play::run(Dailies::eldersBlood(), $me, [
             ...self::hunted(),
@@ -67,7 +69,7 @@ final class EldersBloodDailyTest extends TestCase
             Play::sent($steps),
         );
         static::assertEquals(new Done('all steps are done'), $result);
-        static::assertSame(1, $me->player()->inventory->quantity(new ItemId(5586)));
+        static::assertSame(1, $me->hero()->inventory->quantity(new ItemId(5586)));
     }
 
     #[Test]
@@ -86,7 +88,7 @@ final class EldersBloodDailyTest extends TestCase
         ]);
 
         static::assertEquals(new Done('all steps are done'), $result);
-        static::assertSame(11, $me->player()->inventory->quantity(new ItemId(5586)));
+        static::assertSame(11, $me->hero()->inventory->quantity(new ItemId(5586)));
         static::assertStringNotContainsString('getDrop', implode(' ', Play::sent($steps)));
     }
 
@@ -94,7 +96,7 @@ final class EldersBloodDailyTest extends TestCase
     public function it_stays_put_when_the_daily_was_already_done_today(): void
     {
         $me = Fixture::me(level: 30);
-        $me->hear(new QuestMarkedEvent(new QuestMark(QuestPeriod::Day, 0, 25)));
+        $me->hear(new QuestMarkedEvent(new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(25))));
 
         [$steps, $result] = Play::run(Dailies::eldersBlood(), $me, [
             Fixture::arrival('arcangrove', 7_101, ['LeftBack' => [2, 30]]),
@@ -176,8 +178,13 @@ final class EldersBloodDailyTest extends TestCase
             null,
             null,
             new QuestItemsReceivedEvent([
-                new PlayerItem(
-                    new Resource(new ItemId(5574), new ItemName('Slain Gorillaphant'), new ItemLevel(1)),
+                new HeldItem(
+                    new Resource(
+                        new ItemId(5574),
+                        new ItemName('Slain Gorillaphant'),
+                        new ItemLevel(1),
+                        new Quantity(99),
+                    ),
                     new Quantity(50),
                 ),
             ]),
@@ -186,10 +193,10 @@ final class EldersBloodDailyTest extends TestCase
 
     private static function holding(int $blood): InventoryLoadedEvent
     {
-        return new InventoryLoadedEvent(new PlayerItems([new PlayerItem(
-            new Resource(new ItemId(5586), new ItemName("Elders' Blood"), new ItemLevel(1)),
+        return new InventoryLoadedEvent([new HeldItem(
+            new Resource(new ItemId(5586), new ItemName("Elders' Blood"), new ItemLevel(1), new Quantity(99)),
             new Quantity($blood),
-        )]));
+        )]);
     }
 
     private static function loaded(): QuestLoadedEvent
@@ -197,11 +204,11 @@ final class EldersBloodDailyTest extends TestCase
         return new QuestLoadedEvent([new Quest(
             new QuestId(802),
             new QuestName("Experiment 107: Elder's Blood Potion"),
+            [],
+            [],
+            [],
             Option\none(),
-            [],
-            [],
-            [],
-            Option\some(new QuestMark(QuestPeriod::Day, 0, 25)),
+            Option\some(new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(25))),
         )]);
     }
 }

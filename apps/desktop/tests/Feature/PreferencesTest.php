@@ -10,7 +10,7 @@ use Livewire\Livewire;
 use Lorekeeper\Apps\Desktop\Filament\Pages\ManagePreferences;
 use Lorekeeper\Apps\Desktop\Models\Preferences;
 use Lorekeeper\Apps\Desktop\Tests\TestCase;
-use Lorekeeper\Core\Player\GameSetting;
+use Lorekeeper\Core\Game\Setting\GameSetting;
 use PHPUnit\Framework\Attributes\Test;
 
 final class PreferencesTest extends TestCase

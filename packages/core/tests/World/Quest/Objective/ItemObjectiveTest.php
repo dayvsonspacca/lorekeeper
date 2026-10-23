@@ -18,7 +18,7 @@ final class ItemObjectiveTest extends TestCase
     #[Test]
     public function it_holds_item_and_quantity(): void
     {
-        $gem = new Resource(new ItemId(1234), new ItemName('Realm Gem'), new ItemLevel(1));
+        $gem = new Resource(new ItemId(1234), new ItemName('Realm Gem'), new ItemLevel(1), new Quantity(100));
         $objective = new ItemObjective($gem, new Quantity(10));
 
         static::assertSame($gem, $objective->item);

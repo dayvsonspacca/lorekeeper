@@ -10,9 +10,11 @@ use Lorekeeper\Client\Tracking\AwayTracking;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Client\Tracking\LocationTracking;
 use Lorekeeper\Client\Tracking\StateTracking;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
+use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapPlayer;
@@ -21,8 +23,6 @@ use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
-use Lorekeeper\Server\Event\Map\RoomPlayer;
-use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -52,12 +52,13 @@ final class ArrivalTrackingTest extends TestCase
     }
 
     #[Test]
-    public function it_takes_its_state_and_whether_it_is_away_from_where_it_arrives(): void
+    public function it_takes_its_state_from_where_it_arrives_and_stays_as_away_as_it_was(): void
     {
         $arrival = self::arrival(new MapSpot(new MapCell('r3'), MapPad::Left));
 
         static::assertSame(CombatState::Fighting, StateTracking::follow(CombatState::Idle, $arrival, self::me()));
-        static::assertTrue(AwayTracking::follow(false, $arrival, self::me()));
+        static::assertFalse(AwayTracking::follow(false, $arrival, self::me()));
+        static::assertTrue(AwayTracking::follow(true, $arrival, self::me()));
     }
 
     #[Test]
@@ -87,7 +88,7 @@ final class ArrivalTrackingTest extends TestCase
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
+        return new Identity(new PlayerSpawnId(122_628), new PlayerName('Hero'));
     }
 
     private static function arrival(MapSpot $spot): MovedToMapEvent
@@ -97,27 +98,16 @@ final class ArrivalTrackingTest extends TestCase
             946,
             [],
             [
-                new RoomPlayer(
-                    new SocketId(1),
-                    new MapPlayer(
-                        new PlayerName('Someone'),
-                        new PlayerLevel(80),
-                        Fixture::vitals(),
-                        new MapSpot(new MapCell('Enter'), MapPad::Spawn),
-                        CombatState::Idle,
-                        false,
-                    ),
-                ),
-                new RoomPlayer(
-                    new SocketId(122_628),
-                    new MapPlayer(
+                Fixture::seen(1, name: 'Someone'),
+                new MapPlayer(
+                    new Player(
+                        new PlayerSpawnId(122_628),
                         new PlayerName('Hero'),
                         new PlayerLevel(50),
                         Fixture::vitals(),
-                        $spot,
-                        CombatState::Fighting,
-                        true,
                     ),
+                    $spot,
+                    CombatState::Fighting,
                 ),
             ],
         );

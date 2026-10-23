@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Item;
 
-use Lorekeeper\Core\Support\Tag\Taggable;
-use Lorekeeper\Core\Support\Tag\Tags;
+use Lorekeeper\Core\Game\Tag\Tags;
+use Lorekeeper\Core\Game\Tag\Traits\Taggable;
 
-abstract readonly class Item
+abstract class Item
 {
     /** @use Taggable<ItemTag> */
     use Taggable;
 
     public function __construct(
-        public ItemId $id,
-        public ItemName $name,
-        public ItemLevel $level,
+        public readonly ItemId $id,
+        public readonly ItemName $name,
+        public readonly ItemLevel $level,
     ) {
         $this->tags = new Tags();
     }

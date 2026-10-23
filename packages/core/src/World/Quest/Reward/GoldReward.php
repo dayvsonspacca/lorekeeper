@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Quest\Reward;
 
-use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\World\Currency\Gold;
 
 final readonly class GoldReward implements QuestReward
 {

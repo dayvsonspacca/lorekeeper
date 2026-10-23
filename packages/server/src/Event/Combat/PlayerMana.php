@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Combat;
 
-use Lorekeeper\Core\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Mana;
 use Lorekeeper\Core\Player\PlayerName;
 
 final readonly class PlayerMana

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Bots\Scene;
 
 use Lorekeeper\Client\Character;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
 use Lorekeeper\Server\Event\Event;
@@ -55,7 +55,7 @@ final class Witness
             $this->room = Room::of($me->location()->map);
         }
 
-        $class = $me->player()->class;
+        $class = $me->hero()->class;
         $rank = $class->rank()->value;
         if ($this->rank !== null && $rank > $this->rank) {
             $this->feed = $this->feed->add(
@@ -77,7 +77,7 @@ final class Witness
         $seen = implode('|', [
             $me->state()->name,
             $me->location()->map->name->value,
-            $me->player()->progress->level->value,
+            $me->hero()->level->value,
             $rank,
             $me->away() ? 'away' : 'here',
         ]);
@@ -99,7 +99,7 @@ final class Witness
             $this->rewarded($event, $now);
         }
 
-        $this->room = $this->room->heard($event, $me->player()->name, $now);
+        $this->room = $this->room->heard($event, $me->hero()->name, $now);
         $this->feed = $this->remembered($event, $now);
 
         return $event instanceof MonstersHealthChangedEvent ? $this->throttled($now) : $this->capture($now);

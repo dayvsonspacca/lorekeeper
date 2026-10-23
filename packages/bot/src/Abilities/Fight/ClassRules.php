@@ -7,10 +7,10 @@ namespace Lorekeeper\Bot\Abilities\Fight;
 use Lorekeeper\Bot\Abilities\Fight\Rule\HealthBelow;
 use Lorekeeper\Bot\Abilities\Fight\Rule\ManaAbove;
 use Lorekeeper\Bot\Abilities\Fight\Rule\SkillRule;
-use Lorekeeper\Core\Attribute\Vitals;
-use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\CharacterClass\Skill\Skill;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
 
 final readonly class ClassRules
 {

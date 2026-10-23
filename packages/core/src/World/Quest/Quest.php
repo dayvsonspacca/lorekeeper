@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Quest;
 
+use Lorekeeper\Core\Game\Tag\Tags;
+use Lorekeeper\Core\Game\Tag\Traits\Taggable;
 use Lorekeeper\Core\World\Quest\Objective\QuestObjective;
 use Lorekeeper\Core\World\Quest\Requirement\QuestRequirement;
 use Lorekeeper\Core\World\Quest\Reward\QuestReward;
@@ -11,22 +13,27 @@ use Psl\Option\Option;
 
 final readonly class Quest
 {
+    /** @use Taggable<QuestTag> */
+    use Taggable;
+
     /**
-     * @param Option<QuestDescription> $description
      * @param list<QuestRequirement> $requirements
      * @param list<QuestObjective> $objectives
      * @param list<QuestReward> $rewards
-     * @param Option<QuestMark> $mark
+     * @param Option<QuestDescription> $description
+     * @param Option<QuestGroupId> $groupId
      *
      * @mago-expect lint:excessive-parameter-list
      */
     public function __construct(
         public QuestId $id,
         public QuestName $name,
-        public Option $description,
         public array $requirements,
         public array $objectives,
         public array $rewards,
-        public Option $mark,
-    ) {}
+        public Option $description,
+        public Option $groupId,
+    ) {
+        $this->tags = new Tags();
+    }
 }

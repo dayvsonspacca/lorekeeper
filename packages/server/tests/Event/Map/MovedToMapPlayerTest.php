@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Map;
 
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;
@@ -28,7 +29,10 @@ final class MovedToMapPlayerTest extends TestCase
     {
         static::assertSame(
             $expected,
-            MovedToMapEvent::from(self::message(self::arrive($pad, 2585)))->unwrap()->players[0]->player->spot->pad,
+            MovedToMapEvent::from(self::message(self::arrive($pad, 2585)))
+                ->unwrap()
+                ->map->players->find(new PlayerSpawnId(116_500))->unwrap()
+                ->spot->pad,
         );
     }
 
@@ -65,7 +69,6 @@ final class MovedToMapPlayerTest extends TestCase
                 'intMP' => 100,
                 'intHPMax' => 2585,
                 'intMPMax' => 100,
-                'afk' => false,
             ]],
         ]]], flags: JSON_THROW_ON_ERROR);
     }

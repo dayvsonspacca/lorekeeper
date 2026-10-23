@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\World\Quest\Reward;
 
-use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\Game\Level\Experience;
 use Lorekeeper\Core\World\Quest\Reward\ExperienceReward;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Command\Settings;
 
 use Lorekeeper\Client\Command\Command;
-use Lorekeeper\Core\Player\GameSetting;
+use Lorekeeper\Core\Game\Setting\GameSetting;
 use Override;
 
 final readonly class ChangeGameSettingCommand implements Command

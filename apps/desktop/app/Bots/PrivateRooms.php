@@ -12,7 +12,7 @@ use Lorekeeper\Client\Command\Map\JoinMapCommand;
 use Lorekeeper\Client\Script\Script;
 use Lorekeeper\Client\Script\Send;
 use Lorekeeper\Core\World\Map\MapName;
-use Lorekeeper\Server\RoomId;
+use Lorekeeper\Core\World\Map\MapRoom;
 use Override;
 
 /**
@@ -26,18 +26,19 @@ final readonly class PrivateRooms implements Script
 
     public const int HIGHEST = 99_999;
 
-    /** @var Closure(MapName): RoomId */
+    /** @var Closure(MapName): MapRoom */
     private Closure $rooms;
 
     /**
      * @param Script<TResult> $script
-     * @param null|Closure(MapName): RoomId $rooms
+     * @param null|Closure(MapName): MapRoom $rooms
      */
     public function __construct(
         private Script $script,
         ?Closure $rooms = null,
     ) {
-        $this->rooms = $rooms ?? static fn(MapName $map): RoomId => new RoomId(random_int(self::LOWEST, self::HIGHEST));
+        $this->rooms =
+            $rooms ?? static fn(MapName $map): MapRoom => new MapRoom(random_int(self::LOWEST, self::HIGHEST));
     }
 
     /**

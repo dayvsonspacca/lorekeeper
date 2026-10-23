@@ -31,7 +31,7 @@ final readonly class FightToLevel implements Action
     #[Override]
     public function play(StepScript $bot): Generator
     {
-        $reached = fn(): bool => $bot->me()->player()->progress->level->value >= $this->level->value;
+        $reached = fn(): bool => $bot->me()->hero()->level->value >= $this->level->value;
         if (!$reached()) {
             yield from $bot->kill($this->spot, $bot->attackIn($this->spot->cell, $this->monster), $reached);
         }

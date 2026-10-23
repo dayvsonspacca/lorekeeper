@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Player;
 
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Combat\Helper\CombatStates;
 use Lorekeeper\Server\Exception\MalformedEventException;

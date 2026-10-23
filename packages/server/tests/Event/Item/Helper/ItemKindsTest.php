@@ -6,7 +6,7 @@ namespace Lorekeeper\Server\Tests\Event\Item\Helper;
 
 use Lorekeeper\Core\Item\Equipment\Armor;
 use Lorekeeper\Core\Item\Equipment\Cape;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassItem;
 use Lorekeeper\Core\Item\Equipment\GroundItem;
 use Lorekeeper\Core\Item\Equipment\Helm;
 use Lorekeeper\Core\Item\Equipment\Necklace;
@@ -18,6 +18,7 @@ use Lorekeeper\Core\Item\House\HouseItem;
 use Lorekeeper\Core\Item\House\HouseItemType;
 use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemLevel;
+use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Boost;
 use Lorekeeper\Core\Item\Misc\Enhancement\EffectDescription;
 use Lorekeeper\Core\Item\Misc\Enhancement\EffectName;
@@ -232,6 +233,44 @@ final class ItemKindsTest extends TestCase
         $this->expectException(MalformedEventException::class);
 
         self::read('Enhancement');
+    }
+
+    #[Test]
+    public function a_resource_or_boost_stacks_as_high_as_the_item_says(): void
+    {
+        $scales = ItemKinds::read([
+            'ItemID' => 11_475,
+            'sName' => 'Dragon Scale',
+            'sType' => 'Item',
+            'iLvl' => 1,
+            'iStk' => 1000,
+        ], InventoryLoadedEvent::class);
+        $boost = ItemKinds::read([
+            'ItemID' => 19_189,
+            'sName' => 'Experience Boost',
+            'sType' => 'ServerUse',
+            'iLvl' => 1,
+        ], InventoryLoadedEvent::class);
+
+        static::assertInstanceOf(Resource::class, $scales);
+        static::assertSame(1000, $scales->stack->value);
+        static::assertInstanceOf(Boost::class, $boost);
+        static::assertSame(1, $boost->stack->value);
+    }
+
+    #[Test]
+    public function an_item_the_game_marks_as_temporary_is_tagged_so(): void
+    {
+        $ore = ItemKinds::read([
+            'ItemID' => 42_658,
+            'sName' => 'Metal Ore',
+            'sType' => 'Quest Item',
+            'iLvl' => 1,
+            'bTemp' => true,
+        ], InventoryLoadedEvent::class);
+
+        static::assertTrue($ore->tags->has(ItemTag::Temporary));
+        static::assertFalse(self::read('Item')->tags->has(ItemTag::Temporary));
     }
 
     #[Test]

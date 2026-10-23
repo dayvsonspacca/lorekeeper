@@ -5,20 +5,17 @@ declare(strict_types=1);
 namespace Lorekeeper\Server\Event\Shop;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Currency\AdventureCoins;
-use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\Item\Inventory;
 use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemPrice;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Support\Quantity;
+use Lorekeeper\Core\World\Currency\AdventureCoins;
+use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Core\World\Shop\CurrencyShop;
-use Lorekeeper\Core\World\Shop\CurrencyShopInventory;
-use Lorekeeper\Core\World\Shop\CurrencyShopItem;
 use Lorekeeper\Core\World\Shop\MergeCost;
 use Lorekeeper\Core\World\Shop\MergeShop;
-use Lorekeeper\Core\World\Shop\MergeShopInventory;
-use Lorekeeper\Core\World\Shop\MergeShopItem;
 use Lorekeeper\Core\World\Shop\Shop;
 use Lorekeeper\Core\World\Shop\ShopId;
 use Lorekeeper\Core\World\Shop\ShopName;
@@ -84,10 +81,21 @@ final readonly class ShopLoadedEvent implements Event
         $id = new ShopId($info['ShopID']);
         $name = new ShopName($info['sName']);
 
+        $items = [];
+        $prices = [];
+        $costs = [];
+        foreach ($info['items'] as $entry) {
+            $items[] = self::item($entry);
+            $prices[$entry['ItemID']] = self::price($entry);
+            $costs[$entry['ItemID']] = self::costs($entry);
+        }
+
         try {
+            /** @var Inventory<Item> $inventory */
+            $inventory = new Inventory($items);
             $shop = $info['bMerge'] ?? false
-                ? new MergeShop($id, $name, new MergeShopInventory(array_map(self::merged(...), $info['items'])))
-                : new CurrencyShop($id, $name, new CurrencyShopInventory(array_map(self::sold(...), $info['items'])));
+                ? new MergeShop($id, $name, $inventory, $costs)
+                : new CurrencyShop($id, $name, $inventory, $prices);
         } catch (InvalidArgumentException $exception) {
             throw new MalformedEventException(static::class, $exception->getMessage(), $exception);
         }
@@ -107,43 +115,32 @@ final readonly class ShopLoadedEvent implements Event
     public function summary(): string
     {
         $shop = $this->shop;
-        $count = $shop instanceof CurrencyShop || $shop instanceof MergeShop ? count($shop->inventory->items) : 0;
+        $count = $shop instanceof CurrencyShop || $shop instanceof MergeShop ? count($shop->inventory) : 0;
 
         return "{$shop->name->value}: {$count} items";
     }
 
-    /**
-     * @param ShopEntry $entry
-     *
-     * @throws MalformedEventException
-     */
-    private static function sold(array $entry): CurrencyShopItem
+    /** @param ShopEntry $entry */
+    private static function price(array $entry): ItemPrice
     {
         $cost = $entry['iCost'] ?? 0;
 
-        return new CurrencyShopItem(
-            self::item($entry),
-            new ItemPrice($entry['bCoins'] ?? false ? new AdventureCoins($cost) : new Gold($cost)),
-        );
+        return new ItemPrice($entry['bCoins'] ?? false ? new AdventureCoins($cost) : new Gold($cost));
     }
 
     /**
      * @param ShopEntry $entry
      *
-     * @throws MalformedEventException
-     * @throws InvalidArgumentException
+     * @return list<MergeCost>
      */
-    private static function merged(array $entry): MergeShopItem
+    private static function costs(array $entry): array
     {
-        return new MergeShopItem(
-            self::item($entry),
-            array_map(
-                static fn(array $material): MergeCost => new MergeCost(
-                    new ItemId($material['ItemID']),
-                    new Quantity($material['iQty']),
-                ),
-                $entry['turnin'] ?? [],
+        return array_map(
+            static fn(array $material): MergeCost => new MergeCost(
+                new ItemId($material['ItemID']),
+                new Quantity($material['iQty']),
             ),
+            $entry['turnin'] ?? [],
         );
     }
 

@@ -7,7 +7,7 @@ namespace Lorekeeper\Core\Item\Equipment;
 use Lorekeeper\Core\Item\EquipmentSlot;
 use Override;
 
-final readonly class GroundItem extends Equipment
+final class GroundItem extends Equipment
 {
     #[Override]
     public function slot(): EquipmentSlot

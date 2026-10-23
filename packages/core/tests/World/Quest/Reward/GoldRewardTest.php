@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\World\Quest\Reward;
 
-use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Core\World\Quest\Reward\GoldReward;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

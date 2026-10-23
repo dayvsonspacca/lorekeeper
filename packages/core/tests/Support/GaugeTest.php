@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Tests\Support;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Health;
 use Lorekeeper\Core\Support\Gauge;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;

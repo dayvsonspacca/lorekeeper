@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Combat;
 
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;

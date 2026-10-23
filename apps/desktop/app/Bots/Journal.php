@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Bots;
 
 use Lorekeeper\Client\Character;
+use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemIncrease;
 use Lorekeeper\Server\Event\Inventory\ItemsIncreasedEvent;
@@ -70,7 +71,7 @@ final class Journal
     }
 
     /**
-     * @param list<PlayerItem> $items
+     * @param list<HeldItem> $items
      *
      * @return list<array{string, LogLevel}>
      */
@@ -82,7 +83,7 @@ final class Journal
     }
 
     /**
-     * @param list<PlayerItem> $items
+     * @param list<HeldItem> $items
      *
      * @return list<ItemId>
      */
@@ -106,7 +107,7 @@ final class Journal
     {
         $lines = [];
         foreach ($items as $item) {
-            $held = $me?->player()->inventory->quantity($item) ?? 0;
+            $held = $me?->hero()->inventory->quantity($item) ?? 0;
             if ($held !== 1 && ($held % self::EVERY) !== 0) {
                 continue;
             }
@@ -130,14 +131,12 @@ final class Journal
         }
 
         return $me
-            ->player()
-            ->inventory->find($item)->map(static fn(PlayerItem $held): string => $held->item->name->value)->unwrapOr(
-                $named,
-            );
+            ->hero()
+            ->inventory->find($item)->map(static fn(Item $held): string => $held->name->value)->unwrapOr($named);
     }
 
     private function held(ItemIncrease $got, ?Character $me): int
     {
-        return $got->held->value ?? $me?->player()->inventory->quantity($got->item) ?? $got->quantity->value;
+        return $got->held->value ?? $me?->hero()->inventory->quantity($got->item) ?? $got->quantity->value;
     }
 }

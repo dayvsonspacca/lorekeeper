@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Tests\Event\Player;
 
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
 use Lorekeeper\Server\Exception\MalformedEventException;

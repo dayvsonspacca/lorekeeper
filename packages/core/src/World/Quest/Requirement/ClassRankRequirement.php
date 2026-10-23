@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Quest\Requirement;
 
-use Lorekeeper\Core\CharacterClass\ClassId;
-use Lorekeeper\Core\Progression\Rank;
+use Lorekeeper\Core\Game\Rank\Rank;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassId;
 
 final readonly class ClassRankRequirement implements QuestRequirement
 {

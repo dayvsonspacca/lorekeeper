@@ -27,6 +27,6 @@ final readonly class LevelAtLeast implements Check
     {
         yield from [];
 
-        return $bot->me()->player()->progress->level->value >= $this->level->value;
+        return $bot->me()->hero()->level->value >= $this->level->value;
     }
 }

@@ -7,11 +7,12 @@ namespace Lorekeeper\Client\Tests\Tracking;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Client\Tracking\VitalsTracking;
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Attribute\Vitals;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\Event\Combat\PlayerHealth;
 use Lorekeeper\Server\Event\Combat\PlayerMana;
 use Lorekeeper\Server\Event\Combat\PlayersHealthChangedEvent;
@@ -23,7 +24,6 @@ use Lorekeeper\Server\Event\Events;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
 use Lorekeeper\Server\Message\JsonMessage;
-use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -40,23 +40,23 @@ final class VitalsTrackingTest extends TestCase
             new PlayerVitalsUpdatedEvent(new PlayerName('Someone'), Fixture::vitals(10, 10, 10, 10)),
             self::me(),
         );
+        static::assertFalse($theirs);
+        static::assertSame([390, 390, 100, 100], self::values($vitals));
+
         $mine = VitalsTracking::follow(
             $vitals,
             new PlayerVitalsUpdatedEvent(new PlayerName('HERO'), Fixture::vitals(2585, 2585, 90, 100)),
             self::me(),
         );
-
-        static::assertSame($vitals, $theirs);
-        static::assertSame([2585, 2585, 90, 100], self::values($mine));
+        static::assertTrue($mine);
+        static::assertSame([2585, 2585, 90, 100], self::values($vitals));
     }
 
     #[Test]
-    public function it_keeps_the_same_vitals_when_nothing_changes(): void
+    public function it_says_nothing_changed_when_the_vitals_are_the_same(): void
     {
-        $vitals = Fixture::vitals();
-
-        static::assertSame($vitals, VitalsTracking::follow(
-            $vitals,
+        static::assertFalse(VitalsTracking::follow(
+            Fixture::vitals(),
             new PlayerVitalsUpdatedEvent(new PlayerName('Hero'), Fixture::vitals()),
             self::me(),
         ));
@@ -65,80 +65,108 @@ final class VitalsTrackingTest extends TestCase
     #[Test]
     public function a_fight_changes_health_and_mana_but_not_how_high_they_go(): void
     {
-        $hit = VitalsTracking::follow(
-            Fixture::vitals(),
+        $vitals = Fixture::vitals();
+
+        VitalsTracking::follow(
+            $vitals,
             new PlayersHealthChangedEvent([
                 new PlayerHealth(new PlayerName('Someone'), new Health(1)),
                 new PlayerHealth(new PlayerName('Hero'), new Health(189)),
             ]),
             self::me(),
         );
-        $spent = VitalsTracking::follow(
-            $hit,
+        VitalsTracking::follow(
+            $vitals,
             new PlayersManaChangedEvent([new PlayerMana(new PlayerName('Hero'), new Mana(87))]),
             self::me(),
         );
 
-        static::assertSame([189, 390, 87, 100], self::values($spent));
+        static::assertSame([189, 390, 87, 100], self::values($vitals));
+    }
+
+    #[Test]
+    public function healing_and_regaining_mana_raise_them_back(): void
+    {
+        $vitals = Fixture::vitals(health: 189, mana: 20);
+
+        VitalsTracking::follow(
+            $vitals,
+            new PlayersHealthChangedEvent([new PlayerHealth(new PlayerName('Hero'), new Health(300))]),
+            self::me(),
+        );
+        VitalsTracking::follow(
+            $vitals,
+            new PlayersManaChangedEvent([new PlayerMana(new PlayerName('Hero'), new Mana(64))]),
+            self::me(),
+        );
+
+        static::assertSame([300, 390, 64, 100], self::values($vitals));
     }
 
     #[Test]
     public function more_than_the_maximum_it_knew_becomes_the_new_maximum(): void
     {
-        $healed = VitalsTracking::follow(
-            Fixture::vitals(),
-            new PlayersHealthChangedEvent([
-                new PlayerHealth(new PlayerName('Hero'), new Health(450)),
-            ]),
+        $vitals = Fixture::vitals();
+
+        VitalsTracking::follow(
+            $vitals,
+            new PlayersHealthChangedEvent([new PlayerHealth(new PlayerName('Hero'), new Health(450))]),
+            self::me(),
+        );
+        VitalsTracking::follow(
+            $vitals,
+            new PlayersManaChangedEvent([new PlayerMana(new PlayerName('Hero'), new Mana(120))]),
             self::me(),
         );
 
-        static::assertSame([450, 450, 100, 100], self::values($healed));
+        static::assertSame([450, 450, 120, 120], self::values($vitals));
     }
 
     #[Test]
     public function dying_leaves_no_health_and_coming_back_fills_health_and_mana(): void
     {
-        $dead = VitalsTracking::follow(
-            Fixture::vitals(health: 189, mana: 20),
+        $vitals = Fixture::vitals(health: 189, mana: 20);
+
+        VitalsTracking::follow(
+            $vitals,
             new PlayersStateChangedEvent([new PlayerState(new PlayerName('Hero'), CombatState::Dead)]),
             self::me(),
         );
-        $back = VitalsTracking::follow($dead, new ResurrectedEvent(), self::me());
+        static::assertFalse($vitals->alive());
+        static::assertSame([0, 390, 20, 100], self::values($vitals));
 
-        static::assertFalse($dead->alive());
-        static::assertSame([0, 390, 20, 100], self::values($dead));
-        static::assertSame([390, 390, 100, 100], self::values($back));
+        static::assertTrue(VitalsTracking::follow($vitals, new ResurrectedEvent(), self::me()));
+        static::assertSame([390, 390, 100, 100], self::values($vitals));
     }
 
     #[Test]
     public function standing_again_without_a_resurrection_fills_health_and_mana(): void
     {
-        $dead = VitalsTracking::follow(
-            Fixture::vitals(health: 189, mana: 20),
+        $vitals = Fixture::vitals(health: 189, mana: 20);
+        VitalsTracking::follow(
+            $vitals,
             new PlayersStateChangedEvent([new PlayerState(new PlayerName('Hero'), CombatState::Dead)]),
             self::me(),
         );
 
-        $someoneElse = VitalsTracking::follow(
-            $dead,
+        static::assertFalse(VitalsTracking::follow(
+            $vitals,
             new PlayerStateUpdatedEvent(new PlayerName('Someone'), CombatState::Idle),
             self::me(),
-        );
-        $stillDead = VitalsTracking::follow(
-            $dead,
+        ));
+        static::assertFalse(VitalsTracking::follow(
+            $vitals,
             new PlayerStateUpdatedEvent(new PlayerName('Hero'), CombatState::Dead),
             self::me(),
-        );
-        $back = VitalsTracking::follow(
-            $dead,
+        ));
+        static::assertFalse($vitals->alive());
+
+        VitalsTracking::follow(
+            $vitals,
             new PlayerStateUpdatedEvent(new PlayerName('Hero'), CombatState::Idle),
             self::me(),
         );
-
-        static::assertFalse($someoneElse->alive());
-        static::assertFalse($stillDead->alive());
-        static::assertSame([390, 390, 100, 100], self::values($back));
+        static::assertSame([390, 390, 100, 100], self::values($vitals));
     }
 
     #[Test]
@@ -155,28 +183,27 @@ final class VitalsTrackingTest extends TestCase
             }
         }
 
-        static::assertSame([1193, 1193, 100, 100], self::values($me->player()->vitals));
+        static::assertSame([1193, 1193, 100, 100], self::values($me->hero()->vitals));
     }
 
     #[Test]
     public function leaving_combat_alive_keeps_the_health_it_has(): void
     {
-        $hurt = Fixture::vitals(health: 189);
+        $vitals = Fixture::vitals(health: 189);
 
-        static::assertSame($hurt, VitalsTracking::follow(
-            $hurt,
+        static::assertFalse(VitalsTracking::follow(
+            $vitals,
             new PlayerStateUpdatedEvent(new PlayerName('Hero'), CombatState::Idle),
             self::me(),
         ));
+        static::assertSame([189, 390, 100, 100], self::values($vitals));
     }
 
     #[Test]
     public function someone_else_falling_leaves_my_health_alone(): void
     {
-        $vitals = Fixture::vitals(health: 189);
-
-        static::assertSame($vitals, VitalsTracking::follow(
-            $vitals,
+        static::assertFalse(VitalsTracking::follow(
+            Fixture::vitals(health: 189),
             new PlayersStateChangedEvent([new PlayerState(new PlayerName('Partner'), CombatState::Dead)]),
             self::me(),
         ));
@@ -187,12 +214,12 @@ final class VitalsTrackingTest extends TestCase
     {
         $vitals = Fixture::vitals(health: 189, mana: 20);
 
-        static::assertSame($vitals, VitalsTracking::follow(
+        static::assertFalse(VitalsTracking::follow(
             $vitals,
             new PlayersHealthChangedEvent([new PlayerHealth(new PlayerName('Someone'), new Health(1))]),
             self::me(),
         ));
-        static::assertSame($vitals, VitalsTracking::follow(
+        static::assertFalse(VitalsTracking::follow(
             $vitals,
             new PlayersManaChangedEvent([new PlayerMana(new PlayerName('Someone'), new Mana(1))]),
             self::me(),
@@ -201,7 +228,7 @@ final class VitalsTrackingTest extends TestCase
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
+        return new Identity(new PlayerSpawnId(122_628), new PlayerName('Hero'));
     }
 
     /** @return list<int> */

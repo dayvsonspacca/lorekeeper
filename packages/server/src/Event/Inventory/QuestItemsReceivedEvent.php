@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Inventory;
 
-use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Inventory\Helper\ItemArrival;
 use Lorekeeper\Server\Event\Inventory\Helper\ItemArrivals;
@@ -18,7 +17,7 @@ use Psl\Option;
  */
 final readonly class QuestItemsReceivedEvent extends InventoryUpdatedEvent
 {
-    /** @param non-empty-list<PlayerItem> $items */
+    /** @param non-empty-list<HeldItem> $items */
     public function __construct(
         public array $items,
     ) {}
@@ -33,7 +32,7 @@ final readonly class QuestItemsReceivedEvent extends InventoryUpdatedEvent
                 continue;
             }
 
-            $items[] = new PlayerItem(ItemKinds::read($entry, static::class), new Quantity($entry['iQty']));
+            $items[] = new HeldItem(ItemKinds::read($entry, static::class), new Quantity($entry['iQty']));
         }
 
         return $items === [] ? Option\none() : Option\some(new static($items));
@@ -44,7 +43,7 @@ final readonly class QuestItemsReceivedEvent extends InventoryUpdatedEvent
     {
         return 'Got for now '
         . implode(', ', array_map(
-            static fn(PlayerItem $held): string => "{$held->quantity->value} {$held->item->name->value}",
+            static fn(HeldItem $held): string => "{$held->quantity->value} {$held->item->name->value}",
             $this->items,
         ));
     }

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tests\Command\Inventory;
 
 use Lorekeeper\Client\Command\Inventory\LoadPlayerInventoryCommand;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\AreaId;
-use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -15,7 +15,7 @@ final class LoadPlayerInventoryCommandTest extends TestCase
     #[Test]
     public function it_serializes_to_message(): void
     {
-        $command = new LoadPlayerInventoryCommand(new AreaId(42), new SocketId(99_887));
+        $command = new LoadPlayerInventoryCommand(new AreaId(42), new PlayerSpawnId(99_887));
 
         static::assertSame('%xt%zm%retrieveInventory%42%99887%', $command->toMessage());
     }

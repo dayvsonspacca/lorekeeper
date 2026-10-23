@@ -1,0 +1,119 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Lorekeeper\Core\Tests\Player\Hero;
+
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Game\Level\Experience;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\CharacterClass;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassCategory;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
+use Lorekeeper\Core\Item\Equipment\Helm;
+use Lorekeeper\Core\Item\EquipmentSlot;
+use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Item\ItemLevel;
+use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Player\Hero\Class\HeroClass;
+use Lorekeeper\Core\Player\Hero\Hero;
+use Lorekeeper\Core\Player\Hero\HeroAttributes;
+use Lorekeeper\Core\Player\Hero\HeroProgression;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroInventory;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroWallet;
+use Lorekeeper\Core\Player\Hero\Progression\LevelProgression;
+use Lorekeeper\Core\Player\PlayerLevel;
+use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSpawnId;
+use Lorekeeper\Core\Player\PlayerTag;
+use Lorekeeper\Core\Support\Gauge;
+use Lorekeeper\Core\Support\Quantity;
+use Lorekeeper\Core\World\Currency\AdventureCoins;
+use Lorekeeper\Core\World\Currency\Gold;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Psl\Option;
+
+final class HeroTest extends TestCase
+{
+    #[Test]
+    public function a_hero_knows_its_spawn_id_its_level_with_the_experience_toward_the_next_and_its_wallet(): void
+    {
+        $hero = self::hero();
+
+        static::assertSame(45_466, $hero->spawnId->value);
+        static::assertSame(81, $hero->level->value);
+        static::assertSame($hero->vitals, $hero->attributes->vitals);
+        static::assertSame([4_514_754, 5_280_000], [
+            $hero->progression->level->experience->current->value,
+            $hero->progression->level->experience->maximum->value,
+        ]);
+        static::assertSame([6_800_132, 2899], [
+            $hero->inventory->wallet->gold->value,
+            $hero->inventory->wallet->coins->value,
+        ]);
+    }
+
+    #[Test]
+    public function a_hero_wears_what_its_inventory_keeps(): void
+    {
+        $hero = self::hero();
+        $helm = new Helm(new ItemId(4_767), new ItemName('Helm'), new ItemLevel(1), Option\none());
+
+        $hero->inventory->add($helm);
+        $hero->inventory->equipment->equip($helm);
+
+        static::assertSame($helm, $hero->inventory->equipment->equipped(EquipmentSlot::Helm)->unwrap());
+    }
+
+    #[Test]
+    public function a_hero_goes_up_a_level_and_starts_its_experience_over(): void
+    {
+        $hero = self::hero();
+
+        $hero->up(new Experience(5_600_000));
+
+        static::assertSame(82, $hero->level->value);
+        static::assertSame([0, 5_600_000], [
+            $hero->progression->level->experience->current->value,
+            $hero->progression->level->experience->maximum->value,
+        ]);
+    }
+
+    #[Test]
+    public function a_hero_is_a_member_once_tagged_so(): void
+    {
+        $hero = self::hero();
+
+        static::assertFalse($hero->tags->has(PlayerTag::Member));
+
+        $hero->tags->add(PlayerTag::Member);
+
+        static::assertTrue($hero->tags->has(PlayerTag::Member));
+    }
+
+    private static function hero(): Hero
+    {
+        return new Hero(
+            new PlayerSpawnId(45_466),
+            new PlayerName('Hero'),
+            new PlayerLevel(81),
+            new HeroAttributes(
+                new Vitals(new Gauge(new Health(2585), new Health(2585)), new Gauge(new Mana(100), new Mana(100))),
+            ),
+            new HeroClass(
+                new CharacterClass(new ClassName('Blaze Binder'), ClassCategory::Caster, Option\none(), [], []),
+                new ClassPoints(302_500),
+                [],
+            ),
+            new HeroProgression(new LevelProgression(new Gauge(new Experience(4_514_754), new Experience(5_280_000)))),
+            new HeroInventory(
+                new Quantity(131),
+                new Quantity(131),
+                new HeroWallet(new Gold(6_800_132), new AdventureCoins(2899)),
+            ),
+        );
+    }
+}

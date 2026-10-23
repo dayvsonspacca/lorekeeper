@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Apps\Desktop\Bots\Scene;
 
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Vitals;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\World\Map\Map;
@@ -72,7 +72,7 @@ final readonly class Room
     private static function arrived(MovedToMapEvent $event, PlayerName $me): self
     {
         $room = self::of($event->map);
-        foreach ($event->players as $seen) {
+        foreach ($event->map->players as $seen) {
             $room = $room->entered($seen->player->name, $me);
         }
 

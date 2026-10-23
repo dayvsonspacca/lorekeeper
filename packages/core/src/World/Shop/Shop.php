@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Shop;
 
-use Lorekeeper\Core\Support\Tag\Taggable;
-use Lorekeeper\Core\Support\Tag\Tags;
+use Lorekeeper\Core\Game\Tag\Tags;
+use Lorekeeper\Core\Game\Tag\Traits\Taggable;
 
 abstract readonly class Shop
 {

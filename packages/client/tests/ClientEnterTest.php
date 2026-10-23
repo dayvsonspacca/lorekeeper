@@ -12,18 +12,19 @@ use Lorekeeper\Client\Script\Stopped;
 use Lorekeeper\Client\Script\TimedOut;
 use Lorekeeper\Client\Session\ClientVersion;
 use Lorekeeper\Client\Session\GameLogin;
-use Lorekeeper\Core\CharacterClass\ClassCategory;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\Combat\CombatState;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
+use Lorekeeper\Core\Game\Combat\CombatState;
+use Lorekeeper\Core\Game\Setting\GameSetting;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassCategory;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassItem;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
 use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Core\Player\GameSetting;
+use Lorekeeper\Core\Player\Hero\Class\HeroSkill;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\Player\PlayerSkill;
 use Lorekeeper\Core\Player\PlayerTag;
 use Lorekeeper\Core\World\Map\MapPad;
-use Lorekeeper\Core\World\Quest\QuestMark;
-use Lorekeeper\Core\World\Quest\QuestPeriod;
+use Lorekeeper\Core\World\Quest\QuestGroup;
+use Lorekeeper\Core\World\Quest\QuestGroupId;
+use Lorekeeper\Core\World\Quest\QuestGroupNumber;
 use Lorekeeper\Server\Event\Session\LoginFailedEvent;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -67,7 +68,7 @@ final class ClientEnterTest extends TestCase
         JSON;
 
     private const string PLAYER_DATA = <<<'JSON'
-        {"t":"xt","b":{"r":-1,"o":{"cmd":"initUserDatas","a":[{"uid":45466,"data":{"strUsername":"Hero","intLevel":81,"intExp":4514754,"intExpToLevel":5280000,"intGold":6800132,"intCoins":2899,"iUpg":0,"iUpgDays":-5772,"iBagSlots":131,"ia1":10128,"id0":0,"id1":0,"id2":64,"id3":0,"id4":0,"id5":0,"id6":0,"id7":0,"iw0":0,"im0":0}}]}}}
+        {"t":"xt","b":{"r":-1,"o":{"cmd":"initUserDatas","a":[{"uid":45466,"data":{"strUsername":"Hero","intLevel":81,"intExp":4514754,"intExpToLevel":5280000,"intGold":6800132,"intCoins":2899,"iUpg":0,"iUpgDays":-5772,"iBagSlots":131,"iBankSlots":40,"ia1":10128,"id0":0,"id1":0,"id2":64,"id3":0,"id4":0,"id5":0,"id6":0,"id7":0,"iw0":0,"im0":0}}]}}}
         JSON;
 
     #[Test]
@@ -103,32 +104,37 @@ final class ClientEnterTest extends TestCase
         );
 
         $me = $client->character();
-        $player = $me->player();
-        static::assertSame('Hero', $player->name->value);
+        $hero = $me->hero();
+        static::assertSame('Hero', $hero->name->value);
         static::assertSame([81, 4_514_754, 5_280_000], [
-            $player->progress->level->value,
-            $player->progress->experience->current->value,
-            $player->progress->experience->maximum->value,
+            $hero->level->value,
+            $hero->progression->level->experience->current->value,
+            $hero->progression->level->experience->maximum->value,
         ]);
-        static::assertSame([6_800_132, 2899], [$player->wallet->gold->value, $player->wallet->coins->value]);
-        static::assertFalse($player->tags->has(PlayerTag::Member));
-        static::assertSame(131, $player->inventory->slots->value);
-        static::assertTrue($player->marks->has(new QuestMark(QuestPeriod::Day, 2, 6)));
-        static::assertFalse($player->settings?->allows(GameSetting::Goto));
+        static::assertSame([6_800_132, 2899], [
+            $hero->inventory->wallet->gold->value,
+            $hero->inventory->wallet->coins->value,
+        ]);
+        static::assertFalse($hero->tags->has(PlayerTag::Member));
+        static::assertSame([131, 40], [$hero->inventory->slots->value, $hero->inventory->bank->slots->value]);
+        static::assertTrue($hero->progression->quests->has(
+            new QuestGroupId(QuestGroup::Daily, new QuestGroupNumber(70)),
+        ));
+        static::assertFalse($hero->settings->allows(GameSetting::Goto));
         static::assertSame([2585, 2585, 100, 100], [
-            $player->vitals->health->current->value,
-            $player->vitals->health->maximum->value,
-            $player->vitals->mana->current->value,
-            $player->vitals->mana->maximum->value,
+            $hero->vitals->health->current->value,
+            $hero->vitals->health->maximum->value,
+            $hero->vitals->mana->current->value,
+            $hero->vitals->mana->maximum->value,
         ]);
-        static::assertSame(13, $player->stats->powers->spell->value);
-        static::assertEqualsWithDelta(0.0226, $player->stats->haste->value, 1e-9);
-        static::assertEqualsWithDelta(0.0423, $player->stats->resistances->magical->value, 1e-9);
-        static::assertSame('Blaze Binder', $player->class->class->name->value);
-        static::assertSame(ClassCategory::Caster, $player->class->class->category);
-        static::assertSame(302_500, $player->class->points->value);
-        static::assertSame(10, $player->class->rank()->value);
-        static::assertCount(6, $player->class->class->skills);
+        static::assertSame(13, $hero->attributes->stats->powers->spell->value);
+        static::assertEqualsWithDelta(0.0226, $hero->attributes->stats->haste->value, 1e-9);
+        static::assertEqualsWithDelta(0.0423, $hero->attributes->stats->resistances->magical->value, 1e-9);
+        static::assertSame('Blaze Binder', $hero->class->class->name->value);
+        static::assertSame(ClassCategory::Caster, $hero->class->class->category);
+        static::assertSame(302_500, $hero->class->points->value);
+        static::assertSame(10, $hero->class->rank()->value);
+        static::assertCount(6, $hero->class->class->skills);
         static::assertSame(
             [
                 SkillSlot::AutoAttack,
@@ -139,16 +145,16 @@ final class ClientEnterTest extends TestCase
                 SkillSlot::Potion,
             ],
             array_values(array_map(
-                static fn(PlayerSkill $held): SkillSlot => $held->skill->slot,
-                array_filter($player->class->skills, static fn(PlayerSkill $held): bool => $held->unlocked),
+                static fn(HeroSkill $held): SkillSlot => $held->skill->slot,
+                array_filter($hero->class->skills, static fn(HeroSkill $held): bool => $held->unlocked),
             )),
         );
-        static::assertInstanceOf(ClassItem::class, $player->inventory->find(new ItemId(15_651))->unwrap()->item);
+        static::assertInstanceOf(ClassItem::class, $hero->inventory->find(new ItemId(15_651))->unwrap());
 
-        static::assertSame(45_466, $me->socketId()->value);
+        static::assertSame(45_466, $hero->spawnId->value);
         static::assertSame(65_897, $me->location()->area->value);
         static::assertSame('battleon', $me->location()->map->name->value);
-        static::assertSame(3, $me->location()->room->value);
+        static::assertSame(3, $me->location()->map->room->value);
         static::assertSame('Enter', $me->location()->spot->cell->value);
         static::assertSame(MapPad::Spawn, $me->location()->spot->pad);
         static::assertSame(CombatState::Idle, $me->state());
@@ -175,8 +181,8 @@ final class ClientEnterTest extends TestCase
         );
 
         static::assertInstanceOf(Client::class, $client);
-        static::assertSame('Blaze Binder', $client->character()->player()->class->class->name->value);
-        static::assertSame(0.0, $client->character()->player()->stats->haste->value);
+        static::assertSame('Blaze Binder', $client->character()->hero()->class->class->name->value);
+        static::assertSame(0.0, $client->character()->hero()->attributes->stats->haste->value);
     }
 
     #[Test]

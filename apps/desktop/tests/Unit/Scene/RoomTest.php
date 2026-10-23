@@ -5,21 +5,26 @@ declare(strict_types=1);
 namespace Lorekeeper\Apps\Desktop\Tests\Unit\Scene;
 
 use Lorekeeper\Apps\Desktop\Bots\Scene\Room;
-use Lorekeeper\Core\Asset\Gamefile;
-use Lorekeeper\Core\Asset\Linkage;
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Attribute\Vitals;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Asset\Gamefile;
+use Lorekeeper\Core\Game\Asset\Linkage;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Game\Combat\CombatState;
+use Lorekeeper\Core\Player\Player;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\World\Map\Map;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapMonster;
+use Lorekeeper\Core\World\Map\MapMonsters;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapPlayer;
+use Lorekeeper\Core\World\Map\MapPlayers;
+use Lorekeeper\Core\World\Map\MapRoom;
 use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Core\World\Monster\Monster;
 use Lorekeeper\Core\World\Monster\MonsterAppearance;
@@ -33,11 +38,8 @@ use Lorekeeper\Server\Event\Combat\MonsterRespawnedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersDiedEvent;
 use Lorekeeper\Server\Event\Combat\MonstersHealthChangedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
-use Lorekeeper\Server\Event\Map\RoomPlayer;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
 use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
-use Lorekeeper\Server\RoomId;
-use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -88,29 +90,30 @@ final class RoomTest extends TestCase
     public function it_keeps_the_other_players_in_the_room(): void
     {
         $me = new PlayerName('Hero');
-        $arrival = new MovedToMapEvent(new AreaId(7), new RoomId(3), self::map(), [
-            self::seen(1, 'Hero'),
-            self::seen(2, 'Artix'),
-        ]);
+        $arrival = new MovedToMapEvent(new AreaId(7), self::map([self::seen(1, 'Hero'), self::seen(2, 'Artix')]));
 
         $room = new Room()->heard($arrival, $me, now: 1);
         static::assertCount(2, $room->monsters);
         static::assertSame(['Artix'], $room->players);
 
         $room = $room
-            ->heard(new PlayerEnteredEvent(new SocketId(3), new PlayerName('Cysero')), $me, now: 2)
-            ->heard(new PlayerEnteredEvent(new SocketId(2), new PlayerName('artix')), $me, now: 3)
-            ->heard(new PlayerLeftEvent(new SocketId(2), new PlayerName('Artix')), $me, now: 4);
+            ->heard(new PlayerEnteredEvent(new PlayerSpawnId(3), new PlayerName('Cysero')), $me, now: 2)
+            ->heard(new PlayerEnteredEvent(new PlayerSpawnId(2), new PlayerName('artix')), $me, now: 3)
+            ->heard(new PlayerLeftEvent(new PlayerSpawnId(2), new PlayerName('Artix')), $me, now: 4);
 
         static::assertSame(['Cysero'], $room->players);
     }
 
-    private static function map(): Map
+    /** @param list<MapPlayer> $players */
+    private static function map(array $players = []): Map
     {
-        return new Map(new MapName('oaklore'), new Gamefile('Oaklore/town-oaklore.swf'), [
-            self::monster(1, 'Bonemuncher'),
-            self::monster(2, 'Bonemuncher'),
-        ]);
+        return new Map(
+            new MapName('oaklore'),
+            new MapRoom(3),
+            new Gamefile('Oaklore/town-oaklore.swf'),
+            new MapMonsters([self::monster(1, 'Bonemuncher'), self::monster(2, 'Bonemuncher')]),
+            new MapPlayers($players),
+        );
     }
 
     private static function monster(int $id, string $name): MapMonster
@@ -129,18 +132,17 @@ final class RoomTest extends TestCase
         );
     }
 
-    private static function seen(int $socket, string $name): RoomPlayer
+    private static function seen(int $spawnId, string $name): MapPlayer
     {
-        return new RoomPlayer(
-            new SocketId($socket),
-            new MapPlayer(
+        return new MapPlayer(
+            new Player(
+                new PlayerSpawnId($spawnId),
                 new PlayerName($name),
                 new PlayerLevel(30),
                 new Vitals(new Gauge(new Health(900), new Health(900)), new Gauge(new Mana(100), new Mana(100))),
-                new MapSpot(new MapCell('Enter'), MapPad::Spawn),
-                CombatState::Idle,
-                false,
             ),
+            new MapSpot(new MapCell('Enter'), MapPad::Spawn),
+            CombatState::Idle,
         );
     }
 }

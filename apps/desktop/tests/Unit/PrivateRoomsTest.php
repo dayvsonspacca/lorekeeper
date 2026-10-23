@@ -20,10 +20,10 @@ use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapPad;
+use Lorekeeper\Core\World\Map\MapRoom;
 use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\Event\Map\MapJoins;
-use Lorekeeper\Server\RoomId;
 use PHPUnit\Framework\Attributes\Test;
 use Psl\DateTime\Duration;
 use Psl\Option;
@@ -35,10 +35,10 @@ final class PrivateRoomsTest extends TestCase
     {
         $rooms = [24_357, 84_881];
         $asked = [];
-        $script = new PrivateRooms(self::script(), static function (MapName $map) use (&$rooms, &$asked): RoomId {
+        $script = new PrivateRooms(self::script(), static function (MapName $map) use (&$rooms, &$asked): MapRoom {
             $asked[] = $map->value;
 
-            return new RoomId((int) array_shift($rooms));
+            return new MapRoom((int) array_shift($rooms));
         });
         $steps = $script->run(Characters::me('Hero', 23, 'battleon'));
 

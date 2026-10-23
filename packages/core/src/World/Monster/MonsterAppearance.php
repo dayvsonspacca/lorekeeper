@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\World\Monster;
 
-use Lorekeeper\Core\Asset\Gamefile;
-use Lorekeeper\Core\Asset\Linkage;
+use Lorekeeper\Core\Game\Asset\Gamefile;
+use Lorekeeper\Core\Game\Asset\Linkage;
 
 final readonly class MonsterAppearance
 {

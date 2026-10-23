@@ -7,12 +7,12 @@ namespace Lorekeeper\Client\Tests\Tracking;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Client\Tracking\Identity;
 use Lorekeeper\Client\Tracking\StateTracking;
-use Lorekeeper\Core\Combat\CombatState;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\Player\PlayerName;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\Event\Combat\PlayersStateChangedEvent;
 use Lorekeeper\Server\Event\Combat\PlayerState;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
-use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -63,6 +63,6 @@ final class StateTrackingTest extends TestCase
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
+        return new Identity(new PlayerSpawnId(122_628), new PlayerName('Hero'));
     }
 }

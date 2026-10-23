@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Item;
 
-use Lorekeeper\Core\Progression\Level;
+use Lorekeeper\Core\Game\Level\Level;
 use Override;
 
 final readonly class ItemLevel extends Level

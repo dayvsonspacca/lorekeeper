@@ -10,14 +10,15 @@ use Lorekeeper\Apps\Desktop\Tests\Characters;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
+use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Quest\Quest;
 use Lorekeeper\Core\World\Quest\QuestId;
 use Lorekeeper\Core\World\Quest\QuestName;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemIncrease;
 use Lorekeeper\Server\Event\Inventory\ItemsIncreasedEvent;
@@ -39,6 +40,7 @@ final class JournalTest extends TestCase
         $journal = new Journal();
         $me = Characters::me('Hero', 30, 'arcangrove');
         $slain = self::resource(5574, 'Slain Gorillaphant');
+        $slain->tags->add(ItemTag::Temporary);
         $lines = [];
         $hear = static function (Event $event) use ($journal, $me, &$lines): void {
             $me->hear($event);
@@ -50,14 +52,14 @@ final class JournalTest extends TestCase
         $hear(new QuestLoadedEvent([new Quest(
             new QuestId(802),
             new QuestName("Experiment 107: Elder's Blood Potion"),
+            [],
+            [],
+            [],
             Option\none(),
-            [],
-            [],
-            [],
             Option\none(),
         )]));
         $hear(new QuestAcceptedEvent(new QuestId(802)));
-        $hear(new QuestItemsReceivedEvent([new PlayerItem($slain)]));
+        $hear(new QuestItemsReceivedEvent([new HeldItem($slain)]));
         foreach (range(2, end: 10) as $kill) {
             $hear(new QuestItemsIncreasedEvent([new ItemIncrease(
                 new ItemId(5574),
@@ -67,7 +69,7 @@ final class JournalTest extends TestCase
         }
 
         $hear(new QuestCompletedEvent(new QuestId(802), new QuestName("Experiment 107: Elder's Blood Potion")));
-        $hear(new ItemDroppedEvent([new PlayerItem(self::resource(5586, "Elders' Blood"))]));
+        $hear(new ItemDroppedEvent([new HeldItem(self::resource(5586, "Elders' Blood"))]));
         $hear(new DropPickedUpEvent(new ItemId(5586), new Quantity(1), new Quantity(11)));
 
         static::assertSame(
@@ -107,6 +109,6 @@ final class JournalTest extends TestCase
 
     private static function resource(int $id, string $name): Resource
     {
-        return new Resource(new ItemId($id), new ItemName($name), new ItemLevel(1));
+        return new Resource(new ItemId($id), new ItemName($name), new ItemLevel(1), new Quantity(99));
     }
 }

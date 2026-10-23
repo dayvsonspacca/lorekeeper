@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Server\Event\Combat;
 
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\CharacterClass\Passive\ClassPassive;
-use Lorekeeper\Core\CharacterClass\Passive\PassiveDescription;
-use Lorekeeper\Core\CharacterClass\Passive\PassiveName;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaRestore;
-use Lorekeeper\Core\CharacterClass\Skill\Skill;
-use Lorekeeper\Core\CharacterClass\Skill\SkillName;
-use Lorekeeper\Core\Player\PlayerSkill;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Passive\ClassPassive;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Passive\PassiveDescription;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Passive\PassiveName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\ManaRestore;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillName;
+use Lorekeeper\Core\Player\Hero\Class\HeroSkill;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Combat\Helper\SkillDetails;
 use Lorekeeper\Server\Event\Event;
@@ -34,7 +34,7 @@ final readonly class SkillsLoadedEvent implements Event
     use NamedAfterClass;
 
     /**
-     * @param list<PlayerSkill> $skills
+     * @param list<HeroSkill> $skills
      * @param list<ClassPassive> $passives
      */
     public function __construct(
@@ -86,7 +86,7 @@ final readonly class SkillsLoadedEvent implements Event
                 continue;
             }
 
-            $skills[] = new PlayerSkill(
+            $skills[] = new HeroSkill(
                 new Skill(
                     $slot,
                     new SkillName($skill['nam']),
@@ -115,7 +115,7 @@ final readonly class SkillsLoadedEvent implements Event
     #[Override]
     public function summary(): string
     {
-        $unlocked = array_filter($this->skills, static fn(PlayerSkill $skill): bool => $skill->unlocked);
+        $unlocked = array_filter($this->skills, static fn(HeroSkill $skill): bool => $skill->unlocked);
 
         return count($this->skills) . ' skills, ' . count($unlocked) . ' unlocked';
     }
