@@ -12,21 +12,21 @@ use Psl\Option\Option;
 final readonly class Quest
 {
     /**
-     * @param Option<QuestDescription> $description
      * @param list<QuestRequirement> $requirements
      * @param list<QuestObjective> $objectives
      * @param list<QuestReward> $rewards
-     * @param Option<QuestMark> $mark
+     * @param Option<QuestDescription> $description
+     * @param Option<QuestGroupId> $groupId
      *
      * @mago-expect lint:excessive-parameter-list
      */
     public function __construct(
         public QuestId $id,
         public QuestName $name,
-        public Option $description,
         public array $requirements,
         public array $objectives,
         public array $rewards,
-        public Option $mark,
+        public Option $description,
+        public Option $groupId,
     ) {}
 }

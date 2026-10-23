@@ -15,9 +15,9 @@ use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
 use Lorekeeper\Core\Player\Hero\Hero;
 use Lorekeeper\Core\Player\Hero\HeroClass;
 use Lorekeeper\Core\Player\Hero\HeroInventory;
-use Lorekeeper\Core\Player\Hero\HeroLevelProgress;
-use Lorekeeper\Core\Player\Hero\HeroQuestMarks;
+use Lorekeeper\Core\Player\Hero\HeroProgression;
 use Lorekeeper\Core\Player\Hero\HeroWallet;
+use Lorekeeper\Core\Player\Hero\Progression\LevelProgression;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerSpawnId;
@@ -39,10 +39,9 @@ final class HeroTest extends TestCase
 
         static::assertSame(45_466, $hero->spawnId->value);
         static::assertSame(81, $hero->level->value);
-        static::assertSame($hero->level, $hero->progress->level);
         static::assertSame([4_514_754, 5_280_000], [
-            $hero->progress->experience->current->value,
-            $hero->progress->experience->maximum->value,
+            $hero->progression->level->experience->current->value,
+            $hero->progression->level->experience->maximum->value,
         ]);
         static::assertSame([6_800_132, 2899], [$hero->wallet->gold->value, $hero->wallet->coins->value]);
     }
@@ -64,7 +63,8 @@ final class HeroTest extends TestCase
         return new Hero(
             new PlayerSpawnId(45_466),
             new PlayerName('Hero'),
-            new HeroLevelProgress(new PlayerLevel(81), new Gauge(new Experience(4_514_754), new Experience(5_280_000))),
+            new PlayerLevel(81),
+            new HeroProgression(new LevelProgression(new Gauge(new Experience(4_514_754), new Experience(5_280_000)))),
             new Vitals(new Gauge(new Health(2585), new Health(2585)), new Gauge(new Mana(100), new Mana(100))),
             new HeroClass(
                 new CharacterClass(new ClassName('Blaze Binder'), ClassCategory::Caster, Option\none(), [], []),
@@ -73,7 +73,6 @@ final class HeroTest extends TestCase
             ),
             new HeroInventory(new Quantity(131)),
             new HeroWallet(new Gold(6_800_132), new AdventureCoins(2899)),
-            new HeroQuestMarks(),
         );
     }
 }

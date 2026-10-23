@@ -2,17 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Player\Hero;
+namespace Lorekeeper\Core\Player\Hero\Progression;
 
 use Lorekeeper\Core\Game\Level\Experience;
-use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Core\Support\Gauge;
 
-final readonly class HeroLevelProgress
+final readonly class LevelProgression
 {
     /** @param Gauge<Experience> $experience */
     public function __construct(
-        public PlayerLevel $level,
         public Gauge $experience,
     ) {}
 }
