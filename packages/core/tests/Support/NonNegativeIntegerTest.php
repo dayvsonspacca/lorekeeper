@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\Support;
 
+use Lorekeeper\Core\Attribute\Health;
+use Lorekeeper\Core\Attribute\Mana;
 use Lorekeeper\Core\Support\NonNegativeInteger;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,5 +28,13 @@ final class NonNegativeIntegerTest extends TestCase
         $this->expectException(AssertException::class);
 
         new readonly class(-1) extends NonNegativeInteger {};
+    }
+
+    #[Test]
+    public function it_equals_only_the_same_kind_holding_the_same_value(): void
+    {
+        static::assertTrue(new Health(100)->equals(new Health(100)));
+        static::assertFalse(new Health(100)->equals(new Health(0)));
+        static::assertFalse(new Health(100)->equals(new Mana(100)));
     }
 }
