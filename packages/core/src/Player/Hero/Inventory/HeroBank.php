@@ -17,7 +17,7 @@ final class HeroBank
     public readonly Stock $items;
 
     public function __construct(
-        public readonly Quantity $slots,
+        public private(set) Quantity $slots,
         private readonly HeroInventory $inventory,
     ) {
         $this->items = new Stock();
@@ -58,6 +58,11 @@ final class HeroBank
     public function free(): int
     {
         return max(0, $this->slots->value - count($this->items));
+    }
+
+    public function resize(Quantity $slots): void
+    {
+        $this->slots = $slots;
     }
 
     /**

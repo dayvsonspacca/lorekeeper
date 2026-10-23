@@ -12,6 +12,7 @@ use Lorekeeper\Core\Item\Stock;
 use Lorekeeper\Core\Support\Quantity;
 use Psl\Option;
 
+/** @mago-expect lint:too-many-methods */
 final class HeroInventory
 {
     public readonly Stock $permanent;
@@ -25,7 +26,7 @@ final class HeroInventory
     public readonly HeroBank $bank;
 
     public function __construct(
-        public readonly Quantity $slots,
+        public private(set) Quantity $slots,
         Quantity $bankSlots,
         public readonly HeroWallet $wallet = new HeroWallet(),
     ) {
@@ -101,6 +102,11 @@ final class HeroInventory
     public function full(): bool
     {
         return count($this->permanent) >= $this->slots->value;
+    }
+
+    public function resize(Quantity $slots): void
+    {
+        $this->slots = $slots;
     }
 
     public function fits(ItemId $id): bool

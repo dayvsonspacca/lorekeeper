@@ -239,6 +239,19 @@ final class HeroInventoryTest extends TestCase
         static::assertTrue(new HeroInventory(new Quantity(1), new Quantity(1))->fits(new ItemId(42_657)));
     }
 
+    #[Test]
+    public function its_bag_grows_or_shrinks_without_losing_what_it_holds(): void
+    {
+        $inventory = new HeroInventory(new Quantity(1), new Quantity(1))->add(self::resource(11_475, 'Dragon Scale'));
+
+        static::assertTrue($inventory->full());
+
+        $inventory->resize(new Quantity(131));
+
+        static::assertSame(130, $inventory->free());
+        static::assertSame(1, $inventory->quantity(new ItemId(11_475)));
+    }
+
     private static function resource(int $id, string $name): Resource
     {
         return new Resource(new ItemId($id), new ItemName($name), new ItemLevel(1), new Quantity(1000));

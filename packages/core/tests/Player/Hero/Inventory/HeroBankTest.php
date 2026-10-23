@@ -152,6 +152,18 @@ final class HeroBankTest extends TestCase
         $inventory->bank->withdraw(new ItemId(5586));
     }
 
+    #[Test]
+    public function its_slots_grow_or_shrink_without_losing_what_it_keeps(): void
+    {
+        $inventory = self::inventory();
+        $inventory->bank->add(self::blood(), new Quantity(20));
+
+        $inventory->bank->resize(new Quantity(40));
+
+        static::assertSame(39, $inventory->bank->free());
+        static::assertSame(20, $inventory->bank->quantity(new ItemId(5586)));
+    }
+
     private static function inventory(): HeroInventory
     {
         return new HeroInventory(new Quantity(131), new Quantity(1));
