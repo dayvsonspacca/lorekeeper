@@ -8,10 +8,9 @@ use Lorekeeper\Core\Asset\Gamefile;
 
 final readonly class Map
 {
-    /** @param list<MapMonster> $monsters */
     public function __construct(
         public MapName $name,
         public Gamefile $file,
-        public array $monsters,
+        public MapMonsters $monsters,
     ) {}
 }
