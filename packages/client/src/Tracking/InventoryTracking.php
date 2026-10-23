@@ -4,13 +4,16 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Tracking;
 
+use InvalidArgumentException;
 use Lorekeeper\Client\Drops;
-use Lorekeeper\Core\Player\PlayerInventory;
-use Lorekeeper\Core\Player\PlayerItem;
-use Lorekeeper\Core\Player\PlayerItems;
+use Lorekeeper\Core\Item\Equipment\Equipment;
+use Lorekeeper\Core\Item\Equipment\Traits\Enchantable;
+use Lorekeeper\Core\Item\Stock;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroInventory;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemIncrease;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
@@ -28,152 +31,160 @@ use Lorekeeper\Server\Event\Quest\TurnedInItem;
  */
 final readonly class InventoryTracking
 {
+    /** @throws InvalidArgumentException */
     public static function follow(
-        PlayerInventory $inventory,
+        HeroInventory $inventory,
         Event $event,
         Identity $me,
         Drops $drops = new Drops(),
-    ): PlayerInventory {
+    ): bool {
         return match (true) {
-            $event instanceof DropPickedUpEvent => self::pickedUp($inventory, $event, $drops),
-            $event instanceof InventoryLoadedEvent => new PlayerInventory(
-                $event->items,
-                $inventory->slots,
-                $inventory->temporary,
-            ),
+            $event instanceof InventoryLoadedEvent => self::loaded($inventory, $event->items),
             $event instanceof PlayerDataLoadedEvent => self::resized($inventory, PlayerDataTracking::mine($event, $me)),
-            $event instanceof QuestItemsReceivedEvent => new PlayerInventory(
-                $inventory->permanent,
-                $inventory->slots,
-                self::added($inventory->temporary, $event->items),
-            ),
-            $event instanceof ItemsIncreasedEvent => new PlayerInventory(
-                self::grown($inventory->permanent, $event->items),
-                $inventory->slots,
-                $inventory->temporary,
-            ),
-            $event instanceof QuestItemsIncreasedEvent => new PlayerInventory(
-                $inventory->permanent,
-                $inventory->slots,
-                self::grown($inventory->temporary, $event->items),
-            ),
-            $event instanceof ItemsEnhancedEvent => new PlayerInventory(
-                self::enhanced($inventory->permanent, $event),
-                $inventory->slots,
-                $inventory->temporary,
-            ),
-            $event instanceof ItemsTurnedInEvent => new PlayerInventory(
-                self::taken($inventory->permanent, $event->items),
-                $inventory->slots,
-                self::taken($inventory->temporary, $event->items),
-            ),
-            default => $inventory,
+            $event instanceof QuestItemsReceivedEvent => self::received($inventory, $event->items),
+            $event instanceof ItemsIncreasedEvent => self::grown($inventory->permanent, $event->items),
+            $event instanceof QuestItemsIncreasedEvent => self::grown($inventory->temporary, $event->items),
+            $event instanceof ItemsEnhancedEvent => self::enhanced($inventory, $event),
+            $event instanceof ItemsTurnedInEvent => self::taken($inventory, $event->items),
+            $event instanceof DropPickedUpEvent => self::pickedUp($inventory, $event, $drops),
+            default => false,
         };
     }
 
-    private static function resized(PlayerInventory $inventory, ?PlayerData $data): PlayerInventory
+    /**
+     * @param list<HeldItem> $items
+     *
+     * @throws InvalidArgumentException
+     */
+    public static function loaded(HeroInventory $inventory, array $items): bool
     {
-        if ($data === null || $data->bagSlots->value === $inventory->slots->value) {
-            return $inventory;
+        foreach (iterator_to_array($inventory->permanent) as $kept) {
+            $inventory->take($kept->id, new Quantity($inventory->quantity($kept->id)));
         }
 
-        return new PlayerInventory($inventory->permanent, $data->bagSlots, $inventory->temporary);
-    }
+        foreach ($items as $held) {
+            $inventory->add($held->item, $held->quantity);
+            if (!$held->item instanceof Equipment) {
+                continue;
+            }
 
-    private static function pickedUp(
-        PlayerInventory $inventory,
-        DropPickedUpEvent $event,
-        Drops $drops,
-    ): PlayerInventory {
-        $before = $inventory->permanent->find($event->item)->unwrapOr(null);
-        $item = $drops->find($event->item)->item ?? $before?->item;
-        if ($item === null) {
-            return $inventory;
+            if ($held->equipped) {
+                $inventory->equipment->equip($held->item);
+            }
+
+            if ($held->worn) {
+                $inventory->costume->wear($held->item);
+            }
         }
 
-        $held = $inventory->permanent->items->toArray();
-        $held[$event->item->value] = new PlayerItem($item, $event->held, $before->equipped ?? false);
-
-        return new PlayerInventory(new PlayerItems(array_values($held)), $inventory->slots, $inventory->temporary);
+        return true;
     }
 
-    /** @param non-empty-list<PlayerItem> $added */
-    private static function added(PlayerItems $items, array $added): PlayerItems
+    private static function resized(HeroInventory $inventory, ?PlayerData $data): bool
     {
-        $held = $items->items->toArray();
-        foreach ($added as $item) {
-            $before = $held[$item->item->id->value] ?? null;
-            $held[$item->item->id->value] = $before === null
-                ? $item
-                : new PlayerItem(
-                    $before->item,
-                    new Quantity($before->quantity->value + $item->quantity->value),
-                    $before->equipped,
-                );
+        if ($data === null) {
+            return false;
         }
 
-        return new PlayerItems(array_values($held));
+        $changed = !$data->bagSlots->equals($inventory->slots) || !$data->bankSlots->equals($inventory->bank->slots);
+        $inventory->resize($data->bagSlots);
+        $inventory->bank->resize($data->bankSlots);
+
+        return $changed;
     }
 
-    /** @param non-empty-list<ItemIncrease> $more */
-    private static function grown(PlayerItems $items, array $more): PlayerItems
+    /**
+     * @param non-empty-list<HeldItem> $items
+     *
+     * @throws InvalidArgumentException
+     */
+    private static function received(HeroInventory $inventory, array $items): bool
     {
-        $held = $items->items->toArray();
+        foreach ($items as $held) {
+            $inventory->receive($held->item, $held->quantity);
+        }
+
+        return true;
+    }
+
+    /**
+     * @param non-empty-list<ItemIncrease> $more
+     *
+     * @throws InvalidArgumentException
+     */
+    private static function grown(Stock $stock, array $more): bool
+    {
+        $changed = false;
         foreach ($more as $added) {
-            $before = $held[$added->item->value] ?? null;
-            if ($before === null) {
+            $item = $stock->find($added->item)->unwrapOr(null);
+            if ($item === null) {
                 continue;
             }
 
-            $held[$added->item->value] = new PlayerItem(
-                $before->item,
-                $added->held ?? new Quantity($before->quantity->value + $added->quantity->value),
-                $before->equipped,
-            );
+            $changed = true;
+            if ($added->held !== null) {
+                $stock->hold($added->item, $added->held);
+                continue;
+            }
+
+            $stock->receive($item, $added->quantity);
         }
 
-        return new PlayerItems(array_values($held));
+        return $changed;
     }
 
-    /** @param non-empty-list<TurnedInItem> $taken */
-    private static function taken(PlayerItems $items, array $taken): PlayerItems
+    private static function enhanced(HeroInventory $inventory, ItemsEnhancedEvent $event): bool
     {
-        $held = $items->items->toArray();
-        foreach ($taken as $item) {
-            $before = $held[$item->item->value] ?? null;
-            if ($before === null) {
-                continue;
-            }
-
-            $left = $before->quantity->value - $item->quantity->value;
-            if ($left <= 0) {
-                unset($held[$item->item->value]);
-
-                continue;
-            }
-
-            $held[$item->item->value] = new PlayerItem($before->item, new Quantity($left), $before->equipped);
-        }
-
-        return new PlayerItems(array_values($held));
-    }
-
-    private static function enhanced(PlayerItems $items, ItemsEnhancedEvent $event): PlayerItems
-    {
-        $held = $items->items->toArray();
+        $changed = false;
         foreach ($event->items as $id) {
-            $before = $held[$id->value] ?? null;
-            if ($before === null) {
+            $item = $inventory->permanent->find($id)->unwrapOr(null);
+            if (!$item instanceof Enchantable) {
                 continue;
             }
 
-            $held[$id->value] = new PlayerItem(
-                EnchantedItem::from($before->item, $event->enhancement),
-                $before->quantity,
-                $before->equipped,
-            );
+            $item->enchant($event->enhancement);
+            $changed = true;
         }
 
-        return new PlayerItems(array_values($held));
+        return $changed;
+    }
+
+    /**
+     * @param non-empty-list<TurnedInItem> $taken
+     *
+     * @throws InvalidArgumentException
+     */
+    private static function taken(HeroInventory $inventory, array $taken): bool
+    {
+        $changed = false;
+        foreach ($taken as $item) {
+            if ($inventory->find($item->item)->isNone()) {
+                continue;
+            }
+
+            $inventory->take($item->item, $item->quantity);
+            $changed = true;
+        }
+
+        return $changed;
+    }
+
+    /** @throws InvalidArgumentException */
+    private static function pickedUp(HeroInventory $inventory, DropPickedUpEvent $event, Drops $drops): bool
+    {
+        if ($inventory->permanent->find($event->item)->isSome()) {
+            $inventory->permanent->hold($event->item, $event->held);
+
+            return true;
+        }
+
+        $dropped = $drops->find($event->item);
+        if ($dropped === null) {
+            return false;
+        }
+
+        $inventory->add($dropped->item, $event->held);
+
+        return true;
     }
 }

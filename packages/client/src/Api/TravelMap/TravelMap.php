@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Client\Api\TravelMap;
 
-use Lorekeeper\Core\Progression\LevelRange;
+use Lorekeeper\Core\Game\Level\LevelRange;
 use Lorekeeper\Core\World\Map\MapDescription;
 use Lorekeeper\Core\World\Map\MapId;
 use Lorekeeper\Core\World\Map\MapName;

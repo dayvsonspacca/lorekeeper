@@ -37,7 +37,7 @@ final readonly class GoToForest implements Script
         yield new Progress(0, 1);
 
         if ($me->location()->map->name->value !== 'forest') {
-            yield new Send(new JoinMapCommand($me->player()->name, new MapName('forest'), Option\none()))->awaits(
+            yield new Send(new JoinMapCommand($me->hero()->name, new MapName('forest'), Option\none()))->awaits(
                 Duration::seconds(15),
                 MapJoins::class,
                 MapRefusals::class,

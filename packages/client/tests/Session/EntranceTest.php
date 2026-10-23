@@ -8,19 +8,19 @@ use LogicException;
 use Lorekeeper\Client\MessageParser;
 use Lorekeeper\Client\Session\Entrance;
 use Lorekeeper\Client\Tests\Fixture;
-use Lorekeeper\Core\Currency\AdventureCoins;
-use Lorekeeper\Core\Currency\Gold;
-use Lorekeeper\Core\Player\GameSetting;
+use Lorekeeper\Core\Game\Level\Experience;
+use Lorekeeper\Core\Game\Setting\GameSetting;
+use Lorekeeper\Core\Item\ItemId;
+use Lorekeeper\Core\Player\Hero\HeroSettings;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroWallet;
 use Lorekeeper\Core\Player\PlayerLevel;
-use Lorekeeper\Core\Player\PlayerLevelProgress;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\Player\PlayerQuestMarks;
-use Lorekeeper\Core\Player\PlayerSettings;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Core\Player\PlayerTag;
-use Lorekeeper\Core\Player\Wallet;
-use Lorekeeper\Core\Progression\Experience;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\Support\Quantity;
+use Lorekeeper\Core\World\Currency\AdventureCoins;
+use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Events;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
@@ -28,7 +28,7 @@ use Lorekeeper\Server\Event\Player\PlayerData;
 use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Player\PlayerSettingsData;
 use Lorekeeper\Server\Event\Player\PlayerSettingsLoadedEvent;
-use Lorekeeper\Server\SocketId;
+use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -68,6 +68,16 @@ final class EntranceTest extends TestCase
     }
 
     #[Test]
+    public function before_logging_in_it_waits_for_the_login_and_the_map(): void
+    {
+        $entrance = new Entrance(new PlayerName('Hero3'));
+        $entrance->hear(Fixture::arrival('battleon', 1));
+
+        static::assertContains(LoginSucceededEvent::class, $entrance->missing());
+        static::assertContains(MovedToMapEvent::class, $entrance->missing());
+    }
+
+    #[Test]
     public function a_map_it_is_not_on_does_not_count_as_arriving(): void
     {
         $entrance = self::entrance(self::LOGIN);
@@ -91,7 +101,20 @@ final class EntranceTest extends TestCase
         $entrance->hear(new PlayerDataLoadedEvent([self::member(1)]));
 
         static::assertSame([], $entrance->missing());
-        static::assertTrue($entrance->character()->player()->tags->has(PlayerTag::Member));
+        $hero = $entrance->character()->hero();
+        static::assertTrue($hero->tags->has(PlayerTag::Member));
+        static::assertSame([45_466, 81, 131, 40, 1], [
+            $hero->spawnId->value,
+            $hero->level->value,
+            $hero->inventory->slots->value,
+            $hero->inventory->bank->slots->value,
+            $hero->inventory->quantity(new ItemId(15_651)),
+        ]);
+        static::assertSame([2585, 'Blaze Binder', 1], [
+            $hero->vitals->health->current->value,
+            $hero->class->class->name->value,
+            count($hero->class->skills),
+        ]);
     }
 
     #[Test]
@@ -106,15 +129,15 @@ final class EntranceTest extends TestCase
             self::VITALS,
         );
         $entrance->hear(new PlayerDataLoadedEvent([self::member(45_466)]));
-        $mine = new PlayerSettings([GameSetting::Goto]);
+        $mine = new HeroSettings([GameSetting::Goto]);
         $entrance->hear(new PlayerSettingsLoadedEvent([
-            new PlayerSettingsData(new SocketId(45_466), new PlayerName('Hero'), $mine),
+            new PlayerSettingsData(new PlayerSpawnId(45_466), new PlayerName('Hero'), $mine),
         ]));
         $entrance->hear(new PlayerSettingsLoadedEvent([
-            new PlayerSettingsData(new SocketId(1), new PlayerName('Hero2'), new PlayerSettings()),
+            new PlayerSettingsData(new PlayerSpawnId(1), new PlayerName('Hero2'), new HeroSettings()),
         ]));
 
-        static::assertSame($mine, $entrance->character()->player()->settings);
+        static::assertSame($mine, $entrance->character()->hero()->settings);
     }
 
     private static function entrance(string ...$messages): Entrance
@@ -130,16 +153,18 @@ final class EntranceTest extends TestCase
         return $entrance;
     }
 
-    private static function member(int $socketId): PlayerData
+    private static function member(int $spawnId): PlayerData
     {
         return new PlayerData(
-            new SocketId($socketId),
+            new PlayerSpawnId($spawnId),
             new PlayerName('Hero3'),
-            new PlayerLevelProgress(new PlayerLevel(81), new Gauge(new Experience(0), new Experience(1000))),
-            new Wallet(new Gold(0), new AdventureCoins(0)),
+            new PlayerLevel(81),
+            new Gauge(new Experience(0), new Experience(1000)),
+            new HeroWallet(new Gold(0), new AdventureCoins(0)),
             true,
             new Quantity(131),
-            new PlayerQuestMarks(),
+            new Quantity(40),
+            [],
         );
     }
 }

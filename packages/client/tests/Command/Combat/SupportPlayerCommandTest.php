@@ -6,9 +6,9 @@ namespace Lorekeeper\Client\Tests\Command\Combat;
 
 use InvalidArgumentException;
 use Lorekeeper\Client\Command\Combat\SupportPlayerCommand;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\AreaId;
-use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -20,7 +20,7 @@ final class SupportPlayerCommandTest extends TestCase
         $support = static fn(SkillSlot $skill): string => new SupportPlayerCommand(
             new AreaId(732_692),
             $skill,
-            new SocketId(122_628),
+            new PlayerSpawnId(122_628),
         )->toMessage();
 
         static::assertSame('%xt%zm%gar%732692%0%a1>p:122628%wvz%', $support(SkillSlot::First));
@@ -34,7 +34,7 @@ final class SupportPlayerCommandTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new SupportPlayerCommand(new AreaId(1), SkillSlot::AutoAttack, new SocketId(1));
+        new SupportPlayerCommand(new AreaId(1), SkillSlot::AutoAttack, new PlayerSpawnId(1));
     }
 
     #[Test]
@@ -42,6 +42,6 @@ final class SupportPlayerCommandTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        new SupportPlayerCommand(new AreaId(1), SkillSlot::Potion, new SocketId(1));
+        new SupportPlayerCommand(new AreaId(1), SkillSlot::Potion, new PlayerSpawnId(1));
     }
 }

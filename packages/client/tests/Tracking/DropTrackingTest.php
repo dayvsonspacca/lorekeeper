@@ -10,10 +10,10 @@ use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;
 use Lorekeeper\Core\Item\ItemName;
 use Lorekeeper\Core\Item\Misc\Resource;
-use Lorekeeper\Core\Player\PlayerItem;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
+use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -50,16 +50,18 @@ final class DropTrackingTest extends TestCase
         ));
     }
 
-    private static function cubes(int $quantity): PlayerItem
+    private static function cubes(int $quantity): HeldItem
     {
-        return new PlayerItem(
-            new Resource(new ItemId(4708), new ItemName('Cubes'), new ItemLevel(1)),
+        return new HeldItem(
+            new Resource(new ItemId(4708), new ItemName('Cubes'), new ItemLevel(1), new Quantity(99)),
             new Quantity($quantity),
         );
     }
 
-    private static function token(): PlayerItem
+    private static function token(): HeldItem
     {
-        return new PlayerItem(new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1)));
+        return new HeldItem(
+            new Resource(new ItemId(42_657), new ItemName('Crypto Token'), new ItemLevel(1), new Quantity(99)),
+        );
     }
 }

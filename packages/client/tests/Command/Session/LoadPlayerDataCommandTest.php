@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Lorekeeper\Client\Tests\Command\Session;
 
 use Lorekeeper\Client\Command\Session\LoadPlayerDataCommand;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\AreaId;
-use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -17,7 +17,7 @@ final class LoadPlayerDataCommandTest extends TestCase
     {
         static::assertSame(
             '%xt%zm%retrieveUserDatas%65897%45466%',
-            new LoadPlayerDataCommand(new AreaId(65_897), new SocketId(45_466))->toMessage(),
+            new LoadPlayerDataCommand(new AreaId(65_897), new PlayerSpawnId(45_466))->toMessage(),
         );
     }
 }

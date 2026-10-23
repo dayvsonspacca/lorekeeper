@@ -6,43 +6,46 @@ namespace Lorekeeper\Client\Tests;
 
 use Lorekeeper\Client\Character;
 use Lorekeeper\Client\Location;
-use Lorekeeper\Core\Asset\Gamefile;
-use Lorekeeper\Core\Asset\Linkage;
-use Lorekeeper\Core\Attribute\Health;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\Attribute\Vitals;
-use Lorekeeper\Core\CharacterClass\CharacterClass;
-use Lorekeeper\Core\CharacterClass\ClassCategory;
-use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\SkillCost;
-use Lorekeeper\Core\CharacterClass\Skill\Skill;
-use Lorekeeper\Core\CharacterClass\Skill\SkillName;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
-use Lorekeeper\Core\Combat\CombatState;
-use Lorekeeper\Core\Currency\AdventureCoins;
-use Lorekeeper\Core\Currency\Gold;
+use Lorekeeper\Core\Game\Asset\Gamefile;
+use Lorekeeper\Core\Game\Asset\Linkage;
+use Lorekeeper\Core\Game\Attribute\Health;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Game\Combat\CombatState;
+use Lorekeeper\Core\Game\Level\Experience;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\CharacterClass;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassCategory;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\SkillCost;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Skill;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Player\Hero\Class\HeroClass;
+use Lorekeeper\Core\Player\Hero\Class\HeroSkill;
+use Lorekeeper\Core\Player\Hero\Hero;
+use Lorekeeper\Core\Player\Hero\HeroAttributes;
+use Lorekeeper\Core\Player\Hero\HeroProgression;
+use Lorekeeper\Core\Player\Hero\HeroSettings;
+use Lorekeeper\Core\Player\Hero\Inventory\HeroInventory;
+use Lorekeeper\Core\Player\Hero\Progression\LevelProgression;
 use Lorekeeper\Core\Player\Player;
-use Lorekeeper\Core\Player\PlayerClass;
-use Lorekeeper\Core\Player\PlayerInventory;
-use Lorekeeper\Core\Player\PlayerItems;
 use Lorekeeper\Core\Player\PlayerLevel;
-use Lorekeeper\Core\Player\PlayerLevelProgress;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\Player\PlayerQuestMarks;
-use Lorekeeper\Core\Player\PlayerSettings;
-use Lorekeeper\Core\Player\PlayerSkill;
-use Lorekeeper\Core\Player\Wallet;
-use Lorekeeper\Core\Progression\ClassPoints;
-use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Map\Map;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapMonster;
+use Lorekeeper\Core\World\Map\MapMonsters;
 use Lorekeeper\Core\World\Map\MapName;
 use Lorekeeper\Core\World\Map\MapPad;
+use Lorekeeper\Core\World\Map\MapPlayer;
+use Lorekeeper\Core\World\Map\MapPlayers;
+use Lorekeeper\Core\World\Map\MapRoom;
 use Lorekeeper\Core\World\Map\MapSpot;
 use Lorekeeper\Core\World\Monster\Monster;
 use Lorekeeper\Core\World\Monster\MonsterAppearance;
@@ -52,9 +55,6 @@ use Lorekeeper\Core\World\Monster\MonsterRace;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
-use Lorekeeper\Server\Event\Map\RoomPlayer;
-use Lorekeeper\Server\RoomId;
-use Lorekeeper\Server\SocketId;
 use Psl\DateTime\Duration;
 use Psl\Option;
 
@@ -64,35 +64,41 @@ final readonly class Fixture
         int $level = 1,
         string $map = 'battleon',
         int $area = 1,
-        ?PlayerSettings $settings = null,
+        ?HeroSettings $settings = null,
     ): Character {
         return new Character(
-            new SocketId(122_628),
-            new Player(
+            new Hero(
+                new PlayerSpawnId(122_628),
                 new PlayerName('Hero'),
-                new PlayerLevelProgress(new PlayerLevel($level), new Gauge(new Experience(0), new Experience(1000))),
-                self::vitals(),
-                new PlayerClass(
+                new PlayerLevel($level),
+                new HeroAttributes(self::vitals()),
+                new HeroClass(
                     self::mage(),
                     new ClassPoints(0),
-                    array_map(
-                        static fn(Skill $skill): PlayerSkill => new PlayerSkill($skill, true),
-                        self::mage()->skills,
-                    ),
+                    array_map(static fn(Skill $skill): HeroSkill => new HeroSkill($skill, true), self::mage()->skills),
                 ),
-                new PlayerInventory(new PlayerItems([]), new Quantity(30)),
-                new Wallet(new Gold(0), new AdventureCoins(0)),
-                new PlayerQuestMarks(),
-                settings: $settings,
+                new HeroProgression(new LevelProgression(new Gauge(new Experience(0), new Experience(1000)))),
+                new HeroInventory(new Quantity(30), new Quantity(30)),
+                $settings ?? new HeroSettings(),
             ),
-            new Location(
-                new AreaId($area),
-                new RoomId(1),
-                new Map(new MapName($map), new Gamefile("{$map}.swf"), []),
-                new MapSpot(new MapCell('Enter'), MapPad::Spawn),
-            ),
+            new Location(new AreaId($area), self::map($map), new MapSpot(new MapCell('Enter'), MapPad::Spawn)),
             CombatState::Idle,
             false,
+        );
+    }
+
+    /**
+     * @param list<MapMonster> $monsters
+     * @param list<MapPlayer> $players
+     */
+    public static function map(string $name, array $monsters = [], array $players = []): Map
+    {
+        return new Map(
+            new MapName($name),
+            new MapRoom(1),
+            new Gamefile("{$name}.swf"),
+            new MapMonsters($monsters),
+            new MapPlayers($players),
         );
     }
 
@@ -151,15 +157,24 @@ final readonly class Fixture
 
     /**
      * @param list<MapMonster> $monsters
-     * @param list<RoomPlayer> $players
+     * @param list<MapPlayer> $players
      */
     public static function arrivalOf(string $map, int $area, array $monsters, array $players = []): MovedToMapEvent
     {
-        return new MovedToMapEvent(
-            new AreaId($area),
-            new RoomId(1),
-            new Map(new MapName($map), new Gamefile("{$map}.swf"), $monsters),
-            $players,
+        return new MovedToMapEvent(new AreaId($area), self::map($map, $monsters, $players));
+    }
+
+    public static function seen(
+        int $spawnId,
+        string $cell = 'Enter',
+        MapPad $pad = MapPad::Spawn,
+        CombatState $state = CombatState::Idle,
+        string $name = 'Hero',
+    ): MapPlayer {
+        return new MapPlayer(
+            new Player(new PlayerSpawnId($spawnId), new PlayerName($name), new PlayerLevel(1), self::vitals()),
+            new MapSpot(new MapCell($cell), $pad),
+            $state,
         );
     }
 

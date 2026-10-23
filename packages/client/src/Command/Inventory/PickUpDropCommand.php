@@ -6,13 +6,13 @@ namespace Lorekeeper\Client\Command\Inventory;
 
 use Lorekeeper\Client\Command\Command;
 use Lorekeeper\Core\Item\ItemId;
-use Lorekeeper\Server\SocketId;
+use Lorekeeper\Core\Player\PlayerSpawnId;
 use Override;
 
 final readonly class PickUpDropCommand implements Command
 {
     public function __construct(
-        private SocketId $player,
+        private PlayerSpawnId $player,
         private ItemId $item,
     ) {}
 

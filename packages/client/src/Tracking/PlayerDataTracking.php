@@ -12,7 +12,7 @@ final readonly class PlayerDataTracking
     public static function mine(PlayerDataLoadedEvent $event, Identity $me): ?PlayerData
     {
         foreach ($event->players as $player) {
-            if ($me->owns($player->socketId)) {
+            if ($me->owns($player->spawnId)) {
                 return $player;
             }
         }

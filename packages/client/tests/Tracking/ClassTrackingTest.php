@@ -7,23 +7,23 @@ namespace Lorekeeper\Client\Tests\Tracking;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Client\Tracking\ClassTracking;
 use Lorekeeper\Client\Tracking\Identity;
-use Lorekeeper\Core\Attribute\Mana;
-use Lorekeeper\Core\CharacterClass\ClassCategory;
-use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\CharacterClass\Skill\Cost\ManaCost;
-use Lorekeeper\Core\CharacterClass\Skill\SkillSlot;
-use Lorekeeper\Core\CharacterClass\Skill\SkillTarget;
-use Lorekeeper\Core\Currency\Gold;
-use Lorekeeper\Core\Player\PlayerClass;
+use Lorekeeper\Core\Game\Attribute\Mana;
+use Lorekeeper\Core\Game\Level\Experience;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassCategory;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\Cost\ManaCost;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillSlot;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\Skill\SkillTarget;
+use Lorekeeper\Core\Player\Hero\Class\HeroClass;
+use Lorekeeper\Core\Player\Hero\Class\HeroSkill;
 use Lorekeeper\Core\Player\PlayerName;
-use Lorekeeper\Core\Player\PlayerSkill;
-use Lorekeeper\Core\Progression\ClassPoints;
-use Lorekeeper\Core\Progression\Experience;
+use Lorekeeper\Core\Player\PlayerSpawnId;
+use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\CharacterClass\ClassChangedEvent;
 use Lorekeeper\Server\Event\Combat\SkillsLoadedEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
-use Lorekeeper\Server\SocketId;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psl\DateTime\Duration;
@@ -34,15 +34,19 @@ final class ClassTrackingTest extends TestCase
     #[Test]
     public function it_changes_class_at_once_and_with_no_skills_yet(): void
     {
-        $mage = self::mage();
+        $class = self::mage();
 
-        $theirs = ClassTracking::follow($mage, self::changed(new SocketId(1), 'Warrior'), self::me());
-        $mine = ClassTracking::follow($mage, self::changed(new SocketId(122_628), 'Blaze Binder'), self::me());
+        static::assertFalse(ClassTracking::follow($class, self::changed(new PlayerSpawnId(1), 'Warrior'), self::me()));
+        static::assertSame('Mage', $class->class->name->value);
 
-        static::assertSame($mage, $theirs);
-        static::assertSame('Blaze Binder', $mine->class->name->value);
-        static::assertSame(302_500, $mine->points->value);
-        static::assertSame([], $mine->skills);
+        static::assertTrue(ClassTracking::follow(
+            $class,
+            self::changed(new PlayerSpawnId(122_628), 'Blaze Binder'),
+            self::me(),
+        ));
+        static::assertSame('Blaze Binder', $class->class->name->value);
+        static::assertSame(302_500, $class->points->value);
+        static::assertSame([], $class->skills);
     }
 
     #[Test]
@@ -55,24 +59,20 @@ final class ClassTrackingTest extends TestCase
             Duration::seconds(2),
         );
         $burn = Fixture::skill(SkillSlot::First, SkillTarget::Enemy, new ManaCost(new Mana(10)), Duration::seconds(3));
-        $skills = [new PlayerSkill($fireBolt, true), new PlayerSkill($burn, false)];
-        $changed = ClassTracking::follow(
-            self::mage(),
-            self::changed(new SocketId(122_628), 'Blaze Binder'),
-            self::me(),
-        );
+        $skills = [new HeroSkill($fireBolt, true), new HeroSkill($burn, false)];
+        $class = self::mage();
+        ClassTracking::follow($class, self::changed(new PlayerSpawnId(122_628), 'Blaze Binder'), self::me());
 
-        $learned = ClassTracking::follow($changed, new SkillsLoadedEvent($skills, []), self::me());
-
-        static::assertSame('Blaze Binder', $learned->class->name->value);
-        static::assertSame([$fireBolt, $burn], $learned->class->skills);
-        static::assertSame($skills, $learned->skills);
+        static::assertTrue(ClassTracking::follow($class, new SkillsLoadedEvent($skills, []), self::me()));
+        static::assertSame('Blaze Binder', $class->class->name->value);
+        static::assertSame([$fireBolt, $burn], $class->class->skills);
+        static::assertSame($skills, $class->skills);
     }
 
     #[Test]
     public function it_earns_the_class_points_of_each_reward(): void
     {
-        $mage = self::mage();
+        $class = self::mage();
         $kill = static fn(int $points): MonsterRewardedEvent => new MonsterRewardedEvent(
             new Gold(3),
             new Experience(10),
@@ -80,24 +80,26 @@ final class ClassTrackingTest extends TestCase
             new MonsterSpawnId(4),
         );
 
-        $earned = ClassTracking::follow(ClassTracking::follow($mage, $kill(510), self::me()), $kill(3_090), self::me());
+        ClassTracking::follow($class, $kill(510), self::me());
+        ClassTracking::follow($class, $kill(3_090), self::me());
 
-        static::assertSame(3_600, $earned->points->value);
-        static::assertSame(3, $earned->rank()->value);
-        static::assertSame($mage, ClassTracking::follow($mage, $kill(0), self::me()));
+        static::assertSame(3_600, $class->points->value);
+        static::assertSame(3, $class->rank()->value);
+        static::assertFalse(ClassTracking::follow($class, $kill(0), self::me()));
+        static::assertSame(3_600, $class->points->value);
     }
 
-    private static function mage(): PlayerClass
+    private static function mage(): HeroClass
     {
-        return Fixture::me()->player()->class;
+        return Fixture::me()->hero()->class;
     }
 
     private static function me(): Identity
     {
-        return new Identity(new SocketId(122_628), new PlayerName('Hero'));
+        return new Identity(new PlayerSpawnId(122_628), new PlayerName('Hero'));
     }
 
-    private static function changed(SocketId $player, string $class): ClassChangedEvent
+    private static function changed(PlayerSpawnId $player, string $class): ClassChangedEvent
     {
         return new ClassChangedEvent(
             $player,
