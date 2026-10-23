@@ -2,6 +2,6 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Core\Combat;
+namespace Lorekeeper\Core\Game\Combat\Traits;
 
 interface Targetable {}

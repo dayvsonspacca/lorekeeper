@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Tests\World\Map;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Combat\CombatState;
 use Lorekeeper\Core\Game\Asset\Gamefile;
 use Lorekeeper\Core\Game\Asset\Linkage;
 use Lorekeeper\Core\Game\Attribute\Health;
 use Lorekeeper\Core\Game\Attribute\Mana;
 use Lorekeeper\Core\Game\Attribute\Vitals;
+use Lorekeeper\Core\Game\Combat\CombatState;
 use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapMonster;
