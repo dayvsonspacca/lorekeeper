@@ -93,12 +93,32 @@ final class StockTest extends TestCase
     }
 
     #[Test]
-    public function it_forgets_how_many_it_held_once_an_item_is_removed(): void
+    public function it_takes_the_exact_amount_the_server_says_it_holds(): void
     {
-        $stock = new Stock()->add(self::scales(), new Quantity(50))->remove(new ItemId(11_475));
+        $stock = new Stock()->add(self::scales(), new Quantity(50))->add(self::helm());
 
-        static::assertSame(0, $stock->quantity(new ItemId(11_475)));
-        static::assertCount(0, $stock);
+        $stock->hold(new ItemId(11_475), new Quantity(320));
+        $stock->hold(new ItemId(4_767), new Quantity(1));
+
+        static::assertSame(320, $stock->quantity(new ItemId(11_475)));
+        static::assertSame(1, $stock->quantity(new ItemId(4_767)));
+    }
+
+    #[Test]
+    public function it_refuses_to_hold_more_than_a_stack_or_an_item_it_does_not_have(): void
+    {
+        $stock = new Stock()->add(self::scales());
+
+        try {
+            $stock->hold(new ItemId(11_475), new Quantity(1001));
+            static::fail('A stack went past its limit.');
+        } catch (InvalidArgumentException) {
+            static::assertSame(1, $stock->quantity(new ItemId(11_475)));
+        }
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $stock->hold(new ItemId(1), new Quantity(1));
     }
 
     private static function scales(): Resource

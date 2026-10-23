@@ -115,7 +115,7 @@ final class HeroInventoryTest extends TestCase
             self::resource(11_475, 'Dragon Scale'),
             new Quantity(50),
         );
-        $inventory->permanent->remove(new ItemId(11_475));
+        $inventory->take(new ItemId(11_475), new Quantity(50));
 
         static::assertSame(0, $inventory->quantity(new ItemId(11_475)));
     }

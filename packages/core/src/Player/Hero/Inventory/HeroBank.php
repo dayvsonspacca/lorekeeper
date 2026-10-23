@@ -106,8 +106,9 @@ final class HeroBank
             throw new InvalidArgumentException("The bag has no free slot for {$item->name}.");
         }
 
-        $this->inventory->add($item, new Quantity($this->quantity($id)));
-        $this->items->remove($id);
+        $quantity = new Quantity($this->quantity($id));
+        $this->inventory->add($item, $quantity);
+        $this->items->take($id, $quantity);
 
         return $this;
     }

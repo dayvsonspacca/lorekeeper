@@ -39,7 +39,7 @@ final class Stock implements IteratorAggregate, Countable
             throw new InvalidArgumentException("{$item->name} is already held.");
         }
 
-        $this->hold($item, $quantity->value);
+        $this->store($item, $quantity->value);
         $this->items->add($item);
 
         return $this;
@@ -56,7 +56,7 @@ final class Stock implements IteratorAggregate, Countable
             return $this->add($item, $quantity);
         }
 
-        $this->hold($item, $this->quantity($item->id) + $quantity->value);
+        $this->store($item, $this->quantity($item->id) + $quantity->value);
 
         return $this;
     }
@@ -74,10 +74,13 @@ final class Stock implements IteratorAggregate, Countable
 
         $left = $this->quantity($id) - $quantity->value;
         if ($left <= 0) {
-            return $this->remove($id);
+            $this->items->remove($id);
+            unset($this->quantities[$id->value]);
+
+            return $this;
         }
 
-        $this->hold($item, $left);
+        $this->store($item, $left);
 
         return $this;
     }
@@ -87,10 +90,15 @@ final class Stock implements IteratorAggregate, Countable
      *
      * @throws InvalidArgumentException
      */
-    public function remove(ItemId $id): static
+    public function hold(ItemId $id, Quantity $quantity): static
     {
-        $this->items->remove($id);
-        unset($this->quantities[$id->value]);
+        $item = $this->find($id)->unwrapOrElse(
+            static fn(): never => throw new InvalidArgumentException(
+                "Item {$id} is not held, so its amount cannot be set.",
+            ),
+        );
+
+        $this->store($item, $quantity->value);
 
         return $this;
     }
@@ -123,7 +131,7 @@ final class Stock implements IteratorAggregate, Countable
     }
 
     /** @throws InvalidArgumentException */
-    private function hold(Item $item, int $total): void
+    private function store(Item $item, int $total): void
     {
         $most = $item instanceof Stackable ? $item->stack->value : 1;
         if ($total > $most) {
