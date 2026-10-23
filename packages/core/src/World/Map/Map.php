@@ -10,8 +10,14 @@ final readonly class Map
 {
     public function __construct(
         public MapName $name,
+        public MapRoom $room,
         public Gamefile $file,
         public MapMonsters $monsters,
         public MapPlayers $players,
     ) {}
+
+    public function join(): string
+    {
+        return "{$this->name}-{$this->room}";
+    }
 }
