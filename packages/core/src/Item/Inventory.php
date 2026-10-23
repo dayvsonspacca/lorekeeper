@@ -7,7 +7,7 @@ namespace Lorekeeper\Core\Item;
 use Lorekeeper\Core\Support\Collection;
 
 /**
- * @template T of HoldsItem
+ * @template T of Item
  *
  * @extends Collection<ItemId, T>
  */
@@ -16,6 +16,6 @@ class Inventory extends Collection
     /** @param T $item */
     final protected static function key(mixed $item): ItemId
     {
-        return $item->item->id;
+        return $item->id;
     }
 }

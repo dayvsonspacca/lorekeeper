@@ -5,53 +5,91 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Player\Hero;
 
 use InvalidArgumentException;
+use Lorekeeper\Core\Item\Equipment\Equipment;
+use Lorekeeper\Core\Item\EquipmentSlot;
 use Lorekeeper\Core\Item\Inventory;
+use Lorekeeper\Core\Item\Item;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemTag;
 use Lorekeeper\Core\Support\Quantity;
-use Psl\Option\Option;
+use Psl\Option;
 
-final readonly class HeroInventory
+final class HeroInventory
 {
+    /** @var Inventory<Item> */
+    public readonly Inventory $permanent;
+
+    /** @var Inventory<Item> */
+    public readonly Inventory $temporary;
+
+    /** @var array<positive-int, Quantity> */
+    private array $quantities = [];
+
+    /** @var array<string, ItemId> */
+    private array $equipped = [];
+
+    public function __construct(
+        public readonly Quantity $slots,
+    ) {
+        $this->permanent = new Inventory([]);
+        $this->temporary = new Inventory([]);
+    }
+
     /**
-     * @param Inventory<HeroItem> $permanent
-     * @param Inventory<HeroItem> $temporary
+     * @return $this
      *
      * @throws InvalidArgumentException
      */
-    public function __construct(
-        public Inventory $permanent,
-        public Quantity $slots,
-        public Inventory $temporary = new Inventory([]),
-    ) {
-        foreach ($permanent as $held) {
-            if ($held->item->tags->has(ItemTag::Temporary)) {
-                throw new InvalidArgumentException("Item {$held->item->id} is temporary but kept.");
-            }
+    public function add(Item $item, Quantity $quantity = new Quantity(1)): static
+    {
+        $temporary = $item->tags->has(ItemTag::Temporary);
+        if (($temporary ? $this->permanent : $this->temporary)->has($item)) {
+            throw new InvalidArgumentException("Item {$item->id} is both kept and temporary.");
         }
 
-        foreach ($temporary as $held) {
-            if (!$held->item->tags->has(ItemTag::Temporary)) {
-                throw new InvalidArgumentException("Item {$held->item->id} is not temporary but held as one.");
-            }
+        ($temporary ? $this->temporary : $this->permanent)->add($item);
+        $this->quantities[$item->id->value] = $quantity;
 
-            if ($permanent->has($held)) {
-                throw new InvalidArgumentException("Item {$held->item->id} is both kept and temporary.");
-            }
-        }
+        return $this;
     }
 
-    /** @return Option<HeroItem> */
-    public function find(ItemId $id): Option
+    /**
+     * @return $this
+     *
+     * @throws InvalidArgumentException
+     */
+    public function equip(Equipment $item): static
     {
-        return $this->permanent->find($id)->orElse(fn(): Option => $this->temporary->find($id));
+        if (!$this->permanent->has($item)) {
+            throw new InvalidArgumentException("Item {$item->id} is not kept, so it cannot be equipped.");
+        }
+
+        $this->equipped[$item->slot()->value] = $item->id;
+
+        return $this;
+    }
+
+    /** @return Option\Option<Equipment> */
+    public function equipped(EquipmentSlot $slot): Option\Option
+    {
+        return Option\from_nullable($this->equipped[$slot->value] ?? null)
+            ->andThen(fn(ItemId $id): Option\Option => $this->permanent->find($id))
+            ->andThen(static fn(Item $item): Option\Option => $item instanceof Equipment
+                ? Option\some($item)
+                : Option\none());
+    }
+
+    /** @return Option\Option<Item> */
+    public function find(ItemId $id): Option\Option
+    {
+        return $this->permanent->find($id)->orElse(fn(): Option\Option => $this->temporary->find($id));
     }
 
     public function quantity(ItemId $id): int
     {
         return $this
             ->find($id)
-            ->map(static fn(HeroItem $held): int => $held->quantity->value)
+            ->map(fn(Item $item): int => $this->quantities[$item->id->value]->value ?? 1)
             ->unwrapOr(0);
     }
 

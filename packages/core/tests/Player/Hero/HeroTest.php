@@ -10,7 +10,6 @@ use Lorekeeper\Core\Attribute\Vitals;
 use Lorekeeper\Core\CharacterClass\CharacterClass;
 use Lorekeeper\Core\CharacterClass\ClassCategory;
 use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\Item\Inventory;
 use Lorekeeper\Core\Player\Hero\Hero;
 use Lorekeeper\Core\Player\Hero\HeroClass;
 use Lorekeeper\Core\Player\Hero\HeroInventory;
@@ -69,7 +68,7 @@ final class HeroTest extends TestCase
                 new ClassPoints(302_500),
                 [],
             ),
-            new HeroInventory(new Inventory([]), new Quantity(131)),
+            new HeroInventory(new Quantity(131)),
             new HeroWallet(new Gold(6_800_132), new AdventureCoins(2899)),
             new HeroQuestMarks(),
         );
