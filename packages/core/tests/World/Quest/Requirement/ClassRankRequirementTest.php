@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\World\Quest\Requirement;
 
-use Lorekeeper\Core\CharacterClass\ClassId;
 use Lorekeeper\Core\Game\Rank\Rank;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassId;
 use Lorekeeper\Core\World\Quest\Requirement\ClassRankRequirement;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

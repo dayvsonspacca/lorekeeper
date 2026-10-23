@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Tests\Player\Hero;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassItem;
 use Lorekeeper\Core\Item\Equipment\Helm;
 use Lorekeeper\Core\Item\EquipmentSlot;
 use Lorekeeper\Core\Item\ItemId;

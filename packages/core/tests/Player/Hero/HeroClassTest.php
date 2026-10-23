@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\Player\Hero;
 
-use Lorekeeper\Core\CharacterClass\CharacterClass;
-use Lorekeeper\Core\CharacterClass\ClassCategory;
-use Lorekeeper\Core\CharacterClass\ClassName;
-use Lorekeeper\Core\CharacterClass\ClassPoints;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\CharacterClass;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassCategory;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassName;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
 use Lorekeeper\Core\Player\Hero\HeroClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;

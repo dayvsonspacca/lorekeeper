@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lorekeeper\Core\Tests\Item;
 
 use InvalidArgumentException;
-use Lorekeeper\Core\Item\Equipment\ClassItem;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassItem;
 use Lorekeeper\Core\Item\Inventory;
 use Lorekeeper\Core\Item\ItemId;
 use Lorekeeper\Core\Item\ItemLevel;

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Player\Hero;
 
-use Lorekeeper\Core\CharacterClass\CharacterClass;
-use Lorekeeper\Core\CharacterClass\ClassPoints;
 use Lorekeeper\Core\Game\Rank\Rank;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\CharacterClass;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
 
 final readonly class HeroClass
 {

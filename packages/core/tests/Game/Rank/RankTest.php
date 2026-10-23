@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lorekeeper\Core\Tests\Game\Rank;
 
-use Lorekeeper\Core\CharacterClass\ClassPoints;
 use Lorekeeper\Core\Game\Rank\Rank;
+use Lorekeeper\Core\Item\Equipment\CharacterClass\ClassPoints;
 use Lorekeeper\Core\World\Faction\Reputation;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestWith;
