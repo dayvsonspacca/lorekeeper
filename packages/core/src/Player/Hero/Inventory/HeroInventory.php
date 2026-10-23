@@ -20,6 +20,8 @@ final class HeroInventory
 
     public readonly HeroEquipment $equipment;
 
+    public readonly HeroCostume $costume;
+
     public readonly HeroBank $bank;
 
     public function __construct(
@@ -30,6 +32,7 @@ final class HeroInventory
         $this->permanent = new Stock();
         $this->temporary = new Stock();
         $this->equipment = new HeroEquipment($this->permanent);
+        $this->costume = new HeroCostume($this->permanent);
         $this->bank = new HeroBank($bankSlots, $this);
     }
 

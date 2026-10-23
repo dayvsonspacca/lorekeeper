@@ -76,7 +76,7 @@ final class HeroBank
                 ),
             );
 
-        if ($this->inventory->equipment->wears($id)) {
+        if ($this->inventory->equipment->equips($id)) {
             throw new InvalidArgumentException("{$item->name} is equipped, so it cannot be banked.");
         }
 

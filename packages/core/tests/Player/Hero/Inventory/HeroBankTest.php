@@ -111,7 +111,7 @@ final class HeroBankTest extends TestCase
     }
 
     #[Test]
-    public function it_refuses_to_bank_what_the_hero_wears(): void
+    public function it_refuses_to_bank_what_the_hero_equips(): void
     {
         $helm = self::helm();
         $inventory = self::inventory()->add($helm);

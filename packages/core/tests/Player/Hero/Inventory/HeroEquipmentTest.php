@@ -44,7 +44,7 @@ final class HeroEquipmentTest extends TestCase
     }
 
     #[Test]
-    public function it_tells_whether_it_wears_an_item(): void
+    public function it_tells_whether_it_equips_an_item(): void
     {
         $helm = self::helm();
         $healer = new ClassItem(new ItemId(15_651), new ItemName('Healer'), new ItemLevel(1), Option\none());
@@ -52,10 +52,10 @@ final class HeroEquipmentTest extends TestCase
         $inventory = new HeroInventory(new Quantity(131), new Quantity(131))->add($helm)->add($healer)->add($scales);
         $inventory->equipment->equip($helm);
 
-        static::assertTrue($inventory->equipment->wears(new ItemId(4_767)));
-        static::assertFalse($inventory->equipment->wears(new ItemId(15_651)));
-        static::assertFalse($inventory->equipment->wears(new ItemId(11_475)));
-        static::assertFalse($inventory->equipment->wears(new ItemId(1)));
+        static::assertTrue($inventory->equipment->equips(new ItemId(4_767)));
+        static::assertFalse($inventory->equipment->equips(new ItemId(15_651)));
+        static::assertFalse($inventory->equipment->equips(new ItemId(11_475)));
+        static::assertFalse($inventory->equipment->equips(new ItemId(1)));
     }
 
     #[Test]
