@@ -24,6 +24,7 @@ use Lorekeeper\Client\Session\Credentials;
 use Lorekeeper\Client\Session\Ending;
 use Lorekeeper\Client\Session\EndingStatus;
 use Lorekeeper\Client\Session\Login;
+use Lorekeeper\Client\Session\Versions;
 use Lorekeeper\Core\Player\PlayerName;
 use Psl\Async\CancellationTokenInterface;
 use Psl\DateTime\Duration;
@@ -40,7 +41,7 @@ final class PlayBot extends Command
     /** @var string */
     protected $signature = 'bots:play {account}';
 
-    public function handle(LoginClient $logins, Notifier $notifier): int
+    public function handle(LoginClient $logins, Versions $versions, Notifier $notifier): int
     {
         $account = Account::query()->findOrFail($this->argument('account'));
 
@@ -72,6 +73,7 @@ final class PlayBot extends Command
                 new Credentials(new PlayerName($account->name), $account->password, $account->server),
                 $stop->token(),
                 $logins,
+                $versions,
             );
             $ending = $client instanceof Client ? self::stay($account, $client, $recorder, $stop->token()) : $client;
         } catch (Throwable $exception) {

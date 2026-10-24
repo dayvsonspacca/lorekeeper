@@ -9,9 +9,11 @@ use Lorekeeper\Client\Client;
 use Lorekeeper\Client\Connection;
 use Lorekeeper\Client\Script\Outcome;
 use Lorekeeper\Client\Script\OutcomeStatus;
+use Lorekeeper\Client\Session\ClientVersion;
 use Lorekeeper\Client\Session\Credentials;
 use Lorekeeper\Client\Session\Ending;
 use Lorekeeper\Client\Session\EndingStatus;
+use Lorekeeper\Client\Session\InMemoryVersions;
 use Lorekeeper\Client\Session\Login;
 use Lorekeeper\Client\Tests\Fixture;
 use Lorekeeper\Core\Player\PlayerName;
@@ -72,6 +74,7 @@ final class LoginTest extends TestCase
         static::assertEquals(new Outcome(OutcomeStatus::Done, 'Now in forest'), $again);
         static::assertTrue($loggedOut);
         static::assertSame(['MovedToMap'], $heard);
+        static::assertStringContainsString('SPIDER#0001~Hero~5.3]]>', $sent[1]);
         static::assertSame('%xt%zm%cmd%1%tfer%Hero%forest%', $sent[5]);
         static::assertSame('%xt%zm%logout%1%', end($sent));
         static::assertSame('forest', $client->character()->location()->map->name->value);
@@ -109,7 +112,7 @@ final class LoginTest extends TestCase
 
         $ending = Login::enterOn($connection, new PlayerName('Hero'), 'TOKEN');
 
-        static::assertEquals(new Ending(EndingStatus::Failed, 'Login refused'), $ending);
+        static::assertEquals(new Ending(EndingStatus::Failed, 'Login refused: Nope'), $ending);
     }
 
     #[Test]
@@ -154,6 +157,53 @@ final class LoginTest extends TestCase
     }
 
     #[Test]
+    public function it_learns_the_version_the_server_demands_and_tries_again_once(): void
+    {
+        $listener = TCP\listen('127.0.0.1');
+        $port = $listener->getLocalAddress()->port;
+        $nicks = [];
+        $server = Async\run(static function () use ($listener, &$nicks): void {
+            foreach ([
+                'Server requires AQW game version 5.4 or higher.',
+                'Server requires AQW game version 5.4 or higher.',
+            ] as $refusal) {
+                $connection = $listener->accept();
+                self::readUntilNull($connection);
+                $connection->writeAll(self::POLICY);
+                preg_match('/SPIDER#0001~[^~]+~([^\]]+)/', self::readUntilNull($connection), $nick);
+                $nicks[] = $nick[1] ?? '';
+                $connection->writeAll("%xt%loginResponse%-1%0%-1%%{$refusal}%\0");
+                $connection->close();
+            }
+        });
+        $response = self::loginResponse(
+            '{"login":{"sToken":"TOKEN"},"servers":[{"sName":"Twilly","sIP":"127.0.0.1","iPort":'
+            . $port
+            . ',"bOnline":1,"bUpg":0}]}',
+        );
+        $versions = new InMemoryVersions(new ClientVersion('5.3'));
+
+        try {
+            $ending = Login::enter(
+                new Credentials(new PlayerName('Hero'), 'secret', 'Twilly'),
+                logins: new LoginClient("file://{$response}"),
+                versions: $versions,
+            );
+        } finally {
+            unlink($response);
+            $server->await();
+            $listener->close();
+        }
+
+        static::assertSame(['5.3', '5.4'], $nicks);
+        static::assertEquals(new ClientVersion('5.4'), $versions->current());
+        static::assertEquals(
+            new Ending(EndingStatus::Failed, 'Login refused: Server requires AQW game version 5.4 or higher.'),
+            $ending,
+        );
+    }
+
+    #[Test]
     public function it_does_not_enter_when_the_chosen_server_is_not_open(): void
     {
         $response = self::loginResponse(
@@ -192,6 +242,16 @@ final class LoginTest extends TestCase
         $stream->method('writeAll')->willThrowException(new IO\Exception\RuntimeException('Broken pipe'));
 
         static::assertFalse(Login::leave(new Client(new Connection($stream), Fixture::me())));
+    }
+
+    private static function readUntilNull(TCP\StreamInterface $connection): string
+    {
+        $read = '';
+        while (!str_contains($read, "\0")) {
+            $read .= $connection->read();
+        }
+
+        return $read;
     }
 
     /** @return non-empty-string */
