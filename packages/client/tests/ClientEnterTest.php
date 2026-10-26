@@ -207,7 +207,7 @@ final class ClientEnterTest extends TestCase
 
         static::assertInstanceOf(TimedOut::class, $result);
         static::assertSame(
-            'no answer while waiting for PlayerDataLoadedEvent, ClassChangedEvent, SkillsLoadedEvent, PlayerVitalsUpdatedEvent',
+            'no answer while waiting for HeroDataLoadedEvent, ClassChangedEvent, SkillsLoadedEvent, PlayerVitalsUpdatedEvent',
             Outcome::of($result)->summary,
         );
     }

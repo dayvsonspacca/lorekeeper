@@ -8,8 +8,8 @@ use Lorekeeper\Core\Game\Level\Experience;
 use Lorekeeper\Core\Player\Hero\Hero;
 use Lorekeeper\Core\Player\PlayerLevel;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Player\PlayerData;
-use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroData;
+use Lorekeeper\Server\Event\Player\Hero\HeroDataLoadedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Reward\RewardedEvent;
 
@@ -18,14 +18,14 @@ final readonly class ProgressTracking
     public static function follow(Hero $hero, Event $event, Identity $me): bool
     {
         return match (true) {
-            $event instanceof PlayerDataLoadedEvent => self::recounted($hero, PlayerDataTracking::mine($event, $me)),
+            $event instanceof HeroDataLoadedEvent => self::recounted($hero, HeroDataTracking::mine($event, $me)),
             $event instanceof LeveledUpEvent => self::raised($hero, $event->level, $event->toNextLevel),
             $event instanceof RewardedEvent && $event->experience->value > 0 => self::earned($hero, $event->experience),
             default => false,
         };
     }
 
-    private static function recounted(Hero $hero, ?PlayerData $data): bool
+    private static function recounted(Hero $hero, ?HeroData $data): bool
     {
         if ($data === null) {
             return false;

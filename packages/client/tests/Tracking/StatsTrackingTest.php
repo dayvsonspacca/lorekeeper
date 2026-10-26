@@ -11,7 +11,7 @@ use Lorekeeper\Core\Game\Attribute\Stat\Primary\Strength;
 use Lorekeeper\Core\Game\Attribute\Stat\Resistance\DamageResistance;
 use Lorekeeper\Core\Game\Attribute\Stat\Stats;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
-use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroStatsUpdatedEvent;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -23,7 +23,7 @@ final class StatsTrackingTest extends TestCase
         $stats = new Stats();
         $hit = $stats->chances->hit;
 
-        $changed = StatsTracking::follow($stats, new StatsUpdatedEvent([new Evasion(0.7878), new Haste(0.5509)]));
+        $changed = StatsTracking::follow($stats, new HeroStatsUpdatedEvent([new Evasion(0.7878), new Haste(0.5509)]));
 
         static::assertTrue($changed);
         static::assertSame(0.7878, $stats->chances->evasion->value);
@@ -36,7 +36,7 @@ final class StatsTrackingTest extends TestCase
     {
         $stats = new Stats();
 
-        StatsTracking::follow($stats, new StatsUpdatedEvent([new Strength(245), new DamageResistance(1.2)]));
+        StatsTracking::follow($stats, new HeroStatsUpdatedEvent([new Strength(245), new DamageResistance(1.2)]));
 
         static::assertSame(245, $stats->primary->strength->value);
         static::assertSame(0, $stats->primary->luck->value);

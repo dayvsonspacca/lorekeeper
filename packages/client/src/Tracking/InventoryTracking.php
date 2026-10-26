@@ -20,8 +20,8 @@ use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsIncreasedEvent;
 use Lorekeeper\Server\Event\Inventory\QuestItemsIncreasedEvent;
 use Lorekeeper\Server\Event\Inventory\QuestItemsReceivedEvent;
-use Lorekeeper\Server\Event\Player\PlayerData;
-use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroData;
+use Lorekeeper\Server\Event\Player\Hero\HeroDataLoadedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\TurnedInItem;
 
@@ -40,7 +40,7 @@ final readonly class InventoryTracking
     ): bool {
         return match (true) {
             $event instanceof InventoryLoadedEvent => self::loaded($inventory, $event->items),
-            $event instanceof PlayerDataLoadedEvent => self::resized($inventory, PlayerDataTracking::mine($event, $me)),
+            $event instanceof HeroDataLoadedEvent => self::resized($inventory, HeroDataTracking::mine($event, $me)),
             $event instanceof QuestItemsReceivedEvent => self::received($inventory, $event->items),
             $event instanceof ItemsIncreasedEvent => self::grown($inventory->permanent, $event->items),
             $event instanceof QuestItemsIncreasedEvent => self::grown($inventory->temporary, $event->items),
@@ -80,7 +80,7 @@ final readonly class InventoryTracking
         return true;
     }
 
-    private static function resized(HeroInventory $inventory, ?PlayerData $data): bool
+    private static function resized(HeroInventory $inventory, ?HeroData $data): bool
     {
         if ($data === null) {
             return false;

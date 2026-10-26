@@ -33,15 +33,15 @@ use Lorekeeper\Server\Event\Map\MapNotAvailableEvent;
 use Lorekeeper\Server\Event\Map\MapRequiresQuestEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
 use Lorekeeper\Server\Event\Map\RoomJoinedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroDataLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroSettingsLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroStatsUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerAwayUpdatedEvent;
-use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
 use Lorekeeper\Server\Event\Player\PlayerEnteredEvent;
 use Lorekeeper\Server\Event\Player\PlayerLeftEvent;
-use Lorekeeper\Server\Event\Player\PlayerSettingsLoadedEvent;
 use Lorekeeper\Server\Event\Player\PlayerStateUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
-use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\QuestAcceptedEvent;
@@ -103,10 +103,10 @@ final readonly class Events
         PlayerUpdatedEvent::class,
         PlayerAwayUpdatedEvent::class,
         PlayerVitalsUpdatedEvent::class,
-        StatsUpdatedEvent::class,
+        HeroStatsUpdatedEvent::class,
         PlayerStateUpdatedEvent::class,
-        PlayerDataLoadedEvent::class,
-        PlayerSettingsLoadedEvent::class,
+        HeroDataLoadedEvent::class,
+        HeroSettingsLoadedEvent::class,
         QuestLoadedEvent::class,
         ItemsTurnedInEvent::class,
         QuestAcceptedEvent::class,

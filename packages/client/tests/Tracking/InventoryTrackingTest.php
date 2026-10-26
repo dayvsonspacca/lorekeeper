@@ -35,8 +35,8 @@ use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
 use Lorekeeper\Server\Event\Inventory\QuestItemsReceivedEvent;
-use Lorekeeper\Server\Event\Player\PlayerData;
-use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroData;
+use Lorekeeper\Server\Event\Player\Hero\HeroDataLoadedEvent;
 use Lorekeeper\Server\Event\Quest\ItemsTurnedInEvent;
 use Lorekeeper\Server\Event\Quest\TurnedInItem;
 use PHPUnit\Framework\Attributes\Test;
@@ -198,22 +198,22 @@ final class InventoryTrackingTest extends TestCase
 
         static::assertFalse(InventoryTracking::follow(
             $inventory,
-            new PlayerDataLoadedEvent([self::data(1, 131, 60)]),
+            new HeroDataLoadedEvent(self::data(1, 131, 60)),
             self::me(),
         ));
         static::assertFalse(InventoryTracking::follow(
             $inventory,
-            new PlayerDataLoadedEvent([self::data(122_628, 30, 30)]),
+            new HeroDataLoadedEvent(self::data(122_628, 30, 30)),
             self::me(),
         ));
         static::assertTrue(InventoryTracking::follow(
             $inventory,
-            new PlayerDataLoadedEvent([self::data(1, 131, 60), self::data(122_628, 131, 30)]),
+            new HeroDataLoadedEvent(self::data(122_628, 131, 30)),
             self::me(),
         ));
         static::assertTrue(InventoryTracking::follow(
             $inventory,
-            new PlayerDataLoadedEvent([self::data(122_628, 131, 60)]),
+            new HeroDataLoadedEvent(self::data(122_628, 131, 60)),
             self::me(),
         ));
 
@@ -230,9 +230,9 @@ final class InventoryTrackingTest extends TestCase
         return $inventory;
     }
 
-    private static function data(int $spawnId, int $bagSlots, int $bankSlots): PlayerData
+    private static function data(int $spawnId, int $bagSlots, int $bankSlots): HeroData
     {
-        return new PlayerData(
+        return new HeroData(
             new PlayerSpawnId($spawnId),
             new PlayerName('Hero'),
             new PlayerLevel(1),

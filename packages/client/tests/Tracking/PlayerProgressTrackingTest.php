@@ -21,8 +21,8 @@ use Lorekeeper\Core\World\Quest\QuestGroup;
 use Lorekeeper\Core\World\Quest\QuestGroupId;
 use Lorekeeper\Core\World\Quest\QuestGroupNumber;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
-use Lorekeeper\Server\Event\Player\PlayerData;
-use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroData;
+use Lorekeeper\Server\Event\Player\Hero\HeroDataLoadedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Lorekeeper\Server\Event\Quest\QuestMarkedEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
@@ -91,7 +91,7 @@ final class PlayerProgressTrackingTest extends TestCase
     {
         $me = Fixture::me(level: 4);
 
-        $me->hear(new PlayerDataLoadedEvent([self::data(new PlayerSpawnId(1), level: 90)]));
+        $me->hear(new HeroDataLoadedEvent(self::data(new PlayerSpawnId(1), level: 90)));
 
         static::assertSame(4, $me->hero()->level->value);
         static::assertFalse($me->hero()->tags->has(PlayerTag::Member));
@@ -107,14 +107,14 @@ final class PlayerProgressTrackingTest extends TestCase
         );
     }
 
-    private static function memberData(): PlayerDataLoadedEvent
+    private static function memberData(): HeroDataLoadedEvent
     {
-        return new PlayerDataLoadedEvent([self::data(new PlayerSpawnId(122_628), level: 81)]);
+        return new HeroDataLoadedEvent(self::data(new PlayerSpawnId(122_628), level: 81));
     }
 
-    private static function data(PlayerSpawnId $spawnId, int $level): PlayerData
+    private static function data(PlayerSpawnId $spawnId, int $level): HeroData
     {
-        return new PlayerData(
+        return new HeroData(
             $spawnId,
             new PlayerName('Hero'),
             new PlayerLevel($level),

@@ -36,8 +36,8 @@ use Lorekeeper\Server\Event\Inventory\DropPickedUpEvent;
 use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemDroppedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroStatsUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
-use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
 use Lorekeeper\Server\Event\Progression\LeveledUpEvent;
 use Override;
 use PHPUnit\Framework\Attributes\Test;
@@ -66,7 +66,7 @@ final class CharacterTest extends TestCase
             ),
         );
         $me->hear(new InventoryLoadedEvent([new HeldItem($scales)]));
-        $me->hear(new StatsUpdatedEvent([new Haste(0.331)]));
+        $me->hear(new HeroStatsUpdatedEvent([new Haste(0.331)]));
 
         $hero = $me->hero();
         static::assertSame('Hero', $hero->name->value);

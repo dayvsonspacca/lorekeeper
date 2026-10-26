@@ -24,8 +24,8 @@ use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\Event\Combat\ResurrectedEvent;
 use Lorekeeper\Server\Event\Inventory\ItemsEnhancedEvent;
-use Lorekeeper\Server\Event\Player\PlayerData;
-use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroData;
+use Lorekeeper\Server\Event\Player\Hero\HeroDataLoadedEvent;
 use Lorekeeper\Server\Event\Reward\MonsterRewardedEvent;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -76,19 +76,21 @@ final class WalletTrackingTest extends TestCase
         return new Identity(new PlayerSpawnId(122_628), new PlayerName('Hero'));
     }
 
-    private static function data(int $spawnId, int $gold, int $coins): PlayerDataLoadedEvent
+    private static function data(int $spawnId, int $gold, int $coins): HeroDataLoadedEvent
     {
-        return new PlayerDataLoadedEvent([new PlayerData(
-            new PlayerSpawnId($spawnId),
-            new PlayerName('Hero'),
-            new PlayerLevel(1),
-            new Gauge(new Experience(0), new Experience(1000)),
-            new HeroWallet(new Gold($gold), new AdventureCoins($coins)),
-            false,
-            new Quantity(30),
-            new Quantity(30),
-            [],
-        )]);
+        return new HeroDataLoadedEvent(
+            new HeroData(
+                new PlayerSpawnId($spawnId),
+                new PlayerName('Hero'),
+                new PlayerLevel(1),
+                new Gauge(new Experience(0), new Experience(1000)),
+                new HeroWallet(new Gold($gold), new AdventureCoins($coins)),
+                false,
+                new Quantity(30),
+                new Quantity(30),
+                [],
+            ),
+        );
     }
 
     private static function reward(int $gold): MonsterRewardedEvent

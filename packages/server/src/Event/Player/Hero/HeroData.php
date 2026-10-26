@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Server\Event\Player;
+namespace Lorekeeper\Server\Event\Player\Hero;
 
 use Lorekeeper\Core\Game\Level\Experience;
 use Lorekeeper\Core\Player\Hero\Inventory\HeroWallet;
@@ -13,7 +13,7 @@ use Lorekeeper\Core\Support\Gauge;
 use Lorekeeper\Core\Support\Quantity;
 use Lorekeeper\Core\World\Quest\QuestGroupId;
 
-final readonly class PlayerData
+final readonly class HeroData
 {
     /**
      * @param Gauge<Experience> $experience

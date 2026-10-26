@@ -36,7 +36,7 @@ final class EventsTest extends TestCase
     #[Test]
     public function it_knows_every_event_of_the_package(): void
     {
-        $files = glob(__DIR__ . '/../../src/Event/{,*/}*Event.php', GLOB_BRACE);
+        $files = glob(__DIR__ . '/../../src/Event/{,*/,*/*/}*Event.php', GLOB_BRACE);
         $concrete = array_values(array_filter(
             array_map(
                 static fn(string $file): string => basename($file, suffix: '.php'),

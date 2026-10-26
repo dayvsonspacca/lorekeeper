@@ -6,13 +6,13 @@ namespace Lorekeeper\Client\Tracking;
 
 use Lorekeeper\Core\Game\Attribute\Stat\Stats;
 use Lorekeeper\Server\Event\Event;
-use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroStatsUpdatedEvent;
 
 final readonly class StatsTracking
 {
     public static function follow(Stats $stats, Event $event): bool
     {
-        if (!$event instanceof StatsUpdatedEvent) {
+        if (!$event instanceof HeroStatsUpdatedEvent) {
             return false;
         }
 

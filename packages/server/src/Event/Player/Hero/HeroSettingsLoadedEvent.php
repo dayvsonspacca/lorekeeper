@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Server\Event\Player;
+namespace Lorekeeper\Server\Event\Player\Hero;
 
 use Lorekeeper\Core\Game\Setting\GameSetting;
 use Lorekeeper\Core\Player\Hero\HeroSettings;
@@ -10,6 +10,7 @@ use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
+use Lorekeeper\Server\Event\Player\Hero\Helper\HeroEntries;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -19,9 +20,9 @@ use Psl\Type;
 use Psl\Type\Exception\CoercionException;
 
 /**
- * The server sent the game settings of players in the room.
+ * The server sent our player's game settings.
  */
-final readonly class PlayerSettingsLoadedEvent implements Event
+final readonly class HeroSettingsLoadedEvent implements Event
 {
     use NamedAfterClass;
 
@@ -34,9 +35,8 @@ final readonly class PlayerSettingsLoadedEvent implements Event
         13 => GameSetting::Duels,
     ];
 
-    /** @param non-empty-list<PlayerSettingsData> $players */
     public function __construct(
-        public array $players,
+        public HeroSettingsData $data,
     ) {}
 
     /** @return Option\Option<static> */
@@ -47,43 +47,42 @@ final readonly class PlayerSettingsLoadedEvent implements Event
             return Option\none();
         }
 
+        $hero = HeroEntries::find($message, static::class);
+        if ($hero->isNone()) {
+            return Option\none();
+        }
+
         try {
-            $entries = Type\non_empty_vec(Type\shape([
+            $entry = Type\shape([
                 'uid' => Type\positive_int(),
                 'data' => Type\shape([
                     'strUsername' => Type\non_empty_string(),
                     'ia1' => Type\optional(Type\int()),
                 ], allowUnknownFields: true),
-            ], allowUnknownFields: true))
-                ->coerce($message->data['a'] ?? null);
+            ], allowUnknownFields: true)->coerce($hero->unwrap());
         } catch (CoercionException $exception) {
-            throw new MalformedEventException(static::class, 'player settings are invalid', $exception);
+            throw new MalformedEventException(static::class, 'hero settings are invalid', $exception);
         }
 
-        $players = [];
-        foreach ($entries as $entry) {
-            if (!array_key_exists('ia1', $entry['data'])) {
-                continue;
-            }
-
-            $players[] = new PlayerSettingsData(
-                new PlayerSpawnId($entry['uid']),
-                new PlayerName($entry['data']['strUsername']),
-                self::settings($entry['data']['ia1']),
-            );
+        if (!array_key_exists('ia1', $entry['data'])) {
+            return Option\none();
         }
 
-        return $players === [] ? Option\none() : Option\some(new static($players));
+        return Option\some(
+            new static(
+                new HeroSettingsData(
+                    new PlayerSpawnId($entry['uid']),
+                    new PlayerName($entry['data']['strUsername']),
+                    self::settings($entry['data']['ia1']),
+                ),
+            ),
+        );
     }
 
     #[Override]
     public function summary(): string
     {
-        return 'Settings of '
-        . implode(', ', array_map(
-            static fn(PlayerSettingsData $player): string => $player->name->value,
-            $this->players,
-        ));
+        return "Settings of {$this->data->name->value}";
     }
 
     private static function settings(int $bits): HeroSettings

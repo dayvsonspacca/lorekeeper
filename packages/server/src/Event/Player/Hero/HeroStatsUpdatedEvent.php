@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lorekeeper\Server\Event\Player;
+namespace Lorekeeper\Server\Event\Player\Hero;
 
 use InvalidArgumentException;
 use Lorekeeper\Core\Game\Attribute\Stat\Boost\DamageBoost;
@@ -43,7 +43,7 @@ use Psl\Type\Exception\CoercionException;
 /**
  * Our player's stats changed.
  */
-final readonly class StatsUpdatedEvent implements Event
+final readonly class HeroStatsUpdatedEvent implements Event
 {
     use NamedAfterClass;
 

@@ -33,11 +33,11 @@ use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Inventory\HeldItem;
 use Lorekeeper\Server\Event\Inventory\InventoryLoadedEvent;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
-use Lorekeeper\Server\Event\Player\PlayerData;
-use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
-use Lorekeeper\Server\Event\Player\PlayerSettingsLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroData;
+use Lorekeeper\Server\Event\Player\Hero\HeroDataLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroSettingsLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroStatsUpdatedEvent;
 use Lorekeeper\Server\Event\Player\PlayerVitalsUpdatedEvent;
-use Lorekeeper\Server\Event\Player\StatsUpdatedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 
 /** @mago-expect lint:cyclomatic-complexity */
@@ -50,7 +50,7 @@ final class Entrance
     /** @var ?list<HeldItem> */
     private ?array $inventory = null;
 
-    private ?PlayerData $data = null;
+    private ?HeroData $data = null;
 
     private ?ClassChangedEvent $class = null;
 
@@ -75,12 +75,11 @@ final class Entrance
             $event instanceof LoginSucceededEvent => $this->spawnId = $event->spawnId,
             $event instanceof MovedToMapEvent => $this->arrival = $event,
             $event instanceof InventoryLoadedEvent => $this->inventory = $event->items,
-            $event instanceof PlayerDataLoadedEvent => $this->data = $this->mine($event) ?? $this->data,
-            $event instanceof PlayerSettingsLoadedEvent => $this->settings =
-                $this->settingsOf($event) ?? $this->settings,
+            $event instanceof HeroDataLoadedEvent => $this->data = $this->mine($event) ?? $this->data,
+            $event instanceof HeroSettingsLoadedEvent => $this->settings = $this->settingsOf($event) ?? $this->settings,
             $event instanceof ClassChangedEvent => $this->isMine($event->player) ? ($this->class = $event) : null,
             $event instanceof SkillsLoadedEvent => $this->skills = $event,
-            $event instanceof StatsUpdatedEvent => StatsTracking::follow($this->stats, $event),
+            $event instanceof HeroStatsUpdatedEvent => StatsTracking::follow($this->stats, $event),
             $event instanceof PlayerVitalsUpdatedEvent => $this->isMe($event->name)
                 ? ($this->vitals = $event->vitals)
                 : null,
@@ -95,7 +94,7 @@ final class Entrance
             LoginSucceededEvent::class => $this->spawnId === null,
             MovedToMapEvent::class => $this->me() === null,
             InventoryLoadedEvent::class => $this->inventory === null,
-            PlayerDataLoadedEvent::class => $this->data === null,
+            HeroDataLoadedEvent::class => $this->data === null,
             ClassChangedEvent::class => $this->class === null,
             SkillsLoadedEvent::class => $this->skills === null,
             PlayerVitalsUpdatedEvent::class => $this->vitals === null,
@@ -171,26 +170,14 @@ final class Entrance
             ->unwrapOr(null);
     }
 
-    private function mine(PlayerDataLoadedEvent $event): ?PlayerData
+    private function mine(HeroDataLoadedEvent $event): ?HeroData
     {
-        foreach ($event->players as $player) {
-            if ($this->isMine($player->spawnId)) {
-                return $player;
-            }
-        }
-
-        return null;
+        return $this->isMine($event->data->spawnId) ? $event->data : null;
     }
 
-    private function settingsOf(PlayerSettingsLoadedEvent $event): ?HeroSettings
+    private function settingsOf(HeroSettingsLoadedEvent $event): ?HeroSettings
     {
-        foreach ($event->players as $player) {
-            if ($this->isMine($player->spawnId)) {
-                return $player->settings;
-            }
-        }
-
-        return null;
+        return $this->isMine($event->data->spawnId) ? $event->data->settings : null;
     }
 
     private function isMine(PlayerSpawnId $spawnId): bool

@@ -24,10 +24,10 @@ use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\Events;
 use Lorekeeper\Server\Event\Map\MovedToMapEvent;
-use Lorekeeper\Server\Event\Player\PlayerData;
-use Lorekeeper\Server\Event\Player\PlayerDataLoadedEvent;
-use Lorekeeper\Server\Event\Player\PlayerSettingsData;
-use Lorekeeper\Server\Event\Player\PlayerSettingsLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroData;
+use Lorekeeper\Server\Event\Player\Hero\HeroDataLoadedEvent;
+use Lorekeeper\Server\Event\Player\Hero\HeroSettingsData;
+use Lorekeeper\Server\Event\Player\Hero\HeroSettingsLoadedEvent;
 use Lorekeeper\Server\Event\Session\LoginSucceededEvent;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -97,8 +97,8 @@ final class EntranceTest extends TestCase
             self::SKILLS,
             self::VITALS,
         );
-        $entrance->hear(new PlayerDataLoadedEvent([self::member(45_466)]));
-        $entrance->hear(new PlayerDataLoadedEvent([self::member(1)]));
+        $entrance->hear(new HeroDataLoadedEvent(self::member(45_466)));
+        $entrance->hear(new HeroDataLoadedEvent(self::member(1)));
 
         static::assertSame([], $entrance->missing());
         $hero = $entrance->character()->hero();
@@ -128,14 +128,14 @@ final class EntranceTest extends TestCase
             self::SKILLS,
             self::VITALS,
         );
-        $entrance->hear(new PlayerDataLoadedEvent([self::member(45_466)]));
+        $entrance->hear(new HeroDataLoadedEvent(self::member(45_466)));
         $mine = new HeroSettings([GameSetting::Goto]);
-        $entrance->hear(new PlayerSettingsLoadedEvent([
-            new PlayerSettingsData(new PlayerSpawnId(45_466), new PlayerName('Hero'), $mine),
-        ]));
-        $entrance->hear(new PlayerSettingsLoadedEvent([
-            new PlayerSettingsData(new PlayerSpawnId(1), new PlayerName('Hero2'), new HeroSettings()),
-        ]));
+        $entrance->hear(new HeroSettingsLoadedEvent(
+            new HeroSettingsData(new PlayerSpawnId(45_466), new PlayerName('Hero'), $mine),
+        ));
+        $entrance->hear(new HeroSettingsLoadedEvent(
+            new HeroSettingsData(new PlayerSpawnId(1), new PlayerName('Hero2'), new HeroSettings()),
+        ));
 
         static::assertSame($mine, $entrance->character()->hero()->settings);
     }
@@ -151,7 +151,7 @@ final class EntranceTest extends TestCase
             self::SKILLS,
             self::VITALS,
         );
-        $entrance->hear(new PlayerDataLoadedEvent([self::member(45_466)]));
+        $entrance->hear(new HeroDataLoadedEvent(self::member(45_466)));
 
         $settings = $entrance->character()->hero()->settings;
         foreach (GameSetting::cases() as $setting) {
@@ -172,9 +172,9 @@ final class EntranceTest extends TestCase
         return $entrance;
     }
 
-    private static function member(int $spawnId): PlayerData
+    private static function member(int $spawnId): HeroData
     {
-        return new PlayerData(
+        return new HeroData(
             new PlayerSpawnId($spawnId),
             new PlayerName('Hero3'),
             new PlayerLevel(81),
