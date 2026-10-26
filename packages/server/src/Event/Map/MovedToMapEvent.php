@@ -20,7 +20,6 @@ use Lorekeeper\Core\World\Map\MapCell;
 use Lorekeeper\Core\World\Map\MapMonster;
 use Lorekeeper\Core\World\Map\MapMonsters;
 use Lorekeeper\Core\World\Map\MapName;
-use Lorekeeper\Core\World\Map\MapPad;
 use Lorekeeper\Core\World\Map\MapPlayer;
 use Lorekeeper\Core\World\Map\MapPlayers;
 use Lorekeeper\Core\World\Map\MapRoom;
@@ -34,6 +33,7 @@ use Lorekeeper\Core\World\Monster\MonsterSpawnId;
 use Lorekeeper\Server\AreaId;
 use Lorekeeper\Server\Event\Combat\Helper\CombatStates;
 use Lorekeeper\Server\Event\Event;
+use Lorekeeper\Server\Event\Map\Helper\MapPads;
 use Lorekeeper\Server\Event\NamedAfterClass;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -219,7 +219,7 @@ final readonly class MovedToMapEvent implements Event
                     new PlayerLevel($player['intLevel']),
                     self::vitals($player),
                 ),
-                new MapSpot(new MapCell($player['strFrame']), self::pad($player['strPad'])),
+                new MapSpot(new MapCell($player['strFrame']), MapPads::read($player['strPad'], static::class)),
                 CombatStates::read($player['intState']),
             ),
             $data['uoBranch'] ?? [],
@@ -268,22 +268,6 @@ final readonly class MovedToMapEvent implements Event
             'Chaos' => MonsterRace::Chaos,
             'Unknown' => MonsterRace::Unknown,
             default => throw new MalformedEventException(static::class, "unknown race '{$race}'"),
-        };
-    }
-
-    /** @throws MalformedEventException */
-    private static function pad(string $pad): MapPad
-    {
-        return match (strtolower($pad)) {
-            'left' => MapPad::Left,
-            'right' => MapPad::Right,
-            'top' => MapPad::Top,
-            'bottom' => MapPad::Bottom,
-            'up' => MapPad::Up,
-            'down' => MapPad::Down,
-            'center' => MapPad::Center,
-            'spawn' => MapPad::Spawn,
-            default => throw new MalformedEventException(static::class, "unknown pad '{$pad}'"),
         };
     }
 }

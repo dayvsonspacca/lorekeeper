@@ -10,7 +10,7 @@ use Lorekeeper\Core\Player\PlayerName;
 use Lorekeeper\Core\Player\PlayerSpawnId;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
-use Lorekeeper\Server\Event\Player\Hero\Helper\HeroEntries;
+use Lorekeeper\Server\Event\Player\Helper\PlayerEntries;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
 use Lorekeeper\Server\Message\Message;
@@ -47,7 +47,7 @@ final readonly class HeroSettingsLoadedEvent implements Event
             return Option\none();
         }
 
-        $hero = HeroEntries::find($message, static::class);
+        $hero = PlayerEntries::hero($message, static::class);
         if ($hero->isNone()) {
             return Option\none();
         }

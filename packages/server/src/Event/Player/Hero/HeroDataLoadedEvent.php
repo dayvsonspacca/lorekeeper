@@ -15,7 +15,7 @@ use Lorekeeper\Core\World\Currency\AdventureCoins;
 use Lorekeeper\Core\World\Currency\Gold;
 use Lorekeeper\Server\Event\Event;
 use Lorekeeper\Server\Event\NamedAfterClass;
-use Lorekeeper\Server\Event\Player\Hero\Helper\HeroEntries;
+use Lorekeeper\Server\Event\Player\Helper\PlayerEntries;
 use Lorekeeper\Server\Event\Quest\Helper\QuestGroups;
 use Lorekeeper\Server\Exception\MalformedEventException;
 use Lorekeeper\Server\Message\JsonMessage;
@@ -44,7 +44,7 @@ final readonly class HeroDataLoadedEvent implements Event
             return Option\none();
         }
 
-        $hero = HeroEntries::find($message, static::class);
+        $hero = PlayerEntries::hero($message, static::class);
         if ($hero->isNone()) {
             return Option\none();
         }
