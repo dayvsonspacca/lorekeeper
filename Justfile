@@ -1,4 +1,5 @@
 mod desktop 'apps/desktop/Justfile'
+mod wiki 'apps/wiki/Justfile'
 
 list:
     @just --list

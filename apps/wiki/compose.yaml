@@ -1,0 +1,48 @@
+name: lorekeeper-wiki
+
+services:
+  app:
+    build: docker
+    restart: unless-stopped
+    user: "${UID:-1000}:${GID:-1000}"
+    working_dir: /app/apps/wiki
+    command: ./docker/start.sh
+    environment:
+      HOME: /tmp
+      XDG_CONFIG_HOME: /tmp
+      XDG_DATA_HOME: /tmp
+    volumes:
+      - ../..:/app
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      wiki:
+        ipv4_address: 192.168.77.10
+
+  database:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_USER: wiki
+      POSTGRES_PASSWORD: wiki
+    volumes:
+      - database:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wiki -d wiki"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    networks:
+      wiki:
+        ipv4_address: 192.168.77.11
+
+networks:
+  wiki:
+    ipam:
+      config:
+        - subnet: 192.168.77.0/24
+
+volumes:
+  database:

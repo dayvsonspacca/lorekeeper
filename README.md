@@ -7,6 +7,7 @@
 [![Packages](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/packages.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/packages.yml)
 [![Desktop](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/desktop.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/desktop.yml)
 [![Recorder](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/recorder.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/recorder.yml)
+[![Wiki](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/wiki.yml/badge.svg)](https://github.com/dayvsonspacca/lorekeeper/actions/workflows/wiki.yml)
 [![Coverage](https://img.shields.io/badge/coverage-report-blue)](https://dayvsonspacca.github.io/lorekeeper/)
 
 ## Apps

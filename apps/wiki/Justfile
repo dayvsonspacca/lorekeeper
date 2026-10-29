@@ -1,0 +1,28 @@
+export UID := `id -u`
+export GID := `id -g`
+
+compose := 'docker compose --file ' + source_directory() / 'compose.yaml'
+
+# Build and start the wiki at http://192.168.77.10
+up:
+    {{ compose }} up --detach --build
+
+# Stop the wiki, keeping its database
+down:
+    {{ compose }} down
+
+# Follow what the wiki prints
+logs:
+    {{ compose }} logs --follow app
+
+# Run an artisan command inside the wiki
+artisan *args:
+    {{ compose }} exec app php artisan {{ args }}
+
+# Play a script with AQW_PLAYER and AQW_PASSWORD and keep what the game tells
+explore script *args:
+    {{ compose }} exec --env AQW_PLAYER --env AQW_PASSWORD --env AQW_SERVER app php artisan wiki:explore {{ script }} {{ args }}
+
+# Start over with an empty database
+fresh:
+    {{ compose }} exec app php artisan migrate:fresh --force

@@ -1,0 +1,26 @@
+name: Wiki
+
+on:
+  push:
+    branches: [main]
+    paths: &paths
+      - 'apps/wiki/**'
+      - 'packages/**'
+      - '.github/workflows/app.yml'
+      - '.github/workflows/wiki.yml'
+  pull_request:
+    paths: *paths
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wiki-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: Wiki
+    uses: ./.github/workflows/app.yml
+    with:
+      app: wiki
